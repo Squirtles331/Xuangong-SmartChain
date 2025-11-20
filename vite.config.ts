@@ -56,12 +56,5 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src')
     }
-  },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        api: 'modern' // 关键一行，立即告别 legacy 警告
-      }
-    }
   }
 })
