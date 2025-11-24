@@ -1,0 +1,18 @@
+html.dark {
+  /* primary 暗 */
+  --el-color-primary: #6dc3f9; /* 饱和度高一点，在深色背景更显眼 */
+  --el-color-primary-light-3: #58adff;
+  --el-color-primary-light-5: #85c5ff;
+  --el-color-primary-dark-2: #1d6fc5;
+
+  /* 按钮变量自动跟随 */
+  --el-button-text-color: #ffffff;
+  --el-button-bg-color: var(--el-color-primary);
+  --el-button-border-color: var(--el-color-primary);
+  --el-button-hover-bg-color: var(--el-color-primary-light-3);
+  --el-button-hover-border-color: var(--el-color-primary-light-3);
+  --el-button-active-bg-color: var(--el-color-primary-dark-2);
+  --el-button-active-border-color: var(--el-color-primary-dark-2);
+  --el-button-disabled-bg-color: var(--el-color-primary-light-5);
+  --el-button-disabled-border-color: var(--el-color-primary-light-5);
+}

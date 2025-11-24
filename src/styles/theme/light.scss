@@ -1,0 +1,19 @@
+:root {
+  /* ================= 亮主题（默认） ================= */
+  /* primary 亮 */
+  --el-color-primary: #395ae3;
+  --el-color-primary-light-3: #79bbff;
+  --el-color-primary-light-5: #a6c9ff;
+  --el-color-primary-dark-2: #3375d9;
+  /* 文字、背景、边框等变量 */
+  --el-button-text-color: var(--el-color-white);
+  --el-button-bg-color: var(--el-color-primary);
+  --el-button-border-color: var(--el-color-primary);
+  --el-button-hover-bg-color: var(--el-color-primary-light-3);
+  --el-button-hover-border-color: var(--el-color-primary-light-3);
+  --el-button-active-bg-color: var(--el-color-primary-dark-2);
+  --el-button-active-border-color: var(--el-color-primary-dark-2);
+  --el-button-disabled-bg-color: var(--el-color-primary-light-5);
+  --el-button-disabled-border-color: var(--el-color-primary-light-5);
+}
+
