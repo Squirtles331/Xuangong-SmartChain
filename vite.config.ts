@@ -1,60 +1,124 @@
-import vue from '@vitejs/plugin-vue'
+import type { ConfigEnv, UserConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import { resolve } from 'path'
-import AutoImport from 'unplugin-auto-import/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-import Components from 'unplugin-vue-components/vite'
-import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
-import { defineConfig } from 'vite'
+import { wrapperEnv } from './node/getEnv'
+import { getPluginsList } from './node/plugins'
+import { exclude, include } from './node/optimize'
+import { getNowDate } from './src/common/utils/core/date'
+import pkg from './package.json'
 
+const { dependencies, devDependencies, name, version } = pkg
+
+const __APP_INFO__ = {
+  pkg: { dependencies, devDependencies, name, version }, // package.json 相关信息
+  lastBuildTime: getNowDate() // 编译或打包时间
+}
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [
-    vue(),
-    // 1. 自动引入 Vue/Vue-Router/Pinia 等组合式 API
-    AutoImport({
-      imports: [
-        'vue',
-        'vue-router',
-        'pinia',
-        // 可选：ElementPlus 组合式 API
-        {
-          'element-plus': ['ElMessage', 'ElMessageBox', 'ElNotification', 'ElLoading']
-        }
-      ],
-      dts: 'src/types/auto-imports.d.ts', // 类型声明文件
-      eslintrc: {
-        enabled: true, // 生成 .eslintrc-auto-import.json
-        filepath: './.eslintrc-auto-import.json'
+export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
+  const env = loadEnv(mode, process.cwd())
+  const viteEnv = wrapperEnv(env)
+  return {
+    base: viteEnv.VITE_BASE_URL,
+    resolve: {
+      alias: {
+        '@': resolve(__dirname, 'src')
       }
-    }),
-    // 2. 自动引入组件（ElementPlus + 自定义）
-    Components({
-      // ElementPlus 按需引入
-      resolvers: [ElementPlusResolver({ importStyle: 'sass' })],
-      // 自定义组件目录
-      dirs: ['src/components', 'src/layout'],
-      // 类型声明
-      dts: 'src/types/components.d.ts',
-      // 后缀名
-      extensions: ['vue'],
-      // 深度
-      deep: true
-    }),
-    // 3. SVG 图标插件
-    createSvgIconsPlugin({
-      // 指定需要缓存的图标文件夹
-      iconDirs: [resolve(process.cwd(), 'src/assets/icons')],
-      // 指定symbolId格式
-      symbolId: 'icon-[dir]-[name]',
-      // 自定义插入位置
-      inject: 'body-last',
-      // 自定义dom id
-      customDomId: '__svg__icons__dom__'
-    })
-  ],
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src')
+    },
+    plugins: getPluginsList(command, viteEnv),
+    optimizeDeps: {
+      include,
+      exclude
+    },
+    server: {
+      host: '0.0.0.0',
+      port: viteEnv.VITE_PORT,
+      open: viteEnv.VITE_OPEN,
+      cors: true,
+      proxy: {
+        '/api': {
+          target: 'http://192.168.1.100:8080',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, '')
+        }
+      },
+      warmup: {
+        clientFiles: ['./index.html', './src/{views,components}/*']
+      }
+    },
+    css: {
+      preprocessorOptions: {
+        scss: {
+          additionalData: `@use "@/styles/index.scss" as *;\n`
+        }
+      }
+    },
+    esbuild: {
+      pure: viteEnv.VITE_DROP_CONSOLE ? ['console.log'] : [],
+      drop: viteEnv.VITE_DROP_DEBUGGER ? ['debugger'] : []
+    },
+    build: {
+      // esbuild 打包更快，terser 打包慢
+      minify: 'esbuild',
+      // minify: "terser",
+      // terserOptions: {
+      //   compress: {
+      //     drop_console: viteEnv.VITE_DROP_CONSOLE,
+      //     drop_debugger: viteEnv.VITE_DROP_DEBUGGER,
+      //   },
+      // },
+      outDir: env.VITE_OUT_DIR || 'dist',
+      sourcemap: viteEnv.VITE_SOURCEMAP,
+      // 消除打包大小超过 500kb 警告
+      chunkSizeWarningLimit: 4000,
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, '.', 'index.html')
+        },
+        // 静态资源分类打包
+        output: {
+          // 拆包
+          manualChunks: {
+            'vue-chunks': ['vue', 'vue-router', 'pinia', 'vue-i18n'],
+            'element-plus': ['element-plus'],
+            'wang-editor': ['@wangeditor/editor', '@wangeditor/editor-for-vue'],
+            tinymce: ['tinymce', '@tinymce/tinymce-vue'],
+            echarts: ['echarts'],
+            codemirror: [
+              'codemirror',
+              // "@codemirror/autocomplete",
+              '@codemirror/commands',
+              '@codemirror/language',
+              '@codemirror/lint',
+              // "@codemirror/search",
+              '@codemirror/state',
+              '@codemirror/view'
+            ],
+            // 如果项目只需要一种代码语言，则把其他去掉
+            'codemirror-lang': [
+              '@codemirror/lang-html',
+              '@codemirror/lang-javascript',
+              '@codemirror/lang-markdown',
+              '@codemirror/lang-java',
+              '@codemirror/lang-json',
+              '@codemirror/lang-php',
+              '@codemirror/lang-python',
+              '@codemirror/lang-sql',
+              '@codemirror/lang-xml'
+            ],
+            // 如果项目只需要一种主题，则把其他去掉
+            'codemirror-theme': ['@codemirror/theme-one-dark', '@uiw/codemirror-theme-dracula', '@uiw/codemirror-theme-xcode']
+          },
+          chunkFileNames: 'static/js/[name]-[hash].js',
+          entryFileNames: 'static/js/[name]-[hash].js',
+          assetFileNames: 'static/[ext]/[name]-[hash].[ext]'
+        }
+      },
+      cssCodeSplit: !env.VITE_USE_CSS_SPLIT
+    },
+    define: {
+      __APP_INFO__: JSON.stringify(__APP_INFO__),
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'true', // 去除控制台的一个警告信息
+      log: {}
     }
   }
 })

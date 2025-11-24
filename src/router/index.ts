@@ -255,7 +255,7 @@ const routes: RouteRecordRaw[] = [
         path: 'about',
         name: 'about',
         component: () => import('@/views/AboutView.vue'),
-        meta: { title: '关于' }
+        meta: { title: '关于', hidden: true }
       }
     ]
   }
