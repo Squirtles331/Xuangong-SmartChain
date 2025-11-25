@@ -55,7 +55,7 @@ const setLang = (val: 'zh' | 'en') => {
 .lang-dot {
   width: 8px;
   height: 8px;
-  background-color: #303133;
+  background-color: var(--el-text-color-primary);
   border-radius: 50%;
 }
 </style>

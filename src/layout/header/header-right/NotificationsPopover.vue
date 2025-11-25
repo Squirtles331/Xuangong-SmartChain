@@ -66,11 +66,11 @@ const viewAll = () => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--layout-divider);
 }
 .notify-title {
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 .notify-middle {
   max-height: 360px;
@@ -81,41 +81,41 @@ const viewAll = () => {
   grid-template-columns: 40px 1fr 12px;
   gap: 10px;
   padding: 12px 16px;
-  border-bottom: 1px solid #f2f6fc;
+  border-bottom: 1px solid var(--layout-divider);
 }
 .notify-left {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #ecf5ff;
-  color: #409eff;
+  background-color: var(--el-color-primary-light-5);
+  color: var(--el-color-primary);
   border-radius: 4px;
 }
 .notify-label {
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin-bottom: 4px;
 }
 .notify-text {
-  color: #606266;
+  color: var(--el-text-color-secondary);
   font-size: 13px;
 }
 .notify-time {
-  color: #909399;
+  color: var(--el-text-color-tertiary);
   font-size: 12px;
   margin-top: 6px;
 }
 .notify-dot {
   width: 8px;
   height: 8px;
-  background-color: #409eff;
+  background-color: var(--el-color-primary);
   border-radius: 50%;
   align-self: start;
 }
 .notify-empty {
   padding: 20px;
   text-align: center;
-  color: #909399;
+  color: var(--el-text-color-tertiary);
 }
 .notify-bottom {
   display: flex;

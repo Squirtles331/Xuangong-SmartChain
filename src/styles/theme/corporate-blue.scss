@@ -1,14 +1,14 @@
-:root {
-  --el-color-primary: #395ae3;
-  --el-color-primary-light-3: #79bbff;
-  --el-color-primary-light-5: #a6c9ff;
-  --el-color-primary-dark-2: #3375d9;
-  --el-color-success: #67c23a;
-  --el-color-warning: #e6a23c;
-  --el-color-danger: #f56c6c;
+html.corporate-blue {
+  --el-color-primary: #1f64ff;
+  --el-color-primary-light-3: #4d85ff;
+  --el-color-primary-light-5: #80a6ff;
+  --el-color-primary-dark-2: #174dcc;
+  --el-color-success: #19be6b;
+  --el-color-warning: #ffb302;
+  --el-color-danger: #ff5f5f;
   --el-color-info: #909399;
 
-  --el-text-color-primary: #303133;
+  --el-text-color-primary: #1f2d3d;
   --el-text-color-secondary: #606266;
   --el-text-color-tertiary: #909399;
   --el-border-color: #e4e7ed;
@@ -33,11 +33,11 @@
   --layout-header-border: var(--el-border-color);
   --layout-header-shadow: rgba(0, 21, 41, 0.08);
 
-  --layout-sidebar-bg: #f7f9fc;
-  --layout-sidebar-text: #4b5563;
+  --layout-sidebar-bg: #0e2a66;
+  --layout-sidebar-text: #c9d6ff;
   --layout-sidebar-active-text: var(--el-color-primary);
-  --layout-sidebar-border: #e5e7eb;
-  --layout-sidebar-hover-bg: #f0f6ff;
+  --layout-sidebar-border: rgba(255, 255, 255, 0.1);
+  --layout-sidebar-hover-bg: rgba(31, 100, 255, 0.08);
   --layout-sidebar-active-bg: #e7efff;
 
   --layout-main-bg: var(--el-bg-color-page);
@@ -47,9 +47,9 @@
 
   --tab-bg: #ffffff;
   --tab-color: var(--el-text-color-secondary);
-  --tab-active-bg: #dcebff;
-  --tab-active-color: #409eff;
-  --tab-active-border: #c7dcf8;
+  --tab-active-bg: #e7efff;
+  --tab-active-color: var(--el-color-primary);
+  --tab-active-border: #d0ddff;
   --tab-hover-bg: rgba(0, 0, 0, 0.06);
   --tab-active-shadow: rgba(0, 21, 41, 0.06);
 }

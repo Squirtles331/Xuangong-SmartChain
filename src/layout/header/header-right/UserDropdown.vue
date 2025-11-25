@@ -1,14 +1,14 @@
 <template>
   <el-dropdown trigger="click">
-    <el-avatar size="small" src="" class="avatar"></el-avatar>
+    <el-avatar class="avatar" size="small" src=""></el-avatar>
     <template #dropdown>
       <el-dropdown-menu class="user-dropdown">
         <div class="user-top">
-          <el-avatar size="large" src="" class="user-avatar"></el-avatar>
+          <el-avatar class="user-avatar" size="large" src=""></el-avatar>
           <div class="user-meta">
             <div class="user-row">
               <span class="user-name">{{ user.name }}</span>
-              <el-tag size="small" type="success" class="user-tag">{{ user.role }}</el-tag>
+              <el-tag class="user-tag" size="small" type="success">{{ user.role }}</el-tag>
             </div>
             <div class="user-email">{{ user.email }}</div>
           </div>
@@ -32,7 +32,7 @@
             <span>问题 & 帮助</span>
           </el-dropdown-item>
         </div>
-        <el-dropdown-item divided @click="logout" class="user-bottom">
+        <el-dropdown-item class="user-bottom" divided @click="logout">
           <span>退出登录</span>
           <span class="shortcut">Alt Q</span>
         </el-dropdown-item>
@@ -41,7 +41,7 @@
   </el-dropdown>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { reactive } from 'vue'
 import { Document, Link, QuestionFilled } from '@element-plus/icons-vue'
 
@@ -67,7 +67,7 @@ const logout = () => {}
   align-items: center;
   gap: 10px;
   padding: 8px 16px 12px 16px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--layout-divider);
 }
 .user-avatar {
   width: 44px;
@@ -81,7 +81,7 @@ const logout = () => {}
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 .user-name {
   font-size: 14px;
@@ -91,12 +91,12 @@ const logout = () => {}
 }
 .user-email {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-tertiary);
 }
 .status-dot {
   width: 8px;
   height: 8px;
-  background-color: #67c23a;
+  background-color: var(--el-color-success);
   border-radius: 50%;
 }
 .user-middle {
@@ -113,6 +113,6 @@ const logout = () => {}
   align-items: center;
 }
 .shortcut {
-  color: #909399;
+  color: var(--el-text-color-tertiary);
 }
 </style>

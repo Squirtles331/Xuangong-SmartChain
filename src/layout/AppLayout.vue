@@ -126,7 +126,7 @@ const handleTabClick = (path: string) => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f5f7fa;
+  background-color: var(--layout-main-bg);
 }
 
 .app-body {
@@ -148,7 +148,7 @@ const handleTabClick = (path: string) => {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--layout-overlay);
     z-index: 999;
   }
 }

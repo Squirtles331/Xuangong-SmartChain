@@ -33,13 +33,13 @@ defineProps<{ breadcrumbs: Breadcrumb[] }>()
 <style scoped>
 .app-header {
   height: 60px;
-  background-color: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background-color: var(--layout-header-bg);
+  border-bottom: 1px solid var(--layout-header-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  box-shadow: 0 1px 4px var(--layout-header-shadow);
 }
 
 .header-left {
@@ -59,7 +59,7 @@ defineProps<{ breadcrumbs: Breadcrumb[] }>()
 .logo-text {
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 .header-center {
   flex: 1;

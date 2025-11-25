@@ -31,8 +31,8 @@ const onTabClick = (path: string) => emit('tab-click', path)
 
 <style scoped>
 .chrome-tabs {
-  background-color: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background-color: var(--layout-header-bg);
+  border-bottom: 1px solid var(--layout-header-border);
   padding: 0 16px;
 }
 .chrome-tabs__bar {
@@ -42,12 +42,12 @@ const onTabClick = (path: string) => emit('tab-click', path)
   overflow-y: hidden;
   padding: 3px 0 0 28px;
   position: relative;
-  background-color: #fff;
+  background-color: var(--layout-header-bg);
 }
 .chrome-tab {
   position: relative;
-  background-color: var(--tab-bg, #fff);
-  color: var(--tab-color, #606266);
+  background-color: var(--tab-bg);
+  color: var(--tab-color);
   padding: 8px 16px;
   border-radius: 0;
   cursor: pointer;
@@ -70,7 +70,7 @@ const onTabClick = (path: string) => emit('tab-click', path)
   width: 28px;
   height: 28px;
   border-radius: 100%;
-  box-shadow: 0 0 0 40px var(--tab-bg, #dcebff);
+  box-shadow: 0 0 0 40px var(--tab-bg);
   transition: 0.2s;
 }
 .chrome-tab.active::before {
@@ -82,11 +82,11 @@ const onTabClick = (path: string) => emit('tab-click', path)
   clip-path: inset(50% 50% 0 -14px);
 }
 .chrome-tab.active {
-  --tab-bg: #dcebff;
-  --tab-color: #409eff;
+  --tab-bg: var(--tab-active-bg);
+  --tab-color: var(--tab-active-color);
   z-index: 2;
-  border-color: #c7dcf8;
-  box-shadow: 0 1px 3px rgba(0, 21, 41, 0.06);
+  border-color: var(--tab-active-border);
+  box-shadow: 0 1px 3px var(--tab-active-shadow);
   border-radius: 16px 16px 0 0;
 }
 .tab-label {
@@ -100,7 +100,7 @@ const onTabClick = (path: string) => emit('tab-click', path)
 }
 .tab-pin {
   font-size: 14px;
-  color: #909399;
+  color: var(--el-text-color-tertiary);
 }
 .tab-close {
   display: inline-flex;
@@ -110,11 +110,11 @@ const onTabClick = (path: string) => emit('tab-click', path)
   height: 16px;
   border-radius: 50%;
   font-size: 12px;
-  color: #000;
+  color: var(--el-text-color-primary);
   margin-left: 4px;
 }
 .tab-close:hover {
-  background-color: rgba(0, 0, 0, 0.06);
-  color: #000;
+  background-color: var(--tab-hover-bg);
+  color: var(--el-text-color-primary);
 }
 </style>

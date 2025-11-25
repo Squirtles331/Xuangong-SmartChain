@@ -46,6 +46,6 @@ const openSearchDialog = () => {
 }
 .search-result {
   margin-top: 12px;
-  color: #909399;
+  color: var(--el-text-color-tertiary);
 }
 </style>

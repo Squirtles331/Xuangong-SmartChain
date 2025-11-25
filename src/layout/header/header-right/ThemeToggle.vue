@@ -5,11 +5,13 @@
 </template>
 
 <script lang="ts" setup>
-import { useDark, useToggle } from '@vueuse/core'
-
-const isDark = useDark()
-
-const toggleTheme = useToggle(isDark)
+const isDark = () => document.documentElement.classList.contains('dark-deep')
+const toggleTheme = () => {
+  const root = document.documentElement
+  const current = isDark()
+  root.classList.remove('dark-blue', 'dark-deep', 'dark-midnight', 'dark-neutral', 'corporate-blue')
+  if (!current) root.classList.add('dark-deep')
+}
 </script>
 
 <style scoped></style>

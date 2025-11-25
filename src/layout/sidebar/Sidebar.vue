@@ -6,9 +6,9 @@
       :collapse="collapsed"
       :unique-opened="true"
       router
-      background-color="#304156"
-      text-color="#bfcbd9"
-      active-text-color="#409eff"
+      background-color="var(--layout-sidebar-bg)"
+      text-color="var(--layout-sidebar-text)"
+      active-text-color="var(--layout-sidebar-active-text)"
       @select="onSelect"
     >
       <el-menu-item v-for="item in singleItems" :key="item.path" :index="item.path">
@@ -83,7 +83,7 @@ const onSelect = () => emit('select')
 <style scoped>
 .app-sidebar {
   width: 200px;
-  background-color: #304156;
+  background-color: var(--layout-sidebar-bg);
   transition: width 0.3s;
   overflow: hidden;
   display: flex;
@@ -110,21 +110,32 @@ const onSelect = () => emit('select')
 .app-sidebar :deep(.el-menu-item) {
   height: 48px;
   line-height: 48px;
+  color: var(--layout-sidebar-text);
 }
 .app-sidebar :deep(.el-sub-menu__title) {
   height: 48px;
   line-height: 48px;
+  color: var(--layout-sidebar-text);
+}
+.app-sidebar :deep(.el-menu-item:hover),
+.app-sidebar :deep(.el-sub-menu__title:hover) {
+  background-color: var(--layout-sidebar-hover-bg);
+}
+.app-sidebar :deep(.el-menu-item.is-active) {
+  color: var(--layout-sidebar-active-text);
+  background-color: var(--layout-sidebar-active-bg);
+  border-radius: 8px;
 }
 .sidebar-footer {
   display: flex;
   align-items: center;
   justify-content: flex-start;
   padding: 8px;
-  background-color: #304156;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: var(--layout-sidebar-bg);
+  border-top: 1px solid var(--layout-sidebar-border);
 }
 .collapse-toggle {
-  color: #bfcbd9;
+  color: var(--layout-sidebar-text);
 }
 @media (max-width: 768px) {
   .app-sidebar {
