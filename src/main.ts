@@ -11,7 +11,6 @@ import 'element-plus/dist/index.css'
 
 import 'vxe-table/lib/style.css'
 import 'virtual:svg-icons-register'
-import '@/styles/normalize.css'
 import '@/styles/reset.css'
 import 'gi-component/dist/gi.css'
 // if you just want to import css
