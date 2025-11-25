@@ -1,5 +1,5 @@
 <template>
-  <el-button type="text" circle class="icon-btn" @click="toggleTheme">
+  <el-button type="text" circle class="icon-btn" @click="toggleTheme($event)">
     <el-icon v-if="isDark"><Moon /></el-icon>
     <el-icon v-else><Sunny /></el-icon>
   </el-button>
@@ -26,8 +26,42 @@ const applyTheme = (val: AppTheme) => {
   isDark.value = val !== 'light'
 }
 
-const toggleTheme = () => {
-  applyTheme(isDark.value ? 'light' : 'dark-deep')
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const supportsVT = 'startViewTransition' in document
+
+const toggleTheme = (e?: MouseEvent) => {
+  const next = isDark.value ? 'light' : 'dark-deep'
+  if (!supportsVT || prefersReduced) {
+    applyTheme(next)
+    return
+  }
+  const vw = innerWidth
+  const vh = innerHeight
+  const clickX = e?.clientX ?? vw / 2
+  const clickY = e?.clientY ?? vh / 2
+  const useOppositeOrigin = next === 'light'
+  const cx = useOppositeOrigin ? vw - clickX : clickX
+  const cy = useOppositeOrigin ? vh - clickY : clickY
+  const transition = (document as any).startViewTransition(() => {
+    applyTheme(next)
+  })
+  transition.ready.then(() => {
+    const radius = Math.hypot(Math.max(cx, vw - cx), Math.max(cy, vh - cy))
+    document.documentElement.animate(
+      next === 'light'
+        ? {
+            clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`]
+          }
+        : {
+            clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`]
+          },
+      {
+        duration: 500,
+        easing: 'ease-in-out',
+        pseudoElement: '::view-transition-new(root)'
+      }
+    )
+  })
 }
 
 const savedTheme = localStorage.getItem('app-theme') as AppTheme | null

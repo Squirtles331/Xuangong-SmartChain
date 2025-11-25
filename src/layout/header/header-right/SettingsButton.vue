@@ -7,37 +7,37 @@
       <div class="section">
         <div class="section-title">全局主题</div>
         <div class="card-grid">
-          <div class="option-card" :class="{ active: currentTheme === 'light' }" @click="setTheme('light')">
+          <div class="option-card" :class="{ active: currentTheme === 'light' }" @click="setTheme('light', $event)">
             <div class="preview theme-light">
               <div class="page"></div>
             </div>
             <div class="label">浅色</div>
           </div>
-          <div class="option-card" :class="{ active: currentTheme === 'dark-blue' }" @click="setTheme('dark-blue')">
+          <div class="option-card" :class="{ active: currentTheme === 'dark-blue' }" @click="setTheme('dark-blue', $event)">
             <div class="preview theme-dark-blue">
               <div class="page"></div>
             </div>
             <div class="label">深蓝深色</div>
           </div>
-          <div class="option-card" :class="{ active: currentTheme === 'dark-deep' }" @click="setTheme('dark-deep')">
+          <div class="option-card" :class="{ active: currentTheme === 'dark-deep' }" @click="setTheme('dark-deep', $event)">
             <div class="preview theme-dark-deep">
               <div class="page"></div>
             </div>
             <div class="label">暗黑深色</div>
           </div>
-          <div class="option-card" :class="{ active: currentTheme === 'dark-midnight' }" @click="setTheme('dark-midnight')">
+          <div class="option-card" :class="{ active: currentTheme === 'dark-midnight' }" @click="setTheme('dark-midnight', $event)">
             <div class="preview theme-dark-midnight">
               <div class="page"></div>
             </div>
             <div class="label">午夜深色</div>
           </div>
-          <div class="option-card" :class="{ active: currentTheme === 'dark-neutral' }" @click="setTheme('dark-neutral')">
+          <div class="option-card" :class="{ active: currentTheme === 'dark-neutral' }" @click="setTheme('dark-neutral', $event)">
             <div class="preview theme-dark-neutral">
               <div class="page"></div>
             </div>
             <div class="label">中性深色</div>
           </div>
-          <div class="option-card" :class="{ active: currentTheme === 'corporate-blue' }" @click="setTheme('corporate-blue')">
+          <div class="option-card" :class="{ active: currentTheme === 'corporate-blue' }" @click="setTheme('corporate-blue', $event)">
             <div class="preview theme-corporate-blue">
               <div class="page"></div>
             </div>
@@ -57,12 +57,40 @@ const open = ref(false)
 
 type AppTheme = 'light' | 'dark-blue' | 'dark-deep' | 'dark-midnight' | 'dark-neutral' | 'corporate-blue'
 const currentTheme = ref<AppTheme>('light')
-const setTheme = (val: AppTheme) => {
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const supportsVT = 'startViewTransition' in document
+const setTheme = (val: AppTheme, e?: MouseEvent) => {
   const root = document.documentElement
-  root.classList.remove('dark-blue', 'dark-deep', 'dark-midnight', 'dark-neutral', 'corporate-blue')
-  if (val !== 'light') root.classList.add(val)
-  localStorage.setItem('app-theme', val)
-  currentTheme.value = val
+  const apply = () => {
+    root.classList.remove('dark-blue', 'dark-deep', 'dark-midnight', 'dark-neutral', 'corporate-blue')
+    if (val !== 'light') root.classList.add(val)
+    localStorage.setItem('app-theme', val)
+    currentTheme.value = val
+  }
+  if (!supportsVT || prefersReduced) {
+    apply()
+    return
+  }
+  const vw = innerWidth
+  const vh = innerHeight
+  const cx = e?.clientX ?? vw / 2
+  const cy = e?.clientY ?? vh / 2
+  const transition = (document as any).startViewTransition(() => {
+    apply()
+  })
+  transition.ready.then(() => {
+    const radius = Math.hypot(Math.max(cx, vw - cx), Math.max(cy, vh - cy))
+    root.animate(
+      val === 'light'
+        ? { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`] }
+        : { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`] },
+      {
+        duration: 500,
+        easing: 'ease-in-out',
+        pseudoElement: '::view-transition-new(root)'
+      }
+    )
+  })
 }
 
 const savedTheme = localStorage.getItem('app-theme') as AppTheme | null
