@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <el-card>
     <el-button type="primary">明暗主题</el-button>
-  </div>
+  </el-card>
 </template>
 
 <script lang="ts" setup></script>
