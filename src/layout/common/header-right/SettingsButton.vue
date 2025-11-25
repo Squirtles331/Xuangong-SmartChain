@@ -5,42 +5,59 @@
   <el-drawer v-model="open" direction="rtl" size="420" :lock-scroll="false" :with-header="false" custom-class="settings-drawer">
     <div class="drawer-body">
       <div class="section">
+        <div class="section-title">布局模式</div>
+        <div class="card-grid">
+          <div class="option-card" :class="{ active: layoutMode === 'vertical' }" @click="setLayout('vertical')">
+            <div class="preview"><div class="page"></div></div>
+            <div class="label">纵向</div>
+          </div>
+          <div class="option-card" :class="{ active: layoutMode === 'classic' }" @click="setLayout('classic')">
+            <div class="preview"><div class="page"></div></div>
+            <div class="label">经典</div>
+          </div>
+          <div class="option-card" :class="{ active: layoutMode === 'horizontal' }" @click="setLayout('horizontal')">
+            <div class="preview"><div class="page"></div></div>
+            <div class="label">横向</div>
+          </div>
+          <div class="option-card" :class="{ active: layoutMode === 'columns' }" @click="setLayout('columns')">
+            <div class="preview"><div class="page"></div></div>
+            <div class="label">分栏</div>
+          </div>
+          <div class="option-card" :class="{ active: layoutMode === 'mixed' }" @click="setLayout('mixed')">
+            <div class="preview"><div class="page"></div></div>
+            <div class="label">混合</div>
+          </div>
+          <div class="option-card" :class="{ active: layoutMode === 'embedded' }" @click="setLayout('embedded')">
+            <div class="preview"><div class="page"></div></div>
+            <div class="label">嵌入</div>
+          </div>
+        </div>
+      </div>
+      <div class="section">
         <div class="section-title">全局主题</div>
         <div class="card-grid">
           <div class="option-card" :class="{ active: currentTheme === 'light' }" @click="setTheme('light', $event)">
-            <div class="preview theme-light">
-              <div class="page"></div>
-            </div>
+            <div class="preview theme-light"><div class="page"></div></div>
             <div class="label">浅色</div>
           </div>
           <div class="option-card" :class="{ active: currentTheme === 'dark-blue' }" @click="setTheme('dark-blue', $event)">
-            <div class="preview theme-dark-blue">
-              <div class="page"></div>
-            </div>
+            <div class="preview theme-dark-blue"><div class="page"></div></div>
             <div class="label">深蓝深色</div>
           </div>
           <div class="option-card" :class="{ active: currentTheme === 'dark-deep' }" @click="setTheme('dark-deep', $event)">
-            <div class="preview theme-dark-deep">
-              <div class="page"></div>
-            </div>
+            <div class="preview theme-dark-deep"><div class="page"></div></div>
             <div class="label">暗黑深色</div>
           </div>
           <div class="option-card" :class="{ active: currentTheme === 'dark-midnight' }" @click="setTheme('dark-midnight', $event)">
-            <div class="preview theme-dark-midnight">
-              <div class="page"></div>
-            </div>
+            <div class="preview theme-dark-midnight"><div class="page"></div></div>
             <div class="label">午夜深色</div>
           </div>
           <div class="option-card" :class="{ active: currentTheme === 'dark-neutral' }" @click="setTheme('dark-neutral', $event)">
-            <div class="preview theme-dark-neutral">
-              <div class="page"></div>
-            </div>
+            <div class="preview theme-dark-neutral"><div class="page"></div></div>
             <div class="label">中性深色</div>
           </div>
           <div class="option-card" :class="{ active: currentTheme === 'corporate-blue' }" @click="setTheme('corporate-blue', $event)">
-            <div class="preview theme-corporate-blue">
-              <div class="page"></div>
-            </div>
+            <div class="preview theme-corporate-blue"><div class="page"></div></div>
             <div class="label">企业蓝色</div>
           </div>
         </div>
@@ -64,9 +81,14 @@
 <script lang="ts" setup>
 import { Setting } from '@element-plus/icons-vue'
 import { ref } from 'vue'
-
+import { useLayoutStore, type LayoutMode } from '@/stores/layout'
 const open = ref(false)
-
+const layoutStore = useLayoutStore()
+const layoutMode = ref<LayoutMode>(layoutStore.mode)
+const setLayout = (m: LayoutMode) => {
+  layoutStore.setMode(m)
+  layoutMode.value = m
+}
 type AppTheme = 'light' | 'dark-blue' | 'dark-deep' | 'dark-midnight' | 'dark-neutral' | 'corporate-blue'
 const currentTheme = ref<AppTheme>('light')
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -142,7 +164,6 @@ const setTheme = (val: AppTheme, e?: MouseEvent) => {
     )
   })
 }
-
 const savedTheme = localStorage.getItem('app-theme') as AppTheme | null
 if (savedTheme) setTheme(savedTheme)
 const savedPrimary = localStorage.getItem('app-primary-color')

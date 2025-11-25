@@ -9,7 +9,8 @@
     <template #header>
       <gi-form
         ref="GiFormRef"
-        v-model="form"
+        :model-value="form"
+        @update:modelValue="Object.assign(form, $event)"
         :columns="formColumns"
         :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
         search

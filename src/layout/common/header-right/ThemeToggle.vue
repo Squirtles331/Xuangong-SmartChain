@@ -8,7 +8,6 @@
 <script lang="ts" setup>
 import { Moon, Sunny } from '@element-plus/icons-vue'
 import { ref, onMounted, onUnmounted } from 'vue'
-
 type AppTheme = 'light' | 'dark-blue' | 'dark-deep' | 'dark-midnight' | 'dark-neutral' | 'corporate-blue'
 const root = document.documentElement
 const hasDarkClass = () =>
@@ -18,17 +17,14 @@ const hasDarkClass = () =>
   root.classList.contains('dark-neutral') ||
   root.classList.contains('corporate-blue')
 const isDark = ref<boolean>(hasDarkClass())
-
 const applyTheme = (val: AppTheme) => {
   root.classList.remove('dark-blue', 'dark-deep', 'dark-midnight', 'dark-neutral', 'corporate-blue')
   if (val !== 'light') root.classList.add(val)
   localStorage.setItem('app-theme', val)
   isDark.value = val !== 'light'
 }
-
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const supportsVT = 'startViewTransition' in document
-
 const toggleTheme = (e?: MouseEvent) => {
   const next = isDark.value ? 'light' : 'dark-deep'
   if (!supportsVT || prefersReduced) {
@@ -49,24 +45,14 @@ const toggleTheme = (e?: MouseEvent) => {
     const radius = Math.hypot(Math.max(cx, vw - cx), Math.max(cy, vh - cy))
     document.documentElement.animate(
       next === 'light'
-        ? {
-            clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`]
-          }
-        : {
-            clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`]
-          },
-      {
-        duration: 500,
-        easing: 'ease-in-out',
-        pseudoElement: '::view-transition-new(root)'
-      }
+        ? { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`] }
+        : { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`] },
+      { duration: 500, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
     )
   })
 }
-
 const savedTheme = localStorage.getItem('app-theme') as AppTheme | null
 if (savedTheme) applyTheme(savedTheme)
-
 let observer: MutationObserver | null = null
 onMounted(() => {
   observer = new MutationObserver(() => {

@@ -1,5 +1,9 @@
 <template>
   <aside class="app-sidebar" :class="{ collapsed: collapsed, show: show }">
+    <div class="sidebar-top">
+      <img src="@/assets/icons/demo.svg" alt="Logo" class="logo-img" />
+      <span class="logo-text">玄工智链 · XIC</span>
+    </div>
     <el-menu
       class="sidebar-menu"
       :default-active="activeMenu"
@@ -12,72 +16,74 @@
       @select="onSelect"
     >
       <el-menu-item v-for="item in singleItems" :key="item.path" :index="item.path">
-        {{ item.title }}
+        <el-icon>
+          <component :is="getIcon(item.icon || (item.path === '/' ? 'House' : 'Document'))" />
+        </el-icon>
+        <span class="menu-title">{{ item.title }}</span>
       </el-menu-item>
-
       <el-sub-menu v-for="group in groups" :key="group.path" :index="group.path">
         <template #title>
-          <span>{{ group.title }}</span>
+          <el-icon><component :is="getIcon(group.icon || 'Menu')" /></el-icon>
+          <span class="menu-title">{{ group.title }}</span>
         </template>
-        <el-menu-item v-for="child in group.children" :key="child.path" :index="child.path">
-          {{ child.title }}
-        </el-menu-item>
+        <el-menu-item v-for="child in group.children" :key="child.path" :index="child.path">{{ child.title }}</el-menu-item>
       </el-sub-menu>
     </el-menu>
-    <div class="sidebar-footer">
-      <el-button type="text" class="collapse-toggle" @click="emit('toggle-collapse')">
-        <el-icon><Fold /></el-icon>
-      </el-button>
-    </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { Fold } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { computed } from 'vue'
-
+import * as Icons from '@element-plus/icons-vue'
+import { House, Document, Menu } from '@element-plus/icons-vue'
 const props = defineProps<{ activeMenu: string; collapsed: boolean; show: boolean }>()
 const emit = defineEmits<{ (e: 'select'): void; (e: 'toggle-collapse'): void }>()
-
 const router = useRouter()
-
 const singleItems = computed(() => {
   const options: any = (router as any).options
   const routes = Array.isArray(options?.routes) ? options.routes : []
   const layout = routes.find((r: any) => r.path === '/')
-  const children = Array.isArray(layout?.children) ? layout.children : []
+  let children = Array.isArray(layout?.children) ? layout.children : []
+  children = children.slice().sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
   return children
     .filter((r: any) => !(r.meta && r.meta.hidden) && !Array.isArray(r.children))
     .map((r: any) => {
       const path = r.path ? `/${r.path}` : '/'
       const title = r.meta?.title ?? r.name ?? r.path ?? path
-      return { path, title }
+      const icon = r.meta?.icon as string | undefined
+      return { path, title, icon }
     })
 })
-
 const groups = computed(() => {
   const options: any = (router as any).options
   const routes = Array.isArray(options?.routes) ? options.routes : []
   const layout = routes.find((r: any) => r.path === '/')
-  const children = Array.isArray(layout?.children) ? layout.children : []
+  let children = Array.isArray(layout?.children) ? layout.children : []
+  children = children.slice().sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
   return children
     .filter((r: any) => Array.isArray(r.children))
     .map((r: any) => {
       const groupPath = r.path ? `/${r.path}` : '/'
       const groupTitle = r.meta?.title ?? r.name ?? r.path ?? groupPath
+      const groupIcon = r.meta?.icon as string | undefined
       const items = (r.children || [])
         .filter((c: any) => !(c.meta && c.meta.hidden))
+        .sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
         .map((c: any) => {
           const childPath = `${groupPath}/${c.path}`.replace(/\/+/g, '/').replace(/\/+$/, '')
           const childTitle = c.meta?.title ?? c.name ?? c.path ?? childPath
-          return { path: childPath, title: childTitle }
+          const childIcon = c.meta?.icon as string | undefined
+          return { path: childPath, title: childTitle, icon: childIcon }
         })
-      return { path: groupPath, title: groupTitle, children: items }
+      return { path: groupPath, title: groupTitle, icon: groupIcon, children: items }
     })
 })
-
 const onSelect = () => emit('select')
+const getIcon = (name?: string) => {
+  const icons: any = Icons as any
+  return (name && icons[name]) || Document
+}
 </script>
 
 <style scoped>
@@ -91,6 +97,30 @@ const onSelect = () => emit('select')
 }
 .app-sidebar.collapsed {
   width: 64px;
+}
+.sidebar-top {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--layout-header-border);
+  background-color: var(--layout-header-bg);
+}
+.logo-img {
+  width: 24px;
+  height: 24px;
+}
+.logo-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+.app-sidebar.collapsed .logo-text {
+  display: none;
+}
+.app-sidebar.collapsed .menu-title {
+  display: none;
 }
 .sidebar-menu {
   flex: 1;
@@ -125,17 +155,6 @@ const onSelect = () => emit('select')
   color: var(--layout-sidebar-active-text);
   background-color: var(--layout-sidebar-active-bg);
   border-radius: 8px;
-}
-.sidebar-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 8px;
-  background-color: var(--layout-sidebar-bg);
-  border-top: 1px solid var(--layout-sidebar-border);
-}
-.collapse-toggle {
-  color: var(--layout-sidebar-text);
 }
 @media (max-width: 768px) {
   .app-sidebar {

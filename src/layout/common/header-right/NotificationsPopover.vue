@@ -1,14 +1,13 @@
 <template>
   <el-popover placement="bottom-end" width="360" trigger="click" v-model:visible="open">
     <template #reference>
-      <el-button type="text" circle class="icon-btn">
-        <el-icon><Bell /></el-icon>
-      </el-button>
+      <el-button type="text" circle class="icon-btn"
+        ><el-icon><Bell /></el-icon
+      ></el-button>
     </template>
     <div class="notify-panel">
       <div class="notify-top">
-        <span class="notify-title">通知</span>
-        <el-icon><Message /></el-icon>
+        <span class="notify-title">通知</span><el-icon><Message /></el-icon>
       </div>
       <div class="notify-middle">
         <div class="notify-item" v-for="n in notifications" :key="n.id">
@@ -25,8 +24,8 @@
         <div v-if="notifications.length === 0" class="notify-empty">暂无消息</div>
       </div>
       <div class="notify-bottom">
-        <el-button type="text" @click="clearNotifications">清空</el-button>
-        <el-button type="primary" size="small" @click="viewAll">查看所有消息</el-button>
+        <el-button type="text" @click="clearNotifications">清空</el-button
+        ><el-button type="primary" size="small" @click="viewAll">查看所有消息</el-button>
       </div>
     </div>
   </el-popover>
@@ -36,7 +35,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Bell, Message, ChatLineRound } from '@element-plus/icons-vue'
-
 const router = useRouter()
 const open = ref(false)
 const notifications = ref([
@@ -44,7 +42,6 @@ const notifications = ref([
   { id: 2, text: '公告: 难度很大 后端慎重选择! 演示站部署为dev分支', time: '2025-11-18 21:13:02' },
   { id: 3, text: '公告: 难度很大 后端慎重选择! 演示站部署为dev分支', time: '2025-11-18 21:08:16' }
 ])
-
 const clearNotifications = () => {
   notifications.value = []
 }

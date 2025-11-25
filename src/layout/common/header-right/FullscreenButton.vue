@@ -6,7 +6,6 @@
 
 <script setup lang="ts">
 import { FullScreen } from '@element-plus/icons-vue'
-
 const toggleFull = async () => {
   if (!document.fullscreenElement) {
     await document.documentElement.requestFullscreen()

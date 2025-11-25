@@ -7,35 +7,28 @@
           <el-avatar class="user-avatar" size="large" src=""></el-avatar>
           <div class="user-meta">
             <div class="user-row">
-              <span class="user-name">{{ user.name }}</span>
-              <el-tag class="user-tag" size="small" type="success">{{ user.role }}</el-tag>
+              <span class="user-name">{{ user.name }}</span
+              ><el-tag class="user-tag" size="small" type="success">{{ user.role }}</el-tag>
             </div>
             <div class="user-email">{{ user.email }}</div>
           </div>
           <span class="status-dot"></span>
         </div>
         <div class="user-middle">
-          <el-dropdown-item @click="openDoc">
-            <el-icon><Document /></el-icon>
-            <span>文档</span>
-          </el-dropdown-item>
-          <el-dropdown-item @click="openGitee">
-            <el-icon><Link /></el-icon>
-            <span>Gitee项目地址</span>
-          </el-dropdown-item>
-          <el-dropdown-item @click="openVben">
-            <el-icon><Link /></el-icon>
-            <span>Vben官方地址</span>
-          </el-dropdown-item>
-          <el-dropdown-item @click="openHelp">
-            <el-icon><QuestionFilled /></el-icon>
-            <span>问题 & 帮助</span>
-          </el-dropdown-item>
+          <el-dropdown-item @click="openDoc"
+            ><el-icon><Document /></el-icon><span>文档</span></el-dropdown-item
+          >
+          <el-dropdown-item @click="openGitee"
+            ><el-icon><Link /></el-icon><span>Gitee项目地址</span></el-dropdown-item
+          >
+          <el-dropdown-item @click="openVben"
+            ><el-icon><Link /></el-icon><span>Vben官方地址</span></el-dropdown-item
+          >
+          <el-dropdown-item @click="openHelp"
+            ><el-icon><QuestionFilled /></el-icon><span>问题 & 帮助</span></el-dropdown-item
+          >
         </div>
-        <el-dropdown-item class="user-bottom" divided @click="logout">
-          <span>退出登录</span>
-          <span class="shortcut">Alt Q</span>
-        </el-dropdown-item>
+        <el-dropdown-item class="user-bottom" divided @click="logout"><span>退出登录</span><span class="shortcut">Alt Q</span></el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>
@@ -44,9 +37,7 @@
 <script lang="ts" setup>
 import { reactive } from 'vue'
 import { Document, Link, QuestionFilled } from '@element-plus/icons-vue'
-
 const user = reactive({ name: 'LinaBell', role: 'admin', email: 'crazyLionLi@163.com' })
-
 const openDoc = () => window.open('https://vben.io/guide/introduction.html', '_blank')
 const openGitee = () => window.open('https://gitee.com/vben-admin/vue-vben-admin', '_blank')
 const openVben = () => window.open('https://vben.io', '_blank')

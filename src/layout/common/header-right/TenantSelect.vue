@@ -7,7 +7,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-
 const tenant = ref('tenant1')
 </script>
 

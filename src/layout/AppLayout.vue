@@ -1,31 +1,24 @@
 <template>
-  <div class="app-layout">
-    <Header :breadcrumbs="breadcrumbs" />
-
-    <div class="app-body">
-      <Sidebar
-        :active-menu="activeMenu"
-        :collapsed="sidebarCollapsed"
-        :show="sidebarShow"
-        @select="handleMenuSelect"
-        @toggle-collapse="toggleSidebar"
-      />
-
-      <div v-if="sidebarShow && isMobile" class="sidebar-mask" @click="toggleSidebar"></div>
-
-      <main class="app-main">
-        <MainContent :tabs="tabs" :active-tab="activeTab" @remove-tab="removeTab" @tab-click="handleTabClick" />
-      </main>
-    </div>
-  </div>
+  <component
+    :is="currentLayoutComp"
+    :breadcrumbs="breadcrumbs"
+    :active-menu="activeMenu"
+    :sidebar-collapsed="sidebarCollapsed"
+    :sidebar-show="sidebarShow"
+    :is-mobile="isMobile"
+    :tabs="tabs"
+    :active-tab="activeTab"
+    @select-menu="handleMenuSelect"
+    @toggle-sidebar="toggleSidebar"
+    @remove-tab="removeTab"
+    @tab-click="handleTabClick"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import Sidebar from './sidebar/Sidebar.vue'
-import MainContent from './maincontent/MainContent.vue'
-import Header from './header/Header.vue'
+import { useLayoutStore } from '@/stores/layout'
 
 interface Tab {
   title: string
@@ -39,6 +32,7 @@ interface Breadcrumb {
 
 const route = useRoute()
 const router = useRouter()
+const layoutStore = useLayoutStore()
 
 const getRouteTitle = (path: string): string => {
   const record = router.getRoutes().find((r) => r.path === path)
@@ -119,37 +113,30 @@ const removeTab = (targetPath: string) => {
 const handleTabClick = (path: string) => {
   router.push(path)
 }
+
+const currentLayoutComp = computed(() => {
+  switch (layoutStore.mode) {
+    // 纵向布局：左侧侧栏 + 顶部头部 + 内容
+    case 'vertical':
+      return defineAsyncComponent(() => import('@/layout/modes/vertical/Layout.vue'))
+    // 横向布局：无侧栏，仅头部 + 内容（面包屑隐藏）
+    case 'horizontal':
+      return defineAsyncComponent(() => import('@/layout/modes/horizontal/Layout.vue'))
+    // 分栏布局：主侧栏 + 次侧栏 + 内容
+    case 'columns':
+      return defineAsyncComponent(() => import('@/layout/modes/columns/Layout.vue'))
+    // 混合布局：头部 + 侧栏组合，灵活扩展
+    case 'mixed':
+      return defineAsyncComponent(() => import('@/layout/modes/mixed/Layout.vue'))
+    // 嵌入布局：仅内容区域（无头部、无侧栏）
+    case 'embedded':
+      return defineAsyncComponent(() => import('@/layout/modes/embedded/Layout.vue'))
+    // 经典布局：标准头部 + 左侧侧栏 + 内容
+    case 'classic':
+    default:
+      return defineAsyncComponent(() => import('@/layout/modes/classic/Layout.vue'))
+  }
+})
 </script>
 
-<style scoped>
-.app-layout {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--layout-main-bg);
-}
-
-.app-body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-.app-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-@media (max-width: 768px) {
-  .sidebar-mask {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--layout-overlay);
-    z-index: 999;
-  }
-}
-</style>
+<style scoped></style>

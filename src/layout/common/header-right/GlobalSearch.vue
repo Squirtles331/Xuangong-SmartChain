@@ -19,12 +19,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-
 const search = ref('')
 const searchDialog = ref(false)
 const searchQuery = ref('')
 const shortcut = computed(() => 'Ctrl K')
-
 const openSearchDialog = () => {
   searchDialog.value = true
 }

@@ -17,13 +17,8 @@ interface TabItem {
   title: string
   path: string
 }
-
 const props = defineProps<{ tabs: TabItem[]; activeTab: string; homePath?: string }>()
-const emit = defineEmits<{
-  (e: 'remove-tab', targetPath: string): void
-  (e: 'tab-click', path: string): void
-}>()
-
+const emit = defineEmits<{ (e: 'remove-tab', targetPath: string): void; (e: 'tab-click', path: string): void }>()
 const isAffix = (tab: TabItem) => tab.path === (props.homePath ?? '/')
 const onRemoveTab = (targetPath: string) => emit('remove-tab', targetPath)
 const onTabClick = (path: string) => emit('tab-click', path)
@@ -57,11 +52,9 @@ const onTabClick = (path: string) => emit('tab-click', path)
   z-index: 1;
   border-bottom: none;
 }
-
 .chrome-tab + .chrome-tab {
   border-left: none;
 }
-
 .chrome-tab.active::before,
 .chrome-tab.active::after {
   position: absolute;
