@@ -45,6 +45,18 @@
           </div>
         </div>
       </div>
+      <div class="section">
+        <div class="section-title">主题色</div>
+        <div class="color-row">
+          <el-color-picker
+            v-model="primaryColorDraft"
+            :predefine="predefinedColors"
+            :show-alpha="false"
+            @change="onPrimaryColorChange"
+            :style="{ '--picker-color': primaryColorDraft }"
+          />
+        </div>
+      </div>
     </div>
   </el-drawer>
 </template>
@@ -59,6 +71,46 @@ type AppTheme = 'light' | 'dark-blue' | 'dark-deep' | 'dark-midnight' | 'dark-ne
 const currentTheme = ref<AppTheme>('light')
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const supportsVT = 'startViewTransition' in document
+const primaryColor = ref<string>('')
+const primaryColorDraft = ref<string>('')
+const predefinedColors = ['#f15bb5', '#7c3aed', '#3b82f6', '#06b6d4', '#10b981', '#475569', '#ec4899', '#22c55e', '#84cc16', '#f59e0b']
+const getComputedPrimary = () => getComputedStyle(document.documentElement).getPropertyValue('--el-color-primary').trim() || '#409eff'
+const mix = (color: string, mixColor: string, weight: number) => {
+  const toRgb = (c: string) => {
+    const hex = c.replace('#', '')
+    const bigint = parseInt(
+      hex.length === 3
+        ? hex
+            .split('')
+            .map((x) => x + x)
+            .join('')
+        : hex,
+      16
+    )
+    return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 }
+  }
+  const a = toRgb(color)
+  const b = toRgb(mixColor)
+  const r = Math.round(a.r * (1 - weight) + b.r * weight)
+  const g = Math.round(a.g * (1 - weight) + b.g * weight)
+  const bl = Math.round(a.b * (1 - weight) + b.b * weight)
+  const toHex = (n: number) => n.toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(bl)}`
+}
+const applyPrimaryColor = (color: string) => {
+  const root = document.documentElement
+  root.style.setProperty('--el-color-primary', color)
+  root.style.setProperty('--el-color-primary-light-3', mix(color, '#ffffff', 0.3))
+  root.style.setProperty('--el-color-primary-light-5', mix(color, '#ffffff', 0.5))
+  root.style.setProperty('--el-color-primary-dark-2', mix(color, '#000000', 0.2))
+}
+const onPrimaryColorChange = (val: string) => {
+  if (!val) return
+  primaryColor.value = val
+  primaryColorDraft.value = val
+  applyPrimaryColor(val)
+  localStorage.setItem('app-primary-color', val)
+}
 const setTheme = (val: AppTheme, e?: MouseEvent) => {
   const root = document.documentElement
   const apply = () => {
@@ -66,6 +118,8 @@ const setTheme = (val: AppTheme, e?: MouseEvent) => {
     if (val !== 'light') root.classList.add(val)
     localStorage.setItem('app-theme', val)
     currentTheme.value = val
+    const savedPrimary = localStorage.getItem('app-primary-color')
+    if (savedPrimary) applyPrimaryColor(savedPrimary)
   }
   if (!supportsVT || prefersReduced) {
     apply()
@@ -84,17 +138,17 @@ const setTheme = (val: AppTheme, e?: MouseEvent) => {
       val === 'light'
         ? { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`] }
         : { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`] },
-      {
-        duration: 500,
-        easing: 'ease-in-out',
-        pseudoElement: '::view-transition-new(root)'
-      }
+      { duration: 500, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
     )
   })
 }
 
 const savedTheme = localStorage.getItem('app-theme') as AppTheme | null
 if (savedTheme) setTheme(savedTheme)
+const savedPrimary = localStorage.getItem('app-primary-color')
+primaryColor.value = savedPrimary || getComputedPrimary()
+primaryColorDraft.value = primaryColor.value
+applyPrimaryColor(primaryColor.value)
 </script>
 
 <style scoped>
@@ -119,6 +173,20 @@ if (savedTheme) setTheme(savedTheme)
   font-weight: 600;
   color: #cfd6e6;
   margin-bottom: 10px;
+}
+.color-row {
+  display: flex;
+  justify-content: flex-end;
+}
+:deep(.el-color-picker__trigger) {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--picker-color) 35%, transparent);
+  border-color: var(--picker-color);
+}
+:deep(.el-color-picker__icon) {
+  color: #fff;
 }
 .card-grid {
   display: grid;
