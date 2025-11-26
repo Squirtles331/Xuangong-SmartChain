@@ -38,53 +38,14 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { computed } from 'vue'
 import { Fold } from '@element-plus/icons-vue'
 import UserDropdown from '@/layout/common/header-right/UserDropdown.vue'
 import * as Icons from '@element-plus/icons-vue'
+import { useSidebarMenu } from '@/layout/common/useSidebarMenu'
 const props = defineProps<{ activeMenu: string; collapsed: boolean; show: boolean }>()
 const emit = defineEmits<{ (e: 'select'): void; (e: 'toggle-collapse'): void }>()
-const router = useRouter()
-const singleItems = computed(() => {
-  const options: any = (router as any).options
-  const routes = Array.isArray(options?.routes) ? options.routes : []
-  const layout = routes.find((r: any) => r.path === '/')
-  let children = Array.isArray(layout?.children) ? layout.children : []
-  children = children.slice().sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
-  return children
-    .filter((r: any) => !(r.meta && r.meta.hidden) && !Array.isArray(r.children))
-    .map((r: any) => {
-      const path = r.path ? `/${r.path}` : '/'
-      const title = r.meta?.title ?? r.name ?? r.path ?? path
-      const icon = r.meta?.icon as string | undefined
-      return { path, title, icon }
-    })
-})
-const groups = computed(() => {
-  const options: any = (router as any).options
-  const routes = Array.isArray(options?.routes) ? options.routes : []
-  const layout = routes.find((r: any) => r.path === '/')
-  let children = Array.isArray(layout?.children) ? layout.children : []
-  children = children.slice().sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
-  return children
-    .filter((r: any) => Array.isArray(r.children))
-    .map((r: any) => {
-      const groupPath = r.path ? `/${r.path}` : '/'
-      const groupTitle = r.meta?.title ?? r.name ?? r.path ?? groupPath
-      const groupIcon = r.meta?.icon as string | undefined
-      const items = (r.children || [])
-        .filter((c: any) => !(c.meta && c.meta.hidden))
-        .sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
-        .map((c: any) => {
-          const childPath = `${groupPath}/${c.path}`.replace(/\/+/g, '/').replace(/\/+$/, '')
-          const childTitle = c.meta?.title ?? c.name ?? c.path ?? childPath
-          const childIcon = c.meta?.icon as string | undefined
-          return { path: childPath, title: childTitle, icon: childIcon }
-        })
-      return { path: groupPath, title: groupTitle, icon: groupIcon, children: items }
-    })
-})
+
+const { singleItems, groups } = useSidebarMenu()
 const onSelect = () => emit('select')
 const getIcon = (name?: string) => {
   const icons: any = Icons as any
