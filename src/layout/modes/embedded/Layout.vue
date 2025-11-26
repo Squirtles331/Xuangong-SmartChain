@@ -1,20 +1,44 @@
 <template>
   <div class="embedded-layout">
-    <MainContent :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
+    <Sidebar
+      :active-menu="activeMenu"
+      :collapsed="sidebarCollapsed"
+      :show="sidebarShow"
+      @select="$emit('select-menu')"
+      @toggle-collapse="$emit('toggle-sidebar')"
+    />
+    <div class="right-pane">
+      <MainContent :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import MainContent from './MainContent.vue'
+import Sidebar from './Sidebar.vue'
 
 interface Tab {
   title: string
   path: string
 }
+interface Breadcrumb {
+  title: string
+  path: string
+}
 
-defineProps<{ tabs: Tab[]; activeTab: string }>()
+defineProps<{
+  breadcrumbs?: Breadcrumb[]
+  activeMenu: string
+  sidebarCollapsed: boolean
+  sidebarShow: boolean
+  isMobile: boolean
+  tabs: Tab[]
+  activeTab: string
+}>()
 
 defineEmits<{
+  (e: 'select-menu'): void
+  (e: 'toggle-sidebar'): void
   (e: 'remove-tab', path: string): void
   (e: 'tab-click', path: string): void
 }>()
@@ -24,7 +48,13 @@ defineEmits<{
 .embedded-layout {
   height: 100vh;
   display: flex;
-  flex-direction: column;
   background-color: var(--layout-main-bg);
+  overflow: hidden;
+}
+.right-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 </style>
