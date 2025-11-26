@@ -34,3 +34,11 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 app.mount('#app')
+
+window.addEventListener('keydown', (e) => {
+  const isAltL = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.toLowerCase() === 'l'
+  if (isAltL) {
+    e.preventDefault()
+    window.dispatchEvent(new Event('lock-open'))
+  }
+})

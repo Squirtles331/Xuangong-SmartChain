@@ -8,6 +8,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '登录', hidden: true }
   },
   {
+    path: '/lock',
+    name: 'lock',
+    component: () => import('@/views/LockView.vue'),
+    meta: { title: '锁屏', hidden: true }
+  },
+  {
     path: '/',
     component: () => import('@/layout/AppLayout.vue'),
     children: [
@@ -250,6 +256,14 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+
+// 锁屏守卫
+import { useLockStore } from '@/stores/lock'
+router.beforeEach((to, _from, next) => {
+  const store = useLockStore()
+  if (store.isLocked && to.path !== '/lock') return next('/lock')
+  next()
 })
 
 export default router
