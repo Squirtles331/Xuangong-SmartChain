@@ -27,22 +27,29 @@
           <el-dropdown-item @click="openHelp"
             ><el-icon><QuestionFilled /></el-icon><span>问题 & 帮助</span></el-dropdown-item
           >
+          <el-dropdown-item @click="open = true"
+            ><el-icon><Setting /></el-icon><span>系统设置</span></el-dropdown-item
+          >
         </div>
         <el-dropdown-item class="user-bottom" divided @click="logout"><span>退出登录</span><span class="shortcut">Alt Q</span></el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>
+  <SettingsDrawer v-model="open" />
 </template>
 
 <script lang="ts" setup>
-import { reactive } from 'vue'
-import { Document, Link, QuestionFilled } from '@element-plus/icons-vue'
+import { reactive, ref } from 'vue'
+import { Document, Link, QuestionFilled, Setting } from '@element-plus/icons-vue'
+import SettingsDrawer from '@/layout/common/header-right/SettingsDrawer.vue'
 const user = reactive({ name: 'LinaBell', role: 'admin', email: 'crazyLionLi@163.com' })
 const openDoc = () => window.open('https://vben.io/guide/introduction.html', '_blank')
 const openGitee = () => window.open('https://gitee.com/vben-admin/vue-vben-admin', '_blank')
 const openVben = () => window.open('https://vben.io', '_blank')
 const openHelp = () => window.open('https://github.com/anncwb/vue-vben-admin/issues', '_blank')
 const logout = () => {}
+
+const open = ref(false)
 </script>
 
 <style scoped>

@@ -1,7 +1,4 @@
 <template>
-  <el-button type="text" circle class="icon-btn" @click="open = true">
-    <el-icon><Setting /></el-icon>
-  </el-button>
   <el-drawer v-model="open" direction="rtl" size="420" :lock-scroll="false" :with-header="false" custom-class="settings-drawer">
     <div class="drawer-body">
       <div class="section">
@@ -79,10 +76,11 @@
 </template>
 
 <script lang="ts" setup>
-import { Setting } from '@element-plus/icons-vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useLayoutStore, type LayoutMode } from '@/stores/layout'
-const open = ref(false)
+const props = defineProps<{ modelValue: boolean }>()
+const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
+const open = computed({ get: () => props.modelValue, set: (v: boolean) => emit('update:modelValue', v) })
 const layoutStore = useLayoutStore()
 const layoutMode = ref<LayoutMode>(layoutStore.mode)
 const setLayout = (m: LayoutMode) => {
@@ -100,15 +98,14 @@ const getComputedPrimary = () => getComputedStyle(document.documentElement).getP
 const mix = (color: string, mixColor: string, weight: number) => {
   const toRgb = (c: string) => {
     const hex = c.replace('#', '')
-    const bigint = parseInt(
+    const hexFull =
       hex.length === 3
         ? hex
             .split('')
             .map((x) => x + x)
             .join('')
-        : hex,
-      16
-    )
+        : hex
+    const bigint = parseInt(hexFull, 16)
     return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 }
   }
   const a = toRgb(color)
@@ -173,9 +170,6 @@ applyPrimaryColor(primaryColor.value)
 </script>
 
 <style scoped>
-.icon-btn {
-  color: var(--el-text-color-regular);
-}
 .settings-drawer {
   background: transparent;
 }
