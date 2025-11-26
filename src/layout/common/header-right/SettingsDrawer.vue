@@ -1,5 +1,8 @@
 <template>
-  <el-drawer v-model="open" direction="rtl" size="420" :lock-scroll="false" :with-header="false" custom-class="settings-drawer">
+  <el-drawer v-model="open" direction="rtl" size="420" :lock-scroll="false" :with-header="true" custom-class="settings-drawer">
+    <template #header>
+      <div class="drawer-header">系统设置</div>
+    </template>
     <div class="drawer-body">
       <div class="section">
         <div class="section-title">布局模式</div>
@@ -72,11 +75,18 @@
         </div>
       </div>
     </div>
+    <template #footer>
+      <div class="drawer-footer">
+        <el-button @click="resetDefaults">还原默认配置</el-button>
+        <el-button type="primary" @click="clearAndLogout">清除缓存并退出登录</el-button>
+      </div>
+    </template>
   </el-drawer>
 </template>
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useLayoutStore, type LayoutMode } from '@/stores/layout'
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
@@ -167,21 +177,53 @@ const savedPrimary = localStorage.getItem('app-primary-color')
 primaryColor.value = savedPrimary || getComputedPrimary()
 primaryColorDraft.value = primaryColor.value
 applyPrimaryColor(primaryColor.value)
+
+const router = useRouter()
+const resetDefaults = () => {
+  setTheme('light')
+  localStorage.removeItem('app-primary-color')
+  const def = getComputedPrimary()
+  primaryColor.value = def
+  primaryColorDraft.value = def
+  applyPrimaryColor(def)
+  layoutStore.setMode('classic')
+  layoutMode.value = 'classic'
+}
+const clearAndLogout = () => {
+  localStorage.clear()
+  sessionStorage.clear()
+  router.replace('/login')
+  emit('update:modelValue', false)
+}
 </script>
 
 <style scoped>
-.settings-drawer {
+:deep(.settings-drawer) {
   background: transparent;
 }
-.settings-drawer .el-drawer__body {
-  padding: 20px;
-  background: rgba(22, 24, 29, 0.9);
-  backdrop-filter: blur(10px);
+.el-drawer__body {
+  flex: 1;
+  overflow: auto;
+  padding: var(--el-drawer-padding-primary);
+  scrollbar-width: none;
 }
+
 .drawer-body {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+.drawer-header {
+  padding: 16px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #cfd6e6;
+}
+.drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 20px;
 }
 .section-title {
   font-size: 16px;

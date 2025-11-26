@@ -12,6 +12,7 @@ import 'element-plus/dist/index.css'
 import 'vxe-table/lib/style.css'
 import 'virtual:svg-icons-register'
 import '@/styles/reset.css'
+import '@/styles/element.css'
 import 'gi-component/dist/gi.css'
 // if you just want to import css
 import 'element-plus/theme-chalk/dark/css-vars.css'
@@ -22,7 +23,6 @@ import '@/styles/theme/dark-deep.scss'
 import '@/styles/theme/dark-midnight.scss'
 import '@/styles/theme/dark-neutral.scss'
 import '@/styles/theme/corporate-blue.scss'
-
 const app = createApp(App)
 Dialog._context = app._context // 继承主应用的上下文
 app.use(createPinia())
