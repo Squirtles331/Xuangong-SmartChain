@@ -4,26 +4,18 @@
       class="sidebar-menu"
       :default-active="activeMenu"
       :collapse="collapsed"
-      :unique-opened="true"
       router
       background-color="var(--layout-sidebar-bg)"
       text-color="var(--layout-sidebar-text)"
       active-text-color="var(--layout-sidebar-active-text)"
       @select="onSelect"
     >
-      <el-menu-item v-for="item in singleItems" :key="item.path" :index="item.path">
+      <el-menu-item v-for="child in childItems" :key="child.path" :index="child.path">
         <el-icon>
-          <component :is="getIcon(item.icon || (item.path === '/' ? 'House' : 'Document'))" />
+          <component :is="getIcon(child.icon || 'Document')" />
         </el-icon>
-        <span class="menu-title">{{ item.title }}</span>
+        <span class="menu-title">{{ child.title }}</span>
       </el-menu-item>
-      <el-sub-menu v-for="group in groups" :key="group.path" :index="group.path">
-        <template #title>
-          <el-icon><component :is="getIcon(group.icon || 'Menu')" /></el-icon>
-          <span class="menu-title">{{ group.title }}</span>
-        </template>
-        <el-menu-item v-for="child in group.children" :key="child.path" :index="child.path">{{ child.title }}</el-menu-item>
-      </el-sub-menu>
     </el-menu>
     <div class="sidebar-footer">
       <el-button type="text" class="collapse-toggle" @click="emit('toggle-collapse')">
@@ -35,7 +27,7 @@
 
 <script setup lang="ts">
 import { Fold } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { computed } from 'vue'
 import * as Icons from '@element-plus/icons-vue'
 
@@ -44,44 +36,22 @@ const emit = defineEmits<{ (e: 'select'): void; (e: 'toggle-collapse'): void }>(
 
 const router = useRouter()
 
-const singleItems = computed(() => {
+const route = useRoute()
+const childItems = computed(() => {
   const options: any = (router as any).options
   const routes = Array.isArray(options?.routes) ? options.routes : []
   const layout = routes.find((r: any) => r.path === '/')
-  let children = Array.isArray(layout?.children) ? layout.children : []
-  children = children.slice().sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
+  const seg = (props.activeMenu || route.path || '/').replace(/^\/+/, '').split('/')[0] || ''
+  const parent = Array.isArray(layout?.children) ? layout.children.find((r: any) => r.path === seg) : null
+  const children = Array.isArray(parent?.children) ? parent.children : []
   return children
-    .filter((r: any) => !(r.meta && r.meta.hidden) && !Array.isArray(r.children))
-    .map((r: any) => {
-      const path = r.path ? `/${r.path}` : '/'
-      const title = r.meta?.title ?? r.name ?? r.path ?? path
-      const icon = r.meta?.icon as string | undefined
-      return { path, title, icon }
-    })
-})
-
-const groups = computed(() => {
-  const options: any = (router as any).options
-  const routes = Array.isArray(options?.routes) ? options.routes : []
-  const layout = routes.find((r: any) => r.path === '/')
-  let children = Array.isArray(layout?.children) ? layout.children : []
-  children = children.slice().sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
-  return children
-    .filter((r: any) => Array.isArray(r.children))
-    .map((r: any) => {
-      const groupPath = r.path ? `/${r.path}` : '/'
-      const groupTitle = r.meta?.title ?? r.name ?? r.path ?? groupPath
-      const groupIcon = r.meta?.icon as string | undefined
-      const items = (r.children || [])
-        .filter((c: any) => !(c.meta && c.meta.hidden))
-        .sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
-        .map((c: any) => {
-          const childPath = `${groupPath}/${c.path}`.replace(/\/+/g, '/').replace(/\/+$/, '')
-          const childTitle = c.meta?.title ?? c.name ?? c.path ?? childPath
-          const childIcon = c.meta?.icon as string | undefined
-          return { path: childPath, title: childTitle, icon: childIcon }
-        })
-      return { path: groupPath, title: groupTitle, icon: groupIcon, children: items }
+    .filter((c: any) => !(c.meta && c.meta.hidden))
+    .sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
+    .map((c: any) => {
+      const childPath = `/${seg}/${c.path}`.replace(/\/+/g, '/').replace(/\/+$/, '')
+      const childTitle = c.meta?.title ?? c.name ?? c.path ?? childPath
+      const childIcon = c.meta?.icon as string | undefined
+      return { path: childPath, title: childTitle, icon: childIcon }
     })
 })
 

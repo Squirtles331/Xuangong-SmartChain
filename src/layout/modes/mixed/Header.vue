@@ -6,11 +6,10 @@
         <span class="logo-text">玄工智链 · XIC</span>
       </div>
     </div>
-    <div class="header-center" v-if="showBreadcrumb">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item v-for="item in breadcrumbs" :key="item.path" :to="item.path">{{ item.title }}</el-breadcrumb-item>
-      </el-breadcrumb>
+    <div class="header-center">
+      <el-menu mode="horizontal" :default-active="activeMenu" router class="top-menu" ellipsis :ellipsis-icon="MoreFilled">
+        <el-menu-item v-for="item in topItems" :key="item.path" :index="item.path">{{ item.title }}</el-menu-item>
+      </el-menu>
     </div>
     <HeaderRight />
   </header>
@@ -18,15 +17,48 @@
 
 <script setup lang="ts">
 import HeaderRight from '@/layout/common/HeaderRight.vue'
-import { useLayoutStore } from '@/stores/layout'
+import { useRouter } from 'vue-router'
 import { computed } from 'vue'
-interface Breadcrumb {
-  title: string
-  path: string
-}
-const props = defineProps<{ breadcrumbs: Breadcrumb[] }>()
-const layoutStore = useLayoutStore()
-const showBreadcrumb = computed(() => layoutStore.showBreadcrumb)
+import { MoreFilled } from '@element-plus/icons-vue'
+const props = defineProps<{ breadcrumbs: { title: string; path: string }[] }>()
+const router = useRouter()
+const activeMenu = computed(() => {
+  const r: any = router as any
+  const current = r.currentRoute?.value?.path || '/'
+  return current
+})
+const singleItems = computed(() => {
+  const options: any = (router as any).options
+  const routes = Array.isArray(options?.routes) ? options.routes : []
+  const layout = routes.find((r: any) => r.path === '/')
+  let children = Array.isArray(layout?.children) ? layout.children : []
+  children = children.slice().sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
+  return children
+    .filter((r: any) => !(r.meta && r.meta.hidden) && !Array.isArray(r.children))
+    .map((r: any) => ({ path: r.path ? `/${r.path}` : '/', title: r.meta?.title ?? r.name ?? r.path }))
+})
+const groups = computed(() => {
+  const options: any = (router as any).options
+  const routes = Array.isArray(options?.routes) ? options.routes : []
+  const layout = routes.find((r: any) => r.path === '/')
+  let children = Array.isArray(layout?.children) ? layout.children : []
+  children = children.slice().sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
+  return children
+    .filter((r: any) => Array.isArray(r.children))
+    .map((r: any) => ({
+      path: r.path ? `/${r.path}` : '/',
+      title: r.meta?.title ?? r.name ?? r.path,
+      firstChildPath: (() => {
+        const first = (r.children || [])
+          .filter((c: any) => !(c.meta && c.meta.hidden))
+          .sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))[0]
+        return first ? `${r.path ? `/${r.path}` : '/'}/${first.path}`.replace(/\/+/g, '/').replace(/\/+$/, '') : r.path ? `/${r.path}` : '/'
+      })()
+    }))
+})
+const topItems = computed(() => {
+  return [...singleItems.value, ...groups.value.map((g: any) => ({ path: g.firstChildPath, title: g.title }))]
+})
 </script>
 
 <style scoped>
@@ -62,6 +94,11 @@ const showBreadcrumb = computed(() => layoutStore.showBreadcrumb)
 .header-center {
   flex: 1;
   margin: 0 20px;
+  max-width: 960px;
+  overflow: hidden;
+}
+.top-menu {
+  border-bottom: none;
 }
 @media (max-width: 768px) {
   .app-header {

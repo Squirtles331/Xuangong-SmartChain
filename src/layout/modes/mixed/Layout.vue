@@ -3,13 +3,14 @@
     <Header :breadcrumbs="breadcrumbs" />
     <div class="app-body">
       <Sidebar
+        v-if="hasChildren"
         :active-menu="activeMenu"
         :collapsed="sidebarCollapsed"
         :show="sidebarShow"
         @select="$emit('select-menu')"
         @toggle-collapse="$emit('toggle-sidebar')"
       />
-      <div v-if="sidebarShow && isMobile" class="sidebar-mask" @click="$emit('toggle-sidebar')"></div>
+      <div v-if="hasChildren && sidebarShow && isMobile" class="sidebar-mask" @click="$emit('toggle-sidebar')"></div>
       <main class="app-main">
         <MainContent :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
       </main>
@@ -21,6 +22,8 @@
 import Header from './Header.vue'
 import Sidebar from './Sidebar.vue'
 import MainContent from './MainContent.vue'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 interface Tab {
   title: string
@@ -31,7 +34,7 @@ interface Breadcrumb {
   path: string
 }
 
-defineProps<{
+const props = defineProps<{
   breadcrumbs: Breadcrumb[]
   activeMenu: string
   sidebarCollapsed: boolean
@@ -47,6 +50,17 @@ defineEmits<{
   (e: 'remove-tab', path: string): void
   (e: 'tab-click', path: string): void
 }>()
+
+const router = useRouter()
+const hasChildren = computed(() => {
+  const options: any = (router as any).options
+  const routes = Array.isArray(options?.routes) ? options.routes : []
+  const layout = routes.find((r: any) => r.path === '/')
+  const seg = (props.activeMenu || '/').replace(/^\/+/, '').split('/')[0] || ''
+  const parent = Array.isArray(layout?.children) ? layout.children.find((r: any) => r.path === seg) : null
+  const children = Array.isArray(parent?.children) ? parent.children : []
+  return children.filter((c: any) => !(c.meta && c.meta.hidden)).length > 0
+})
 </script>
 
 <style scoped>
