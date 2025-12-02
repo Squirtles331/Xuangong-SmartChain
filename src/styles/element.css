@@ -1,6 +1,6 @@
 .el-drawer__body {
-    flex: 1;
-    overflow: auto;
-    padding: var(--el-drawer-padding-primary);
-     scrollbar-width: none;
+  flex: 1;
+  overflow: auto;
+  padding: var(--el-drawer-padding-primary);
+  scrollbar-width: none;
 }
