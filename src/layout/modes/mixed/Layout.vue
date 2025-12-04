@@ -12,7 +12,8 @@
       />
       <div v-if="hasChildren && sidebarShow && isMobile" class="sidebar-mask" @click="$emit('toggle-sidebar')"></div>
       <main class="app-main">
-        <MainContent :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
+        <AffixTabs :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
+        <MainContent />
       </main>
     </div>
   </div>
@@ -22,6 +23,7 @@
 import Header from './Header.vue'
 import Sidebar from './Sidebar.vue'
 import MainContent from './MainContent.vue'
+import AffixTabs from '@/layout/common/AffixTabs.vue'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 

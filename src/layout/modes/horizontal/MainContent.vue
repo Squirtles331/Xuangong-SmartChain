@@ -1,14 +1,19 @@
 <template>
-  <AffixTabs :tabs="tabs" :active-tab="activeTab" @remove-tab="onRemoveTab" @tab-click="onTabClick" />
-  <router-view />
+  <div class="main-content">
+    <router-view />
+  </div>
 </template>
 
-<script setup lang="ts">
-import AffixTabs from '@/layout/common/AffixTabs.vue'
-const props = defineProps<{ tabs: { title: string; path: string }[]; activeTab: string }>()
-const emit = defineEmits<{ (e: 'remove-tab', targetPath: string): void; (e: 'tab-click', path: string): void }>()
-const onRemoveTab = (targetPath: string) => emit('remove-tab', targetPath)
-const onTabClick = (path: string) => emit('tab-click', path)
-</script>
+<script setup lang="ts"></script>
 
-<style scoped></style>
+<style scoped>
+.main-content {
+  padding: var(--layout-content-padding, 16px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+</style>

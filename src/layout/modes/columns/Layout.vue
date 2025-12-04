@@ -11,7 +11,8 @@
     <div class="right-pane">
       <Header :breadcrumbs="breadcrumbs" @toggle-sub="subCollapsed = !subCollapsed" />
       <main class="app-main">
-        <MainContent :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
+        <AffixTabs :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
+        <MainContent />
       </main>
     </div>
     <div v-if="sidebarShow && isMobile" class="sidebar-mask" @click="$emit('toggle-sidebar')"></div>
@@ -25,6 +26,7 @@ import Header from './Header.vue'
 import MainSidebar from './MainSidebar.vue'
 import SecondarySidebar from './SecondarySidebar.vue'
 import MainContent from './MainContent.vue'
+import AffixTabs from '@/layout/common/AffixTabs.vue'
 
 interface Tab {
   title: string

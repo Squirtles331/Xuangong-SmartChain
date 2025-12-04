@@ -8,7 +8,8 @@
       @toggle-collapse="$emit('toggle-sidebar')"
     />
     <div class="right-pane">
-      <MainContent :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
+      <AffixTabs :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
+      <MainContent />
     </div>
   </div>
 </template>
@@ -16,6 +17,7 @@
 <script setup lang="ts">
 import MainContent from './MainContent.vue'
 import Sidebar from './Sidebar.vue'
+import AffixTabs from '@/layout/common/AffixTabs.vue'
 
 interface Tab {
   title: string
