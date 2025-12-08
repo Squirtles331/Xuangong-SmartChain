@@ -31,19 +31,19 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'user',
             name: 'user',
-            component: () => import('@/views/system/UserView.vue'),
+            component: () => import('@/views/system/user/index.vue'),
             meta: { title: '用户管理', icon: 'User', order: 1 }
           },
           {
             path: 'role',
             name: 'role',
-            component: () => import('@/views/system/RoleView.vue'),
+            component: () => import('@/views/system/role/index.vue'),
             meta: { title: '角色管理', icon: 'UserFilled', order: 2 }
           },
           {
             path: 'menu',
             name: 'menu',
-            component: () => import('@/views/system/MenuView.vue'),
+            component: () => import('@/views/system/menu/index.vue'),
             meta: { title: '菜单管理', icon: 'Menu', order: 3 }
           }
         ]
