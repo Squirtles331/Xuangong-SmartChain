@@ -1,25 +1,25 @@
 <template>
-  <GiPageLayout :bordered="true">
+  <gi-page-layout :bordered="true">
     <template #header>
-      <GiForm
-        v-model="searchForm"
+      <gi-form
         ref="searchFormRef"
+        v-model="searchForm"
         :columns="searchColumns"
-        search
-        @search="handleSearch"
-        @reset="handleReset"
         :grid-item-props="{
           span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
         }"
+        search
+        @reset="handleReset"
+        @search="handleSearch"
       />
     </template>
 
     <template #tool>
-      <GiButton type="add" @click="openAdd" />
-      <GiButton type="reset" style="margin-left: 8px" @click="refresh" />
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <GiTable :data="pagedUsers" :columns="columns" :pagination="pagination" border style="height: 100%">
+    <gi-table :columns="columns" :data="pagedUsers" :pagination="pagination" border style="height: 100%">
       <template #index="{ $index }">
         {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
       </template>
@@ -27,26 +27,26 @@
         <el-tag :type="row.status === '启用' ? 'success' : 'info'">{{ row.status }}</el-tag>
       </template>
       <template #actions="{ row }">
-        <GiButton type="edit" @click="openEdit(row)" />
-        <GiButton type="delete" style="margin-left: 8px" @click="remove(row.id)" />
+        <gi-button type="edit" @click="openEdit(row)" />
+        <gi-button style="margin-left: 8px" type="delete" @click="remove(row.id)" />
       </template>
-    </GiTable>
+    </gi-table>
 
-    <GiDialog
+    <gi-dialog
       v-model="dialogVisible"
-      :title="dialogMode === 'add' ? '新增用户' : '编辑用户'"
       :footer="true"
       :on-before-ok="submitDialog"
       :on-cancel="closeDialog"
+      :title="dialogMode === 'add' ? '新增用户' : '编辑用户'"
     >
-      <GiForm v-model="formModel" :columns="formColumns" :label-width="100" />
-    </GiDialog>
-  </GiPageLayout>
+      <gi-form v-model="formModel" :columns="formColumns" :label-width="100" />
+    </gi-dialog>
+  </gi-page-layout>
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { TableColumnItem, FormColumnItem, FormInstance } from 'gi-component'
+<script lang="ts" setup>
+import { computed, ref } from 'vue'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
 type UserStatus = '启用' | '禁用'
 interface User {

@@ -1,0 +1,222 @@
+name: 玄工智链前端 CI/CD 流水线
+
+# 触发条件：推送到 main 或 develop 分支
+workflow:
+  rules:
+    - when: push
+      branches:
+        - main
+        - develop
+
+jobs:
+  # 任务 1：代码检查（Lint）
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'  # 项目要求 >=20.18.0
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: 获取 pnpm 存储目录
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: 设置 pnpm 缓存
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 代码格式检查（Prettier）
+        run: pnpm prettier --check .
+
+      - name: ESLint 代码检查
+        run: pnpm lint:eslint
+
+      - name: TypeScript 类型检查
+        run: pnpm type-check
+
+  # 任务 2：运行测试
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: 获取 pnpm 存储目录
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: 设置 pnpm 缓存
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 运行单元测试
+        run: pnpm test
+        continue-on-error: true  # 如果没有测试用例，不会阻断流水线
+
+  # 任务 3：构建项目
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]  # 依赖 lint 和 test 任务完成
+    strategy:
+      matrix:
+        # 可以同时构建多个环境
+        mode: [production]
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: 获取 pnpm 存储目录
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: 设置 pnpm 缓存
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 构建生产环境
+        env:
+          # 设置环境变量，根据实际情况调整
+          NODE_ENV: production
+          VITE_BASE_URL: /starlink-mos-frontend/  # 如果部署到子目录，修改这里
+          VITE_PORT: 3000
+          VITE_OPEN: false
+          VITE_DROP_CONSOLE: true  # 生产环境去掉 console
+          VITE_DROP_DEBUGGER: true
+          VITE_SOURCEMAP: false
+          VITE_USE_CSS_SPLIT: false
+        run: pnpm build
+
+      - name: 查看构建产物
+        run: |
+          echo "=== 构建产物结构 ==="
+          ls -la dist/
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist-${{ matrix.mode }}
+          path: dist/
+          retention-days: 30  # 保留 30 天
+
+  # 任务 4：部署到 Gitee Pages（仅 main 分支）
+  deploy-pages:
+    runs-on: ubuntu-latest
+    needs: build
+    # 只在 main 分支触发
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 下载构建产物
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-production
+          path: ./dist
+
+      - name: 部署到 Gitee Pages
+        # 这里使用 Gitee Pages 服务，需要手动在 Gitee 仓库中开启 Pages 服务
+        # 或者使用 SSH 部署到自己的服务器（参考 deploy-server 任务）
+        run: |
+          echo "构建产物已准备好，可以通过 Gitee Pages 部署"
+          echo "请在 Gitee 仓库设置中开启 Pages 服务"
+
+  # 任务 5：部署到自己的服务器（可选，需要配置 SSH）
+  deploy-server:
+    runs-on: ubuntu-latest
+    needs: build
+    # 只在 main 分支触发
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: 下载构建产物
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-production
+          path: ./dist
+
+      - name: 部署到服务器
+        uses: easingthemes/ssh-deploy@v4
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # 需要在 Gitee 配置
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}  # 服务器地址
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}  # 服务器用户名
+          TARGET: /var/www/starlink-mos-frontend  # 部署目标目录
+          SOURCE: dist/
+          ARGS: "-rlgoDzvc -i --delete"
+
+      - name: 部署成功通知
+        if: success()
+        run: |
+          echo "✅ 部署成功！"
+          echo "项目已部署到 /var/www/starlink-mos-frontend"
+
+  # 任务 6：通知（可选）
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: always()  # 无论成功失败都执行
+    steps:
+      - name: 发送构建结果通知
+        run: |
+          if [ "${{ needs.build.result }}" == "success" ]; then
+            echo "✅ 构建成功！分支：${{ github.ref }}"
+          else
+            echo "❌ 构建失败！分支：${{ github.ref }}"
+            echo "请查看流水线日志了解详情"
+          fi

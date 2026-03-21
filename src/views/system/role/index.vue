@@ -1,7 +1,18 @@
 <template>
-  <div>功能待开发</div>
+  <gi-page-layout :bordered="true">
+    <template #header> </template>
+    <template #left>
+      <Tree />
+    </template>
+    <template #tool>
+      <Form />
+    </template>
+    <Table />
+  </gi-page-layout>
 </template>
 
-<script setup lang="ts"></script>
-
-<style scoped></style>
+<script lang="ts" setup>
+import Tree from './component/tree.vue'
+import Table from '@/views/system/role/component/table.vue'
+import Form from '@/views/system/role/component/form.vue'
+</script>
