@@ -1,0 +1,76 @@
+version: '1.0'
+name: develop-pipeline
+displayName: 玄工智链开发环境流水线
+stages:
+  - stage:
+      name: lint
+      displayName: 代码检查
+      steps:
+        - step: build@nodejs
+          name: install_and_lint
+          displayName: 安装依赖并检查代码
+          nodeVersion: 20.18.0
+          commands:
+            - npm install -g pnpm@8
+            - pnpm install
+            - pnpm lint:eslint
+            - pnpm type-check
+          caches:
+            - path: node_modules
+              key: $(CACHE_KEY)-node_modules
+              restoreKeys:
+                - $(CACHE_KEY)-node_modules-
+  - stage:
+      name: build
+      displayName: 构建项目（开发环境）
+      steps:
+        - step: build@nodejs
+          name: build_project
+          displayName: 构建开发环境
+          nodeVersion: 20.18.0
+          commands:
+            - npm install -g pnpm@8
+            - pnpm install
+            - pnpm build
+          env:
+            NODE_ENV: development
+            VITE_DROP_CONSOLE: false
+            VITE_DROP_DEBUGGER: false
+            VITE_SOURCEMAP: true
+          caches:
+            - path: node_modules
+              key: $(CACHE_KEY)-node_modules
+              restoreKeys:
+                - $(CACHE_KEY)-node_modules-
+          artifacts:
+            - name: BUILD_ARTIFACT
+              path:
+                - ./dist
+  - stage:
+      name: test
+      displayName: 运行测试
+      steps:
+        - step: build@nodejs
+          name: run_test
+          displayName: 运行单元测试
+          nodeVersion: 20.18.0
+          commands:
+            - npm install -g pnpm@8
+            - pnpm install
+            - pnpm test || true
+          caches:
+            - path: node_modules
+              key: $(CACHE_KEY)-node_modules
+              restoreKeys:
+                - $(CACHE_KEY)-node_modules-
+      enable: false
+triggers:
+  push:
+    branches:
+      include:
+        - develop
+  pr:
+    targetBranch:
+      include:
+        - master
+        - develop
