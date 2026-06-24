@@ -128,6 +128,42 @@ const routes: RouteRecordRaw[] = [
         ]
       },
       {
+        path: 'bom',
+        name: 'bom',
+        meta: { title: '研发管理', icon: 'Collection', order: 25 },
+        children: [
+          { path: 'list', name: 'bomList', component: () => import('@/views/bom/List.vue'), meta: { title: 'BOM管理', icon: 'List', order: 1 } },
+          { path: 'editor/:id', name: 'bomEditor', component: () => import('@/views/bom/Editor.vue'), meta: { title: 'BOM编辑器', hidden: true } },
+          { path: 'create', name: 'bomCreate', component: () => import('@/views/bom/Editor.vue'), meta: { title: '新建BOM', hidden: true } }
+        ]
+      },
+      {
+        path: 'routing',
+        name: 'routing',
+        meta: { title: '工艺路线', icon: 'Connection', order: 26, hidden: true },
+        children: [
+          { path: 'editor/:id', name: 'routingEditor', component: () => import('@/views/routing/Editor.vue'), meta: { title: '工艺路线编辑' } }
+        ]
+      },
+      {
+        path: 'ecn',
+        name: 'ecn',
+        meta: { title: '变更管理', icon: 'Switch', order: 27 },
+        children: [
+          { path: 'list', name: 'ecnList', component: () => import('@/views/ecn/List.vue'), meta: { title: 'ECN变更', icon: 'Switch', order: 1 } }
+        ]
+      },
+      {
+        path: 'crm',
+        name: 'crm',
+        meta: { title: '营销中心', icon: 'ShoppingCart', order: 30 },
+        children: [
+          { path: 'customer', name: 'crmCustomer', component: () => import('@/views/crm/Customer.vue'), meta: { title: '客户管理', icon: 'User', order: 1 } },
+          { path: 'order', name: 'crmOrder', component: () => import('@/views/crm/Order.vue'), meta: { title: '销售订单', icon: 'Document', order: 2 } },
+          { path: 'receivable', name: 'crmReceivable', component: () => import('@/views/crm/Receivable.vue'), meta: { title: '应收台账', icon: 'Money', order: 3 } }
+        ]
+      },
+      {
         path: 'analysis',
         name: 'analysis',
         meta: { title: '数据分析', icon: 'DataLine', order: 20 },
