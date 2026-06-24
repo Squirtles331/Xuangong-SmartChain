@@ -188,7 +188,14 @@ export interface AuditLog {
   created_at: string
 }
 
-export function getAuditLogs(params: { page: number; page_size: number; user_name?: string; module?: string; start_date?: string; end_date?: string }) {
+export function getAuditLogs(params: {
+  page: number
+  page_size: number
+  user_name?: string
+  module?: string
+  start_date?: string
+  end_date?: string
+}) {
   return http.get<ApiResponse<{ total: number; items: AuditLog[] }>>('/system/audit-logs', { params })
 }
 

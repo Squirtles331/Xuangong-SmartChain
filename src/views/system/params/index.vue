@@ -26,7 +26,11 @@ import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface Param {
-  id: string; code: string; name: string; value: string; description: string
+  id: string
+  code: string
+  name: string
+  value: string
+  description: string
 }
 
 const params = ref<Param[]>([
@@ -57,7 +61,7 @@ const columns: TableColumnItem<Param>[] = [
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const filteredData = computed(() => {
   const kw = searchForm.keyword?.toLowerCase() || ''
-  return kw ? params.value.filter(p => p.code.toLowerCase().includes(kw) || p.name.toLowerCase().includes(kw)) : params.value
+  return kw ? params.value.filter((p) => p.code.toLowerCase().includes(kw) || p.name.toLowerCase().includes(kw)) : params.value
 })
 const pagedData = computed(() => {
   pagination.total = filteredData.value.length
@@ -76,20 +80,45 @@ const formColumns: FormColumnItem[] = [
   { type: 'input', label: '说明', field: 'description', props: { type: 'textarea', rows: 2 } as any }
 ]
 
-function handleSearch() { pagination.currentPage = 1 }
-function handleReset() { searchForm.keyword = ''; pagination.currentPage = 1 }
-function refresh() { handleReset() }
+function handleSearch() {
+  pagination.currentPage = 1
+}
+function handleReset() {
+  searchForm.keyword = ''
+  pagination.currentPage = 1
+}
+function refresh() {
+  handleReset()
+}
 
-function openAdd() { dialogMode.value = 'add'; form.code = ''; form.name = ''; form.value = ''; form.description = ''; dialogVisible.value = true }
-function openEdit(row: Param) { dialogMode.value = 'edit'; editingId.value = row.id; form.code = row.code; form.name = row.name; form.value = row.value; form.description = row.description; dialogVisible.value = true }
+function openAdd() {
+  dialogMode.value = 'add'
+  form.code = ''
+  form.name = ''
+  form.value = ''
+  form.description = ''
+  dialogVisible.value = true
+}
+function openEdit(row: Param) {
+  dialogMode.value = 'edit'
+  editingId.value = row.id
+  form.code = row.code
+  form.name = row.name
+  form.value = row.value
+  form.description = row.description
+  dialogVisible.value = true
+}
 
 async function submitDialog() {
-  if (!form.code || !form.name) { ElMessage.warning('请填写必填项'); return false }
+  if (!form.code || !form.name) {
+    ElMessage.warning('请填写必填项')
+    return false
+  }
   if (dialogMode.value === 'add') {
     params.value.unshift({ id: Date.now().toString(), ...form })
     ElMessage.success('新增成功')
   } else {
-    const p = params.value.find(p => p.id === editingId.value)
+    const p = params.value.find((p) => p.id === editingId.value)
     if (p) Object.assign(p, form)
     ElMessage.success('保存成功')
   }

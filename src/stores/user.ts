@@ -91,8 +91,19 @@ export const useUserStore = defineStore('user', () => {
   restoreUserInfo()
 
   return {
-    token, refreshToken, userId, username, realName, avatar, roles, permissions,
-    isLoggedIn, hasPermission,
-    doLogin, doLogout, clearAuth, restoreUserInfo
+    token,
+    refreshToken,
+    userId,
+    username,
+    realName,
+    avatar,
+    roles,
+    permissions,
+    isLoggedIn,
+    hasPermission,
+    doLogin,
+    doLogout,
+    clearAuth,
+    restoreUserInfo
   }
 })

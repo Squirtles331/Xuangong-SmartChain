@@ -14,9 +14,7 @@
             </div>
           </div>
           <div class="stat-footer">
-            <span :style="{ color: card.trend > 0 ? '#67c23a' : '#f56c6c' }">
-              {{ card.trend > 0 ? '↑' : '↓' }} {{ Math.abs(card.trend) }}%
-            </span>
+            <span :style="{ color: card.trend > 0 ? '#67c23a' : '#f56c6c' }"> {{ card.trend > 0 ? '↑' : '↓' }} {{ Math.abs(card.trend) }}% </span>
             <span style="color: #909399; margin-left: 8px">较上周</span>
           </div>
         </el-card>
@@ -121,58 +119,105 @@ onMounted(() => {
     const chart = echarts.init(chartRef2.value)
     chart.setOption({
       tooltip: { trigger: 'item' },
-      series: [{
-        type: 'pie', radius: ['50%', '75%'],
-        data: [
-          { value: 12, name: '已下发', itemStyle: { color: '#909399' } },
-          { value: 28, name: '生产中', itemStyle: { color: '#409eff' } },
-          { value: 8, name: '已完工', itemStyle: { color: '#67c23a' } },
-          { value: 5, name: '待审批', itemStyle: { color: '#e6a23c' } }
-        ],
-        label: { show: true, formatter: '{b}\n{d}%' }
-      }]
+      series: [
+        {
+          type: 'pie',
+          radius: ['50%', '75%'],
+          data: [
+            { value: 12, name: '已下发', itemStyle: { color: '#909399' } },
+            { value: 28, name: '生产中', itemStyle: { color: '#409eff' } },
+            { value: 8, name: '已完工', itemStyle: { color: '#67c23a' } },
+            { value: 5, name: '待审批', itemStyle: { color: '#e6a23c' } }
+          ],
+          label: { show: true, formatter: '{b}\n{d}%' }
+        }
+      ]
     })
   }
 })
 </script>
 
 <style scoped lang="scss">
-.dashboard { padding: 0; }
+.dashboard {
+  padding: 0;
+}
 
-.stats-row { margin-bottom: 0; }
+.stats-row {
+  margin-bottom: 0;
+}
 
 .stat-card {
-  :deep(.el-card__body) { padding: 20px; }
+  :deep(.el-card__body) {
+    padding: 20px;
+  }
 }
 
 .stat-content {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.stat-value { font-size: 28px; font-weight: 700; color: #303133; }
-.stat-title { font-size: 14px; color: #909399; margin-top: 4px; }
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #303133;
+}
+.stat-title {
+  font-size: 14px;
+  color: #909399;
+  margin-top: 4px;
+}
 
 .stat-icon {
-  width: 56px; height: 56px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.stat-footer { margin-top: 12px; font-size: 12px; }
+.stat-footer {
+  margin-top: 12px;
+  font-size: 12px;
+}
 
 .todo-item {
-  display: flex; align-items: center; padding: 10px 0;
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
   border-bottom: 1px solid #f0f0f0;
-  &:last-child { border-bottom: none; }
+  &:last-child {
+    border-bottom: none;
+  }
 }
 
-.todo-text { flex: 1; font-size: 14px; }
-.todo-time { font-size: 12px; color: #c0c4cc; }
+.todo-text {
+  flex: 1;
+  font-size: 14px;
+}
+.todo-time {
+  font-size: 12px;
+  color: #c0c4cc;
+}
 
 .quick-link {
-  display: flex; flex-direction: column; align-items: center; padding: 16px 8px;
-  border-radius: 8px; cursor: pointer; transition: all 0.2s;
-  &:hover { background-color: #f5f7fa; }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover {
+    background-color: #f5f7fa;
+  }
 }
 
-.quick-link-text { font-size: 12px; color: #606266; margin-top: 8px; }
+.quick-link-text {
+  font-size: 12px;
+  color: #606266;
+  margin-top: 8px;
+}
 </style>

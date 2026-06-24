@@ -83,6 +83,9 @@ export function startOperation(operationId: string) {
   return http.put(`/operations/${operationId}/start`)
 }
 
-export function reportOperation(operationId: string, data: { qualified_qty: number; defective_qty: number; defect_reasons?: string[]; actual_hours: number }) {
+export function reportOperation(
+  operationId: string,
+  data: { qualified_qty: number; defective_qty: number; defect_reasons?: string[]; actual_hours: number }
+) {
   return http.put(`/operations/${operationId}/report`, data)
 }

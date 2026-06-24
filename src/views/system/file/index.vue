@@ -40,14 +40,57 @@ import type { TableColumnItem } from 'gi-component'
 import type { UploadFile } from 'element-plus'
 
 interface FileItem {
-  id: string; name: string; module: string; object_type: string; size: number; type: string; url: string; uploaded_at: string
+  id: string
+  name: string
+  module: string
+  object_type: string
+  size: number
+  type: string
+  url: string
+  uploaded_at: string
 }
 
 const files = ref<FileItem[]>([
-  { id: '1', name: '离心泵装配图.pdf', module: 'BOM管理', object_type: '物料图纸', size: 2.5 * 1024 * 1024, type: 'pdf', url: '', uploaded_at: '2025-01-15 09:00:00' },
-  { id: '2', name: '工单异常照片.jpg', module: '工单管理', object_type: '异常附件', size: 1.2 * 1024 * 1024, type: 'image', url: 'https://via.placeholder.com/800x600', uploaded_at: '2025-01-15 10:30:00' },
-  { id: '3', name: '来料检验报告.xlsx', module: '质检管理', object_type: '检验报告', size: 0.5 * 1024 * 1024, type: 'excel', url: '', uploaded_at: '2025-01-14 14:00:00' },
-  { id: '4', name: '作业指导书_SOP.docx', module: '工艺路线', object_type: '操作指导', size: 3.1 * 1024 * 1024, type: 'word', url: '', uploaded_at: '2025-01-13 11:00:00' }
+  {
+    id: '1',
+    name: '离心泵装配图.pdf',
+    module: 'BOM管理',
+    object_type: '物料图纸',
+    size: 2.5 * 1024 * 1024,
+    type: 'pdf',
+    url: '',
+    uploaded_at: '2025-01-15 09:00:00'
+  },
+  {
+    id: '2',
+    name: '工单异常照片.jpg',
+    module: '工单管理',
+    object_type: '异常附件',
+    size: 1.2 * 1024 * 1024,
+    type: 'image',
+    url: 'https://via.placeholder.com/800x600',
+    uploaded_at: '2025-01-15 10:30:00'
+  },
+  {
+    id: '3',
+    name: '来料检验报告.xlsx',
+    module: '质检管理',
+    object_type: '检验报告',
+    size: 0.5 * 1024 * 1024,
+    type: 'excel',
+    url: '',
+    uploaded_at: '2025-01-14 14:00:00'
+  },
+  {
+    id: '4',
+    name: '作业指导书_SOP.docx',
+    module: '工艺路线',
+    object_type: '操作指导',
+    size: 3.1 * 1024 * 1024,
+    type: 'word',
+    url: '',
+    uploaded_at: '2025-01-13 11:00:00'
+  }
 ])
 
 const columns: TableColumnItem<FileItem>[] = [
@@ -83,13 +126,20 @@ function handleUpload(file: UploadFile) {
 
 const previewVisible = ref(false)
 const previewFileData = ref<FileItem | null>(null)
-function previewFile(row: FileItem) { previewFileData.value = row; previewVisible.value = true }
-function downloadFile(row: FileItem) { ElMessage.success(`开始下载: ${row.name}`) }
+function previewFile(row: FileItem) {
+  previewFileData.value = row
+  previewVisible.value = true
+}
+function downloadFile(row: FileItem) {
+  ElMessage.success(`开始下载: ${row.name}`)
+}
 function deleteFile(id: string) {
-  ElMessageBox.confirm('确定删除该文件？', '提示', { type: 'warning' }).then(() => {
-    files.value = files.value.filter(f => f.id !== id)
-    ElMessage.success('删除成功')
-  }).catch(() => {})
+  ElMessageBox.confirm('确定删除该文件？', '提示', { type: 'warning' })
+    .then(() => {
+      files.value = files.value.filter((f) => f.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 
 function refresh() {}

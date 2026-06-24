@@ -95,10 +95,7 @@ async function tryRefreshToken(): Promise<boolean> {
   if (!refreshToken) return false
 
   try {
-    const res = await axios.post(
-      `${http.defaults.baseURL}/auth/refresh`,
-      { refresh_token: refreshToken }
-    )
+    const res = await axios.post(`${http.defaults.baseURL}/auth/refresh`, { refresh_token: refreshToken })
     if (res.data?.data?.access_token) {
       localStorage.setItem('access_token', res.data.data.access_token)
       if (res.data.data.refresh_token) {

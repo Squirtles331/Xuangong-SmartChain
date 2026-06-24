@@ -73,27 +73,116 @@ interface MenuNode {
 // ==================== Mock 数据 ====================
 const menuTree = ref<MenuNode[]>([
   {
-    id: '1', parent_id: null, name: '首页', type: 'menu', path: '/', component: 'views/HomeView.vue',
-    permission_code: 'home:view', icon: 'House', sort_order: 0, visible: true
+    id: '1',
+    parent_id: null,
+    name: '首页',
+    type: 'menu',
+    path: '/',
+    component: 'views/HomeView.vue',
+    permission_code: 'home:view',
+    icon: 'House',
+    sort_order: 0,
+    visible: true
   },
   {
-    id: '2', parent_id: null, name: '系统管理', type: 'directory', permission_code: 'system', icon: 'Setting', sort_order: 10, visible: true,
+    id: '2',
+    parent_id: null,
+    name: '系统管理',
+    type: 'directory',
+    permission_code: 'system',
+    icon: 'Setting',
+    sort_order: 10,
+    visible: true,
     children: [
-      { id: '21', parent_id: '2', name: '用户管理', type: 'menu', path: '/system/user', component: 'views/system/user/index.vue', permission_code: 'system:user:list', icon: 'User', sort_order: 1, visible: true, children: [
-        { id: '211', parent_id: '21', name: '新增用户', type: 'button', permission_code: 'system:user:create', sort_order: 1, visible: true },
-        { id: '212', parent_id: '21', name: '编辑用户', type: 'button', permission_code: 'system:user:edit', sort_order: 2, visible: true },
-        { id: '213', parent_id: '21', name: '删除用户', type: 'button', permission_code: 'system:user:delete', sort_order: 3, visible: true }
-      ]},
-      { id: '22', parent_id: '2', name: '角色管理', type: 'menu', path: '/system/role', component: 'views/system/role/index.vue', permission_code: 'system:role:list', icon: 'UserFilled', sort_order: 2, visible: true },
-      { id: '23', parent_id: '2', name: '菜单管理', type: 'menu', path: '/system/menu', component: 'views/system/menu/index.vue', permission_code: 'system:menu:list', icon: 'Menu', sort_order: 3, visible: true },
-      { id: '24', parent_id: '2', name: '字典管理', type: 'menu', path: '/system/dict', component: 'views/system/dict/index.vue', permission_code: 'system:dict:list', icon: 'Notebook', sort_order: 4, visible: true }
+      {
+        id: '21',
+        parent_id: '2',
+        name: '用户管理',
+        type: 'menu',
+        path: '/system/user',
+        component: 'views/system/user/index.vue',
+        permission_code: 'system:user:list',
+        icon: 'User',
+        sort_order: 1,
+        visible: true,
+        children: [
+          { id: '211', parent_id: '21', name: '新增用户', type: 'button', permission_code: 'system:user:create', sort_order: 1, visible: true },
+          { id: '212', parent_id: '21', name: '编辑用户', type: 'button', permission_code: 'system:user:edit', sort_order: 2, visible: true },
+          { id: '213', parent_id: '21', name: '删除用户', type: 'button', permission_code: 'system:user:delete', sort_order: 3, visible: true }
+        ]
+      },
+      {
+        id: '22',
+        parent_id: '2',
+        name: '角色管理',
+        type: 'menu',
+        path: '/system/role',
+        component: 'views/system/role/index.vue',
+        permission_code: 'system:role:list',
+        icon: 'UserFilled',
+        sort_order: 2,
+        visible: true
+      },
+      {
+        id: '23',
+        parent_id: '2',
+        name: '菜单管理',
+        type: 'menu',
+        path: '/system/menu',
+        component: 'views/system/menu/index.vue',
+        permission_code: 'system:menu:list',
+        icon: 'Menu',
+        sort_order: 3,
+        visible: true
+      },
+      {
+        id: '24',
+        parent_id: '2',
+        name: '字典管理',
+        type: 'menu',
+        path: '/system/dict',
+        component: 'views/system/dict/index.vue',
+        permission_code: 'system:dict:list',
+        icon: 'Notebook',
+        sort_order: 4,
+        visible: true
+      }
     ]
   },
   {
-    id: '3', parent_id: null, name: '生产管理', type: 'directory', permission_code: 'production', icon: 'Monitor', sort_order: 20, visible: true,
+    id: '3',
+    parent_id: null,
+    name: '生产管理',
+    type: 'directory',
+    permission_code: 'production',
+    icon: 'Monitor',
+    sort_order: 20,
+    visible: true,
     children: [
-      { id: '31', parent_id: '3', name: '工单管理', type: 'menu', path: '/work-order/list', component: 'views/work-order/List.vue', permission_code: 'work-order:list', icon: 'Tickets', sort_order: 1, visible: true },
-      { id: '32', parent_id: '3', name: '车间看板', type: 'menu', path: '/work-order/kanban', component: 'views/work-order/Kanban.vue', permission_code: 'work-order:kanban', icon: 'DataBoard', sort_order: 2, visible: true }
+      {
+        id: '31',
+        parent_id: '3',
+        name: '工单管理',
+        type: 'menu',
+        path: '/work-order/list',
+        component: 'views/work-order/List.vue',
+        permission_code: 'work-order:list',
+        icon: 'Tickets',
+        sort_order: 1,
+        visible: true
+      },
+      {
+        id: '32',
+        parent_id: '3',
+        name: '车间看板',
+        type: 'menu',
+        path: '/work-order/kanban',
+        component: 'views/work-order/Kanban.vue',
+        permission_code: 'work-order:kanban',
+        icon: 'DataBoard',
+        sort_order: 2,
+        visible: true
+      }
     ]
   }
 ])
@@ -101,14 +190,32 @@ const menuTree = ref<MenuNode[]>([
 // ==================== 当前选中节点 ====================
 const currentMenu = ref<MenuNode | null>(null)
 const menuForm = reactive({
-  name: '', type: 'menu' as string, path: '', component: '', permission_code: '',
-  icon: '', sort_order: 1, visible: true, parent_id: null as string | null
+  name: '',
+  type: 'menu' as string,
+  path: '',
+  component: '',
+  permission_code: '',
+  icon: '',
+  sort_order: 1,
+  visible: true,
+  parent_id: null as string | null
 })
 
 const menuFormColumns: FormColumnItem[] = [
   { type: 'input', label: '名称', field: 'name', required: true },
-  { type: 'select-v2', label: '类型', field: 'type', required: true,
-    props: { options: [{ label: '目录', value: 'directory' }, { label: '菜单', value: 'menu' }, { label: '按钮', value: 'button' }] } as any },
+  {
+    type: 'select-v2',
+    label: '类型',
+    field: 'type',
+    required: true,
+    props: {
+      options: [
+        { label: '目录', value: 'directory' },
+        { label: '菜单', value: 'menu' },
+        { label: '按钮', value: 'button' }
+      ]
+    } as any
+  },
   { type: 'input', label: '路由路径', field: 'path', props: { placeholder: '如 /system/user' } as any },
   { type: 'input', label: '组件路径', field: 'component', props: { placeholder: '如 views/system/user/index.vue' } as any },
   { type: 'input', label: '权限编码', field: 'permission_code', required: true, props: { placeholder: '如 system:user:list' } as any },
@@ -119,20 +226,46 @@ const menuFormColumns: FormColumnItem[] = [
 
 function handleNodeClick(data: MenuNode) {
   currentMenu.value = data
-  menuForm.name = data.name; menuForm.type = data.type; menuForm.path = data.path || ''
-  menuForm.component = data.component || ''; menuForm.permission_code = data.permission_code
-  menuForm.icon = data.icon || ''; menuForm.sort_order = data.sort_order
-  menuForm.visible = data.visible; menuForm.parent_id = data.parent_id
+  menuForm.name = data.name
+  menuForm.type = data.type
+  menuForm.path = data.path || ''
+  menuForm.component = data.component || ''
+  menuForm.permission_code = data.permission_code
+  menuForm.icon = data.icon || ''
+  menuForm.sort_order = data.sort_order
+  menuForm.visible = data.visible
+  menuForm.parent_id = data.parent_id
 }
 
 function openAdd(type: 'directory' | 'menu' | 'button') {
-  currentMenu.value = { id: '', parent_id: null, name: '', type, path: '', component: '', permission_code: '', icon: '', sort_order: 1, visible: true }
-  menuForm.name = ''; menuForm.type = type; menuForm.path = ''; menuForm.component = ''
-  menuForm.permission_code = ''; menuForm.icon = ''; menuForm.sort_order = 1; menuForm.visible = true; menuForm.parent_id = null
+  currentMenu.value = {
+    id: '',
+    parent_id: null,
+    name: '',
+    type,
+    path: '',
+    component: '',
+    permission_code: '',
+    icon: '',
+    sort_order: 1,
+    visible: true
+  }
+  menuForm.name = ''
+  menuForm.type = type
+  menuForm.path = ''
+  menuForm.component = ''
+  menuForm.permission_code = ''
+  menuForm.icon = ''
+  menuForm.sort_order = 1
+  menuForm.visible = true
+  menuForm.parent_id = null
 }
 
 function saveMenu() {
-  if (!menuForm.name || !menuForm.permission_code) { ElMessage.warning('请填写名称和权限编码'); return }
+  if (!menuForm.name || !menuForm.permission_code) {
+    ElMessage.warning('请填写名称和权限编码')
+    return
+  }
   if (currentMenu.value!.id) {
     Object.assign(currentMenu.value, menuForm)
     ElMessage.success('保存成功')
@@ -146,22 +279,29 @@ function saveMenu() {
 }
 
 function deleteMenu() {
-  ElMessageBox.confirm('确定删除该菜单节点？（子节点将一并删除）', '警告', { type: 'warning' }).then(() => {
-    removeNode(menuTree.value, currentMenu.value!.id)
-    currentMenu.value = null
-    ElMessage.success('删除成功')
-  }).catch(() => {})
+  ElMessageBox.confirm('确定删除该菜单节点？（子节点将一并删除）', '警告', { type: 'warning' })
+    .then(() => {
+      removeNode(menuTree.value, currentMenu.value!.id)
+      currentMenu.value = null
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 
 function removeNode(nodes: MenuNode[], id: string): boolean {
   for (let i = 0; i < nodes.length; i++) {
-    if (nodes[i].id === id) { nodes.splice(i, 1); return true }
+    if (nodes[i].id === id) {
+      nodes.splice(i, 1)
+      return true
+    }
     if (nodes[i].children && removeNode(nodes[i].children!, id)) return true
   }
   return false
 }
 
-function refresh() { currentMenu.value = null }
+function refresh() {
+  currentMenu.value = null
+}
 </script>
 
 <style scoped lang="scss">

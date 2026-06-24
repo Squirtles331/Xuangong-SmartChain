@@ -39,7 +39,10 @@ export const usePermissionStore = defineStore('permission', () => {
   }
 
   return {
-    menuTree, loaded, flatPermissions,
-    loadMenus, reset
+    menuTree,
+    loaded,
+    flatPermissions,
+    loadMenus,
+    reset
   }
 })

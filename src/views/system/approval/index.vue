@@ -21,7 +21,13 @@
       </template>
     </gi-table>
 
-    <gi-dialog v-model="dialogVisible" :footer="true" :on-before-ok="submitDialog" :title="dialogMode === 'add' ? '新增审批流' : '编辑审批流'" width="600px">
+    <gi-dialog
+      v-model="dialogVisible"
+      :footer="true"
+      :on-before-ok="submitDialog"
+      :title="dialogMode === 'add' ? '新增审批流' : '编辑审批流'"
+      width="600px"
+    >
       <gi-form v-model="form" :columns="formColumns" :label-width="120" />
     </gi-dialog>
   </gi-page-layout>
@@ -34,7 +40,11 @@ import { ArrowRight } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface ApprovalFlow {
-  id: string; name: string; business_type: string; nodes: string[]; status: string
+  id: string
+  name: string
+  business_type: string
+  nodes: string[]
+  status: string
 }
 
 const flows = ref<ApprovalFlow[]>([
@@ -61,26 +71,60 @@ const editingId = ref('')
 const form = reactive({ name: '', business_type: '', nodes: '车间主任' })
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '审批流名称', field: 'name', required: true },
-  { type: 'select-v2', label: '关联业务', field: 'business_type', required: true, props: { options: [
-    { label: '普通工单', value: 'work_order_normal' }, { label: '紧急工单', value: 'work_order_urgent' },
-    { label: 'BOM/工艺', value: 'bom_routing' }, { label: 'ECN变更', value: 'ecn' },
-    { label: '销售订单', value: 'sales_order' }, { label: '采购订单', value: 'purchase_order' }
-  ] } as any },
+  {
+    type: 'select-v2',
+    label: '关联业务',
+    field: 'business_type',
+    required: true,
+    props: {
+      options: [
+        { label: '普通工单', value: 'work_order_normal' },
+        { label: '紧急工单', value: 'work_order_urgent' },
+        { label: 'BOM/工艺', value: 'bom_routing' },
+        { label: 'ECN变更', value: 'ecn' },
+        { label: '销售订单', value: 'sales_order' },
+        { label: '采购订单', value: 'purchase_order' }
+      ]
+    } as any
+  },
   { type: 'input', label: '审批节点', field: 'nodes', required: true, props: { placeholder: '多个节点用逗号分隔，如：车间主任,生产部长' } as any }
 ]
 
-function openAdd() { dialogMode.value = 'add'; form.name = ''; form.business_type = ''; form.nodes = ''; dialogVisible.value = true }
-function openEdit(row: ApprovalFlow) { dialogMode.value = 'edit'; editingId.value = row.id; form.name = row.name; form.business_type = row.business_type; form.nodes = row.nodes.join(','); dialogVisible.value = true }
+function openAdd() {
+  dialogMode.value = 'add'
+  form.name = ''
+  form.business_type = ''
+  form.nodes = ''
+  dialogVisible.value = true
+}
+function openEdit(row: ApprovalFlow) {
+  dialogMode.value = 'edit'
+  editingId.value = row.id
+  form.name = row.name
+  form.business_type = row.business_type
+  form.nodes = row.nodes.join(',')
+  dialogVisible.value = true
+}
 
 async function submitDialog() {
-  if (!form.name || !form.business_type || !form.nodes) { ElMessage.warning('请填写必填项'); return false }
-  const nodes = form.nodes.split(',').map(s => s.trim()).filter(Boolean)
+  if (!form.name || !form.business_type || !form.nodes) {
+    ElMessage.warning('请填写必填项')
+    return false
+  }
+  const nodes = form.nodes
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
   if (dialogMode.value === 'add') {
     flows.value.unshift({ id: Date.now().toString(), ...form, nodes, status: 'active' })
     ElMessage.success('新增成功')
   } else {
-    const f = flows.value.find(f => f.id === editingId.value)
-    if (f) { f.name = form.name; f.business_type = form.business_type; f.nodes = nodes }
+    const f = flows.value.find((f) => f.id === editingId.value)
+    if (f) {
+      f.name = form.name
+      f.business_type = form.business_type
+      f.nodes = nodes
+    }
     ElMessage.success('保存成功')
   }
   return true
@@ -92,9 +136,11 @@ function toggleStatus(row: ApprovalFlow) {
 }
 
 function deleteFlow(id: string) {
-  ElMessageBox.confirm('确定删除该审批流？', '提示', { type: 'warning' }).then(() => {
-    flows.value = flows.value.filter(f => f.id !== id)
-    ElMessage.success('删除成功')
-  }).catch(() => {})
+  ElMessageBox.confirm('确定删除该审批流？', '提示', { type: 'warning' })
+    .then(() => {
+      flows.value = flows.value.filter((f) => f.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 </script>

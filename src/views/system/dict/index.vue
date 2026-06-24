@@ -20,7 +20,12 @@
     </gi-table>
 
     <!-- 字典类型弹窗 -->
-    <gi-dialog v-model="typeDialogVisible" :footer="true" :on-before-ok="submitTypeDialog" :title="typeDialogMode === 'add' ? '新增字典类型' : '编辑字典类型'">
+    <gi-dialog
+      v-model="typeDialogVisible"
+      :footer="true"
+      :on-before-ok="submitTypeDialog"
+      :title="typeDialogMode === 'add' ? '新增字典类型' : '编辑字典类型'"
+    >
       <gi-form v-model="typeForm" :columns="typeFormColumns" :label-width="100" />
     </gi-dialog>
 
@@ -40,7 +45,13 @@
       </gi-table>
 
       <!-- 字典项弹窗 -->
-      <gi-dialog v-model="itemFormVisible" :footer="true" :on-before-ok="submitItemDialog" :title="itemDialogMode === 'add' ? '新增字典项' : '编辑字典项'" width="500px">
+      <gi-dialog
+        v-model="itemFormVisible"
+        :footer="true"
+        :on-before-ok="submitItemDialog"
+        :title="itemDialogMode === 'add' ? '新增字典项' : '编辑字典项'"
+        width="500px"
+      >
         <gi-form v-model="itemForm" :columns="itemFormColumns" :label-width="100" />
       </gi-dialog>
     </gi-dialog>
@@ -111,7 +122,7 @@ const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 
 const filteredTypes = computed(() => {
   const kw = searchForm.keyword?.toLowerCase() || ''
-  return kw ? dictTypes.value.filter(t => t.code.toLowerCase().includes(kw) || t.name.toLowerCase().includes(kw)) : dictTypes.value
+  return kw ? dictTypes.value.filter((t) => t.code.toLowerCase().includes(kw) || t.name.toLowerCase().includes(kw)) : dictTypes.value
 })
 
 const pagedTypes = computed(() => {
@@ -120,9 +131,16 @@ const pagedTypes = computed(() => {
   return filteredTypes.value.slice(start, start + pagination.pageSize)
 })
 
-function handleSearch() { pagination.currentPage = 1 }
-function handleReset() { searchForm.keyword = ''; pagination.currentPage = 1 }
-function refresh() { handleReset() }
+function handleSearch() {
+  pagination.currentPage = 1
+}
+function handleReset() {
+  searchForm.keyword = ''
+  pagination.currentPage = 1
+}
+function refresh() {
+  handleReset()
+}
 
 // ==================== 字典类型 CRUD ====================
 const typeDialogVisible = ref(false)
@@ -137,24 +155,31 @@ const typeFormColumns: FormColumnItem[] = [
 
 function openAddType() {
   typeDialogMode.value = 'add'
-  typeForm.code = ''; typeForm.name = ''; typeForm.description = ''
+  typeForm.code = ''
+  typeForm.name = ''
+  typeForm.description = ''
   typeDialogVisible.value = true
 }
 
 function openEditType(row: DictType) {
   typeDialogMode.value = 'edit'
   editingTypeId.value = row.id
-  typeForm.code = row.code; typeForm.name = row.name; typeForm.description = row.description
+  typeForm.code = row.code
+  typeForm.name = row.name
+  typeForm.description = row.description
   typeDialogVisible.value = true
 }
 
 async function submitTypeDialog() {
-  if (!typeForm.code || !typeForm.name) { ElMessage.warning('请填写必填项'); return false }
+  if (!typeForm.code || !typeForm.name) {
+    ElMessage.warning('请填写必填项')
+    return false
+  }
   if (typeDialogMode.value === 'add') {
     dictTypes.value.unshift({ id: Date.now().toString(), ...typeForm, status: 'active' })
     ElMessage.success('新增成功')
   } else {
-    const idx = dictTypes.value.findIndex(t => t.id === editingTypeId.value)
+    const idx = dictTypes.value.findIndex((t) => t.id === editingTypeId.value)
     if (idx > -1) Object.assign(dictTypes.value[idx], typeForm)
     ElMessage.success('编辑成功')
   }
@@ -162,11 +187,13 @@ async function submitTypeDialog() {
 }
 
 function deleteType(id: string) {
-  ElMessageBox.confirm('删除字典类型将同时删除其下所有字典项，确定删除？', '警告', { type: 'warning' }).then(() => {
-    dictTypes.value = dictTypes.value.filter(t => t.id !== id)
-    delete dictItemsMap.value[id]
-    ElMessage.success('删除成功')
-  }).catch(() => {})
+  ElMessageBox.confirm('删除字典类型将同时删除其下所有字典项，确定删除？', '警告', { type: 'warning' })
+    .then(() => {
+      dictTypes.value = dictTypes.value.filter((t) => t.id !== id)
+      delete dictItemsMap.value[id]
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 
 // ==================== 字典项管理 ====================
@@ -181,7 +208,20 @@ const itemFormColumns: FormColumnItem[] = [
   { type: 'input', label: '编码', field: 'code', required: true },
   { type: 'input', label: '名称', field: 'name', required: true },
   { type: 'input-number', label: '排序', field: 'sort_order', props: { min: 1 } as any },
-  { type: 'select-v2', label: '标签样式', field: 'css_class', props: { options: [{ label: '无', value: '' }, { label: '红色(danger)', value: 'danger' }, { label: '橙色(warning)', value: 'warning' }, { label: '绿色(success)', value: 'success' }, { label: '灰色(info)', value: 'info' }] } as any }
+  {
+    type: 'select-v2',
+    label: '标签样式',
+    field: 'css_class',
+    props: {
+      options: [
+        { label: '无', value: '' },
+        { label: '红色(danger)', value: 'danger' },
+        { label: '橙色(warning)', value: 'warning' },
+        { label: '绿色(success)', value: 'success' },
+        { label: '灰色(info)', value: 'info' }
+      ]
+    } as any
+  }
 ]
 
 // 在 typeColumns 里加点击行事件——这里用操作列方式：加一个"管理字典项"按钮
@@ -198,7 +238,11 @@ typeColumns.splice(4, 0, { label: '字典项', width: 120, slotName: 'itemCount'
 // 在模板里用 #itemCount slot 显示
 // 实际上更简单的做法是直接在操作列加按钮
 typeColumns[typeColumns.length - 1] = {
-  label: '操作', width: 300, fixed: 'right', slotName: 'actions', align: 'center'
+  label: '操作',
+  width: 300,
+  fixed: 'right',
+  slotName: 'actions',
+  align: 'center'
 } as any
 
 // 需要重新定义 actions slot 逻辑...太绕了，直接换个方案：
@@ -208,16 +252,34 @@ typeColumns[typeColumns.length - 1] = {
 // 但 gi-table 的 actions slot 已经写好了，直接在里面加按钮即可
 // 我已经在 template 里用了 #actions，让我直接在模板里加上第三个按钮
 
-function openAddItem() { itemDialogMode.value = 'add'; itemForm.code = ''; itemForm.name = ''; itemForm.sort_order = 1; itemForm.css_class = ''; itemFormVisible.value = true }
-function openEditItem(row: DictItem) { itemDialogMode.value = 'edit'; editingItemId.value = row.id; itemForm.code = row.code; itemForm.name = row.name; itemForm.sort_order = row.sort_order; itemForm.css_class = row.css_class || ''; itemFormVisible.value = true }
+function openAddItem() {
+  itemDialogMode.value = 'add'
+  itemForm.code = ''
+  itemForm.name = ''
+  itemForm.sort_order = 1
+  itemForm.css_class = ''
+  itemFormVisible.value = true
+}
+function openEditItem(row: DictItem) {
+  itemDialogMode.value = 'edit'
+  editingItemId.value = row.id
+  itemForm.code = row.code
+  itemForm.name = row.name
+  itemForm.sort_order = row.sort_order
+  itemForm.css_class = row.css_class || ''
+  itemFormVisible.value = true
+}
 
 async function submitItemDialog() {
-  if (!itemForm.code || !itemForm.name) { ElMessage.warning('请填写必填项'); return false }
+  if (!itemForm.code || !itemForm.name) {
+    ElMessage.warning('请填写必填项')
+    return false
+  }
   if (itemDialogMode.value === 'add') {
     currentItems.value.push({ id: Date.now().toString(), dict_type_id: currentType.value!.id, ...itemForm, status: 'active' })
     ElMessage.success('新增成功')
   } else {
-    const idx = currentItems.value.findIndex(i => i.id === editingItemId.value)
+    const idx = currentItems.value.findIndex((i) => i.id === editingItemId.value)
     if (idx > -1) Object.assign(currentItems.value[idx], itemForm)
     ElMessage.success('编辑成功')
   }
@@ -226,14 +288,19 @@ async function submitItemDialog() {
 }
 
 function deleteItem(id: string) {
-  ElMessageBox.confirm('确定删除该字典项？', '提示', { type: 'warning' }).then(() => {
-    currentItems.value = currentItems.value.filter(i => i.id !== id)
-    dictItemsMap.value[currentType.value!.id] = currentItems.value
-    ElMessage.success('删除成功')
-  }).catch(() => {})
+  ElMessageBox.confirm('确定删除该字典项？', '提示', { type: 'warning' })
+    .then(() => {
+      currentItems.value = currentItems.value.filter((i) => i.id !== id)
+      dictItemsMap.value[currentType.value!.id] = currentItems.value
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 
-function closeItemDialog() { currentType.value = null; currentItems.value = [] }
+function closeItemDialog() {
+  currentType.value = null
+  currentItems.value = []
+}
 
 const itemColumns: TableColumnItem<DictItem>[] = [
   { type: 'index', label: '#', width: 50 },
