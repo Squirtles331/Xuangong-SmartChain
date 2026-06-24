@@ -149,7 +149,7 @@ const handleLogin = async () => {
 
     // 开发模式：Mock 登录，跳过真实 API
     const success = await mockLogin()
-    
+
     if (success) {
       ElMessage.success('登录成功')
       if (loginForm.remember) {
@@ -175,10 +175,16 @@ function mockLogin(): Promise<boolean> {
         // 设置用户信息到 localStorage，模拟登录态
         localStorage.setItem('access_token', 'mock_token_' + Date.now())
         localStorage.setItem('refresh_token', 'mock_refresh_token')
-        localStorage.setItem('user_info', JSON.stringify({
-          id: '1', username: loginForm.username, real_name: loginForm.username,
-          roles: ['super_admin'], permissions: ['*']
-        }))
+        localStorage.setItem(
+          'user_info',
+          JSON.stringify({
+            id: '1',
+            username: loginForm.username,
+            real_name: loginForm.username,
+            roles: ['super_admin'],
+            permissions: ['*']
+          })
+        )
         resolve(true)
       } else {
         ElMessage.error('请输入用户名和密码')

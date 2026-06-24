@@ -23,7 +23,14 @@ import { materialTree as mockCatTree, materialList as mockMaterials } from '@/mo
 
 const catTree = ref(JSON.parse(JSON.stringify(mockCatTree)))
 
-interface M { id: string; code: string; name: string; spec: string; type: string; unit: string }
+interface M {
+  id: string
+  code: string
+  name: string
+  spec: string
+  type: string
+  unit: string
+}
 const materials = ref<M[]>(mockMaterials as any)
 
 const cols: TableColumnItem<M>[] = [
@@ -37,7 +44,19 @@ function onCatClick(_d: any) {}
 function openAdd() {}
 </script>
 <style scoped>
-.mdm-layout { display: flex; height: calc(100vh - 180px); }
-.mdm-tree { width: 260px; border-right: 1px solid #eee; overflow: auto; padding: 12px; }
-.mdm-content { flex: 1; padding: 12px; overflow: auto; }
+.mdm-layout {
+  display: flex;
+  height: calc(100vh - 180px);
+}
+.mdm-tree {
+  width: 260px;
+  border-right: 1px solid #eee;
+  overflow: auto;
+  padding: 12px;
+}
+.mdm-content {
+  flex: 1;
+  padding: 12px;
+  overflow: auto;
+}
 </style>
