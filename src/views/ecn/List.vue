@@ -50,21 +50,81 @@ import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface ECN {
-  id: string; code: string; change_type: string; material: string; current_version: string
-  status: string; urgency: string; applicant: string; created_at: string
+  id: string
+  code: string
+  change_type: string
+  material: string
+  current_version: string
+  status: string
+  urgency: string
+  applicant: string
+  created_at: string
 }
 
 const ecns = ref<ECN[]>([
-  { id: '1', code: 'ECN202501150001', change_type: 'BOM变更', material: '离心泵 XJP-100', current_version: 'MBOM V1.2', status: 'draft', urgency: 'urgent', applicant: '张工', created_at: '2025-01-15' },
-  { id: '2', code: 'ECN202501120002', change_type: '工艺变更', material: '齿轮箱 GBX-200', current_version: '标准工艺 V1.0', status: 'approved', urgency: 'normal', applicant: '李工', created_at: '2025-01-12' },
-  { id: '3', code: 'ECN202501080003', change_type: 'BOM+工艺变更', material: '传动轴 DS-50', current_version: 'MBOM V1.1', status: 'executed', urgency: 'planned', applicant: '王工', created_at: '2025-01-08' },
-  { id: '4', code: 'ECN202501020004', change_type: 'BOM变更', material: '离心泵 XJP-200', current_version: 'MBOM V1.0', status: 'verified', urgency: 'normal', applicant: '张工', created_at: '2025-01-02' }
+  {
+    id: '1',
+    code: 'ECN202501150001',
+    change_type: 'BOM变更',
+    material: '离心泵 XJP-100',
+    current_version: 'MBOM V1.2',
+    status: 'draft',
+    urgency: 'urgent',
+    applicant: '张工',
+    created_at: '2025-01-15'
+  },
+  {
+    id: '2',
+    code: 'ECN202501120002',
+    change_type: '工艺变更',
+    material: '齿轮箱 GBX-200',
+    current_version: '标准工艺 V1.0',
+    status: 'approved',
+    urgency: 'normal',
+    applicant: '李工',
+    created_at: '2025-01-12'
+  },
+  {
+    id: '3',
+    code: 'ECN202501080003',
+    change_type: 'BOM+工艺变更',
+    material: '传动轴 DS-50',
+    current_version: 'MBOM V1.1',
+    status: 'executed',
+    urgency: 'planned',
+    applicant: '王工',
+    created_at: '2025-01-08'
+  },
+  {
+    id: '4',
+    code: 'ECN202501020004',
+    change_type: 'BOM变更',
+    material: '离心泵 XJP-200',
+    current_version: 'MBOM V1.0',
+    status: 'verified',
+    urgency: 'normal',
+    applicant: '张工',
+    created_at: '2025-01-02'
+  }
 ])
 
 const searchForm = reactive({ keyword: '', status: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword' } as any,
-  { type: 'select-v2', label: '状态', field: 'status', props: { options: [{ label: '全部', value: '' }, { label: '草稿', value: 'draft' }, { label: '已审批', value: 'approved' }, { label: '已执行', value: 'executed' }, { label: '已验证', value: 'verified' }] } } as any
+  {
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    props: {
+      options: [
+        { label: '全部', value: '' },
+        { label: '草稿', value: 'draft' },
+        { label: '已审批', value: 'approved' },
+        { label: '已执行', value: 'executed' },
+        { label: '已验证', value: 'verified' }
+      ]
+    }
+  } as any
 ]
 
 const columns: TableColumnItem<ECN>[] = [
@@ -80,21 +140,35 @@ const columns: TableColumnItem<ECN>[] = [
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const filteredEcns = computed(() => ecns.value.filter(e => {
-  if (searchForm.keyword && !e.material.includes(searchForm.keyword) && !e.code.includes(searchForm.keyword)) return false
-  if (searchForm.status && e.status !== searchForm.status) return false
-  return true
-}))
-const pagedEcns = computed(() => { pagination.total = filteredEcns.value.length; return filteredEcns.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize) })
+const filteredEcns = computed(() =>
+  ecns.value.filter((e) => {
+    if (searchForm.keyword && !e.material.includes(searchForm.keyword) && !e.code.includes(searchForm.keyword)) return false
+    if (searchForm.status && e.status !== searchForm.status) return false
+    return true
+  })
+)
+const pagedEcns = computed(() => {
+  pagination.total = filteredEcns.value.length
+  return filteredEcns.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
+})
 
-function handleSearch() { pagination.currentPage = 1 }
-function handleReset() { searchForm.keyword = ''; searchForm.status = ''; pagination.currentPage = 1 }
+function handleSearch() {
+  pagination.currentPage = 1
+}
+function handleReset() {
+  searchForm.keyword = ''
+  searchForm.status = ''
+  pagination.currentPage = 1
+}
 
 const impactVisible = ref(false)
 const impactData = reactive({ code: '', material: '', change_type: '', current_version: '', items: [] as any[] })
 
 function viewImpact(row: ECN) {
-  impactData.code = row.code; impactData.material = row.material; impactData.change_type = row.change_type; impactData.current_version = row.current_version
+  impactData.code = row.code
+  impactData.material = row.material
+  impactData.change_type = row.change_type
+  impactData.current_version = row.current_version
   impactData.items = [
     { dimension: '在制工单', detail: 'WO202501150001 离心泵 XJP-100 (生产中, 在制45台)', count: 1 },
     { dimension: '库存', detail: '旧版物料"泵体铸件(旧)"库存 120件', count: 120 },
@@ -104,6 +178,12 @@ function viewImpact(row: ECN) {
   impactVisible.value = true
 }
 
-function submitEcn(row: ECN) { row.status = 'approved'; ElMessage.success('已提交审批') }
-function executeEcn(row: ECN) { row.status = 'executed'; ElMessage.success('变更已执行') }
+function submitEcn(row: ECN) {
+  row.status = 'approved'
+  ElMessage.success('已提交审批')
+}
+function executeEcn(row: ECN) {
+  row.status = 'executed'
+  ElMessage.success('变更已执行')
+}
 </script>

@@ -22,7 +22,9 @@
       <el-tab-pane label="基本信息" name="info">
         <el-descriptions :column="3" border>
           <el-descriptions-item label="工单编号">{{ order.code }}</el-descriptions-item>
-          <el-descriptions-item label="工单类型">{{ order.wo_type === 'production' ? '生产工单' : order.wo_type === 'rework' ? '返工工单' : '样品工单' }}</el-descriptions-item>
+          <el-descriptions-item label="工单类型">{{
+            order.wo_type === 'production' ? '生产工单' : order.wo_type === 'rework' ? '返工工单' : '样品工单'
+          }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="statusTagType(order.status)">{{ statusText(order.status) }}</el-tag>
           </el-descriptions-item>
@@ -36,7 +38,9 @@
           </el-descriptions-item>
           <el-descriptions-item label="生产车间">{{ order.workshop_name }}</el-descriptions-item>
           <el-descriptions-item label="生产产线">{{ order.line_name || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="优先级">{{ order.priority === 'urgent' ? '紧急' : order.priority === 'high' ? '高' : order.priority === 'normal' ? '普通' : '低' }}</el-descriptions-item>
+          <el-descriptions-item label="优先级">{{
+            order.priority === 'urgent' ? '紧急' : order.priority === 'high' ? '高' : order.priority === 'normal' ? '普通' : '低'
+          }}</el-descriptions-item>
           <el-descriptions-item label="计划开工">{{ order.planned_start_date }}</el-descriptions-item>
           <el-descriptions-item label="计划完工">{{ order.planned_end_date }}</el-descriptions-item>
           <el-descriptions-item label="实际开工">{{ order.actual_start_date || '-' }}</el-descriptions-item>
@@ -96,23 +100,135 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const activeTab = ref('info')
 
 const order = reactive({
-  id: '1', code: 'WO202501150001', wo_type: 'production', material_code: '04.01.001-00001',
-  material_name: '离心泵 XJP-100', material_spec: '流量100m³/h', planned_qty: 100, completed_qty: 45,
-  progress: 45, status: 'in_progress', priority: 'normal', workshop_name: '机加工一车间',
-  line_name: '产线A', planned_start_date: '2025-01-10', planned_end_date: '2025-01-20',
-  actual_start_date: '2025-01-11', bom_version: 'MBOM V1.2', routing_version: '标准工艺 V1.1',
-  customer_po: 'PO-2025-001', remark: '', created_by: '张三', created_at: '2025-01-09 14:00:00'
+  id: '1',
+  code: 'WO202501150001',
+  wo_type: 'production',
+  material_code: '04.01.001-00001',
+  material_name: '离心泵 XJP-100',
+  material_spec: '流量100m³/h',
+  planned_qty: 100,
+  completed_qty: 45,
+  progress: 45,
+  status: 'in_progress',
+  priority: 'normal',
+  workshop_name: '机加工一车间',
+  line_name: '产线A',
+  planned_start_date: '2025-01-10',
+  planned_end_date: '2025-01-20',
+  actual_start_date: '2025-01-11',
+  bom_version: 'MBOM V1.2',
+  routing_version: '标准工艺 V1.1',
+  customer_po: 'PO-2025-001',
+  remark: '',
+  created_by: '张三',
+  created_at: '2025-01-09 14:00:00'
 })
 
 const operations = [
-  { operation_no: 10, name: '下料', work_center: '下料组', status: 'completed', worker: '李四', qualified_qty: 100, defective_qty: 2, actual_hours: '8.5h', planned_start: '2025-01-11 08:00', planned_end: '2025-01-11 17:00', is_qc_gate: false },
-  { operation_no: 20, name: '粗车', work_center: '数控车组', status: 'completed', worker: '王五', qualified_qty: 98, defective_qty: 1, actual_hours: '16h', planned_start: '2025-01-12 08:00', planned_end: '2025-01-14 12:00', is_qc_gate: false },
-  { operation_no: 30, name: '精车', work_center: '数控车组', status: 'running', worker: '赵六', qualified_qty: 45, defective_qty: 3, actual_hours: '12h', planned_start: '2025-01-14 13:00', planned_end: '2025-01-16 17:00', is_qc_gate: true },
-  { operation_no: 40, name: '钻孔', work_center: '钻床组', status: 'pending', worker: '-', qualified_qty: 0, defective_qty: 0, actual_hours: '-', planned_start: '2025-01-17 08:00', planned_end: '2025-01-17 17:00', is_qc_gate: false },
-  { operation_no: 50, name: '磨削', work_center: '磨床组', status: 'pending', worker: '-', qualified_qty: 0, defective_qty: 0, actual_hours: '-', planned_start: '2025-01-18 08:00', planned_end: '2025-01-19 12:00', is_qc_gate: true },
-  { operation_no: 60, name: '装配', work_center: '装配组', status: 'pending', worker: '-', qualified_qty: 0, defective_qty: 0, actual_hours: '-', planned_start: '2025-01-19 13:00', planned_end: '2025-01-20 12:00', is_qc_gate: false },
-  { operation_no: 70, name: '试压', work_center: '测试组', status: 'pending', worker: '-', qualified_qty: 0, defective_qty: 0, actual_hours: '-', planned_start: '2025-01-20 13:00', planned_end: '2025-01-20 17:00', is_qc_gate: true },
-  { operation_no: 80, name: '油漆', work_center: '涂装组', status: 'pending', worker: '-', qualified_qty: 0, defective_qty: 0, actual_hours: '-', planned_start: '2025-01-21 08:00', planned_end: '2025-01-21 12:00', is_qc_gate: false }
+  {
+    operation_no: 10,
+    name: '下料',
+    work_center: '下料组',
+    status: 'completed',
+    worker: '李四',
+    qualified_qty: 100,
+    defective_qty: 2,
+    actual_hours: '8.5h',
+    planned_start: '2025-01-11 08:00',
+    planned_end: '2025-01-11 17:00',
+    is_qc_gate: false
+  },
+  {
+    operation_no: 20,
+    name: '粗车',
+    work_center: '数控车组',
+    status: 'completed',
+    worker: '王五',
+    qualified_qty: 98,
+    defective_qty: 1,
+    actual_hours: '16h',
+    planned_start: '2025-01-12 08:00',
+    planned_end: '2025-01-14 12:00',
+    is_qc_gate: false
+  },
+  {
+    operation_no: 30,
+    name: '精车',
+    work_center: '数控车组',
+    status: 'running',
+    worker: '赵六',
+    qualified_qty: 45,
+    defective_qty: 3,
+    actual_hours: '12h',
+    planned_start: '2025-01-14 13:00',
+    planned_end: '2025-01-16 17:00',
+    is_qc_gate: true
+  },
+  {
+    operation_no: 40,
+    name: '钻孔',
+    work_center: '钻床组',
+    status: 'pending',
+    worker: '-',
+    qualified_qty: 0,
+    defective_qty: 0,
+    actual_hours: '-',
+    planned_start: '2025-01-17 08:00',
+    planned_end: '2025-01-17 17:00',
+    is_qc_gate: false
+  },
+  {
+    operation_no: 50,
+    name: '磨削',
+    work_center: '磨床组',
+    status: 'pending',
+    worker: '-',
+    qualified_qty: 0,
+    defective_qty: 0,
+    actual_hours: '-',
+    planned_start: '2025-01-18 08:00',
+    planned_end: '2025-01-19 12:00',
+    is_qc_gate: true
+  },
+  {
+    operation_no: 60,
+    name: '装配',
+    work_center: '装配组',
+    status: 'pending',
+    worker: '-',
+    qualified_qty: 0,
+    defective_qty: 0,
+    actual_hours: '-',
+    planned_start: '2025-01-19 13:00',
+    planned_end: '2025-01-20 12:00',
+    is_qc_gate: false
+  },
+  {
+    operation_no: 70,
+    name: '试压',
+    work_center: '测试组',
+    status: 'pending',
+    worker: '-',
+    qualified_qty: 0,
+    defective_qty: 0,
+    actual_hours: '-',
+    planned_start: '2025-01-20 13:00',
+    planned_end: '2025-01-20 17:00',
+    is_qc_gate: true
+  },
+  {
+    operation_no: 80,
+    name: '油漆',
+    work_center: '涂装组',
+    status: 'pending',
+    worker: '-',
+    qualified_qty: 0,
+    defective_qty: 0,
+    actual_hours: '-',
+    planned_start: '2025-01-21 08:00',
+    planned_end: '2025-01-21 12:00',
+    is_qc_gate: false
+  }
 ]
 
 const logs = [
@@ -125,26 +241,59 @@ const logs = [
 ]
 
 function statusTagType(s: string) {
-  const map: Record<string, string> = { draft: 'info', approved: '', released: 'warning', in_progress: 'primary', completed: 'success', closed: 'info' }
+  const map: Record<string, string> = {
+    draft: 'info',
+    approved: '',
+    released: 'warning',
+    in_progress: 'primary',
+    completed: 'success',
+    closed: 'info'
+  }
   return map[s] || 'info'
 }
 
 function statusText(s: string) {
-  const map: Record<string, string> = { draft: '草稿', approved: '已审批', released: '已下发', in_progress: '生产中', completed: '已完工', closed: '已关闭' }
+  const map: Record<string, string> = {
+    draft: '草稿',
+    approved: '已审批',
+    released: '已下发',
+    in_progress: '生产中',
+    completed: '已完工',
+    closed: '已关闭'
+  }
   return map[s] || s
 }
 
-function submitApproval() { order.status = 'approved'; ElMessage.success('已提交审批') }
-function releaseOrder() { order.status = 'released'; ElMessage.success('已下发到车间') }
+function submitApproval() {
+  order.status = 'approved'
+  ElMessage.success('已提交审批')
+}
+function releaseOrder() {
+  order.status = 'released'
+  ElMessage.success('已下发到车间')
+}
 function closeOrder() {
-  ElMessageBox.confirm('确认关闭该工单？', '确认', { type: 'warning' }).then(() => {
-    order.status = 'closed'; ElMessage.success('工单已关闭')
-  }).catch(() => {})
+  ElMessageBox.confirm('确认关闭该工单？', '确认', { type: 'warning' })
+    .then(() => {
+      order.status = 'closed'
+      ElMessage.success('工单已关闭')
+    })
+    .catch(() => {})
 }
 </script>
 
 <style scoped>
-.detail-header { display: flex; justify-content: space-between; align-items: center; }
-.header-left { display: flex; align-items: center; }
-.header-left h2 { margin: 0; font-size: 20px; }
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+}
+.header-left h2 {
+  margin: 0;
+  font-size: 20px;
+}
 </style>

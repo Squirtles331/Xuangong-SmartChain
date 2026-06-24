@@ -28,17 +28,27 @@
     <!-- 回款登记弹窗 -->
     <el-dialog v-model="receiptVisible" title="登记回款" width="500px">
       <el-form :model="receiptForm" label-width="100px">
-        <el-form-item label="客户" required><el-select v-model="receiptForm.customer" style="width:100%"><el-option v-for="c in customerNames" :key="c" :label="c" :value="c" /></el-select></el-form-item>
-        <el-form-item label="回款金额" required><el-input-number v-model="receiptForm.amount" :min="0" style="width:100%" /></el-form-item>
-        <el-form-item label="回款日期" required><el-date-picker v-model="receiptForm.date" style="width:100%" /></el-form-item>
-        <el-form-item label="回款方式" required><el-select v-model="receiptForm.method" style="width:100%"><el-option label="银行转账" value="bank" /><el-option label="现金" value="cash" /><el-option label="承兑汇票" value="draft" /></el-select></el-form-item>
+        <el-form-item label="客户" required
+          ><el-select v-model="receiptForm.customer" style="width: 100%"
+            ><el-option v-for="c in customerNames" :key="c" :label="c" :value="c" /></el-select
+        ></el-form-item>
+        <el-form-item label="回款金额" required><el-input-number v-model="receiptForm.amount" :min="0" style="width: 100%" /></el-form-item>
+        <el-form-item label="回款日期" required><el-date-picker v-model="receiptForm.date" style="width: 100%" /></el-form-item>
+        <el-form-item label="回款方式" required
+          ><el-select v-model="receiptForm.method" style="width: 100%"
+            ><el-option label="银行转账" value="bank" /><el-option label="现金" value="cash" /><el-option label="承兑汇票" value="draft" /></el-select
+        ></el-form-item>
       </el-form>
-      <template #footer><el-button @click="receiptVisible = false">取消</el-button><el-button type="primary" @click="submitReceipt">确认</el-button></template>
+      <template #footer
+        ><el-button @click="receiptVisible = false">取消</el-button><el-button type="primary" @click="submitReceipt">确认</el-button></template
+      >
     </el-dialog>
 
     <!-- 核销弹窗 -->
     <el-dialog v-model="settleVisible" title="回款核销" width="600px">
-      <p>当前回款余额: <strong>{{ receiptForm.amount.toLocaleString() }} 元</strong></p>
+      <p>
+        当前回款余额: <strong>{{ receiptForm.amount.toLocaleString() }} 元</strong>
+      </p>
       <el-table :data="settleList" border @selection-change="onSettleSelect">
         <el-table-column type="selection" width="50" />
         <el-table-column prop="code" label="应收单号" width="160" />
@@ -46,7 +56,9 @@
         <el-table-column prop="balance" label="余额" width="120" align="right" />
         <el-table-column prop="aging" label="账龄" width="100" />
       </el-table>
-      <template #footer><el-button @click="settleVisible = false">取消</el-button><el-button type="primary" @click="submitSettle">确认核销</el-button></template>
+      <template #footer
+        ><el-button @click="settleVisible = false">取消</el-button><el-button type="primary" @click="submitSettle">确认核销</el-button></template
+      >
     </el-dialog>
   </gi-page-layout>
 </template>
@@ -56,7 +68,16 @@ import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
-interface AR { id: string; code: string; customer: string; amount: number; settled: number; balance: number; due_date: string; aging: number }
+interface AR {
+  id: string
+  code: string
+  customer: string
+  amount: number
+  settled: number
+  balance: number
+  due_date: string
+  aging: number
+}
 
 const ars = ref<AR[]>([
   { id: '1', code: 'AR202501150001', customer: 'XX重工集团', amount: 230000, settled: 0, balance: 230000, due_date: '2025-03-15', aging: -45 },
@@ -68,40 +89,85 @@ const ars = ref<AR[]>([
 const searchForm = reactive({ customer: '', aging: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '客户', field: 'customer' } as any,
-  { type: 'select-v2', label: '账龄', field: 'aging', props: { options: [{ label: '全部', value: '' }, { label: '未到期', value: '0' }, { label: '逾期1-30天', value: '1' }, { label: '逾期31-60天', value: '2' }, { label: '逾期61-90天', value: '3' }, { label: '逾期>90天', value: '4' }] } } as any
+  {
+    type: 'select-v2',
+    label: '账龄',
+    field: 'aging',
+    props: {
+      options: [
+        { label: '全部', value: '' },
+        { label: '未到期', value: '0' },
+        { label: '逾期1-30天', value: '1' },
+        { label: '逾期31-60天', value: '2' },
+        { label: '逾期61-90天', value: '3' },
+        { label: '逾期>90天', value: '4' }
+      ]
+    }
+  } as any
 ]
 
 const columns: TableColumnItem<AR>[] = [
-  { prop: 'code', label: '应收单号', width: 160 }, { prop: 'customer', label: '客户', minWidth: 140 },
-  { prop: 'amount', label: '应收金额', width: 120, align: 'right' }, { prop: 'settled', label: '已核销', width: 120, align: 'right' },
-  { prop: 'balance', label: '余额', width: 120, align: 'right' }, { prop: 'due_date', label: '到期日', width: 110 },
-  { label: '账龄', width: 100, slotName: 'aging', align: 'center' }, { label: '状态', width: 80, slotName: 'status', align: 'center' },
+  { prop: 'code', label: '应收单号', width: 160 },
+  { prop: 'customer', label: '客户', minWidth: 140 },
+  { prop: 'amount', label: '应收金额', width: 120, align: 'right' },
+  { prop: 'settled', label: '已核销', width: 120, align: 'right' },
+  { prop: 'balance', label: '余额', width: 120, align: 'right' },
+  { prop: 'due_date', label: '到期日', width: 110 },
+  { label: '账龄', width: 100, slotName: 'aging', align: 'center' },
+  { label: '状态', width: 80, slotName: 'status', align: 'center' },
   { label: '操作', width: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const filteredAR = computed(() => ars.value.filter(a => {
-  if (searchForm.customer && !a.customer.includes(searchForm.customer)) return false
-  return true
-}))
-const pagedAR = computed(() => { pagination.total = filteredAR.value.length; return filteredAR.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize) })
+const filteredAR = computed(() =>
+  ars.value.filter((a) => {
+    if (searchForm.customer && !a.customer.includes(searchForm.customer)) return false
+    return true
+  })
+)
+const pagedAR = computed(() => {
+  pagination.total = filteredAR.value.length
+  return filteredAR.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
+})
 
-function handleSearch() { pagination.currentPage = 1 }
-function handleReset() { searchForm.customer = ''; searchForm.aging = ''; pagination.currentPage = 1 }
+function handleSearch() {
+  pagination.currentPage = 1
+}
+function handleReset() {
+  searchForm.customer = ''
+  searchForm.aging = ''
+  pagination.currentPage = 1
+}
 
 const customerNames = ['XX重工集团', 'YY机械设备', 'ZZ泵业科技']
 
 const receiptVisible = ref(false)
 const receiptForm = reactive({ customer: 'XX重工集团', amount: 0, date: new Date().toISOString().slice(0, 10), method: 'bank' })
-function openReceipt() { receiptVisible.value = true }
-function submitReceipt() { receiptVisible.value = false; ElMessage.success('回款已登记，请核销') }
+function openReceipt() {
+  receiptVisible.value = true
+}
+function submitReceipt() {
+  receiptVisible.value = false
+  ElMessage.success('回款已登记，请核销')
+}
 
-const settleVisible = ref(false); const settleList = ref<AR[]>([]); const selectedSettle = ref<AR[]>([])
-function openSettle(row: AR) { settleList.value = ars.value.filter(a => a.customer === row.customer && a.balance > 0); settleVisible.value = true }
-function onSettleSelect(rows: AR[]) { selectedSettle.value = rows }
+const settleVisible = ref(false)
+const settleList = ref<AR[]>([])
+const selectedSettle = ref<AR[]>([])
+function openSettle(row: AR) {
+  settleList.value = ars.value.filter((a) => a.customer === row.customer && a.balance > 0)
+  settleVisible.value = true
+}
+function onSettleSelect(rows: AR[]) {
+  selectedSettle.value = rows
+}
 function submitSettle() {
   const total = selectedSettle.value.reduce((s, a) => s + a.balance, 0)
-  selectedSettle.value.forEach(a => { a.settled = a.amount; a.balance = 0 })
-  settleVisible.value = false; ElMessage.success(`已核销 ${total.toLocaleString()} 元`)
+  selectedSettle.value.forEach((a) => {
+    a.settled = a.amount
+    a.balance = 0
+  })
+  settleVisible.value = false
+  ElMessage.success(`已核销 ${total.toLocaleString()} 元`)
 }
 </script>

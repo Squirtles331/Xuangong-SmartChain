@@ -35,24 +35,113 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface BOM {
-  id: string; material_code: string; material_name: string; bom_type: string; version: string
-  status: string; effective_date: string; created_by: string; created_at: string
+  id: string
+  material_code: string
+  material_name: string
+  bom_type: string
+  version: string
+  status: string
+  effective_date: string
+  created_by: string
+  created_at: string
 }
 
 const boms = ref<BOM[]>([
-  { id: '1', material_code: '04.01.001-00001', material_name: '离心泵 XJP-100', bom_type: 'EBOM', version: 'V2.0', status: 'active', effective_date: '2025-01-10', created_by: '张工', created_at: '2025-01-10' },
-  { id: '2', material_code: '04.01.001-00001', material_name: '离心泵 XJP-100', bom_type: 'MBOM', version: 'V1.2', status: 'active', effective_date: '2025-01-12', created_by: '李工', created_at: '2025-01-12' },
-  { id: '3', material_code: '04.02.001-00001', material_name: '齿轮箱 GBX-200', bom_type: 'EBOM', version: 'V1.0', status: 'active', effective_date: '2025-01-05', created_by: '张工', created_at: '2025-01-05' },
-  { id: '4', material_code: '04.02.001-00001', material_name: '齿轮箱 GBX-200', bom_type: 'MBOM', version: 'V1.0', status: 'active', effective_date: '2025-01-08', created_by: '李工', created_at: '2025-01-08' },
-  { id: '5', material_code: '03.01.001-00001', material_name: '传动轴 DS-50', bom_type: 'MBOM', version: 'V1.1', status: 'draft', effective_date: '-', created_by: '李工', created_at: '2025-01-15' },
-  { id: '6', material_code: '04.01.001-00001', material_name: '离心泵 XJP-100', bom_type: 'MBOM', version: 'V1.1', status: 'archived', effective_date: '2024-12-01', created_by: '王工', created_at: '2024-12-01' },
-  { id: '7', material_code: '04.01.001-00001', material_name: '离心泵 XJP-100', bom_type: 'MBOM', version: 'V1.0', status: 'archived', effective_date: '2024-10-15', created_by: '王工', created_at: '2024-10-15' }
+  {
+    id: '1',
+    material_code: '04.01.001-00001',
+    material_name: '离心泵 XJP-100',
+    bom_type: 'EBOM',
+    version: 'V2.0',
+    status: 'active',
+    effective_date: '2025-01-10',
+    created_by: '张工',
+    created_at: '2025-01-10'
+  },
+  {
+    id: '2',
+    material_code: '04.01.001-00001',
+    material_name: '离心泵 XJP-100',
+    bom_type: 'MBOM',
+    version: 'V1.2',
+    status: 'active',
+    effective_date: '2025-01-12',
+    created_by: '李工',
+    created_at: '2025-01-12'
+  },
+  {
+    id: '3',
+    material_code: '04.02.001-00001',
+    material_name: '齿轮箱 GBX-200',
+    bom_type: 'EBOM',
+    version: 'V1.0',
+    status: 'active',
+    effective_date: '2025-01-05',
+    created_by: '张工',
+    created_at: '2025-01-05'
+  },
+  {
+    id: '4',
+    material_code: '04.02.001-00001',
+    material_name: '齿轮箱 GBX-200',
+    bom_type: 'MBOM',
+    version: 'V1.0',
+    status: 'active',
+    effective_date: '2025-01-08',
+    created_by: '李工',
+    created_at: '2025-01-08'
+  },
+  {
+    id: '5',
+    material_code: '03.01.001-00001',
+    material_name: '传动轴 DS-50',
+    bom_type: 'MBOM',
+    version: 'V1.1',
+    status: 'draft',
+    effective_date: '-',
+    created_by: '李工',
+    created_at: '2025-01-15'
+  },
+  {
+    id: '6',
+    material_code: '04.01.001-00001',
+    material_name: '离心泵 XJP-100',
+    bom_type: 'MBOM',
+    version: 'V1.1',
+    status: 'archived',
+    effective_date: '2024-12-01',
+    created_by: '王工',
+    created_at: '2024-12-01'
+  },
+  {
+    id: '7',
+    material_code: '04.01.001-00001',
+    material_name: '离心泵 XJP-100',
+    bom_type: 'MBOM',
+    version: 'V1.0',
+    status: 'archived',
+    effective_date: '2024-10-15',
+    created_by: '王工',
+    created_at: '2024-10-15'
+  }
 ])
 
 const searchForm = reactive({ keyword: '', bom_type: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '物料编码/名称' } as any },
-  { type: 'select-v2', label: 'BOM类型', field: 'bom_type', props: { options: [{ label: '全部', value: '' }, { label: 'EBOM', value: 'EBOM' }, { label: 'PBOM', value: 'PBOM' }, { label: 'MBOM', value: 'MBOM' }] } as any }
+  {
+    type: 'select-v2',
+    label: 'BOM类型',
+    field: 'bom_type',
+    props: {
+      options: [
+        { label: '全部', value: '' },
+        { label: 'EBOM', value: 'EBOM' },
+        { label: 'PBOM', value: 'PBOM' },
+        { label: 'MBOM', value: 'MBOM' }
+      ]
+    } as any
+  }
 ]
 
 const columns: TableColumnItem<BOM>[] = [
@@ -69,7 +158,7 @@ const columns: TableColumnItem<BOM>[] = [
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 
 const filteredBoms = computed(() => {
-  return boms.value.filter(b => {
+  return boms.value.filter((b) => {
     if (searchForm.keyword && !b.material_name.includes(searchForm.keyword) && !b.material_code.includes(searchForm.keyword)) return false
     if (searchForm.bom_type && b.bom_type !== searchForm.bom_type) return false
     return true
@@ -81,21 +170,42 @@ const pagedBoms = computed(() => {
   return filteredBoms.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
 })
 
-function handleSearch() { pagination.currentPage = 1 }
-function handleReset() { searchForm.keyword = ''; searchForm.bom_type = ''; pagination.currentPage = 1 }
-function refresh() { handleReset() }
+function handleSearch() {
+  pagination.currentPage = 1
+}
+function handleReset() {
+  searchForm.keyword = ''
+  searchForm.bom_type = ''
+  pagination.currentPage = 1
+}
+function refresh() {
+  handleReset()
+}
 
 function convertToMBOM(row: BOM) {
-  ElMessageBox.confirm(`将 ${row.material_name} 的 EBOM ${row.version} 转换为 MBOM？`, '转换确认').then(() => {
-    boms.value.unshift({ ...row, id: Date.now().toString(), bom_type: 'MBOM', version: 'V1.0 (新)', status: 'draft', effective_date: '-', created_by: '当前用户', created_at: new Date().toISOString().slice(0, 10) })
-    ElMessage.success('已创建 MBOM 草稿，请在编辑器中完善')
-  }).catch(() => {})
+  ElMessageBox.confirm(`将 ${row.material_name} 的 EBOM ${row.version} 转换为 MBOM？`, '转换确认')
+    .then(() => {
+      boms.value.unshift({
+        ...row,
+        id: Date.now().toString(),
+        bom_type: 'MBOM',
+        version: 'V1.0 (新)',
+        status: 'draft',
+        effective_date: '-',
+        created_by: '当前用户',
+        created_at: new Date().toISOString().slice(0, 10)
+      })
+      ElMessage.success('已创建 MBOM 草稿，请在编辑器中完善')
+    })
+    .catch(() => {})
 }
 
 function deleteBom(id: string) {
-  ElMessageBox.confirm('确定删除该BOM版本？', '警告', { type: 'warning' }).then(() => {
-    boms.value = boms.value.filter(b => b.id !== id)
-    ElMessage.success('删除成功')
-  }).catch(() => {})
+  ElMessageBox.confirm('确定删除该BOM版本？', '警告', { type: 'warning' })
+    .then(() => {
+      boms.value = boms.value.filter((b) => b.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 </script>

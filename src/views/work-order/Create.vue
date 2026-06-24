@@ -67,10 +67,14 @@
     <!-- Step 3: 确认提交 -->
     <div v-show="activeStep === 2">
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="工单类型">{{ step1Form.wo_type === 'production' ? '生产工单' : step1Form.wo_type === 'rework' ? '返工工单' : '样品工单' }}</el-descriptions-item>
+        <el-descriptions-item label="工单类型">{{
+          step1Form.wo_type === 'production' ? '生产工单' : step1Form.wo_type === 'rework' ? '返工工单' : '样品工单'
+        }}</el-descriptions-item>
         <el-descriptions-item label="产品">{{ step1Form.material_name }}</el-descriptions-item>
         <el-descriptions-item label="计划数量">{{ step1Form.planned_qty }} {{ step1Form.unit }}</el-descriptions-item>
-        <el-descriptions-item label="优先级">{{ step1Form.priority === 'urgent' ? '紧急' : step1Form.priority === 'high' ? '高' : step1Form.priority === 'normal' ? '普通' : '低' }}</el-descriptions-item>
+        <el-descriptions-item label="优先级">{{
+          step1Form.priority === 'urgent' ? '紧急' : step1Form.priority === 'high' ? '高' : step1Form.priority === 'normal' ? '普通' : '低'
+        }}</el-descriptions-item>
         <el-descriptions-item label="生产车间">{{ step1Form.workshop }}</el-descriptions-item>
         <el-descriptions-item label="计划开工">{{ step1Form.planned_start }}</el-descriptions-item>
         <el-descriptions-item label="计划完工">{{ step1Form.planned_end }}</el-descriptions-item>
@@ -98,23 +102,71 @@ const router = useRouter()
 const activeStep = ref(0)
 
 const step1Form = reactive({
-  wo_type: 'production', material_code: '', material_name: '', material_spec: '', unit: '台',
-  planned_qty: 100, priority: 'normal', workshop: '机加工一车间', line: '',
-  planned_start: '2025-01-16', planned_end: '2025-01-25', customer_po: '', remark: ''
+  wo_type: 'production',
+  material_code: '',
+  material_name: '',
+  material_spec: '',
+  unit: '台',
+  planned_qty: 100,
+  priority: 'normal',
+  workshop: '机加工一车间',
+  line: '',
+  planned_start: '2025-01-16',
+  planned_end: '2025-01-25',
+  customer_po: '',
+  remark: ''
 })
 
 const step1Columns: FormColumnItem[] = [
-  { type: 'select-v2', label: '工单类型', field: 'wo_type', required: true,
-    props: { options: [{ label: '生产工单', value: 'production' }, { label: '返工工单', value: 'rework' }, { label: '样品工单', value: 'sample' }] } as any },
-  { type: 'input', label: '产品物料', field: 'material_code', required: true,
-    props: { placeholder: '搜索选择产品物料编码', clearable: true } as any },
-  { type: 'input', label: '产品名称', field: 'material_name',
-    props: { disabled: true, placeholder: '选择物料后自动填充' } as any },
+  {
+    type: 'select-v2',
+    label: '工单类型',
+    field: 'wo_type',
+    required: true,
+    props: {
+      options: [
+        { label: '生产工单', value: 'production' },
+        { label: '返工工单', value: 'rework' },
+        { label: '样品工单', value: 'sample' }
+      ]
+    } as any
+  },
+  {
+    type: 'input',
+    label: '产品物料',
+    field: 'material_code',
+    required: true,
+    props: { placeholder: '搜索选择产品物料编码', clearable: true } as any
+  },
+  { type: 'input', label: '产品名称', field: 'material_name', props: { disabled: true, placeholder: '选择物料后自动填充' } as any },
   { type: 'input-number', label: '计划数量', field: 'planned_qty', required: true, props: { min: 1 } as any },
-  { type: 'select-v2', label: '优先级', field: 'priority', required: true,
-    props: { options: [{ label: '紧急', value: 'urgent' }, { label: '高', value: 'high' }, { label: '普通', value: 'normal' }, { label: '低', value: 'low' }] } as any },
-  { type: 'select-v2', label: '生产车间', field: 'workshop', required: true,
-    props: { options: [{ label: '机加工一车间', value: '机加工一车间' }, { label: '机加工二车间', value: '机加工二车间' }, { label: '装配车间', value: '装配车间' }] } as any },
+  {
+    type: 'select-v2',
+    label: '优先级',
+    field: 'priority',
+    required: true,
+    props: {
+      options: [
+        { label: '紧急', value: 'urgent' },
+        { label: '高', value: 'high' },
+        { label: '普通', value: 'normal' },
+        { label: '低', value: 'low' }
+      ]
+    } as any
+  },
+  {
+    type: 'select-v2',
+    label: '生产车间',
+    field: 'workshop',
+    required: true,
+    props: {
+      options: [
+        { label: '机加工一车间', value: '机加工一车间' },
+        { label: '机加工二车间', value: '机加工二车间' },
+        { label: '装配车间', value: '装配车间' }
+      ]
+    } as any
+  },
   { type: 'date-picker', label: '计划开工', field: 'planned_start', required: true },
   { type: 'date-picker', label: '计划完工', field: 'planned_end', required: true },
   { type: 'input', label: '客户订单号', field: 'customer_po' },

@@ -99,66 +99,248 @@ import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 interface TreeNode {
-  id: string; label: string; material_code: string; material_name: string
-  qty: number; scrap_rate: number; position_no: string; material_type: string
-  is_critical: boolean; substitute_allowed: boolean; children?: TreeNode[]
+  id: string
+  label: string
+  material_code: string
+  material_name: string
+  qty: number
+  scrap_rate: number
+  position_no: string
+  material_type: string
+  is_critical: boolean
+  substitute_allowed: boolean
+  children?: TreeNode[]
 }
 
 const treeData = ref<TreeNode[]>([
   {
-    id: 'root', label: '离心泵 XJP-100 ×1', material_code: '04.01.001-00001', material_name: '离心泵 XJP-100',
-    qty: 1, scrap_rate: 0, position_no: '', material_type: 'normal', is_critical: false, substitute_allowed: false,
+    id: 'root',
+    label: '离心泵 XJP-100 ×1',
+    material_code: '04.01.001-00001',
+    material_name: '离心泵 XJP-100',
+    qty: 1,
+    scrap_rate: 0,
+    position_no: '',
+    material_type: 'normal',
+    is_critical: false,
+    substitute_allowed: false,
     children: [
-      { id: 'c1', label: '泵体组件 ×1', material_code: '03.01.002-00001', material_name: '泵体组件', qty: 1, scrap_rate: 0, position_no: 'A1', material_type: 'normal', is_critical: true, substitute_allowed: false, children: [
-        { id: 'c11', label: '泵体铸件 ×1', material_code: '01.01.001-00001', material_name: '泵体铸件', qty: 1, scrap_rate: 2, position_no: 'A1-1', material_type: 'normal', is_critical: true, substitute_allowed: false },
-        { id: 'c12', label: '耐磨环 ×2', material_code: '02.01.001-00001', material_name: '耐磨环', qty: 2, scrap_rate: 0, position_no: 'A1-2', material_type: 'normal', is_critical: false, substitute_allowed: false },
-        { id: 'c13', label: '螺栓 M16×60 ×8', material_code: '02.02.001-00001', material_name: '螺栓 M16×60', qty: 8, scrap_rate: 1, position_no: 'A1-3', material_type: 'normal', is_critical: false, substitute_allowed: true }
-      ]},
-      { id: 'c2', label: '叶轮组件 ×1', material_code: '03.01.003-00001', material_name: '叶轮组件', qty: 1, scrap_rate: 0, position_no: 'A2', material_type: 'normal', is_critical: true, substitute_allowed: false, children: [
-        { id: 'c21', label: '叶轮铸件 ×1', material_code: '01.01.002-00001', material_name: '叶轮铸件', qty: 1, scrap_rate: 1.5, position_no: 'A2-1', material_type: 'normal', is_critical: true, substitute_allowed: false },
-        { id: 'c22', label: '键 8×7×30 ×1', material_code: '02.03.001-00001', material_name: '键 8×7×30', qty: 1, scrap_rate: 0, position_no: 'A2-2', material_type: 'normal', is_critical: false, substitute_allowed: false }
-      ]},
-      { id: 'c3', label: '轴承架组件 ×1', material_code: '03.01.004-00001', material_name: '轴承架组件', qty: 1, scrap_rate: 0, position_no: 'A3', material_type: 'phantom', is_critical: false, substitute_allowed: false, children: [
-        { id: 'c31', label: '轴承架 ×1', material_code: '01.01.003-00001', material_name: '轴承架', qty: 1, scrap_rate: 0, position_no: 'A3-1', material_type: 'normal', is_critical: false, substitute_allowed: false },
-        { id: 'c32', label: '轴承 6308 ×2', material_code: '02.04.001-00001', material_name: '轴承 6308', qty: 2, scrap_rate: 0, position_no: 'A3-2', material_type: 'normal', is_critical: true, substitute_allowed: true }
-      ]},
-      { id: 'c4', label: '润滑油 Shell Tellus 46 ×0.5L', material_code: '05.01.001-00001', material_name: '润滑油 Shell Tellus 46', qty: 0.5, scrap_rate: 0, position_no: '', material_type: 'auxiliary', is_critical: false, substitute_allowed: false }
+      {
+        id: 'c1',
+        label: '泵体组件 ×1',
+        material_code: '03.01.002-00001',
+        material_name: '泵体组件',
+        qty: 1,
+        scrap_rate: 0,
+        position_no: 'A1',
+        material_type: 'normal',
+        is_critical: true,
+        substitute_allowed: false,
+        children: [
+          {
+            id: 'c11',
+            label: '泵体铸件 ×1',
+            material_code: '01.01.001-00001',
+            material_name: '泵体铸件',
+            qty: 1,
+            scrap_rate: 2,
+            position_no: 'A1-1',
+            material_type: 'normal',
+            is_critical: true,
+            substitute_allowed: false
+          },
+          {
+            id: 'c12',
+            label: '耐磨环 ×2',
+            material_code: '02.01.001-00001',
+            material_name: '耐磨环',
+            qty: 2,
+            scrap_rate: 0,
+            position_no: 'A1-2',
+            material_type: 'normal',
+            is_critical: false,
+            substitute_allowed: false
+          },
+          {
+            id: 'c13',
+            label: '螺栓 M16×60 ×8',
+            material_code: '02.02.001-00001',
+            material_name: '螺栓 M16×60',
+            qty: 8,
+            scrap_rate: 1,
+            position_no: 'A1-3',
+            material_type: 'normal',
+            is_critical: false,
+            substitute_allowed: true
+          }
+        ]
+      },
+      {
+        id: 'c2',
+        label: '叶轮组件 ×1',
+        material_code: '03.01.003-00001',
+        material_name: '叶轮组件',
+        qty: 1,
+        scrap_rate: 0,
+        position_no: 'A2',
+        material_type: 'normal',
+        is_critical: true,
+        substitute_allowed: false,
+        children: [
+          {
+            id: 'c21',
+            label: '叶轮铸件 ×1',
+            material_code: '01.01.002-00001',
+            material_name: '叶轮铸件',
+            qty: 1,
+            scrap_rate: 1.5,
+            position_no: 'A2-1',
+            material_type: 'normal',
+            is_critical: true,
+            substitute_allowed: false
+          },
+          {
+            id: 'c22',
+            label: '键 8×7×30 ×1',
+            material_code: '02.03.001-00001',
+            material_name: '键 8×7×30',
+            qty: 1,
+            scrap_rate: 0,
+            position_no: 'A2-2',
+            material_type: 'normal',
+            is_critical: false,
+            substitute_allowed: false
+          }
+        ]
+      },
+      {
+        id: 'c3',
+        label: '轴承架组件 ×1',
+        material_code: '03.01.004-00001',
+        material_name: '轴承架组件',
+        qty: 1,
+        scrap_rate: 0,
+        position_no: 'A3',
+        material_type: 'phantom',
+        is_critical: false,
+        substitute_allowed: false,
+        children: [
+          {
+            id: 'c31',
+            label: '轴承架 ×1',
+            material_code: '01.01.003-00001',
+            material_name: '轴承架',
+            qty: 1,
+            scrap_rate: 0,
+            position_no: 'A3-1',
+            material_type: 'normal',
+            is_critical: false,
+            substitute_allowed: false
+          },
+          {
+            id: 'c32',
+            label: '轴承 6308 ×2',
+            material_code: '02.04.001-00001',
+            material_name: '轴承 6308',
+            qty: 2,
+            scrap_rate: 0,
+            position_no: 'A3-2',
+            material_type: 'normal',
+            is_critical: true,
+            substitute_allowed: true
+          }
+        ]
+      },
+      {
+        id: 'c4',
+        label: '润滑油 Shell Tellus 46 ×0.5L',
+        material_code: '05.01.001-00001',
+        material_name: '润滑油 Shell Tellus 46',
+        qty: 0.5,
+        scrap_rate: 0,
+        position_no: '',
+        material_type: 'auxiliary',
+        is_critical: false,
+        substitute_allowed: false
+      }
     ]
   }
 ])
 
 const currentNode = ref<TreeNode | null>(null)
-const nodeForm = reactive({ material_code: '', material_name: '', qty: 1, scrap_rate: 0, position_no: '', material_type: 'normal', is_critical: false, substitute_allowed: false })
+const nodeForm = reactive({
+  material_code: '',
+  material_name: '',
+  qty: 1,
+  scrap_rate: 0,
+  position_no: '',
+  material_type: 'normal',
+  is_critical: false,
+  substitute_allowed: false
+})
 
 function handleNodeClick(data: TreeNode) {
   currentNode.value = data
-  nodeForm.material_code = data.material_code; nodeForm.material_name = data.material_name
-  nodeForm.qty = data.qty; nodeForm.scrap_rate = data.scrap_rate
-  nodeForm.position_no = data.position_no; nodeForm.material_type = data.material_type
-  nodeForm.is_critical = data.is_critical; nodeForm.substitute_allowed = data.substitute_allowed
+  nodeForm.material_code = data.material_code
+  nodeForm.material_name = data.material_name
+  nodeForm.qty = data.qty
+  nodeForm.scrap_rate = data.scrap_rate
+  nodeForm.position_no = data.position_no
+  nodeForm.material_type = data.material_type
+  nodeForm.is_critical = data.is_critical
+  nodeForm.substitute_allowed = data.substitute_allowed
 }
 
 function addChild(parentId: string | null) {
-  currentNode.value = { id: '', label: '', material_code: '', material_name: '', qty: 1, scrap_rate: 0, position_no: '', material_type: 'normal', is_critical: false, substitute_allowed: false }
-  nodeForm.material_code = ''; nodeForm.material_name = ''; nodeForm.qty = 1; nodeForm.scrap_rate = 0; nodeForm.position_no = ''; nodeForm.material_type = 'normal'; nodeForm.is_critical = false; nodeForm.substitute_allowed = false
+  currentNode.value = {
+    id: '',
+    label: '',
+    material_code: '',
+    material_name: '',
+    qty: 1,
+    scrap_rate: 0,
+    position_no: '',
+    material_type: 'normal',
+    is_critical: false,
+    substitute_allowed: false
+  }
+  nodeForm.material_code = ''
+  nodeForm.material_name = ''
+  nodeForm.qty = 1
+  nodeForm.scrap_rate = 0
+  nodeForm.position_no = ''
+  nodeForm.material_type = 'normal'
+  nodeForm.is_critical = false
+  nodeForm.substitute_allowed = false
 }
 
 function saveNode() {
-  if (!nodeForm.material_code) { ElMessage.warning('请填写物料编码'); return }
+  if (!nodeForm.material_code) {
+    ElMessage.warning('请填写物料编码')
+    return
+  }
   if (currentNode.value!.id) {
     const node = currentNode.value!
-    node.material_code = nodeForm.material_code; node.material_name = nodeForm.material_name || nodeForm.material_code
-    node.qty = nodeForm.qty; node.scrap_rate = nodeForm.scrap_rate; node.position_no = nodeForm.position_no
-    node.material_type = nodeForm.material_type; node.is_critical = nodeForm.is_critical; node.substitute_allowed = nodeForm.substitute_allowed
+    node.material_code = nodeForm.material_code
+    node.material_name = nodeForm.material_name || nodeForm.material_code
+    node.qty = nodeForm.qty
+    node.scrap_rate = nodeForm.scrap_rate
+    node.position_no = nodeForm.position_no
+    node.material_type = nodeForm.material_type
+    node.is_critical = nodeForm.is_critical
+    node.substitute_allowed = nodeForm.substitute_allowed
     node.label = `${nodeForm.material_name || nodeForm.material_code} ×${nodeForm.qty}`
     ElMessage.success('保存成功')
   } else {
     const newNode: TreeNode = {
-      id: Date.now().toString(), label: `${nodeForm.material_name || nodeForm.material_code} ×${nodeForm.qty}`,
-      ...nodeForm, children: []
+      id: Date.now().toString(),
+      label: `${nodeForm.material_name || nodeForm.material_code} ×${nodeForm.qty}`,
+      ...nodeForm,
+      children: []
     }
-    if (!currentNode.value!.id) { treeData.value.push(newNode) }
-    else {
+    if (!currentNode.value!.id) {
+      treeData.value.push(newNode)
+    } else {
       if (!currentNode.value!.children) currentNode.value!.children = []
       currentNode.value!.children.push(newNode)
     }
@@ -168,33 +350,75 @@ function saveNode() {
 }
 
 function deleteNode() {
-  ElMessageBox.confirm('确定删除该节点及其所有子节点？', '警告', { type: 'warning' }).then(() => {
-    removeNode(treeData.value, currentNode.value!.id)
-    currentNode.value = null
-    ElMessage.success('删除成功')
-  }).catch(() => {})
+  ElMessageBox.confirm('确定删除该节点及其所有子节点？', '警告', { type: 'warning' })
+    .then(() => {
+      removeNode(treeData.value, currentNode.value!.id)
+      currentNode.value = null
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 
 function removeNode(nodes: TreeNode[], id: string): boolean {
   for (let i = 0; i < nodes.length; i++) {
-    if (nodes[i].id === id) { nodes.splice(i, 1); return true }
+    if (nodes[i].id === id) {
+      nodes.splice(i, 1)
+      return true
+    }
     if (nodes[i].children && removeNode(nodes[i].children!, id)) return true
   }
   return false
 }
 
-function importExcel() { ElMessage.success('导入成功') }
-function exportExcel() { ElMessage.success('导出成功') }
-function saveBom() { ElMessage.success('BOM 已保存') }
+function importExcel() {
+  ElMessage.success('导入成功')
+}
+function exportExcel() {
+  ElMessage.success('导出成功')
+}
+function saveBom() {
+  ElMessage.success('BOM 已保存')
+}
 </script>
 
 <style scoped>
-.editor-header { display: flex; justify-content: space-between; align-items: center; }
-.editor-header h2 { margin: 0; font-size: 18px; }
-.editor-container { display: flex; gap: 0; height: calc(100vh - 180px); }
-.tree-panel { width: 420px; border-right: 1px solid #eee; overflow: auto; padding: 12px; }
-.form-panel { flex: 1; overflow: auto; padding: 16px; }
-.empty-tip { display: flex; align-items: center; justify-content: center; height: 100%; }
-.tree-node { font-size: 13px; }
-.phantom-node { border: 1px dashed #e6a23c; padding: 2px 6px; border-radius: 4px; }
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.editor-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.editor-container {
+  display: flex;
+  gap: 0;
+  height: calc(100vh - 180px);
+}
+.tree-panel {
+  width: 420px;
+  border-right: 1px solid #eee;
+  overflow: auto;
+  padding: 12px;
+}
+.form-panel {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+.empty-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.tree-node {
+  font-size: 13px;
+}
+.phantom-node {
+  border: 1px dashed #e6a23c;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
 </style>

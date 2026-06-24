@@ -49,7 +49,9 @@
             <el-input v-model="form.remark" type="textarea" :rows="2" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" size="large" @click="submitReport" :disabled="form.qualified_qty + form.defective_qty === 0">提交报工</el-button>
+            <el-button type="primary" size="large" @click="submitReport" :disabled="form.qualified_qty + form.defective_qty === 0"
+              >提交报工</el-button
+            >
             <el-button size="large" @click="$router.back()">返回</el-button>
           </el-form-item>
         </el-form>
@@ -78,15 +80,22 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const report = reactive({
-  wo_code: 'WO202501150001', material_name: '离心泵 XJP-100',
-  operation_no: 30, operation_name: '精车', work_center: '数控车组',
-  start_time: '2025-01-15 08:00:00', planned_qty: 100, reported_qty: 45
+  wo_code: 'WO202501150001',
+  material_name: '离心泵 XJP-100',
+  operation_no: 30,
+  operation_name: '精车',
+  work_center: '数控车组',
+  start_time: '2025-01-15 08:00:00',
+  planned_qty: 100,
+  reported_qty: 45
 })
 
 // 计时器
 const elapsed = ref(65) // 分钟，模拟已过时间
 let timer: ReturnType<typeof setInterval>
-onMounted(() => { timer = setInterval(() => elapsed.value++, 60000) })
+onMounted(() => {
+  timer = setInterval(() => elapsed.value++, 60000)
+})
 onUnmounted(() => clearInterval(timer))
 
 const elapsedDisplay = computed(() => {
@@ -98,8 +107,11 @@ const elapsedDisplay = computed(() => {
 const maxReportQty = computed(() => report.planned_qty - report.reported_qty)
 
 const form = reactive({
-  qualified_qty: 55, defective_qty: 0, defect_reasons: [] as string[],
-  actual_hours: elapsed.value, remark: ''
+  qualified_qty: 55,
+  defective_qty: 0,
+  defect_reasons: [] as string[],
+  actual_hours: elapsed.value,
+  remark: ''
 })
 
 const reportHistory = ref([
@@ -108,36 +120,56 @@ const reportHistory = ref([
 ])
 
 function submitReport() {
-  if (form.qualified_qty + form.defective_qty === 0) { ElMessage.warning('请填写报工数量'); return }
-  if (form.qualified_qty + form.defective_qty > maxReportQty.value) { ElMessage.warning('报工总数不能超过剩余数量'); return }
-  if (form.defective_qty > 0 && form.defect_reasons.length === 0) { ElMessage.warning('请选择不良原因'); return }
+  if (form.qualified_qty + form.defective_qty === 0) {
+    ElMessage.warning('请填写报工数量')
+    return
+  }
+  if (form.qualified_qty + form.defective_qty > maxReportQty.value) {
+    ElMessage.warning('报工总数不能超过剩余数量')
+    return
+  }
+  if (form.defective_qty > 0 && form.defect_reasons.length === 0) {
+    ElMessage.warning('请选择不良原因')
+    return
+  }
 
-  ElMessageBox.confirm(
-    `确认报工：合格 ${form.qualified_qty} 件，不良 ${form.defective_qty} 件？`,
-    '确认报工', { type: 'warning' }
-  ).then(() => {
-    reportHistory.value.unshift({
-      time: new Date().toLocaleString('zh-CN'), qualified_qty: form.qualified_qty,
-      defective_qty: form.defective_qty, defect_reasons: form.defect_reasons.join(', '),
-      actual_hours: form.actual_hours, worker: '赵六'
+  ElMessageBox.confirm(`确认报工：合格 ${form.qualified_qty} 件，不良 ${form.defective_qty} 件？`, '确认报工', { type: 'warning' })
+    .then(() => {
+      reportHistory.value.unshift({
+        time: new Date().toLocaleString('zh-CN'),
+        qualified_qty: form.qualified_qty,
+        defective_qty: form.defective_qty,
+        defect_reasons: form.defect_reasons.join(', '),
+        actual_hours: form.actual_hours,
+        worker: '赵六'
+      })
+      report.reported_qty += form.qualified_qty + form.defective_qty
+
+      if (report.reported_qty >= report.planned_qty) {
+        ElMessage.success('全部完工！')
+        setTimeout(() => router.push('/work-order/list'), 1500)
+      } else {
+        ElMessage.success('报工成功')
+        form.qualified_qty = report.planned_qty - report.reported_qty
+        form.defective_qty = 0
+        form.defect_reasons = []
+      }
     })
-    report.reported_qty += form.qualified_qty + form.defective_qty
-
-    if (report.reported_qty >= report.planned_qty) {
-      ElMessage.success('全部完工！')
-      setTimeout(() => router.push('/work-order/list'), 1500)
-    } else {
-      ElMessage.success('报工成功')
-      form.qualified_qty = report.planned_qty - report.reported_qty
-      form.defective_qty = 0
-      form.defect_reasons = []
-    }
-  }).catch(() => {})
+    .catch(() => {})
 }
 </script>
 
 <style scoped>
-.report-container { max-width: 900px; }
-.report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.report-header h2 { margin: 0; }
+.report-container {
+  max-width: 900px;
+}
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.report-header h2 {
+  margin: 0;
+}
 </style>
