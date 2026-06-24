@@ -19,14 +19,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { TableColumnItem } from 'gi-component'
+import { equipments as mockEqs, workCenters as mockWCs, molds as mockMolds } from '@/mock'
 
 const tab = ref('equipment')
-const equipments = ref([
-  { id: '1', code: 'EQ0000000001', name: '数控车床', model: 'CK6150', workshop: '机加工一车间', status: 'running' },
-  { id: '2', code: 'EQ0000000002', name: '数控车床', model: 'CK6150', workshop: '机加工一车间', status: 'idle' },
-  { id: '3', code: 'EQ0000000003', name: '钻床', model: 'Z3050', workshop: '机加工一车间', status: 'running' },
-  { id: '4', code: 'EQ0000000004', name: '磨床', model: 'M1432', workshop: '机加工一车间', status: 'repair' }
-])
+const equipments = ref(mockEqs)
 const eqCols: TableColumnItem<any>[] = [
   { prop: 'code', label: '设备编码', width: 150 },
   { prop: 'name', label: '名称', width: 120 },
@@ -35,11 +31,7 @@ const eqCols: TableColumnItem<any>[] = [
   { label: '状态', width: 80, slotName: 'status', align: 'center' }
 ]
 
-const wcs = ref([
-  { id: '1', code: 'WC00000001', name: '数控车组', workshop: '机加工一车间', capacity: '16h/天', cost: '150元/h' },
-  { id: '2', code: 'WC00000002', name: '钻床组', workshop: '机加工一车间', capacity: '8h/天', cost: '80元/h' },
-  { id: '3', code: 'WC00000003', name: '磨床组', workshop: '机加工一车间', capacity: '8h/天', cost: '120元/h' }
-])
+const wcs = ref(mockWCs)
 const wcCols: TableColumnItem<any>[] = [
   { prop: 'code', label: '编码', width: 140 },
   { prop: 'name', label: '名称', width: 120 },
@@ -48,10 +40,7 @@ const wcCols: TableColumnItem<any>[] = [
   { prop: 'cost', label: '工时费率', width: 100 }
 ]
 
-const molds = ref([
-  { id: '1', code: 'MD0000000001', name: '泵体铸造模具', type: '铸模', life: '10000模次', used: '3500' },
-  { id: '2', code: 'MD0000000002', name: '叶轮锻模', type: '锻模', life: '5000模次', used: '1200' }
-])
+const molds = ref(mockMolds)
 const mdCols: TableColumnItem<any>[] = [
   { prop: 'code', label: '编码', width: 150 },
   { prop: 'name', label: '名称', width: 150 },
