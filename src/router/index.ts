@@ -128,6 +128,41 @@ const routes: RouteRecordRaw[] = [
         ]
       },
       {
+        path: 'mdm',
+        name: 'mdm',
+        meta: { title: '主数据管理', icon: 'DataAnalysis', order: 5 },
+        children: [
+          { path: 'organization', name: 'mdmOrg', component: () => import('@/views/mdm/Organization.vue'), meta: { title: '组织管理', icon: 'OfficeBuilding', order: 1 } },
+          { path: 'material', name: 'mdmMaterial', component: () => import('@/views/mdm/Material.vue'), meta: { title: '物料管理', icon: 'Goods', order: 2 } },
+          { path: 'resource', name: 'mdmResource', component: () => import('@/views/mdm/Resource.vue'), meta: { title: '制造资源', icon: 'Cpu', order: 3 } }
+        ]
+      },
+      {
+        path: 'scm',
+        name: 'scm',
+        meta: { title: '供应链管理', icon: 'ShoppingBag', order: 35 },
+        children: [
+          { path: 'supplier', name: 'scmSupplier', component: () => import('@/views/scm/Supplier.vue'), meta: { title: '供应商管理', icon: 'Avatar', order: 1 } },
+          { path: 'purchase', name: 'scmPurchase', component: () => import('@/views/scm/Purchase.vue'), meta: { title: '采购订单', icon: 'ShoppingCart', order: 2 } }
+        ]
+      },
+      {
+        path: 'wms',
+        name: 'wms',
+        meta: { title: '仓储管理', icon: 'Box', order: 36 },
+        children: [
+          { path: 'inventory', name: 'wmsInventory', component: () => import('@/views/wms/Inventory.vue'), meta: { title: '库存查询', icon: 'List', order: 1 } }
+        ]
+      },
+      {
+        path: 'qms',
+        name: 'qms',
+        meta: { title: '质量管理', icon: 'Checked', order: 37 },
+        children: [
+          { path: 'inspection', name: 'qmsInspection', component: () => import('@/views/qms/Inspection.vue'), meta: { title: '质检管理', icon: 'Search', order: 1 } }
+        ]
+      },
+      {
         path: 'bom',
         name: 'bom',
         meta: { title: '研发管理', icon: 'Collection', order: 25 },
