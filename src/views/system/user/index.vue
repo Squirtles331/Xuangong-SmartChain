@@ -18,19 +18,22 @@
       <gi-button type="add" @click="openAdd" />
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
-
-    <gi-table :columns="columns" :data="pagedUsers" :pagination="pagination" border style="height: 100%">
-      <template #index="{ $index }">
-        {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
+    <TableSetting title="表格工具栏" :columns="columns" :disabled-column-keys="disabledColumnKeys" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table :columns="settingColumns" v-bind="tableProps" :data="pagedUsers" :pagination="pagination" border style="height: 100%">
+          <template #index="{ $index }">
+            {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
+          </template>
+          <template #status="{ row }">
+            <el-tag :type="row.status === '启用' ? 'success' : 'info'">{{ row.status }}</el-tag>
+          </template>
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button style="margin-left: 8px" type="delete" @click="remove(row.id)" />
+          </template>
+        </gi-table>
       </template>
-      <template #status="{ row }">
-        <el-tag :type="row.status === '启用' ? 'success' : 'info'">{{ row.status }}</el-tag>
-      </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button style="margin-left: 8px" type="delete" @click="remove(row.id)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <gi-dialog
       v-model="dialogVisible"
@@ -47,7 +50,7 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-
+import BaseTableSetting from '@/components/TableSetting.vue'
 type UserStatus = '启用' | '禁用'
 interface User {
   id: number
@@ -56,6 +59,21 @@ interface User {
   role: string
   status: UserStatus
   createdAt: string
+}
+
+type TableSettingSlotProps = {
+  settingColumns: TableColumnItem<User>[]
+  isFullscreen: boolean
+  tableProps: Record<string, unknown>
+}
+
+const TableSetting = BaseTableSetting as typeof BaseTableSetting & {
+  new (): {
+    $slots: {
+      default?: (props: TableSettingSlotProps) => any
+      'toolbar-left'?: () => any
+    }
+  }
 }
 
 const users = ref<User[]>([
@@ -78,6 +96,7 @@ const searchForm = ref({
   role: '',
   status: ''
 })
+const disabledColumnKeys = ['__type_index_1__', 'name']
 const searchFormRef = ref<FormInstance | null>()
 const searchColumns = computed(() => {
   return [

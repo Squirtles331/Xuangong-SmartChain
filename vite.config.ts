@@ -1,22 +1,23 @@
+import { resolve } from 'path'
 import type { ConfigEnv, UserConfig } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
-import { resolve } from 'path'
-import { wrapperEnv } from './node/getEnv'
-import { getPluginsList } from './node/plugins'
 import { exclude, include } from './node/optimize'
-import { getNowDate } from './src/common/utils/core/date'
+import { getPluginsList } from './node/plugins'
+import { wrapperEnv } from './node/getEnv'
 import pkg from './package.json'
+import { getNowDate } from './src/common/utils/core/date'
 
 const { dependencies, devDependencies, name, version } = pkg
 
 const __APP_INFO__ = {
-  pkg: { dependencies, devDependencies, name, version }, // package.json 相关信息
-  lastBuildTime: getNowDate() // 编译或打包时间
+  pkg: { dependencies, devDependencies, name, version },
+  lastBuildTime: getNowDate()
 }
-// https://vitejs.dev/config/
+
 export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
   const env = loadEnv(mode, process.cwd())
   const viteEnv = wrapperEnv(env)
+
   return {
     base: viteEnv.VITE_BASE_URL,
     resolve: {
@@ -52,61 +53,22 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
         }
       }
     },
-    esbuild: {
-      pure: viteEnv.VITE_DROP_CONSOLE ? ['console.log'] : [],
-      drop: viteEnv.VITE_DROP_DEBUGGER ? ['debugger'] : []
-    },
     build: {
-      // esbuild 打包更快，terser 打包慢
       minify: 'esbuild',
-      // minify: "terser",
-      // terserOptions: {
-      //   compress: {
-      //     drop_console: viteEnv.VITE_DROP_CONSOLE,
-      //     drop_debugger: viteEnv.VITE_DROP_DEBUGGER,
-      //   },
-      // },
       outDir: env.VITE_OUT_DIR || 'dist',
       sourcemap: viteEnv.VITE_SOURCEMAP,
-      // 消除打包大小超过 500kb 警告
       chunkSizeWarningLimit: 4000,
       rollupOptions: {
         input: {
           index: resolve(__dirname, '.', 'index.html')
         },
-        // 静态资源分类打包
         output: {
-          // 拆包
-          manualChunks: {
-            'vue-chunks': ['vue', 'vue-router', 'pinia', 'vue-i18n'],
-            'element-plus': ['element-plus'],
-            'wang-editor': ['@wangeditor/editor', '@wangeditor/editor-for-vue'],
-            tinymce: ['tinymce', '@tinymce/tinymce-vue'],
-            echarts: ['echarts'],
-            codemirror: [
-              'codemirror',
-              // "@codemirror/autocomplete",
-              '@codemirror/commands',
-              '@codemirror/language',
-              '@codemirror/lint',
-              // "@codemirror/search",
-              '@codemirror/state',
-              '@codemirror/view'
-            ],
-            // 如果项目只需要一种代码语言，则把其他去掉
-            'codemirror-lang': [
-              '@codemirror/lang-html',
-              '@codemirror/lang-javascript',
-              '@codemirror/lang-markdown',
-              '@codemirror/lang-java',
-              '@codemirror/lang-json',
-              '@codemirror/lang-php',
-              '@codemirror/lang-python',
-              '@codemirror/lang-sql',
-              '@codemirror/lang-xml'
-            ],
-            // 如果项目只需要一种主题，则把其他去掉
-            'codemirror-theme': ['@codemirror/theme-one-dark', '@uiw/codemirror-theme-dracula', '@uiw/codemirror-theme-xcode']
+          manualChunks(id) {
+            if (id.includes('node_modules/element-plus')) return 'element-plus'
+            if (id.includes('node_modules/echarts')) return 'echarts'
+            if (id.includes('node_modules/vue/') || id.includes('node_modules/vue-router/') || id.includes('node_modules/pinia/')) {
+              return 'vue-chunks'
+            }
           },
           chunkFileNames: 'static/js/[name]-[hash].js',
           entryFileNames: 'static/js/[name]-[hash].js',
@@ -117,7 +79,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
     },
     define: {
       __APP_INFO__: JSON.stringify(__APP_INFO__),
-      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'true', // 去除控制台的一个警告信息
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'true',
       log: {}
     }
   }

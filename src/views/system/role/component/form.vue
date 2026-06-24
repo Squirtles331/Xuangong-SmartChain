@@ -27,7 +27,7 @@ function reset() {
   ElMessage.info('点击了重置')
 }
 
-const form = reactive({})
+const form = ref({})
 
 const columns = computed(() => {
   return [
