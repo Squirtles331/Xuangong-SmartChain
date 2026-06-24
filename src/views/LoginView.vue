@@ -123,9 +123,9 @@ const loginFormRef = ref()
 const loading = ref(false)
 
 const loginForm = reactive({
-  company: '',
-  username: '',
-  password: '',
+  company: 'company1',
+  username: 'admin',
+  password: '123456',
   captcha: '',
   remember: false
 })
@@ -160,6 +160,8 @@ const handleLogin = async () => {
       if (loginForm.remember) {
         localStorage.setItem('remembered_username', loginForm.username)
       }
+      // 开发模式：设置 Mock 登录标记
+      localStorage.setItem('mock_login', 'true')
       router.push('/')
     }
   } catch (error) {

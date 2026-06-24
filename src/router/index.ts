@@ -327,10 +327,12 @@ router.beforeEach((to, _from, next) => {
   const lockStore = useLockStore()
   if (lockStore.isLocked && to.path !== '/lock') return next('/lock')
 
-  // 登录检查（白名单：login、lock）
+  // 登录检查（开发模式下 Mock 登录可绕过）
   const whiteList = ['/login', '/lock']
   const userStore = useUserStore()
-  if (!userStore.isLoggedIn && !whiteList.includes(to.path)) {
+  // 开发模式：如果 localStorage 有 mock_login 标记，跳过登录检查
+  const mockLogin = localStorage.getItem('mock_login')
+  if (!mockLogin && !userStore.isLoggedIn && !whiteList.includes(to.path)) {
     return next('/login')
   }
 
