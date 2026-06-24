@@ -102,11 +102,27 @@ const router = createRouter({
   routes
 })
 
-// 锁屏守卫
+// 锁屏守卫 + 登录守卫
 import { useLockStore } from '@/stores/lock'
+import { useUserStore } from '@/stores/user'
+
 router.beforeEach((to, _from, next) => {
-  const store = useLockStore()
-  if (store.isLocked && to.path !== '/lock') return next('/lock')
+  // 锁屏检查
+  const lockStore = useLockStore()
+  if (lockStore.isLocked && to.path !== '/lock') return next('/lock')
+
+  // 登录检查（白名单：login、lock）
+  const whiteList = ['/login', '/lock']
+  const userStore = useUserStore()
+  if (!userStore.isLoggedIn && !whiteList.includes(to.path)) {
+    return next('/login')
+  }
+
+  // 已登录用户访问登录页，重定向到首页
+  if (userStore.isLoggedIn && to.path === '/login') {
+    return next('/')
+  }
+
   next()
 })
 

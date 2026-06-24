@@ -115,13 +115,16 @@ import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Refresh } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const loginFormRef = ref()
+const loading = ref(false)
 
 const loginForm = reactive({
   company: '',
-  username: 'admin',
+  username: '',
   password: '',
   captcha: '',
   remember: false
@@ -131,7 +134,7 @@ const captchaText = ref('9 7 3')
 
 const loginRules = {
   company: [{ required: true, message: '请选择租户/组织', trigger: 'change' }],
-  username: [{ required: true, message: '请输入邮箱/手机号', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
   captcha: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
 }
@@ -144,14 +147,25 @@ const refreshCaptcha = () => {
 const handleLogin = async () => {
   try {
     await loginFormRef.value.validate()
+    loading.value = true
 
-    // 模拟登录
-    ElMessage.success('登录成功')
+    const success = await userStore.doLogin({
+      tenant_id: loginForm.company,
+      username: loginForm.username,
+      password: loginForm.password
+    })
 
-    // 跳转到首页
-    router.push('/')
+    if (success) {
+      ElMessage.success('登录成功')
+      if (loginForm.remember) {
+        localStorage.setItem('remembered_username', loginForm.username)
+      }
+      router.push('/')
+    }
   } catch (error) {
     console.error('登录失败:', error)
+  } finally {
+    loading.value = false
   }
 }
 </script>
