@@ -45,6 +45,42 @@ const routes: RouteRecordRaw[] = [
             name: 'menu',
             component: () => import('@/views/system/menu/index.vue'),
             meta: { title: '菜单管理', icon: 'Menu', order: 3 }
+          },
+          {
+            path: 'dict',
+            name: 'dict',
+            component: () => import('@/views/system/dict/index.vue'),
+            meta: { title: '字典管理', icon: 'Notebook', order: 4 }
+          },
+          {
+            path: 'params',
+            name: 'params',
+            component: () => import('@/views/system/params/index.vue'),
+            meta: { title: '系统参数', icon: 'Tools', order: 5 }
+          },
+          {
+            path: 'audit',
+            name: 'audit',
+            component: () => import('@/views/system/audit/index.vue'),
+            meta: { title: '操作日志', icon: 'DocumentChecked', order: 6 }
+          },
+          {
+            path: 'code-rule',
+            name: 'codeRule',
+            component: () => import('@/views/system/code-rule/index.vue'),
+            meta: { title: '编码规则', icon: 'Stamp', order: 7 }
+          },
+          {
+            path: 'approval',
+            name: 'approval',
+            component: () => import('@/views/system/approval/index.vue'),
+            meta: { title: '审批流配置', icon: 'Select', order: 8 }
+          },
+          {
+            path: 'file',
+            name: 'file',
+            component: () => import('@/views/system/file/index.vue'),
+            meta: { title: '文件管理', icon: 'FolderOpened', order: 9 }
           }
         ]
       },
