@@ -85,6 +85,49 @@ const routes: RouteRecordRaw[] = [
         ]
       },
       {
+        path: 'work-order',
+        name: 'workOrder',
+        meta: { title: '生产管理', icon: 'Monitor', order: 20 },
+        children: [
+          {
+            path: 'list',
+            name: 'workOrderList',
+            component: () => import('@/views/work-order/List.vue'),
+            meta: { title: '工单管理', icon: 'Tickets', order: 1 }
+          },
+          {
+            path: 'create',
+            name: 'workOrderCreate',
+            component: () => import('@/views/work-order/Create.vue'),
+            meta: { title: '新建工单', icon: 'Plus', order: 2, hidden: true }
+          },
+          {
+            path: ':id',
+            name: 'workOrderDetail',
+            component: () => import('@/views/work-order/Detail.vue'),
+            meta: { title: '工单详情', hidden: true }
+          },
+          {
+            path: 'kanban',
+            name: 'workOrderKanban',
+            component: () => import('@/views/work-order/Kanban.vue'),
+            meta: { title: '车间看板', icon: 'DataBoard', order: 3 }
+          },
+          {
+            path: 'report/:id',
+            name: 'workOrderReport',
+            component: () => import('@/views/work-order/Report.vue'),
+            meta: { title: '工序报工', hidden: true }
+          },
+          {
+            path: 'my-tasks',
+            name: 'workOrderMyTasks',
+            component: () => import('@/views/work-order/MyTasks.vue'),
+            meta: { title: '我的任务', icon: 'User', order: 4 }
+          }
+        ]
+      },
+      {
         path: 'analysis',
         name: 'analysis',
         meta: { title: '数据分析', icon: 'DataLine', order: 20 },
