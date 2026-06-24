@@ -6,13 +6,15 @@ import Mock from 'mockjs'
 
 // ==================== 字典类型 ====================
 export const dictTypes = Mock.mock({
-  'list|10': [{
-    'id|+1': 1,
-    code: '@pick(["work_order_priority","work_order_status","defect_reason","material_type","warehouse_type","equipment_status","customer_type","payment_method","exception_type","inspection_result"])',
-    name: '@pick(["工单优先级","工单状态","不良原因","物料类型","仓库类型","设备状态","客户类型","回款方式","异常类型","质检判定"])',
-    description: '@csentence(10,20)',
-    'status|1': ['active','active','active','disabled']
-  }]
+  'list|10': [
+    {
+      'id|+1': 1,
+      code: '@pick(["work_order_priority","work_order_status","defect_reason","material_type","warehouse_type","equipment_status","customer_type","payment_method","exception_type","inspection_result"])',
+      name: '@pick(["工单优先级","工单状态","不良原因","物料类型","仓库类型","设备状态","客户类型","回款方式","异常类型","质检判定"])',
+      description: '@csentence(10,20)',
+      'status|1': ['active', 'active', 'active', 'disabled']
+    }
+  ]
 }).list
 
 // ==================== 字典项 ====================
@@ -82,35 +84,188 @@ export const dictItems: Record<string, any[]> = {
 // ==================== 菜单 ====================
 export const menuTree = [
   {
-    id: '1', parent_id: null, name: '首页', type: 'menu', path: '/', component: 'views/HomeView.vue',
-    permission_code: 'home:view', icon: 'House', sort_order: 0, visible: true
+    id: '1',
+    parent_id: null,
+    name: '首页',
+    type: 'menu',
+    path: '/',
+    component: 'views/HomeView.vue',
+    permission_code: 'home:view',
+    icon: 'House',
+    sort_order: 0,
+    visible: true
   },
   {
-    id: '2', parent_id: null, name: '主数据管理', type: 'directory', permission_code: 'mdm', icon: 'DataAnalysis', sort_order: 5, visible: true,
+    id: '2',
+    parent_id: null,
+    name: '主数据管理',
+    type: 'directory',
+    permission_code: 'mdm',
+    icon: 'DataAnalysis',
+    sort_order: 5,
+    visible: true,
     children: [
-      { id: '201', parent_id: '2', name: '组织管理', type: 'menu', path: '/mdm/organization', component: 'views/mdm/Organization.vue', permission_code: 'mdm:org:list', icon: 'OfficeBuilding', sort_order: 1, visible: true },
-      { id: '202', parent_id: '2', name: '物料管理', type: 'menu', path: '/mdm/material', component: 'views/mdm/Material.vue', permission_code: 'mdm:material:list', icon: 'Goods', sort_order: 2, visible: true },
-      { id: '203', parent_id: '2', name: '制造资源', type: 'menu', path: '/mdm/resource', component: 'views/mdm/Resource.vue', permission_code: 'mdm:resource:list', icon: 'Cpu', sort_order: 3, visible: true }
+      {
+        id: '201',
+        parent_id: '2',
+        name: '组织管理',
+        type: 'menu',
+        path: '/mdm/organization',
+        component: 'views/mdm/Organization.vue',
+        permission_code: 'mdm:org:list',
+        icon: 'OfficeBuilding',
+        sort_order: 1,
+        visible: true
+      },
+      {
+        id: '202',
+        parent_id: '2',
+        name: '物料管理',
+        type: 'menu',
+        path: '/mdm/material',
+        component: 'views/mdm/Material.vue',
+        permission_code: 'mdm:material:list',
+        icon: 'Goods',
+        sort_order: 2,
+        visible: true
+      },
+      {
+        id: '203',
+        parent_id: '2',
+        name: '制造资源',
+        type: 'menu',
+        path: '/mdm/resource',
+        component: 'views/mdm/Resource.vue',
+        permission_code: 'mdm:resource:list',
+        icon: 'Cpu',
+        sort_order: 3,
+        visible: true
+      }
     ]
   },
   {
-    id: '3', parent_id: null, name: '系统管理', type: 'directory', permission_code: 'system', icon: 'Setting', sort_order: 10, visible: true,
+    id: '3',
+    parent_id: null,
+    name: '系统管理',
+    type: 'directory',
+    permission_code: 'system',
+    icon: 'Setting',
+    sort_order: 10,
+    visible: true,
     children: [
-      { id: '301', parent_id: '3', name: '用户管理', type: 'menu', path: '/system/user', component: 'views/system/user/index.vue', permission_code: 'system:user:list', icon: 'User', sort_order: 1, visible: true,
+      {
+        id: '301',
+        parent_id: '3',
+        name: '用户管理',
+        type: 'menu',
+        path: '/system/user',
+        component: 'views/system/user/index.vue',
+        permission_code: 'system:user:list',
+        icon: 'User',
+        sort_order: 1,
+        visible: true,
         children: [
           { id: '3011', parent_id: '301', name: '新增用户', type: 'button', permission_code: 'system:user:create', sort_order: 1, visible: true },
           { id: '3012', parent_id: '301', name: '编辑用户', type: 'button', permission_code: 'system:user:edit', sort_order: 2, visible: true },
           { id: '3013', parent_id: '301', name: '删除用户', type: 'button', permission_code: 'system:user:delete', sort_order: 3, visible: true }
         ]
       },
-      { id: '302', parent_id: '3', name: '角色管理', type: 'menu', path: '/system/role', component: 'views/system/role/index.vue', permission_code: 'system:role:list', icon: 'UserFilled', sort_order: 2, visible: true },
-      { id: '303', parent_id: '3', name: '菜单管理', type: 'menu', path: '/system/menu', component: 'views/system/menu/index.vue', permission_code: 'system:menu:list', icon: 'Menu', sort_order: 3, visible: true },
-      { id: '304', parent_id: '3', name: '字典管理', type: 'menu', path: '/system/dict', component: 'views/system/dict/index.vue', permission_code: 'system:dict:list', icon: 'Notebook', sort_order: 4, visible: true },
-      { id: '305', parent_id: '3', name: '系统参数', type: 'menu', path: '/system/params', component: 'views/system/params/index.vue', permission_code: 'system:params:list', icon: 'Tools', sort_order: 5, visible: true },
-      { id: '306', parent_id: '3', name: '操作日志', type: 'menu', path: '/system/audit', component: 'views/system/audit/index.vue', permission_code: 'system:audit:list', icon: 'DocumentChecked', sort_order: 6, visible: true },
-      { id: '307', parent_id: '3', name: '编码规则', type: 'menu', path: '/system/code-rule', component: 'views/system/code-rule/index.vue', permission_code: 'system:coderule:list', icon: 'Stamp', sort_order: 7, visible: true },
-      { id: '308', parent_id: '3', name: '审批流配置', type: 'menu', path: '/system/approval', component: 'views/system/approval/index.vue', permission_code: 'system:approval:list', icon: 'Select', sort_order: 8, visible: true },
-      { id: '309', parent_id: '3', name: '文件管理', type: 'menu', path: '/system/file', component: 'views/system/file/index.vue', permission_code: 'system:file:list', icon: 'FolderOpened', sort_order: 9, visible: true }
+      {
+        id: '302',
+        parent_id: '3',
+        name: '角色管理',
+        type: 'menu',
+        path: '/system/role',
+        component: 'views/system/role/index.vue',
+        permission_code: 'system:role:list',
+        icon: 'UserFilled',
+        sort_order: 2,
+        visible: true
+      },
+      {
+        id: '303',
+        parent_id: '3',
+        name: '菜单管理',
+        type: 'menu',
+        path: '/system/menu',
+        component: 'views/system/menu/index.vue',
+        permission_code: 'system:menu:list',
+        icon: 'Menu',
+        sort_order: 3,
+        visible: true
+      },
+      {
+        id: '304',
+        parent_id: '3',
+        name: '字典管理',
+        type: 'menu',
+        path: '/system/dict',
+        component: 'views/system/dict/index.vue',
+        permission_code: 'system:dict:list',
+        icon: 'Notebook',
+        sort_order: 4,
+        visible: true
+      },
+      {
+        id: '305',
+        parent_id: '3',
+        name: '系统参数',
+        type: 'menu',
+        path: '/system/params',
+        component: 'views/system/params/index.vue',
+        permission_code: 'system:params:list',
+        icon: 'Tools',
+        sort_order: 5,
+        visible: true
+      },
+      {
+        id: '306',
+        parent_id: '3',
+        name: '操作日志',
+        type: 'menu',
+        path: '/system/audit',
+        component: 'views/system/audit/index.vue',
+        permission_code: 'system:audit:list',
+        icon: 'DocumentChecked',
+        sort_order: 6,
+        visible: true
+      },
+      {
+        id: '307',
+        parent_id: '3',
+        name: '编码规则',
+        type: 'menu',
+        path: '/system/code-rule',
+        component: 'views/system/code-rule/index.vue',
+        permission_code: 'system:coderule:list',
+        icon: 'Stamp',
+        sort_order: 7,
+        visible: true
+      },
+      {
+        id: '308',
+        parent_id: '3',
+        name: '审批流配置',
+        type: 'menu',
+        path: '/system/approval',
+        component: 'views/system/approval/index.vue',
+        permission_code: 'system:approval:list',
+        icon: 'Select',
+        sort_order: 8,
+        visible: true
+      },
+      {
+        id: '309',
+        parent_id: '3',
+        name: '文件管理',
+        type: 'menu',
+        path: '/system/file',
+        component: 'views/system/file/index.vue',
+        permission_code: 'system:file:list',
+        icon: 'FolderOpened',
+        sort_order: 9,
+        visible: true
+      }
     ]
   }
 ]
@@ -129,16 +284,18 @@ export const systemParams = [
 
 // ==================== 操作日志 ====================
 export const auditLogs = Mock.mock({
-  'list|20': [{
-    'id|+1': 1,
-    user_name: '@cname',
-    'module|1': ['工单管理','用户管理','BOM管理','采购管理','系统管理'],
-    'action|1': ['CREATE','UPDATE','DELETE','APPROVE','LOGIN'],
-    target: '@word(8)',
-    ip: '@ip',
-    request_params: '@pick([null,"{\\"qty\\":100}","{\\"status\\":\\"approved\\"}"])',
-    created_at: '@datetime("yyyy-MM-dd HH:mm:ss")'
-  }]
+  'list|20': [
+    {
+      'id|+1': 1,
+      user_name: '@cname',
+      'module|1': ['工单管理', '用户管理', 'BOM管理', '采购管理', '系统管理'],
+      'action|1': ['CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'LOGIN'],
+      target: '@word(8)',
+      ip: '@ip',
+      request_params: '@pick([null,"{\\"qty\\":100}","{\\"status\\":\\"approved\\"}"])',
+      created_at: '@datetime("yyyy-MM-dd HH:mm:ss")'
+    }
+  ]
 }).list
 
 // ==================== 编码规则 ====================
@@ -167,14 +324,16 @@ export const approvalFlows = [
 
 // ==================== 用户 ====================
 export const systemUsers = Mock.mock({
-  'list|15': [{
-    'id|+1': 1,
-    username: '@word(6,10)',
-    real_name: '@cname',
-    email: '@email',
-    phone: /1[3-9]\d{9}/,
-    'status|1': ['active','active','active','disabled'],
-    'roles|1-2': ['@pick(["超级管理员","生产计划员","车间主任","班组长","操作工","质检员","仓管员","采购员","销售员","财务"])'],
-    created_at: '@datetime("yyyy-MM-dd HH:mm:ss")'
-  }]
+  'list|15': [
+    {
+      'id|+1': 1,
+      username: '@word(6,10)',
+      real_name: '@cname',
+      email: '@email',
+      phone: /1[3-9]\d{9}/,
+      'status|1': ['active', 'active', 'active', 'disabled'],
+      'roles|1-2': ['@pick(["超级管理员","生产计划员","车间主任","班组长","操作工","质检员","仓管员","采购员","销售员","财务"])'],
+      created_at: '@datetime("yyyy-MM-dd HH:mm:ss")'
+    }
+  ]
 }).list

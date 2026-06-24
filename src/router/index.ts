@@ -272,7 +272,12 @@ const routes: RouteRecordRaw[] = [
         name: 'aps',
         meta: { title: 'APS排程', icon: 'Timer', order: 40 },
         children: [
-          { path: 'schedule', name: 'apsSchedule', component: () => import('@/views/aps/Schedule.vue'), meta: { title: '排程管理', icon: 'Timer', order: 1 } }
+          {
+            path: 'schedule',
+            name: 'apsSchedule',
+            component: () => import('@/views/aps/Schedule.vue'),
+            meta: { title: '排程管理', icon: 'Timer', order: 1 }
+          }
         ]
       },
       {
@@ -280,7 +285,12 @@ const routes: RouteRecordRaw[] = [
         name: 'mrp',
         meta: { title: 'MRP运算', icon: 'Operation', order: 45 },
         children: [
-          { path: 'result', name: 'mrpResult', component: () => import('@/views/mrp/Result.vue'), meta: { title: 'MRP结果', icon: 'Operation', order: 1 } }
+          {
+            path: 'result',
+            name: 'mrpResult',
+            component: () => import('@/views/mrp/Result.vue'),
+            meta: { title: 'MRP结果', icon: 'Operation', order: 1 }
+          }
         ]
       },
       {
