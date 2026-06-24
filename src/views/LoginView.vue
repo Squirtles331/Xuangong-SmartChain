@@ -115,10 +115,8 @@ import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Refresh } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
-const userStore = useUserStore()
 const loginFormRef = ref()
 const loading = ref(false)
 
@@ -149,18 +147,14 @@ const handleLogin = async () => {
     await loginFormRef.value.validate()
     loading.value = true
 
-    const success = await userStore.doLogin({
-      tenant_id: loginForm.company,
-      username: loginForm.username,
-      password: loginForm.password
-    })
-
+    // 开发模式：Mock 登录，跳过真实 API
+    const success = await mockLogin()
+    
     if (success) {
       ElMessage.success('登录成功')
       if (loginForm.remember) {
         localStorage.setItem('remembered_username', loginForm.username)
       }
-      // 开发模式：设置 Mock 登录标记
       localStorage.setItem('mock_login', 'true')
       router.push('/')
     }
@@ -169,6 +163,28 @@ const handleLogin = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// Mock 登录：模拟 0.5 秒延迟后直接成功
+function mockLogin(): Promise<boolean> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // 简单校验：admin/123456 或任意非空账号
+      if (loginForm.username && loginForm.password) {
+        // 设置用户信息到 localStorage，模拟登录态
+        localStorage.setItem('access_token', 'mock_token_' + Date.now())
+        localStorage.setItem('refresh_token', 'mock_refresh_token')
+        localStorage.setItem('user_info', JSON.stringify({
+          id: '1', username: loginForm.username, real_name: loginForm.username,
+          roles: ['super_admin'], permissions: ['*']
+        }))
+        resolve(true)
+      } else {
+        ElMessage.error('请输入用户名和密码')
+        resolve(false)
+      }
+    }, 500)
+  })
 }
 </script>
 
