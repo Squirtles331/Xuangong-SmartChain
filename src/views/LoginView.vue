@@ -134,7 +134,7 @@ const loginRules = {
   company: [{ required: true, message: '请选择租户/组织', trigger: 'change' }],
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  captcha: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
+  captcha: [{ required: false, message: '请输入验证码', trigger: 'blur' }]
 }
 
 const refreshCaptcha = () => {
@@ -160,6 +160,7 @@ const handleLogin = async () => {
     }
   } catch (error) {
     console.error('登录失败:', error)
+    ElMessage.error('登录失败，请检查表单填写')
   } finally {
     loading.value = false
   }
