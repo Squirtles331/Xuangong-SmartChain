@@ -24,6 +24,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
+import { orgTree as mockOrgTree } from '@/mock'
 import type { FormColumnItem } from 'gi-component'
 
 const orgTree = ref([

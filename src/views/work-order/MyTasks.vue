@@ -87,6 +87,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
+import { myTasks as mockMyTasks } from '@/mock'
 import type { TableColumnItem } from 'gi-component'
 
 interface Task {
@@ -109,110 +110,11 @@ interface Task {
 
 const activeTab = ref('assigned')
 
-const assignedTasks = ref<Task[]>([
-  {
-    id: '1',
-    wo_id: '1',
-    wo_code: 'WO202501150001',
-    wo_priority: 'normal',
-    material_name: '离心泵 XJP-100',
-    operation_no: 40,
-    operation_name: '钻孔',
-    work_center: '钻床组',
-    planned_qty: 100,
-    reported_qty: 0,
-    planned_start: '2025-01-17 08:00',
-    planned_end: '2025-01-17 17:00',
-    status: 'assigned'
-  },
-  {
-    id: '2',
-    wo_id: '2',
-    wo_code: 'WO202501150002',
-    wo_priority: 'high',
-    material_name: '齿轮箱 GBX-200',
-    operation_no: 10,
-    operation_name: '下料',
-    work_center: '下料组',
-    planned_qty: 50,
-    reported_qty: 0,
-    planned_start: '2025-01-16 08:00',
-    planned_end: '2025-01-16 17:00',
-    status: 'assigned'
-  }
-])
+const assignedTasks = ref<Task[]>(mockMyTasks.assigned as any)
 
-const runningTasks = ref<Task[]>([
-  {
-    id: '3',
-    wo_id: '1',
-    wo_code: 'WO202501150001',
-    wo_priority: 'normal',
-    material_name: '离心泵 XJP-100',
-    operation_no: 30,
-    operation_name: '精车',
-    work_center: '数控车组',
-    planned_qty: 100,
-    reported_qty: 45,
-    planned_start: '2025-01-14',
-    planned_end: '2025-01-16',
-    status: 'running'
-  }
-])
+const runningTasks = ref<Task[]>(mockMyTasks.running as any)
 
-const completedTasks = ref<Task[]>([
-  {
-    id: '4',
-    wo_id: '1',
-    wo_code: 'WO202501150001',
-    wo_priority: 'normal',
-    material_name: '离心泵 XJP-100',
-    operation_no: 20,
-    operation_name: '粗车',
-    work_center: '数控车组',
-    planned_qty: 100,
-    reported_qty: 100,
-    planned_start: '2025-01-12',
-    planned_end: '2025-01-14',
-    status: 'completed',
-    qc_required: false,
-    inspected: false
-  },
-  {
-    id: '5',
-    wo_id: '1',
-    wo_code: 'WO202501150001',
-    wo_priority: 'normal',
-    material_name: '离心泵 XJP-100',
-    operation_no: 10,
-    operation_name: '下料',
-    work_center: '下料组',
-    planned_qty: 100,
-    reported_qty: 100,
-    planned_start: '2025-01-11',
-    planned_end: '2025-01-11',
-    status: 'completed',
-    qc_required: false,
-    inspected: false
-  },
-  {
-    id: '6',
-    wo_id: '3',
-    wo_code: 'WO202501140003',
-    wo_priority: 'normal',
-    material_name: '离心泵 XJP-200',
-    operation_no: 50,
-    operation_name: '磨削',
-    work_center: '磨床组',
-    planned_qty: 30,
-    reported_qty: 30,
-    planned_start: '2025-01-13',
-    planned_end: '2025-01-14',
-    status: 'completed',
-    qc_required: true,
-    inspected: true
-  }
-])
+const completedTasks = ref<Task[]>(mockMyTasks.completed as any)
 
 const completedColumns: TableColumnItem<Task>[] = [
   { prop: 'wo_code', label: '工单', width: 150 },

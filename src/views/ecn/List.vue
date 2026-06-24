@@ -47,6 +47,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { ecnOrders as mockEcns } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface ECN {
@@ -61,52 +62,7 @@ interface ECN {
   created_at: string
 }
 
-const ecns = ref<ECN[]>([
-  {
-    id: '1',
-    code: 'ECN202501150001',
-    change_type: 'BOM变更',
-    material: '离心泵 XJP-100',
-    current_version: 'MBOM V1.2',
-    status: 'draft',
-    urgency: 'urgent',
-    applicant: '张工',
-    created_at: '2025-01-15'
-  },
-  {
-    id: '2',
-    code: 'ECN202501120002',
-    change_type: '工艺变更',
-    material: '齿轮箱 GBX-200',
-    current_version: '标准工艺 V1.0',
-    status: 'approved',
-    urgency: 'normal',
-    applicant: '李工',
-    created_at: '2025-01-12'
-  },
-  {
-    id: '3',
-    code: 'ECN202501080003',
-    change_type: 'BOM+工艺变更',
-    material: '传动轴 DS-50',
-    current_version: 'MBOM V1.1',
-    status: 'executed',
-    urgency: 'planned',
-    applicant: '王工',
-    created_at: '2025-01-08'
-  },
-  {
-    id: '4',
-    code: 'ECN202501020004',
-    change_type: 'BOM变更',
-    material: '离心泵 XJP-200',
-    current_version: 'MBOM V1.0',
-    status: 'verified',
-    urgency: 'normal',
-    applicant: '张工',
-    created_at: '2025-01-02'
-  }
-])
+const ecns = ref<ECN[]>(mockEcns as any)
 
 const searchForm = reactive({ keyword: '', status: '' })
 const searchColumns: FormColumnItem[] = [

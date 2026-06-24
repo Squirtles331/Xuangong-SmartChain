@@ -70,6 +70,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { routingOperations as mockOps } from '@/mock'
 
 interface Operation {
   id: string
@@ -87,143 +88,7 @@ interface Operation {
   instruction: string
 }
 
-const operations = ref<Operation[]>([
-  {
-    id: '1',
-    operation_no: 10,
-    name: '下料',
-    work_center: '下料组',
-    setup_hours: 15,
-    run_hours: 5,
-    queue_hours: 0,
-    move_hours: 10,
-    workers: 1,
-    skill: '锯床操作',
-    is_qc_gate: false,
-    is_outsourced: false,
-    instruction: '按图纸尺寸下料，留3mm余量'
-  },
-  {
-    id: '2',
-    operation_no: 20,
-    name: '粗车',
-    work_center: '数控车组',
-    setup_hours: 30,
-    run_hours: 25,
-    queue_hours: 30,
-    move_hours: 10,
-    workers: 1,
-    skill: '数控车床操作',
-    is_qc_gate: false,
-    is_outsourced: false,
-    instruction: ''
-  },
-  {
-    id: '3',
-    operation_no: 30,
-    name: '精车',
-    work_center: '数控车组',
-    setup_hours: 20,
-    run_hours: 18,
-    queue_hours: 20,
-    move_hours: 10,
-    workers: 1,
-    skill: '数控车床操作',
-    is_qc_gate: true,
-    is_outsourced: false,
-    instruction: '保证公差±0.01mm'
-  },
-  {
-    id: '4',
-    operation_no: 40,
-    name: '钻孔',
-    work_center: '钻床组',
-    setup_hours: 10,
-    run_hours: 8,
-    queue_hours: 15,
-    move_hours: 10,
-    workers: 1,
-    skill: '钻床操作',
-    is_qc_gate: false,
-    is_outsourced: false,
-    instruction: ''
-  },
-  {
-    id: '5',
-    operation_no: 50,
-    name: '热处理',
-    work_center: '热处理组',
-    setup_hours: 60,
-    run_hours: 120,
-    queue_hours: 60,
-    move_hours: 30,
-    workers: 2,
-    skill: '热处理操作',
-    is_qc_gate: false,
-    is_outsourced: true,
-    instruction: '淬火+回火，HRC45-50'
-  },
-  {
-    id: '6',
-    operation_no: 60,
-    name: '磨削',
-    work_center: '磨床组',
-    setup_hours: 20,
-    run_hours: 15,
-    queue_hours: 20,
-    move_hours: 10,
-    workers: 1,
-    skill: '磨床操作',
-    is_qc_gate: true,
-    is_outsourced: false,
-    instruction: ''
-  },
-  {
-    id: '7',
-    operation_no: 70,
-    name: '装配',
-    work_center: '装配组',
-    setup_hours: 30,
-    run_hours: 45,
-    queue_hours: 30,
-    move_hours: 10,
-    workers: 2,
-    skill: '装配钳工',
-    is_qc_gate: false,
-    is_outsourced: false,
-    instruction: ''
-  },
-  {
-    id: '8',
-    operation_no: 80,
-    name: '试压',
-    work_center: '测试组',
-    setup_hours: 15,
-    run_hours: 20,
-    queue_hours: 10,
-    move_hours: 10,
-    workers: 1,
-    skill: '测试操作',
-    is_qc_gate: true,
-    is_outsourced: false,
-    instruction: '试验压力2.5MPa，保压30min'
-  },
-  {
-    id: '9',
-    operation_no: 90,
-    name: '油漆',
-    work_center: '涂装组',
-    setup_hours: 20,
-    run_hours: 30,
-    queue_hours: 10,
-    move_hours: 10,
-    workers: 1,
-    skill: '涂装操作',
-    is_qc_gate: false,
-    is_outsourced: false,
-    instruction: ''
-  }
-])
+const operations = ref<Operation[]>(JSON.parse(JSON.stringify(mockOps)))
 
 const workCenters = ['下料组', '数控车组', '钻床组', '热处理组', '磨床组', '装配组', '测试组', '涂装组']
 const skills = ['锯床操作', '数控车床操作', '钻床操作', '热处理操作', '磨床操作', '装配钳工', '测试操作', '涂装操作']

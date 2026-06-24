@@ -29,6 +29,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { customers as mockCustomers } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface Customer {
@@ -42,38 +43,7 @@ interface Customer {
   status: string
 }
 
-const customers = ref<Customer[]>([
-  {
-    id: '1',
-    code: 'CUST00000001',
-    name: 'XX重工集团有限公司',
-    contact_person: '赵总',
-    contact_phone: '13800000001',
-    payment_terms: '月结30天',
-    credit_limit: 500000,
-    status: 'active'
-  },
-  {
-    id: '2',
-    code: 'CUST00000002',
-    name: 'YY机械设备有限公司',
-    contact_person: '钱经理',
-    contact_phone: '13800000002',
-    payment_terms: '月结60天',
-    credit_limit: 200000,
-    status: 'active'
-  },
-  {
-    id: '3',
-    code: 'CUST00000003',
-    name: 'ZZ泵业科技有限公司',
-    contact_person: '孙工',
-    contact_phone: '13800000003',
-    payment_terms: '款到发货',
-    credit_limit: 0,
-    status: 'active'
-  }
-])
+const customers = ref<Customer[]>(mockCustomers as any)
 
 const columns: TableColumnItem<Customer>[] = [
   { prop: 'code', label: '客户编码', width: 150 },

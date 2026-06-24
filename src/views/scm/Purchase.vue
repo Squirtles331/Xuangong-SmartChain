@@ -37,6 +37,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { purchaseOrders as mockPOs } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface PO {

@@ -21,6 +21,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { suppliers as mockSuppliers } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface S {

@@ -66,6 +66,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { receivables as mockARs } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface AR {
@@ -79,12 +80,7 @@ interface AR {
   aging: number
 }
 
-const ars = ref<AR[]>([
-  { id: '1', code: 'AR202501150001', customer: 'XX重工集团', amount: 230000, settled: 0, balance: 230000, due_date: '2025-03-15', aging: -45 },
-  { id: '2', code: 'AR202501100002', customer: 'YY机械设备', amount: 180000, settled: 100000, balance: 80000, due_date: '2025-02-10', aging: 35 },
-  { id: '3', code: 'AR202501050003', customer: 'ZZ泵业科技', amount: 50000, settled: 50000, balance: 0, due_date: '2025-01-20', aging: 0 },
-  { id: '4', code: 'AR202412010004', customer: 'XX重工集团', amount: 120000, settled: 60000, balance: 60000, due_date: '2024-12-30', aging: 75 }
-])
+const ars = ref<AR[]>(mockARs as any)
 
 const searchForm = reactive({ customer: '', aging: '' })
 const searchColumns: FormColumnItem[] = [

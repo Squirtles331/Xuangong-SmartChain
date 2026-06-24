@@ -52,6 +52,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { inspectionTasks as mockTasks } from '@/mock'
 import type { TableColumnItem } from 'gi-component'
 
 interface T {

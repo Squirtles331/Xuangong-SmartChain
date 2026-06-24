@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { salesOrders as mockOrders } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface Order {
@@ -39,48 +40,7 @@ interface Order {
   status: string
 }
 
-const orders = ref<Order[]>([
-  {
-    id: '1',
-    code: 'SO202501150001',
-    customer_name: 'XX重工集团',
-    material_name: '离心泵 XJP-100',
-    qty: 50,
-    amount: 230000,
-    delivery_date: '2025-02-15',
-    status: 'in_production'
-  },
-  {
-    id: '2',
-    code: 'SO202501100002',
-    customer_name: 'YY机械设备',
-    material_name: '齿轮箱 GBX-200',
-    qty: 20,
-    amount: 180000,
-    delivery_date: '2025-02-10',
-    status: 'pending_delivery'
-  },
-  {
-    id: '3',
-    code: 'SO202501050003',
-    customer_name: 'ZZ泵业科技',
-    material_name: '传动轴 DS-50',
-    qty: 100,
-    amount: 50000,
-    delivery_date: '2025-01-20',
-    status: 'completed'
-  },
-  {
-    id: '4',
-    code: 'SO202501150004',
-    customer_name: 'XX重工集团',
-    material_name: '阀门组件 VL-300',
-    qty: 30,
-    amount: 90000,
-    delivery_date: '2025-03-01',
-    status: 'approved'
-  }
-])
+const orders = ref<Order[]>(mockOrders as any)
 
 const searchForm = reactive({ code: '', customer: '', status: '' })
 const searchColumns: FormColumnItem[] = [

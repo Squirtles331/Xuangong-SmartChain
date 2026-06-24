@@ -32,6 +32,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { bomList as mockBoms } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface BOM {
@@ -46,85 +47,7 @@ interface BOM {
   created_at: string
 }
 
-const boms = ref<BOM[]>([
-  {
-    id: '1',
-    material_code: '04.01.001-00001',
-    material_name: '离心泵 XJP-100',
-    bom_type: 'EBOM',
-    version: 'V2.0',
-    status: 'active',
-    effective_date: '2025-01-10',
-    created_by: '张工',
-    created_at: '2025-01-10'
-  },
-  {
-    id: '2',
-    material_code: '04.01.001-00001',
-    material_name: '离心泵 XJP-100',
-    bom_type: 'MBOM',
-    version: 'V1.2',
-    status: 'active',
-    effective_date: '2025-01-12',
-    created_by: '李工',
-    created_at: '2025-01-12'
-  },
-  {
-    id: '3',
-    material_code: '04.02.001-00001',
-    material_name: '齿轮箱 GBX-200',
-    bom_type: 'EBOM',
-    version: 'V1.0',
-    status: 'active',
-    effective_date: '2025-01-05',
-    created_by: '张工',
-    created_at: '2025-01-05'
-  },
-  {
-    id: '4',
-    material_code: '04.02.001-00001',
-    material_name: '齿轮箱 GBX-200',
-    bom_type: 'MBOM',
-    version: 'V1.0',
-    status: 'active',
-    effective_date: '2025-01-08',
-    created_by: '李工',
-    created_at: '2025-01-08'
-  },
-  {
-    id: '5',
-    material_code: '03.01.001-00001',
-    material_name: '传动轴 DS-50',
-    bom_type: 'MBOM',
-    version: 'V1.1',
-    status: 'draft',
-    effective_date: '-',
-    created_by: '李工',
-    created_at: '2025-01-15'
-  },
-  {
-    id: '6',
-    material_code: '04.01.001-00001',
-    material_name: '离心泵 XJP-100',
-    bom_type: 'MBOM',
-    version: 'V1.1',
-    status: 'archived',
-    effective_date: '2024-12-01',
-    created_by: '王工',
-    created_at: '2024-12-01'
-  },
-  {
-    id: '7',
-    material_code: '04.01.001-00001',
-    material_name: '离心泵 XJP-100',
-    bom_type: 'MBOM',
-    version: 'V1.0',
-    status: 'archived',
-    effective_date: '2024-10-15',
-    created_by: '王工',
-    created_at: '2024-10-15'
-  }
-])
+const boms = ref<BOM[]>(mockBoms as any)
 
 const searchForm = reactive({ keyword: '', bom_type: '' })
 const searchColumns: FormColumnItem[] = [

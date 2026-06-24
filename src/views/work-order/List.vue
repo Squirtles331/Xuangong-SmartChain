@@ -56,6 +56,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { workOrders as mockWOs } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface WorkOrder {
@@ -77,144 +78,7 @@ interface WorkOrder {
 }
 
 // ==================== Mock 数据 ====================
-const orders = ref<WorkOrder[]>([
-  {
-    id: '1',
-    code: 'WO202501150001',
-    wo_type: 'production',
-    material_code: '04.01.001-00001',
-    material_name: '离心泵 XJP-100',
-    material_spec: '流量100m³/h',
-    planned_qty: 100,
-    completed_qty: 45,
-    progress: 45,
-    status: 'in_progress',
-    priority: 'normal',
-    workshop_name: '机加工一车间',
-    current_operation: '工序30:精车',
-    planned_start_date: '2025-01-10',
-    planned_end_date: '2025-01-20'
-  },
-  {
-    id: '2',
-    code: 'WO202501150002',
-    wo_type: 'production',
-    material_code: '04.02.001-00001',
-    material_name: '齿轮箱 GBX-200',
-    material_spec: '速比1:5',
-    planned_qty: 50,
-    completed_qty: 0,
-    progress: 0,
-    status: 'released',
-    priority: 'high',
-    workshop_name: '机加工二车间',
-    current_operation: '-',
-    planned_start_date: '2025-01-16',
-    planned_end_date: '2025-01-28'
-  },
-  {
-    id: '3',
-    code: 'WO202501140003',
-    wo_type: 'production',
-    material_code: '04.01.002-00001',
-    material_name: '离心泵 XJP-200',
-    material_spec: '流量200m³/h',
-    planned_qty: 30,
-    completed_qty: 30,
-    progress: 100,
-    status: 'completed',
-    priority: 'normal',
-    workshop_name: '机加工一车间',
-    current_operation: '全部完工',
-    planned_start_date: '2025-01-05',
-    planned_end_date: '2025-01-14'
-  },
-  {
-    id: '4',
-    code: 'WO202501150004',
-    wo_type: 'rework',
-    material_code: '04.01.001-00001',
-    material_name: '离心泵 XJP-100',
-    material_spec: '流量100m³/h',
-    planned_qty: 5,
-    completed_qty: 0,
-    progress: 0,
-    status: 'draft',
-    priority: 'urgent',
-    workshop_name: '机加工一车间',
-    current_operation: '-',
-    planned_start_date: '2025-01-16',
-    planned_end_date: '2025-01-18'
-  },
-  {
-    id: '5',
-    code: 'WO202501150005',
-    wo_type: 'production',
-    material_code: '03.01.001-00001',
-    material_name: '传动轴 DS-50',
-    material_spec: 'φ50×500',
-    planned_qty: 200,
-    completed_qty: 120,
-    progress: 60,
-    status: 'in_progress',
-    priority: 'normal',
-    workshop_name: '机加工二车间',
-    current_operation: '工序20:车削',
-    planned_start_date: '2025-01-12',
-    planned_end_date: '2025-01-22'
-  },
-  {
-    id: '6',
-    code: 'WO202501130006',
-    wo_type: 'production',
-    material_code: '04.01.001-00001',
-    material_name: '离心泵 XJP-100',
-    material_spec: '流量100m³/h',
-    planned_qty: 80,
-    completed_qty: 80,
-    progress: 100,
-    status: 'closed',
-    priority: 'normal',
-    workshop_name: '机加工一车间',
-    current_operation: '-',
-    planned_start_date: '2025-01-02',
-    planned_end_date: '2025-01-12'
-  },
-  {
-    id: '7',
-    code: 'WO202501150007',
-    wo_type: 'sample',
-    material_code: '04.03.001-00001',
-    material_name: '新型泵 NP-001',
-    material_spec: '试制',
-    planned_qty: 3,
-    completed_qty: 1,
-    progress: 33,
-    status: 'in_progress',
-    priority: 'low',
-    workshop_name: '装配车间',
-    current_operation: '工序40:测试',
-    planned_start_date: '2025-01-14',
-    planned_end_date: '2025-01-25'
-  },
-  {
-    id: '8',
-    code: 'WO202501150008',
-    wo_type: 'production',
-    material_code: '04.01.003-00001',
-    material_name: '阀门组件 VL-300',
-    material_spec: 'DN300',
-    planned_qty: 60,
-    completed_qty: 0,
-    progress: 0,
-    status: 'approved',
-    priority: 'normal',
-    workshop_name: '机加工二车间',
-    current_operation: '-',
-    planned_start_date: '2025-01-18',
-    planned_end_date: '2025-01-30'
-  }
-])
+const orders = ref<WorkOrder[]>(mockWOs as any)
 
 // ==================== 搜索 ====================
 const searchForm = reactive({ code: '', status: '', priority: '', workshop: '', date_range: [] as string[] })

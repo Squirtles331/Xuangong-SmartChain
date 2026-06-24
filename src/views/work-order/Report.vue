@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { reportHistory as mockHistory } from '@/mock'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -114,10 +115,7 @@ const form = reactive({
   remark: ''
 })
 
-const reportHistory = ref([
-  { time: '2025-01-15 14:00', qualified_qty: 25, defective_qty: 1, defect_reasons: '尺寸超差', actual_hours: 180, worker: '赵六' },
-  { time: '2025-01-15 10:00', qualified_qty: 20, defective_qty: 2, defect_reasons: '外观缺陷, 设备精度', actual_hours: 120, worker: '赵六' }
-])
+const reportHistory = ref(mockHistory)
 
 function submitReport() {
   if (form.qualified_qty + form.defective_qty === 0) {

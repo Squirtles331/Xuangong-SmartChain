@@ -137,6 +137,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { kanbanOps as mockKanbanOps } from '@/mock'
 
 interface KanbanOp {
   id: string
@@ -158,121 +159,7 @@ interface KanbanOp {
 const currentWorkshop = ref('机加工一车间')
 const workshops = ['机加工一车间', '机加工二车间', '装配车间']
 
-const ops = ref<KanbanOp[]>([
-  {
-    id: '1',
-    wo_code: 'WO202501150001',
-    wo_priority: 'normal',
-    material_name: '离心泵 XJP-100',
-    operation_no: 40,
-    name: '钻孔',
-    work_center: '钻床组',
-    total_hours: 14,
-    status: 'pending'
-  },
-  {
-    id: '2',
-    wo_code: 'WO202501150001',
-    wo_priority: 'normal',
-    material_name: '离心泵 XJP-100',
-    operation_no: 50,
-    name: '磨削',
-    work_center: '磨床组',
-    total_hours: 18,
-    status: 'pending'
-  },
-  {
-    id: '3',
-    wo_code: 'WO202501160010',
-    wo_priority: 'urgent',
-    material_name: '齿轮箱 GBX-200',
-    operation_no: 10,
-    name: '下料',
-    work_center: '下料组',
-    total_hours: 8,
-    status: 'pending'
-  },
-  {
-    id: '4',
-    wo_code: 'WO202501150002',
-    wo_priority: 'high',
-    material_name: '齿轮箱 GBX-200',
-    operation_no: 20,
-    name: '粗车',
-    work_center: '数控车组',
-    total_hours: 32,
-    status: 'assigned',
-    worker: '王五',
-    planned_start: '2025-01-16 08:00'
-  },
-  {
-    id: '5',
-    wo_code: 'WO202501150005',
-    wo_priority: 'normal',
-    material_name: '传动轴 DS-50',
-    operation_no: 30,
-    name: '精车',
-    work_center: '数控车组',
-    total_hours: 16,
-    status: 'assigned',
-    worker: '李四',
-    planned_start: '2025-01-16 13:00'
-  },
-  {
-    id: '6',
-    wo_code: 'WO202501150001',
-    wo_priority: 'normal',
-    material_name: '离心泵 XJP-100',
-    operation_no: 30,
-    name: '精车',
-    work_center: '数控车组',
-    total_hours: 20,
-    status: 'running',
-    worker: '赵六',
-    progress: 60
-  },
-  {
-    id: '7',
-    wo_code: 'WO202501150005',
-    wo_priority: 'normal',
-    material_name: '传动轴 DS-50',
-    operation_no: 20,
-    name: '车削',
-    work_center: '数控车组',
-    total_hours: 24,
-    status: 'running',
-    worker: '孙八',
-    progress: 35
-  },
-  {
-    id: '8',
-    wo_code: 'WO202501150001',
-    wo_priority: 'normal',
-    material_name: '离心泵 XJP-100',
-    operation_no: 10,
-    name: '下料',
-    work_center: '下料组',
-    total_hours: 8.5,
-    status: 'completed',
-    worker: '李四',
-    qualified_qty: 100,
-    defective_qty: 2
-  },
-  {
-    id: '9',
-    wo_code: 'WO202501150001',
-    wo_priority: 'normal',
-    material_name: '离心泵 XJP-100',
-    operation_no: 20,
-    name: '粗车',
-    work_center: '数控车组',
-    total_hours: 16,
-    status: 'completed',
-    worker: '王五',
-    qualified_qty: 98,
-    defective_qty: 1
-  }
-])
+const ops = ref<KanbanOp[]>(mockKanbanOps as any)
 
 const pendingOps = computed(() => ops.value.filter((o) => o.status === 'pending'))
 const assignedOps = computed(() => ops.value.filter((o) => o.status === 'assigned'))
