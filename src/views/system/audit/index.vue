@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { auditLogs as mockLogs } from '@/mock'
 
@@ -107,7 +107,6 @@ const filteredLogs = computed(() => {
 })
 
 const pagedLogs = computed(() => {
-  pagination.total = filteredLogs.value.length
   const s = (pagination.currentPage - 1) * pagination.pageSize
   return filteredLogs.value.slice(s, s + pagination.pageSize)
 })
@@ -129,6 +128,11 @@ function showDetail(row: Log) {
   detailLog.value = row
   detailVisible.value = true
 }
+
+// 自动更新分页total
+import { watch } from 'vue'
+watch(filteredLogs, (val) => { pagination.total = val.length }, { immediate: true })
+
 </script>
 
 <style scoped>

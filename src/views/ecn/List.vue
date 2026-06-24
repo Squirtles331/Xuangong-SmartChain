@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ecnOrders as mockEcns } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
@@ -104,9 +104,10 @@ const filteredEcns = computed(() =>
   })
 )
 const pagedEcns = computed(() => {
-  pagination.total = filteredEcns.value.length
   return filteredEcns.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
 })
+
+watch(filteredEcns, (val) => { pagination.total = val.length }, { immediate: true })
 
 function handleSearch() {
   pagination.currentPage = 1

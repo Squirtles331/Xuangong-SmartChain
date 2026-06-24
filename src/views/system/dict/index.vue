@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import type { DictType, DictItem } from '@/api/system'
@@ -94,9 +94,10 @@ const filteredTypes = computed(() => {
 
 const pagedTypes = computed(() => {
   const start = (pagination.currentPage - 1) * pagination.pageSize
-  pagination.total = filteredTypes.value.length
   return filteredTypes.value.slice(start, start + pagination.pageSize)
 })
+
+watch(filteredTypes, (val) => { pagination.total = val.length }, { immediate: true })
 
 function handleSearch() {
   pagination.currentPage = 1

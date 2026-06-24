@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { bomList as mockBoms } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
@@ -89,9 +89,10 @@ const filteredBoms = computed(() => {
 })
 
 const pagedBoms = computed(() => {
-  pagination.total = filteredBoms.value.length
   return filteredBoms.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
 })
+
+watch(filteredBoms, (val) => { pagination.total = val.length }, { immediate: true })
 
 function handleSearch() {
   pagination.currentPage = 1

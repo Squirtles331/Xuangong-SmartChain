@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { salesOrders as mockOrders } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
@@ -83,9 +83,10 @@ const filtered = computed(() =>
   })
 )
 const pagedOrders = computed(() => {
-  pagination.total = filtered.value.length
   return filtered.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
 })
+
+watch(filtered, (val) => { pagination.total = val.length }, { immediate: true })
 
 function statusStep(s: string) {
   const map: Record<string, number> = { approved: 1, in_production: 2, pending_delivery: 3, completed: 4 }

@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { receivables as mockARs } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
@@ -122,9 +122,10 @@ const filteredAR = computed(() =>
   })
 )
 const pagedAR = computed(() => {
-  pagination.total = filteredAR.value.length
   return filteredAR.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
 })
+
+watch(filteredAR, (val) => { pagination.total = val.length }, { immediate: true })
 
 function handleSearch() {
   pagination.currentPage = 1

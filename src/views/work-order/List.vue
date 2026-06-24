@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { workOrders as mockWOs } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
@@ -147,10 +147,13 @@ const filteredOrders = computed(() => {
 })
 
 const pagedOrders = computed(() => {
-  pagination.total = filteredOrders.value.length
   const s = (pagination.currentPage - 1) * pagination.pageSize
   return filteredOrders.value.slice(s, s + pagination.pageSize)
 })
+
+// 副作用分离：更新 total
+// 自动更新分页total
+watch(filteredOrders, (val) => { pagination.total = val.length }, { immediate: true })
 
 function handleSearch() {
   pagination.currentPage = 1

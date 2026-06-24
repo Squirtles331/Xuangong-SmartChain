@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
@@ -57,7 +57,6 @@ const filteredData = computed(() => {
   return kw ? params.value.filter((p) => p.code.toLowerCase().includes(kw) || p.name.toLowerCase().includes(kw)) : params.value
 })
 const pagedData = computed(() => {
-  pagination.total = filteredData.value.length
   const s = (pagination.currentPage - 1) * pagination.pageSize
   return filteredData.value.slice(s, s + pagination.pageSize)
 })
@@ -117,4 +116,9 @@ async function submitDialog() {
   }
   return true
 }
+
+// 自动更新分页total
+import { watch } from 'vue'
+watch(filteredData, (val) => { pagination.total = val.length }, { immediate: true })
+
 </script>
