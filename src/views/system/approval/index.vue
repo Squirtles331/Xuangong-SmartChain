@@ -35,6 +35,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { approvalFlows as mockFlows } from '@/mock'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
@@ -47,14 +48,9 @@ interface ApprovalFlow {
   status: string
 }
 
-const flows = ref<ApprovalFlow[]>([
-  { id: '1', name: '普通工单审批', business_type: 'work_order_normal', nodes: ['车间主任'], status: 'active' },
-  { id: '2', name: '紧急工单审批', business_type: 'work_order_urgent', nodes: ['车间主任', '生产部长'], status: 'active' },
-  { id: '3', name: 'BOM/工艺审批', business_type: 'bom_routing', nodes: ['研发负责人'], status: 'active' },
-  { id: '4', name: 'ECN变更审批', business_type: 'ecn', nodes: ['研发负责人', '工艺负责人', '生产负责人', '质量负责人'], status: 'active' },
-  { id: '5', name: '销售订单审批', business_type: 'sales_order', nodes: ['销售经理'], status: 'active' },
-  { id: '6', name: '采购订单审批', business_type: 'purchase_order', nodes: ['采购经理'], status: 'active' }
-])
+import { approvalFlows as mockFlows } from '@/mock'
+
+const flows = ref<ApprovalFlow[]>(mockFlows as any)
 
 const columns: TableColumnItem<ApprovalFlow>[] = [
   { type: 'index', label: '#', width: 60 },

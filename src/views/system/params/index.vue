@@ -33,16 +33,9 @@ interface Param {
   description: string
 }
 
-const params = ref<Param[]>([
-  { id: '1', code: 'login_lock_count', name: '登录失败锁定次数', value: '5', description: '连续登录失败N次后锁定账号' },
-  { id: '2', code: 'login_lock_minutes', name: '登录锁定时间(分钟)', value: '30', description: '锁定后自动解锁时间' },
-  { id: '3', code: 'token_expire_minutes', name: 'Token有效期(分钟)', value: '120', description: 'JWT Token过期时间' },
-  { id: '4', code: 'mrp_horizon_days', name: 'MRP展望期(天)', value: '90', description: 'MRP计算的时间范围' },
-  { id: '5', code: 'stock_count_approval_threshold', name: '盘点差异审批阈值(元)', value: '1000', description: '超过此金额需升级审批' },
-  { id: '6', code: 'work_center_overload_pct', name: '工作中心超负荷阈值(%)', value: '90', description: '负荷率超过此值标记为超负荷' },
-  { id: '7', code: 'ar_aging_warn_days', name: '应收账龄警告天数', value: '30', description: '逾期超过此天数标记为警告' },
-  { id: '8', code: 'file_upload_max_mb', name: '文件上传大小限制(MB)', value: '10', description: '单个文件最大上传大小' }
-])
+import { systemParams as mockParams } from '@/mock'
+
+const params = ref<Param[]>(mockParams as any)
 
 const searchForm = reactive({ keyword: '' })
 const searchColumns: FormColumnItem[] = [

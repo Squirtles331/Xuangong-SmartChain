@@ -63,44 +63,11 @@ import { ref, reactive, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import type { DictType, DictItem } from '@/api/system'
+import { dictTypes as mockDictTypes, dictItems as mockDictItems } from '@/mock'
 
-// ==================== Mock 数据 ====================
-const dictTypes = ref<DictType[]>([
-  { id: '1', code: 'work_order_priority', name: '工单优先级', description: '工单的优先级等级', status: 'active' },
-  { id: '2', code: 'work_order_status', name: '工单状态', description: '工单生命周期状态', status: 'active' },
-  { id: '3', code: 'defect_reason', name: '不良原因', description: '生产报工时的不良原因选项', status: 'active' },
-  { id: '4', code: 'material_type', name: '物料类型', description: '物料的制造/采购分类', status: 'active' },
-  { id: '5', code: 'warehouse_type', name: '仓库类型', description: '仓库的分类', status: 'active' },
-  { id: '6', code: 'equipment_status', name: '设备状态', description: '设备生命周期状态', status: 'active' },
-  { id: '7', code: 'customer_type', name: '客户类型', description: '企业/个人', status: 'active' },
-  { id: '8', code: 'payment_method', name: '回款方式', description: '回款支付方式', status: 'active' },
-  { id: '9', code: 'exception_type', name: '异常类型', description: '生产异常分类', status: 'active' },
-  { id: '10', code: 'inspection_result', name: '质检判定', description: '来料/过程/最终检验判定结论', status: 'active' }
-])
-
-const dictItemsMap = ref<Record<string, DictItem[]>>({
-  '1': [
-    { id: '101', dict_type_id: '1', code: 'urgent', name: '紧急', sort_order: 1, css_class: 'danger', status: 'active' },
-    { id: '102', dict_type_id: '1', code: 'high', name: '高', sort_order: 2, css_class: 'warning', status: 'active' },
-    { id: '103', dict_type_id: '1', code: 'normal', name: '普通', sort_order: 3, css_class: '', status: 'active' },
-    { id: '104', dict_type_id: '1', code: 'low', name: '低', sort_order: 4, css_class: 'info', status: 'active' }
-  ],
-  '2': [
-    { id: '201', dict_type_id: '2', code: 'draft', name: '草稿', sort_order: 1, css_class: 'info', status: 'active' },
-    { id: '202', dict_type_id: '2', code: 'approved', name: '已审批', sort_order: 2, css_class: '', status: 'active' },
-    { id: '203', dict_type_id: '2', code: 'released', name: '已下发', sort_order: 3, css_class: 'warning', status: 'active' },
-    { id: '204', dict_type_id: '2', code: 'in_progress', name: '生产中', sort_order: 4, css_class: '', status: 'active' },
-    { id: '205', dict_type_id: '2', code: 'completed', name: '已完工', sort_order: 5, css_class: 'success', status: 'active' },
-    { id: '206', dict_type_id: '2', code: 'closed', name: '已关闭', sort_order: 6, css_class: 'info', status: 'active' }
-  ],
-  '3': [
-    { id: '301', dict_type_id: '3', code: 'dimension', name: '尺寸超差', sort_order: 1, css_class: '', status: 'active' },
-    { id: '302', dict_type_id: '3', code: 'appearance', name: '外观缺陷', sort_order: 2, css_class: '', status: 'active' },
-    { id: '303', dict_type_id: '3', code: 'material', name: '材质问题', sort_order: 3, css_class: '', status: 'active' },
-    { id: '304', dict_type_id: '3', code: 'equipment', name: '设备精度', sort_order: 4, css_class: '', status: 'active' },
-    { id: '305', dict_type_id: '3', code: 'operation', name: '操作失误', sort_order: 5, css_class: '', status: 'active' }
-  ]
-})
+// ==================== 数据（来自 Mock 数据中心） ====================
+const dictTypes = ref<DictType[]>(mockDictTypes as any)
+const dictItemsMap = ref<Record<string, DictItem[]>>(mockDictItems as any)
 
 // ==================== 搜索 ====================
 const searchForm = reactive({ keyword: '' })

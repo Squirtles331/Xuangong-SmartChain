@@ -26,6 +26,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { codeRules as mockCodeRules } from '@/mock'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
@@ -39,18 +40,9 @@ interface CodeRule {
   example: string
 }
 
-const rules = ref<CodeRule[]>([
-  { id: '1', code: 'WO', name: '工单编号', prefix: 'WO', date_format: 'YYYYMMDD', serial_length: 4, example: 'WO202501150001' },
-  { id: '2', code: 'SO', name: '销售订单编号', prefix: 'SO', date_format: 'YYYYMMDD', serial_length: 4, example: 'SO202501150001' },
-  { id: '3', code: 'PR', name: '采购申请编号', prefix: 'PR', date_format: 'YYYYMMDD', serial_length: 4, example: 'PR202501150001' },
-  { id: '4', code: 'PO', name: '采购订单编号', prefix: 'PO', date_format: 'YYYYMMDD', serial_length: 4, example: 'PO202501150001' },
-  { id: '5', code: 'ECN', name: '变更单编号', prefix: 'ECN', date_format: 'YYYYMMDD', serial_length: 4, example: 'ECN202501150001' },
-  { id: '6', code: 'DN', name: '发货通知编号', prefix: 'DN', date_format: 'YYYYMMDD', serial_length: 4, example: 'DN202501150001' },
-  { id: '7', code: 'AR', name: '应收单编号', prefix: 'AR', date_format: 'YYYYMMDD', serial_length: 4, example: 'AR202501150001' },
-  { id: '8', code: 'RC', name: '回款单编号', prefix: 'RC', date_format: 'YYYYMMDD', serial_length: 4, example: 'RC202501150001' },
-  { id: '9', code: 'MRP', name: 'MRP运行编号', prefix: 'MRP', date_format: 'YYYYMMDD', serial_length: 4, example: 'MRP202501150001' },
-  { id: '10', code: 'SCH', name: '排程版本编号', prefix: 'SCH', date_format: 'YYYYMMDD', serial_length: 4, example: 'SCH202501150001' }
-])
+import { codeRules as mockCodeRules } from '@/mock'
+
+const rules = ref<CodeRule[]>(mockCodeRules as any)
 
 const columns: TableColumnItem<CodeRule>[] = [
   { type: 'index', label: '#', width: 60 },

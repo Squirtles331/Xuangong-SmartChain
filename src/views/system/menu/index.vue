@@ -52,6 +52,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { menuTree as mockMenuTree } from '@/mock'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Folder, Document, Operation } from '@element-plus/icons-vue'
 import type { FormColumnItem } from 'gi-component'
@@ -70,122 +71,11 @@ interface MenuNode {
   children?: MenuNode[]
 }
 
-// ==================== Mock 数据 ====================
-const menuTree = ref<MenuNode[]>([
-  {
-    id: '1',
-    parent_id: null,
-    name: '首页',
-    type: 'menu',
-    path: '/',
-    component: 'views/HomeView.vue',
-    permission_code: 'home:view',
-    icon: 'House',
-    sort_order: 0,
-    visible: true
-  },
-  {
-    id: '2',
-    parent_id: null,
-    name: '系统管理',
-    type: 'directory',
-    permission_code: 'system',
-    icon: 'Setting',
-    sort_order: 10,
-    visible: true,
-    children: [
-      {
-        id: '21',
-        parent_id: '2',
-        name: '用户管理',
-        type: 'menu',
-        path: '/system/user',
-        component: 'views/system/user/index.vue',
-        permission_code: 'system:user:list',
-        icon: 'User',
-        sort_order: 1,
-        visible: true,
-        children: [
-          { id: '211', parent_id: '21', name: '新增用户', type: 'button', permission_code: 'system:user:create', sort_order: 1, visible: true },
-          { id: '212', parent_id: '21', name: '编辑用户', type: 'button', permission_code: 'system:user:edit', sort_order: 2, visible: true },
-          { id: '213', parent_id: '21', name: '删除用户', type: 'button', permission_code: 'system:user:delete', sort_order: 3, visible: true }
-        ]
-      },
-      {
-        id: '22',
-        parent_id: '2',
-        name: '角色管理',
-        type: 'menu',
-        path: '/system/role',
-        component: 'views/system/role/index.vue',
-        permission_code: 'system:role:list',
-        icon: 'UserFilled',
-        sort_order: 2,
-        visible: true
-      },
-      {
-        id: '23',
-        parent_id: '2',
-        name: '菜单管理',
-        type: 'menu',
-        path: '/system/menu',
-        component: 'views/system/menu/index.vue',
-        permission_code: 'system:menu:list',
-        icon: 'Menu',
-        sort_order: 3,
-        visible: true
-      },
-      {
-        id: '24',
-        parent_id: '2',
-        name: '字典管理',
-        type: 'menu',
-        path: '/system/dict',
-        component: 'views/system/dict/index.vue',
-        permission_code: 'system:dict:list',
-        icon: 'Notebook',
-        sort_order: 4,
-        visible: true
-      }
-    ]
-  },
-  {
-    id: '3',
-    parent_id: null,
-    name: '生产管理',
-    type: 'directory',
-    permission_code: 'production',
-    icon: 'Monitor',
-    sort_order: 20,
-    visible: true,
-    children: [
-      {
-        id: '31',
-        parent_id: '3',
-        name: '工单管理',
-        type: 'menu',
-        path: '/work-order/list',
-        component: 'views/work-order/List.vue',
-        permission_code: 'work-order:list',
-        icon: 'Tickets',
-        sort_order: 1,
-        visible: true
-      },
-      {
-        id: '32',
-        parent_id: '3',
-        name: '车间看板',
-        type: 'menu',
-        path: '/work-order/kanban',
-        component: 'views/work-order/Kanban.vue',
-        permission_code: 'work-order:kanban',
-        icon: 'DataBoard',
-        sort_order: 2,
-        visible: true
-      }
-    ]
-  }
-])
+// ==================== 数据（来自 Mock 数据中心） ====================
+import { menuTree as mockMenuTree } from '@/mock'
+const menuTree = ref<MenuNode[]>(JSON.parse(JSON.stringify(mockMenuTree)))
+
+// ==================== 当前选中节点 ====================
 
 // ==================== 当前选中节点 ====================
 const currentMenu = ref<MenuNode | null>(null)
