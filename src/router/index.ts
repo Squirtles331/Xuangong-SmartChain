@@ -92,37 +92,37 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'list',
             name: 'workOrderList',
-            component: () => import('@/views/work-order/List.vue'),
+            component: () => import('@/views/work-order/list/index.vue'),
             meta: { title: '工单管理', icon: 'Tickets', order: 1 }
           },
           {
             path: 'create',
             name: 'workOrderCreate',
-            component: () => import('@/views/work-order/Create.vue'),
+            component: () => import('@/views/work-order/create/index.vue'),
             meta: { title: '新建工单', icon: 'Plus', order: 2, hidden: true }
           },
           {
             path: ':id',
             name: 'workOrderDetail',
-            component: () => import('@/views/work-order/Detail.vue'),
+            component: () => import('@/views/work-order/detail/index.vue'),
             meta: { title: '工单详情', hidden: true }
           },
           {
             path: 'kanban',
             name: 'workOrderKanban',
-            component: () => import('@/views/work-order/Kanban.vue'),
+            component: () => import('@/views/work-order/kanban/index.vue'),
             meta: { title: '车间看板', icon: 'DataBoard', order: 3 }
           },
           {
             path: 'report/:id',
             name: 'workOrderReport',
-            component: () => import('@/views/work-order/Report.vue'),
+            component: () => import('@/views/work-order/report/index.vue'),
             meta: { title: '工序报工', hidden: true }
           },
           {
             path: 'my-tasks',
             name: 'workOrderMyTasks',
-            component: () => import('@/views/work-order/MyTasks.vue'),
+            component: () => import('@/views/work-order/my-tasks/index.vue'),
             meta: { title: '我的任务', icon: 'User', order: 4 }
           }
         ]
@@ -135,19 +135,19 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'organization',
             name: 'mdmOrg',
-            component: () => import('@/views/mdm/Organization.vue'),
+            component: () => import('@/views/mdm/organization/index.vue'),
             meta: { title: '组织管理', icon: 'OfficeBuilding', order: 1 }
           },
           {
             path: 'material',
             name: 'mdmMaterial',
-            component: () => import('@/views/mdm/Material.vue'),
+            component: () => import('@/views/mdm/material/index.vue'),
             meta: { title: '物料管理', icon: 'Goods', order: 2 }
           },
           {
             path: 'resource',
             name: 'mdmResource',
-            component: () => import('@/views/mdm/Resource.vue'),
+            component: () => import('@/views/mdm/resource/index.vue'),
             meta: { title: '制造资源', icon: 'Cpu', order: 3 }
           }
         ]
@@ -160,13 +160,13 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'supplier',
             name: 'scmSupplier',
-            component: () => import('@/views/scm/Supplier.vue'),
+            component: () => import('@/views/scm/supplier/index.vue'),
             meta: { title: '供应商管理', icon: 'Avatar', order: 1 }
           },
           {
             path: 'purchase',
             name: 'scmPurchase',
-            component: () => import('@/views/scm/Purchase.vue'),
+            component: () => import('@/views/scm/purchase/index.vue'),
             meta: { title: '采购订单', icon: 'ShoppingCart', order: 2 }
           }
         ]
@@ -179,7 +179,7 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'inventory',
             name: 'wmsInventory',
-            component: () => import('@/views/wms/Inventory.vue'),
+            component: () => import('@/views/wms/inventory/index.vue'),
             meta: { title: '库存查询', icon: 'List', order: 1 }
           }
         ]
@@ -192,7 +192,7 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'inspection',
             name: 'qmsInspection',
-            component: () => import('@/views/qms/Inspection.vue'),
+            component: () => import('@/views/qms/inspection/index.vue'),
             meta: { title: '质检管理', icon: 'Search', order: 1 }
           }
         ]
@@ -202,9 +202,9 @@ const routes: RouteRecordRaw[] = [
         name: 'bom',
         meta: { title: '研发管理', icon: 'Collection', order: 25 },
         children: [
-          { path: 'list', name: 'bomList', component: () => import('@/views/bom/List.vue'), meta: { title: 'BOM管理', icon: 'List', order: 1 } },
-          { path: 'editor/:id', name: 'bomEditor', component: () => import('@/views/bom/Editor.vue'), meta: { title: 'BOM编辑器', hidden: true } },
-          { path: 'create', name: 'bomCreate', component: () => import('@/views/bom/Editor.vue'), meta: { title: '新建BOM', hidden: true } }
+          { path: 'list', name: 'bomList', component: () => import('@/views/bom/list/index.vue'), meta: { title: 'BOM管理', icon: 'List', order: 1 } },
+          { path: 'editor/:id', name: 'bomEditor', component: () => import('@/views/bom/editor/index.vue'), meta: { title: 'BOM编辑器', hidden: true } },
+          { path: 'create', name: 'bomCreate', component: () => import('@/views/bom/editor/index.vue'), meta: { title: '新建BOM', hidden: true } }
         ]
       },
       {
@@ -212,7 +212,7 @@ const routes: RouteRecordRaw[] = [
         name: 'routing',
         meta: { title: '工艺路线', icon: 'Connection', order: 26, hidden: true },
         children: [
-          { path: 'editor/:id', name: 'routingEditor', component: () => import('@/views/routing/Editor.vue'), meta: { title: '工艺路线编辑' } }
+          { path: 'editor/:id', name: 'routingEditor', component: () => import('@/views/routing/editor/index.vue'), meta: { title: '工艺路线编辑' } }
         ]
       },
       {
@@ -220,7 +220,7 @@ const routes: RouteRecordRaw[] = [
         name: 'ecn',
         meta: { title: '变更管理', icon: 'Switch', order: 27 },
         children: [
-          { path: 'list', name: 'ecnList', component: () => import('@/views/ecn/List.vue'), meta: { title: 'ECN变更', icon: 'Switch', order: 1 } }
+          { path: 'list', name: 'ecnList', component: () => import('@/views/ecn/list/index.vue'), meta: { title: 'ECN变更', icon: 'Switch', order: 1 } }
         ]
       },
       {
@@ -231,19 +231,19 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'customer',
             name: 'crmCustomer',
-            component: () => import('@/views/crm/Customer.vue'),
+            component: () => import('@/views/crm/customer/index.vue'),
             meta: { title: '客户管理', icon: 'User', order: 1 }
           },
           {
             path: 'order',
             name: 'crmOrder',
-            component: () => import('@/views/crm/Order.vue'),
+            component: () => import('@/views/crm/order/index.vue'),
             meta: { title: '销售订单', icon: 'Document', order: 2 }
           },
           {
             path: 'receivable',
             name: 'crmReceivable',
-            component: () => import('@/views/crm/Receivable.vue'),
+            component: () => import('@/views/crm/receivable/index.vue'),
             meta: { title: '应收台账', icon: 'Money', order: 3 }
           }
         ]
@@ -275,7 +275,7 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'schedule',
             name: 'apsSchedule',
-            component: () => import('@/views/aps/Schedule.vue'),
+            component: () => import('@/views/aps/schedule/index.vue'),
             meta: { title: '排程管理', icon: 'Timer', order: 1 }
           }
         ]
@@ -288,7 +288,7 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'result',
             name: 'mrpResult',
-            component: () => import('@/views/mrp/Result.vue'),
+            component: () => import('@/views/mrp/result/index.vue'),
             meta: { title: 'MRP结果', icon: 'Operation', order: 1 }
           }
         ]
