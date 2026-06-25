@@ -79,7 +79,9 @@ function handleReset() {
   searchForm.keyword = ''
   pagination.currentPage = 1
 }
-function del(id:string){data.value=data.value.filter((e:any)=>e.id!==id)}
+function del(id: string) {
+  data.value = data.value.filter((e: any) => e.id !== id)
+}
 function refresh() {
   handleReset()
 }

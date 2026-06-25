@@ -6,7 +6,7 @@
         ><el-tag :type="row.type === '电' ? 'warning' : row.type === '水' ? 'primary' : 'info'" size="small">{{ row.type }}</el-tag></template
       >
     </gi-table>
-      <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode==='add'?'新增':'编辑'" width="600px">
+    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
       <gi-form v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
