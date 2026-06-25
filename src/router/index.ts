@@ -292,9 +292,23 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/bom/list/index.vue'),
             meta: { title: 'BOM管理', icon: 'List', order: 1 }
           },
-          { path: 'compare', name: 'bomCompare', component: () => import('@/views/bom/compare/index.vue'), meta: { title: '版本比较', icon: 'Switch', order: 2 } },
-          { path: 'explode', name: 'bomExplode', component: () => import('@/views/bom/explode/index.vue'), meta: { title: '展开/反查', icon: 'Search', order: 3 } },
-          { path: 'cost', name: 'bomCost', component: () => import('@/views/bom/cost/index.vue'), meta: { title: '成本卷积', icon: 'Money', order: 4 }
+          {
+            path: 'compare',
+            name: 'bomCompare',
+            component: () => import('@/views/bom/compare/index.vue'),
+            meta: { title: '版本比较', icon: 'Switch', order: 2 }
+          },
+          {
+            path: 'explode',
+            name: 'bomExplode',
+            component: () => import('@/views/bom/explode/index.vue'),
+            meta: { title: '展开/反查', icon: 'Search', order: 3 }
+          },
+          {
+            path: 'cost',
+            name: 'bomCost',
+            component: () => import('@/views/bom/cost/index.vue'),
+            meta: { title: '成本卷积', icon: 'Money', order: 4 }
           },
           {
             path: 'editor/:id',
