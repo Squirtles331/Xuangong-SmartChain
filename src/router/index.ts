@@ -124,6 +124,18 @@ const routes: RouteRecordRaw[] = [
             name: 'workOrderMyTasks',
             component: () => import('@/views/work-order/my-tasks/index.vue'),
             meta: { title: '我的任务', icon: 'User', order: 4 }
+          },
+          {
+            path: 'split',
+            name: 'workOrderSplit',
+            component: () => import('@/views/work-order/split/index.vue'),
+            meta: { title: '工单拆分', hidden: true }
+          },
+          {
+            path: 'trace',
+            name: 'workOrderTrace',
+            component: () => import('@/views/work-order/trace/index.vue'),
+            meta: { title: '报工追溯', icon: 'Clock', order: 5 }
           }
         ]
       },
@@ -164,10 +176,22 @@ const routes: RouteRecordRaw[] = [
             meta: { title: '供应商管理', icon: 'Avatar', order: 1 }
           },
           {
+            path: 'purchase-request',
+            name: 'scmPR',
+            component: () => import('@/views/scm/purchase-request/index.vue'),
+            meta: { title: '采购申请', icon: 'Edit', order: 2 }
+          },
+          {
             path: 'purchase',
             name: 'scmPurchase',
             component: () => import('@/views/scm/purchase/index.vue'),
-            meta: { title: '采购订单', icon: 'ShoppingCart', order: 2 }
+            meta: { title: '采购订单', icon: 'ShoppingCart', order: 3 }
+          },
+          {
+            path: 'return',
+            name: 'scmReturn',
+            component: () => import('@/views/scm/return/index.vue'),
+            meta: { title: '采购退货', icon: 'Sell', order: 4 }
           }
         ]
       },
@@ -181,6 +205,42 @@ const routes: RouteRecordRaw[] = [
             name: 'wmsInventory',
             component: () => import('@/views/wms/inventory/index.vue'),
             meta: { title: '库存查询', icon: 'List', order: 1 }
+          },
+          {
+            path: 'picking',
+            name: 'wmsPicking',
+            component: () => import('@/views/wms/picking/index.vue'),
+            meta: { title: '生产领料', icon: 'TakeawayBox', order: 2 }
+          },
+          {
+            path: 'receipt',
+            name: 'wmsReceipt',
+            component: () => import('@/views/wms/receipt/index.vue'),
+            meta: { title: '入库管理', icon: 'Download', order: 3 }
+          },
+          {
+            path: 'delivery',
+            name: 'wmsDelivery',
+            component: () => import('@/views/wms/delivery/index.vue'),
+            meta: { title: '销售出库', icon: 'Upload', order: 4 }
+          },
+          {
+            path: 'return',
+            name: 'wmsReturn',
+            component: () => import('@/views/wms/return/index.vue'),
+            meta: { title: '退料/退货', icon: 'Refresh', order: 5 }
+          },
+          {
+            path: 'stock-count',
+            name: 'wmsStockCount',
+            component: () => import('@/views/wms/stock-count/index.vue'),
+            meta: { title: '库存盘点', icon: 'Checked', order: 6 }
+          },
+          {
+            path: 'transfer',
+            name: 'wmsTransfer',
+            component: () => import('@/views/wms/transfer/index.vue'),
+            meta: { title: '库存调拨', icon: 'Connection', order: 7 }
           }
         ]
       },
@@ -194,6 +254,18 @@ const routes: RouteRecordRaw[] = [
             name: 'qmsInspection',
             component: () => import('@/views/qms/inspection/index.vue'),
             meta: { title: '质检管理', icon: 'Search', order: 1 }
+          },
+          {
+            path: 'template',
+            name: 'qmsTemplate',
+            component: () => import('@/views/qms/template/index.vue'),
+            meta: { title: '质检模板', icon: 'Notebook', order: 2 }
+          },
+          {
+            path: 'supplier-quality',
+            name: 'qmsSupplierQuality',
+            component: () => import('@/views/qms/supplier-quality/index.vue'),
+            meta: { title: '供应商质量', icon: 'TrendCharts', order: 3 }
           }
         ]
       },
@@ -207,6 +279,10 @@ const routes: RouteRecordRaw[] = [
             name: 'bomList',
             component: () => import('@/views/bom/list/index.vue'),
             meta: { title: 'BOM管理', icon: 'List', order: 1 }
+          },
+          { path: 'compare', name: 'bomCompare', component: () => import('@/views/bom/compare/index.vue'), meta: { title: '版本比较', icon: 'Switch', order: 2 } },
+          { path: 'explode', name: 'bomExplode', component: () => import('@/views/bom/explode/index.vue'), meta: { title: '展开/反查', icon: 'Search', order: 3 } },
+          { path: 'cost', name: 'bomCost', component: () => import('@/views/bom/cost/index.vue'), meta: { title: '成本卷积', icon: 'Money', order: 4 }
           },
           {
             path: 'editor/:id',
@@ -305,6 +381,12 @@ const routes: RouteRecordRaw[] = [
             name: 'mrpResult',
             component: () => import('@/views/mrp/result/index.vue'),
             meta: { title: 'MRP结果', icon: 'Operation', order: 1 }
+          },
+          {
+            path: 'history',
+            name: 'mrpHistory',
+            component: () => import('@/views/mrp/history/index.vue'),
+            meta: { title: '运行历史', icon: 'Clock', order: 2 }
           }
         ]
       },
