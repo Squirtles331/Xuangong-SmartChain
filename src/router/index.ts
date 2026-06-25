@@ -464,6 +464,24 @@ const routes: RouteRecordRaw[] = [
             name: 'equipmentMaintain',
             component: () => import('@/views/equipment/maintain/index.vue'),
             meta: { title: '保养管理', icon: 'SetUp', order: 3 }
+          },
+          {
+            path: 'repair',
+            name: 'equipmentRepair',
+            component: () => import('@/views/equipment/repair/index.vue'),
+            meta: { title: '维修工单', icon: 'Tools', order: 4 }
+          },
+          {
+            path: 'spare',
+            name: 'equipmentSpare',
+            component: () => import('@/views/equipment/spare/index.vue'),
+            meta: { title: '备件管理', icon: 'Box', order: 5 }
+          },
+          {
+            path: 'oee',
+            name: 'equipmentOEE',
+            component: () => import('@/views/equipment/oee/index.vue'),
+            meta: { title: 'OEE统计', icon: 'TrendCharts', order: 6 }
           }
         ]
       },
