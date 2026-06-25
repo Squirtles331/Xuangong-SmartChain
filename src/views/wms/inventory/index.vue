@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface Inv {
   id: string
@@ -112,9 +112,10 @@ const fd = computed(() =>
   invs.value.filter((i) => (!s.keyword || i.name.includes(s.keyword) || i.code.includes(s.keyword)) && (!s.warehouse || i.warehouse === s.warehouse))
 )
 const pd = computed(() => {
-  p.total = fd.value.length
   return fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize)
 })
+
+watch(fd, (val) => { p.total = val.length }, { immediate: true })
 function hs() {
   p.currentPage = 1
 }
