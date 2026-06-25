@@ -329,6 +329,56 @@ const routes: RouteRecordRaw[] = [
         ]
       },
       {
+        path: 'equipment',
+        name: 'equipment',
+        meta: { title: '设备中心', icon: 'Cpu', order: 50 },
+        children: [
+          { path: 'list', name: 'equipmentList', component: () => import('@/views/equipment/list/index.vue'), meta: { title: '设备台账', icon: 'Monitor', order: 1 } },
+          { path: 'check', name: 'equipmentCheck', component: () => import('@/views/equipment/check/index.vue'), meta: { title: '点检管理', icon: 'Checked', order: 2 } },
+          { path: 'maintain', name: 'equipmentMaintain', component: () => import('@/views/equipment/maintain/index.vue'), meta: { title: '保养管理', icon: 'SetUp', order: 3 } }
+        ]
+      },
+      {
+        path: 'iot',
+        name: 'iot',
+        meta: { title: 'IoT中心', icon: 'Connection', order: 55 },
+        children: [
+          { path: 'monitor', name: 'iotMonitor', component: () => import('@/views/iot/monitor/index.vue'), meta: { title: '设备监控', icon: 'Monitor', order: 1 } }
+        ]
+      },
+      {
+        path: 'energy',
+        name: 'energy',
+        meta: { title: '能源中心', icon: 'TrendCharts', order: 60 },
+        children: [
+          { path: 'overview', name: 'energyOverview', component: () => import('@/views/energy/overview/index.vue'), meta: { title: '能耗概览', icon: 'DataLine', order: 1 } }
+        ]
+      },
+      {
+        path: 'ehs',
+        name: 'ehs',
+        meta: { title: '安环中心', icon: 'Warning', order: 65 },
+        children: [
+          { path: 'index', name: 'ehsIndex', component: () => import('@/views/ehs/index/index.vue'), meta: { title: '安全管理', icon: 'Warning', order: 1 } }
+        ]
+      },
+      {
+        path: 'hr',
+        name: 'hr',
+        meta: { title: '人资中心', icon: 'User', order: 70 },
+        children: [
+          { path: 'index', name: 'hrIndex', component: () => import('@/views/hr/index/index.vue'), meta: { title: '人资管理', icon: 'User', order: 1 } }
+        ]
+      },
+      {
+        path: 'finance',
+        name: 'finance',
+        meta: { title: '财务中心', icon: 'Money', order: 75 },
+        children: [
+          { path: 'index', name: 'financeIndex', component: () => import('@/views/finance/index/index.vue'), meta: { title: '财务管理', icon: 'Money', order: 1 } }
+        ]
+      },
+      {
         path: 'about',
         name: 'about',
         component: () => import('@/views/AboutView.vue'),
