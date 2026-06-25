@@ -10,7 +10,9 @@
       </template>
       <template #nodes="{ row }">
         <el-tag v-for="(node, i) in row.nodes" :key="i" size="small" style="margin-right: 4px">{{ node }}</el-tag>
-        <el-icon v-if="row.nodes.length > 1" v-for="i in row.nodes.length - 1" :key="'arrow' + i" style="margin: 0 2px"><ArrowRight /></el-icon>
+        <template v-if="row.nodes.length > 1">
+          <el-icon v-for="i in row.nodes.length - 1" :key="'arrow' + i" style="margin: 0 2px"><ArrowRight /></el-icon>
+        </template>
       </template>
       <template #actions="{ row }">
         <gi-button type="edit" @click="openEdit(row)" />
