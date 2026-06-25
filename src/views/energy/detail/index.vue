@@ -1,10 +1,14 @@
 <template>
   <gi-page-layout :bordered="true">
+    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <gi-table :columns="cols" :data="data" border stripe size="small">
       <template #type="{ row }"
         ><el-tag :type="row.type === '电' ? 'warning' : row.type === '水' ? 'primary' : 'info'" size="small">{{ row.type }}</el-tag></template
       >
     </gi-table>
+      <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode==='add'?'新增':'编辑'" width="600px">
+      <gi-form v-model="form" :columns="formCols" :label-width="100" />
+    </gi-dialog>
   </gi-page-layout>
 </template>
 <script lang="ts" setup>

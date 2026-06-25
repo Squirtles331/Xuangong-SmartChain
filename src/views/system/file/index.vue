@@ -1,5 +1,6 @@
 <template>
   <gi-page-layout :bordered="true">
+    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <template #tool>
       <el-upload :auto-upload="false" :show-file-list="false" @change="handleUpload">
         <gi-button type="add">上传文件</gi-button>
@@ -142,5 +143,6 @@ function deleteFile(id: string) {
     .catch(() => {})
 }
 
+function del(id:string){data.value=data.value.filter((e:any)=>e.id!==id)}
 function refresh() {}
 </script>

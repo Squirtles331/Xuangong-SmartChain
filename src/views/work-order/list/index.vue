@@ -50,12 +50,16 @@
         <gi-button v-if="['draft', 'approved'].includes(row.status)" type="delete" size="small" @click="deleteOrder(row.id)" />
       </template>
     </gi-table>
+      <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode==='add'?'新增':'编辑'" width="600px">
+      <gi-form v-model="form" :columns="formCols" :label-width="100" />
+    </gi-dialog>
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { workOrders as mockWOs } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
@@ -168,6 +172,11 @@ function handleReset() {
   Object.assign(searchForm, { code: '', status: '', priority: '', date_range: [] })
   pagination.currentPage = 1
 }
+function del(id:string){data.value=data.value.filter((e:any)=>e.id!==id)}
+const vis=ref(false);const mode=ref<'add'|'edit'>('add');const eid=ref('');const form=reactive({name:''});const formCols:FormColumnItem[]=[{type:'input',label:'名称',field:'name',required:true}]
+function openAdd(){mode.value='add';eid.value='';vis.value=true}
+function openEdit(r:any){mode.value='edit';eid.value=r.id;Object.assign(form,r);vis.value=true}
+async function submit(){if(!form.name){ElMessage.warning('请填写必填项');return false};if(mode.value==='add'){data.value.unshift({id:Date.now().toString(),...form})}else{const i=data.value.findIndex((e:any)=>e.id===eid.value);if(i>-1)Object.assign(data.value[i],form)};return true}
 function refresh() {
   handleReset()
 }

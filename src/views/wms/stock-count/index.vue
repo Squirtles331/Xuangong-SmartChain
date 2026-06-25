@@ -1,5 +1,6 @@
 <template>
   <gi-page-layout :bordered="true">
+    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <template #tool><gi-button type="add" @click="openCreate" /></template>
     <gi-table :columns="cols" :data="plans" border stripe>
       <template #type="{ row }"

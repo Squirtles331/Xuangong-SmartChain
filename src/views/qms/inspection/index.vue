@@ -1,5 +1,6 @@
 <template>
   <gi-page-layout :bordered="true">
+    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <gi-table :columns="cols" :data="data" border stripe>
       <template #status="{ row }"
         ><el-tag v-if="row.status === 'pending'" type="warning" size="small">待检</el-tag
