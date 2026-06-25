@@ -336,6 +336,12 @@ const routes: RouteRecordRaw[] = [
             name: 'crmReceivable',
             component: () => import('@/views/crm/receivable/index.vue'),
             meta: { title: '应收台账', icon: 'Money', order: 3 }
+          },
+          {
+            path: 'order-change',
+            name: 'crmOrderChange',
+            component: () => import('@/views/crm/order-change/index.vue'),
+            meta: { title: '订单变更', hidden: true }
           }
         ]
       },

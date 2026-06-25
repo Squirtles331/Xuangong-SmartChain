@@ -118,6 +118,14 @@ const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const filteredAR = computed(() =>
   ars.value.filter((a) => {
     if (searchForm.customer && !a.customer.includes(searchForm.customer)) return false
+    if (searchForm.aging) {
+      const agingDays = a.aging
+      if (searchForm.aging === '0' && agingDays > 0) return false
+      if (searchForm.aging === '1' && (agingDays <= 0 || agingDays > 30)) return false
+      if (searchForm.aging === '2' && (agingDays <= 30 || agingDays > 60)) return false
+      if (searchForm.aging === '3' && (agingDays <= 60 || agingDays > 90)) return false
+      if (searchForm.aging === '4' && agingDays <= 90) return false
+    }
     return true
   })
 )
