@@ -99,8 +99,8 @@ const cols: TableColumnItem<Emp>[] = [
   { prop: 'position', label: '岗位', width: 140 },
   { prop: 'phone', label: '电话', width: 130 },
   { prop: 'hire_date', label: '入职日期', width: 110 },
-  { label: '状态', width: 60, slotName: 'status', align: 'center' },
-  { label: '操作', width: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 60, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() =>

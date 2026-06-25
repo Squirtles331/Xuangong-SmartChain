@@ -92,12 +92,12 @@ const sc: FormColumnItem[] = [
 ]
 const cols: TableColumnItem<In>[] = [
   { prop: 'code', label: '入库单号', width: 160 },
-  { label: '类型', width: 100, slotName: 'type', align: 'center' },
+  { label: '类型', minWidth: 100, slotName: 'type', align: 'center' },
   { prop: 'material', label: '物料', minWidth: 160 },
-  { prop: 'qty', label: '数量', width: 80, align: 'center' },
+  { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { prop: 'warehouse', label: '仓库', width: 100 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() =>

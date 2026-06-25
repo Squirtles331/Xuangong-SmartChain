@@ -129,14 +129,14 @@ const searchColumns: FormColumnItem[] = [
 const columns: TableColumnItem<WorkOrder>[] = [
   { prop: 'code', label: '工单编号', width: 160 },
   { prop: 'material_name', label: '产品', minWidth: 140 },
-  { prop: 'planned_qty', label: '计划数量', width: 100, align: 'center' },
-  { label: '进度', width: 140, slotName: 'progress' },
+  { prop: 'planned_qty', label: '计划数量', minWidth: 100, align: 'center' },
+  { label: '进度', minWidth: 140, slotName: 'progress' },
   { prop: 'current_operation', label: '当前工序', width: 140 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '优先级', width: 70, slotName: 'priority', align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '优先级', minWidth: 70, slotName: 'priority', align: 'center' },
   { prop: 'workshop_name', label: '车间', width: 130 },
-  { label: '计划完工', width: 110, slotName: 'planned_end_date' },
-  { label: '操作', width: 280, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '计划完工', minWidth: 110, slotName: 'planned_end_date' },
+  { label: '操作', minWidth: 280, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })

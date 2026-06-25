@@ -25,8 +25,8 @@ const cols: TableColumnItem<any>[] = [
   { prop: 'name', label: '名称', width: 120 },
   { prop: 'model', label: '型号', width: 120 },
   { prop: 'workshop', label: '所属车间', width: 140 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 160, slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
 ]
 function openAdd() {}
 function openEdit(_r: any) {}

@@ -74,10 +74,10 @@ const cols: TableColumnItem<PR>[] = [
   { prop: 'po_code', label: '采购订单', width: 170 },
   { prop: 'supplier', label: '供应商', minWidth: 150 },
   { prop: 'material', label: '物料', minWidth: 140 },
-  { prop: 'qty', label: '数量', width: 80, align: 'center' },
+  { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { prop: 'reason', label: '原因', width: 120 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 100, slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() => returns.value.filter((r) => (!s.code || r.code.includes(s.code)) && (!s.status || r.status === s.status)))

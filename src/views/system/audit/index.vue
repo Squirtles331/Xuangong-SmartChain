@@ -88,11 +88,11 @@ const columns: TableColumnItem<Log>[] = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'user_name', label: '操作人', width: 100 },
   { prop: 'module', label: '模块', width: 120 },
-  { label: '操作', width: 80, slotName: 'action_type', align: 'center' },
+  { label: '操作', minWidth: 80, slotName: 'action_type', align: 'center' },
   { prop: 'target', label: '操作对象', minWidth: 160 },
   { prop: 'ip', label: 'IP', width: 140 },
   { prop: 'created_at', label: '时间', width: 170 },
-  { label: '操作', width: 80, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })

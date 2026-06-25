@@ -130,10 +130,10 @@ const cols: TableColumnItem<Eq>[] = [
   { prop: 'name', label: '设备名称', width: 120 },
   { prop: 'model', label: '型号', width: 100 },
   { prop: 'workshop', label: '所属车间', width: 140 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { prop: 'purchase_date', label: '购置日期', width: 110 },
   { prop: 'commission_date', label: '投产日期', width: 110 },
-  { label: '操作', width: 280, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 280, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() =>

@@ -63,9 +63,9 @@ const columns: TableColumnItem<S>[] = [
   { prop: 'contact', label: '联系人', width: 100 },
   { prop: 'phone', label: '电话', width: 130 },
   { prop: 'terms', label: '付款条款', width: 110 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '资质', width: 80, slotName: 'qualified', align: 'center' },
-  { label: '操作', width: 160, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '资质', minWidth: 80, slotName: 'qualified', align: 'center' },
+  { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const vis = ref(false)
 const mode = ref<'add' | 'edit'>('add')

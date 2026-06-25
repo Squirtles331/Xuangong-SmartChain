@@ -102,10 +102,10 @@ const cols: TableColumnItem<Inv>[] = [
   { prop: 'warehouse', label: '仓库', width: 100 },
   { prop: 'location', label: '库位', width: 100 },
   { prop: 'lot', label: '批号', width: 150 },
-  { label: '库存', width: 80, slotName: 'qty', align: 'center' },
-  { prop: 'reserved', label: '已预留', width: 80, align: 'center' },
-  { prop: 'available', label: '可用', width: 80, align: 'center' },
-  { label: '操作', width: 80, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '库存', minWidth: 80, slotName: 'qty', align: 'center' },
+  { prop: 'reserved', label: '已预留', minWidth: 80, align: 'center' },
+  { prop: 'available', label: '可用', minWidth: 80, align: 'center' },
+  { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() =>

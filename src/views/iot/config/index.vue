@@ -23,10 +23,10 @@ const data = ref([
 ])
 const cols: TableColumnItem<any>[] = [
   { prop: 'name', label: '设备名称', width: 180 },
-  { label: '协议', width: 80, slotName: 'protocol', align: 'center' },
+  { label: '协议', minWidth: 80, slotName: 'protocol', align: 'center' },
   { prop: 'address', label: '采集地址', minWidth: 280 },
-  { prop: 'interval', label: '采集间隔', width: 80, align: 'center' },
-  { label: '操作', width: 100, slotName: 'actions', align: 'center' }
+  { prop: 'interval', label: '采集间隔', minWidth: 80, align: 'center' },
+  { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
 function openAdd() {}
 function editCfg(_r: any) {}

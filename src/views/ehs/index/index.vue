@@ -106,11 +106,11 @@ const cols: TableColumnItem<Hz>[] = [
   { prop: 'code', label: '编号', width: 160 },
   { prop: 'location', label: '位置', width: 140 },
   { prop: 'desc', label: '描述', minWidth: 180 },
-  { label: '风险等级', width: 80, slotName: 'level', align: 'center' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
+  { label: '风险等级', minWidth: 80, slotName: 'level', align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { prop: 'finder', label: '发现人', width: 80 },
   { prop: 'found_at', label: '发现时间', width: 110 },
-  { label: '操作', width: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() =>

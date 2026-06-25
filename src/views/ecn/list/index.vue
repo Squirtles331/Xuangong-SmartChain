@@ -88,11 +88,11 @@ const columns: TableColumnItem<ECN>[] = [
   { prop: 'change_type', label: '变更类型', width: 130 },
   { prop: 'material', label: '变更对象', minWidth: 160 },
   { prop: 'current_version', label: '当前版本', width: 120 },
-  { label: '紧急程度', width: 80, slotName: 'urgency', align: 'center' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
+  { label: '紧急程度', minWidth: 80, slotName: 'urgency', align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { prop: 'applicant', label: '申请人', width: 80 },
   { prop: 'created_at', label: '日期', width: 110 },
-  { label: '操作', width: 200, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })

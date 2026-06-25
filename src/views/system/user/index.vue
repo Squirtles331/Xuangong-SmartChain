@@ -150,13 +150,13 @@ const pagedUsers = computed(() => {
 })
 
 const columns: TableColumnItem<User>[] = [
-  { type: 'index', label: '#', width: 60, slotName: 'index', align: 'center' },
+  { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
   { prop: 'username', label: '用户名', minWidth: 120 },
   { prop: 'nickname', label: '昵称', minWidth: 120 },
   { prop: 'role', label: '角色', minWidth: 100 },
-  { prop: 'status', label: '状态', width: 100, slotName: 'status' },
+  { prop: 'status', label: '状态', minWidth: 100, slotName: 'status' },
   { prop: 'createdAt', label: '创建时间', minWidth: 140 },
-  { label: '操作', width: 300, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 300, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const dialogVisible = ref(false)

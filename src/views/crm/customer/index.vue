@@ -51,9 +51,9 @@ const columns: TableColumnItem<Customer>[] = [
   { prop: 'contact_person', label: '联系人', width: 100 },
   { prop: 'contact_phone', label: '联系电话', width: 130 },
   { prop: 'payment_terms', label: '付款条款', width: 110 },
-  { prop: 'credit_limit', label: '信用额度(元)', width: 140, align: 'right' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 160, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'credit_limit', label: '信用额度(元)', minWidth: 140, align: 'right' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const dialogVisible = ref(false)

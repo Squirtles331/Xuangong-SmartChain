@@ -24,7 +24,7 @@
 import { ref,reactive,computed,watch } from 'vue';import { ElMessage } from 'element-plus';import type { FormColumnItem,TableColumnItem } from 'gi-component'
 interface Sch { id:string;team:string;shift:string;members:string;leader:string }
 const data=ref<Sch[]>([{id:'1',team:'甲班',shift:'day',members:'李四,王五,赵六',leader:'李四'},{id:'2',team:'乙班',shift:'night',members:'孙八,周九,吴十',leader:'孙八'}])
-const cols:TableColumnItem<Sch>[]=[{prop:'team',label:'班组',width:80},{label:'班次',width:60,slotName:'shift',align:'center'},{prop:'members',label:'成员',minWidth:180},{prop:'leader',label:'班组长',width:80},{label:'操作',width:180,fixed:'right',slotName:'actions',align:'center'}]
+const cols:TableColumnItem<Sch>[]=[{prop:'team',label:'班组',minWidth:80},{label:'班次',minWidth:60,slotName:'shift',align:'center'},{prop:'members',label:'成员',minWidth:180},{prop:'leader',label:'班组长',minWidth:80},{label:'操作',minWidth:180,fixed:'right',slotName:'actions',align:'center'}]
 const p=reactive({currentPage:1,pageSize:10,total:0});const pd=computed(()=>data.value.slice((p.currentPage-1)*p.pageSize,p.currentPage*p.pageSize));watch(data,(v)=>{p.total=v.length},{immediate:true})
 function refresh(){};function handleExport(){ElMessage.success('导出成功')}
 const vis=ref(false);const mode=ref<'add'|'edit'>('add');const eid=ref('')

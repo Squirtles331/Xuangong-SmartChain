@@ -58,9 +58,9 @@ const cols: TableColumnItem<T>[] = [
   { prop: 'type', label: '类型', width: 100 },
   { prop: 'material', label: '物料', minWidth: 140 },
   { prop: 'lot', label: '批号', width: 160 },
-  { prop: 'qty', label: '数量', width: 80, align: 'center' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 80, slotName: 'actions', align: 'center' }
+  { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 80, slotName: 'actions', align: 'center' }
 ]
 const iv = ref(false)
 const ic = ref<T | null>(null)

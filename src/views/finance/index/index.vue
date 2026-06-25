@@ -69,12 +69,12 @@ const sc: FormColumnItem[] = [
 const cols: TableColumnItem<AP>[] = [
   { prop: 'code', label: '应付单号', width: 160 },
   { prop: 'supplier', label: '供应商', minWidth: 150 },
-  { prop: 'amount', label: '金额', width: 100, align: 'right' },
-  { prop: 'paid', label: '已付', width: 100, align: 'right' },
-  { prop: 'balance', label: '余额', width: 100, align: 'right' },
+  { prop: 'amount', label: '金额', minWidth: 100, align: 'right' },
+  { prop: 'paid', label: '已付', minWidth: 100, align: 'right' },
+  { prop: 'balance', label: '余额', minWidth: 100, align: 'right' },
   { prop: 'due_date', label: '到期日', width: 110 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() =>

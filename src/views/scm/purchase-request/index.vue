@@ -153,10 +153,10 @@ const cols: TableColumnItem<PR>[] = [
   { prop: 'dept', label: '申请部门', width: 100 },
   { prop: 'reason', label: '申请原因', width: 130 },
   { prop: 'need_date', label: '需求日期', width: 110 },
-  { label: '来源', width: 70, slotName: 'source', align: 'center' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
+  { label: '来源', minWidth: 70, slotName: 'source', align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { prop: 'created_at', label: '创建时间', width: 110 },
-  { label: '操作', width: 250, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 250, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() =>

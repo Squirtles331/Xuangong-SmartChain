@@ -105,13 +105,13 @@ const searchColumns: FormColumnItem[] = [
 const columns: TableColumnItem<AR>[] = [
   { prop: 'code', label: '应收单号', width: 160 },
   { prop: 'customer', label: '客户', minWidth: 140 },
-  { prop: 'amount', label: '应收金额', width: 120, align: 'right' },
-  { prop: 'settled', label: '已核销', width: 120, align: 'right' },
-  { prop: 'balance', label: '余额', width: 120, align: 'right' },
+  { prop: 'amount', label: '应收金额', minWidth: 120, align: 'right' },
+  { prop: 'settled', label: '已核销', minWidth: 120, align: 'right' },
+  { prop: 'balance', label: '余额', minWidth: 120, align: 'right' },
   { prop: 'due_date', label: '到期日', width: 110 },
-  { label: '账龄', width: 100, slotName: 'aging', align: 'center' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 80, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '账龄', minWidth: 100, slotName: 'aging', align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
