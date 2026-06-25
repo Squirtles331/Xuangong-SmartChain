@@ -153,7 +153,13 @@ const pagedOrders = computed(() => {
 
 // 副作用分离：更新 total
 // 自动更新分页total
-watch(filteredOrders, (val) => { pagination.total = val.length }, { immediate: true })
+watch(
+  filteredOrders,
+  (val) => {
+    pagination.total = val.length
+  },
+  { immediate: true }
+)
 
 function handleSearch() {
   pagination.currentPage = 1

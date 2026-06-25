@@ -97,7 +97,13 @@ const pagedTypes = computed(() => {
   return filteredTypes.value.slice(start, start + pagination.pageSize)
 })
 
-watch(filteredTypes, (val) => { pagination.total = val.length }, { immediate: true })
+watch(
+  filteredTypes,
+  (val) => {
+    pagination.total = val.length
+  },
+  { immediate: true }
+)
 
 function handleSearch() {
   pagination.currentPage = 1

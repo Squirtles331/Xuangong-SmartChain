@@ -2,7 +2,15 @@
   <gi-page-layout :bordered="true" :size="320" style="height: calc(100vh - 120px)">
     <template #left>
       <div class="tree-wrapper">
-        <el-tree ref="treeRef" :data="menuTree" :props="{ children: 'children', label: 'name' }" node-key="id" default-expand-all highlight-current @node-click="onNodeClick">
+        <el-tree
+          ref="treeRef"
+          :data="menuTree"
+          :props="{ children: 'children', label: 'name' }"
+          node-key="id"
+          default-expand-all
+          highlight-current
+          @node-click="onNodeClick"
+        >
           <template #default="{ data }">
             <span class="tree-node">
               <el-icon v-if="data.type === 'directory'" style="margin-right: 4px"><Folder /></el-icon>
@@ -23,7 +31,7 @@
       </div>
     </template>
     <template #header>
-      <h3 style="margin:0">{{ currentNode ? (currentNode.id ? '编辑' : '新增') + '菜单节点' : '请选择左侧节点' }}</h3>
+      <h3 style="margin: 0">{{ currentNode ? (currentNode.id ? '编辑' : '新增') + '菜单节点' : '请选择左侧节点' }}</h3>
     </template>
     <div v-if="!currentNode" class="empty-tip"><el-empty description="选择左侧菜单节点进行编辑，或点击下方按钮新增" /></div>
     <gi-form v-else v-model="nodeForm" :columns="formColumns" :label-width="100" style="padding: 16px">
@@ -43,19 +51,49 @@ import { Folder, Document, Operation } from '@element-plus/icons-vue'
 import type { FormColumnItem } from 'gi-component'
 import { menuTree as mockMenuTree } from '@/mock'
 
-interface MenuNode { id: string; parent_id: string | null; name: string; type: 'directory' | 'menu' | 'button'; path?: string; component?: string; permission_code: string; icon?: string; sort_order: number; visible: boolean; children?: MenuNode[] }
+interface MenuNode {
+  id: string
+  parent_id: string | null
+  name: string
+  type: 'directory' | 'menu' | 'button'
+  path?: string
+  component?: string
+  permission_code: string
+  icon?: string
+  sort_order: number
+  visible: boolean
+  children?: MenuNode[]
+}
 
 const menuTree = ref<MenuNode[]>(JSON.parse(JSON.stringify(mockMenuTree)))
 const currentNode = ref<MenuNode | null>(null)
 
 const nodeForm = reactive({
-  name: '', type: 'menu' as string, path: '', component: '',
-  permission_code: '', icon: '', sort_order: 1, visible: true
+  name: '',
+  type: 'menu' as string,
+  path: '',
+  component: '',
+  permission_code: '',
+  icon: '',
+  sort_order: 1,
+  visible: true
 })
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '名称', field: 'name', required: true },
-  { type: 'select-v2', label: '类型', field: 'type', required: true, props: { options: [{ label: '目录', value: 'directory' }, { label: '菜单', value: 'menu' }, { label: '按钮', value: 'button' }] } as any },
+  {
+    type: 'select-v2',
+    label: '类型',
+    field: 'type',
+    required: true,
+    props: {
+      options: [
+        { label: '目录', value: 'directory' },
+        { label: '菜单', value: 'menu' },
+        { label: '按钮', value: 'button' }
+      ]
+    } as any
+  },
   { type: 'input', label: '路由路径', field: 'path', props: { placeholder: '菜单类型时必填' } as any },
   { type: 'input', label: '组件路径', field: 'component', props: { placeholder: '如 views/system/user/index.vue' } as any },
   { type: 'input', label: '权限编码', field: 'permission_code', required: true },
@@ -66,24 +104,46 @@ const formColumns: FormColumnItem[] = [
 
 function onNodeClick(data: MenuNode) {
   currentNode.value = data
-  nodeForm.name = data.name; nodeForm.type = data.type; nodeForm.path = data.path || ''
-  nodeForm.component = data.component || ''; nodeForm.permission_code = data.permission_code
-  nodeForm.icon = data.icon || ''; nodeForm.sort_order = data.sort_order; nodeForm.visible = data.visible
+  nodeForm.name = data.name
+  nodeForm.type = data.type
+  nodeForm.path = data.path || ''
+  nodeForm.component = data.component || ''
+  nodeForm.permission_code = data.permission_code
+  nodeForm.icon = data.icon || ''
+  nodeForm.sort_order = data.sort_order
+  nodeForm.visible = data.visible
 }
 
 function addNode(type: 'directory' | 'menu' | 'button') {
   const parent = currentNode.value
   const newNode: MenuNode = {
-    id: '', parent_id: parent?.id || null, name: '', type,
-    path: '', component: '', permission_code: '', icon: '', sort_order: 1, visible: true
+    id: '',
+    parent_id: parent?.id || null,
+    name: '',
+    type,
+    path: '',
+    component: '',
+    permission_code: '',
+    icon: '',
+    sort_order: 1,
+    visible: true
   }
   currentNode.value = newNode
-  nodeForm.name = ''; nodeForm.type = type; nodeForm.path = ''; nodeForm.component = ''
-  nodeForm.permission_code = ''; nodeForm.icon = ''; nodeForm.sort_order = 1; nodeForm.visible = true
+  nodeForm.name = ''
+  nodeForm.type = type
+  nodeForm.path = ''
+  nodeForm.component = ''
+  nodeForm.permission_code = ''
+  nodeForm.icon = ''
+  nodeForm.sort_order = 1
+  nodeForm.visible = true
 }
 
 function saveNode() {
-  if (!nodeForm.name || !nodeForm.permission_code) { ElMessage.warning('请填写名称和权限编码'); return }
+  if (!nodeForm.name || !nodeForm.permission_code) {
+    ElMessage.warning('请填写名称和权限编码')
+    return
+  }
   if (currentNode.value!.id) {
     Object.assign(currentNode.value, nodeForm)
     ElMessage.success('保存成功')
@@ -92,7 +152,10 @@ function saveNode() {
     const parent = currentNode.value!.parent_id
     if (parent) {
       const parentNode = findNode(menuTree.value, parent)
-      if (parentNode) { if (!parentNode.children) parentNode.children = []; parentNode.children.push(newNode) }
+      if (parentNode) {
+        if (!parentNode.children) parentNode.children = []
+        parentNode.children.push(newNode)
+      }
     } else {
       menuTree.value.push(newNode)
     }
@@ -110,20 +173,53 @@ function removeNode() {
 }
 
 function findNode(nodes: MenuNode[], id: string): MenuNode | null {
-  for (const n of nodes) { if (n.id === id) return n; if (n.children) { const f = findNode(n.children, id); if (f) return f } }
+  for (const n of nodes) {
+    if (n.id === id) return n
+    if (n.children) {
+      const f = findNode(n.children, id)
+      if (f) return f
+    }
+  }
   return null
 }
 
 function removeFromTree(nodes: MenuNode[], id: string): boolean {
-  for (let i = 0; i < nodes.length; i++) { if (nodes[i].id === id) { nodes.splice(i, 1); return true }; if (nodes[i].children && removeFromTree(nodes[i].children!, id)) return true }
+  for (let i = 0; i < nodes.length; i++) {
+    if (nodes[i].id === id) {
+      nodes.splice(i, 1)
+      return true
+    }
+    if (nodes[i].children && removeFromTree(nodes[i].children!, id)) return true
+  }
   return false
 }
 </script>
 
 <style scoped>
-.tree-wrapper { display: flex; flex-direction: column; height: 100%; }
-.tree-wrapper :deep(.el-tree) { flex: 1; overflow: auto; }
-.tree-toolbar { padding: 8px 0; border-top: 1px solid #eee; display: flex; gap: 8px; }
-.tree-node { display: flex; align-items: center; font-size: 13px; }
-.empty-tip { display: flex; align-items: center; justify-content: center; height: 100%; }
+.tree-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.tree-wrapper :deep(.el-tree) {
+  flex: 1;
+  overflow: auto;
+}
+.tree-toolbar {
+  padding: 8px 0;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 8px;
+}
+.tree-node {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+}
+.empty-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
 </style>

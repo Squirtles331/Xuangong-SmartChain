@@ -92,7 +92,13 @@ const pagedBoms = computed(() => {
   return filteredBoms.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
 })
 
-watch(filteredBoms, (val) => { pagination.total = val.length }, { immediate: true })
+watch(
+  filteredBoms,
+  (val) => {
+    pagination.total = val.length
+  },
+  { immediate: true }
+)
 
 function handleSearch() {
   pagination.currentPage = 1

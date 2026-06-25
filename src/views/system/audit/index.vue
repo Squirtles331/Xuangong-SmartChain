@@ -131,8 +131,13 @@ function showDetail(row: Log) {
 
 // 自动更新分页total
 import { watch } from 'vue'
-watch(filteredLogs, (val) => { pagination.total = val.length }, { immediate: true })
-
+watch(
+  filteredLogs,
+  (val) => {
+    pagination.total = val.length
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

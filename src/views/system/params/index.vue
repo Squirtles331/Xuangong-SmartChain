@@ -119,6 +119,11 @@ async function submitDialog() {
 
 // 自动更新分页total
 import { watch } from 'vue'
-watch(filteredData, (val) => { pagination.total = val.length }, { immediate: true })
-
+watch(
+  filteredData,
+  (val) => {
+    pagination.total = val.length
+  },
+  { immediate: true }
+)
 </script>

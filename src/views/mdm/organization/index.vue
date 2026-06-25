@@ -2,7 +2,14 @@
   <gi-page-layout :bordered="true" :size="260" style="height: calc(100vh - 120px)">
     <template #left>
       <div class="tree-wrapper">
-        <el-tree :data="orgTree" :props="{ children: 'children', label: 'name' }" node-key="id" default-expand-all highlight-current @node-click="onNodeClick">
+        <el-tree
+          :data="orgTree"
+          :props="{ children: 'children', label: 'name' }"
+          node-key="id"
+          default-expand-all
+          highlight-current
+          @node-click="onNodeClick"
+        >
           <template #default="{ data }">
             <span class="tree-node">
               <el-icon v-if="data.type === 'group'" style="margin-right: 4px"><OfficeBuilding /></el-icon>
@@ -21,7 +28,21 @@
       </div>
     </template>
     <template #header>
-      <h3 v-if="currentNode" style="margin:0">{{ currentNode.type === 'group' ? '集团' : currentNode.type === 'company' ? '公司' : currentNode.type === 'plant' ? '工厂' : currentNode.type === 'workshop' ? '车间' : currentNode.type === 'line' ? '产线' : '工位' }}信息</h3>
+      <h3 v-if="currentNode" style="margin: 0">
+        {{
+          currentNode.type === 'group'
+            ? '集团'
+            : currentNode.type === 'company'
+              ? '公司'
+              : currentNode.type === 'plant'
+                ? '工厂'
+                : currentNode.type === 'workshop'
+                  ? '车间'
+                  : currentNode.type === 'line'
+                    ? '产线'
+                    : '工位'
+        }}信息
+      </h3>
     </template>
     <div v-if="!currentNode" class="empty-tip"><el-empty description="请选择左侧组织节点" /></div>
     <gi-form v-else v-model="currentNode" :columns="orgColumns" :label-width="100" style="padding: 16px">
@@ -47,8 +68,12 @@ const orgColumns: FormColumnItem[] = [
   { type: 'input', label: '编码', field: 'code', props: { placeholder: '自动生成' } as any }
 ]
 
-function onNodeClick(data: any) { currentNode.value = { ...data } }
-function saveNode() { ElMessage.success('保存成功') }
+function onNodeClick(data: any) {
+  currentNode.value = { ...data }
+}
+function saveNode() {
+  ElMessage.success('保存成功')
+}
 
 function addNode() {
   const parent = currentNode.value
@@ -69,12 +94,18 @@ function removeNode() {
   if (!currentNode.value) return
   const id = currentNode.value.id
   const removed = removeFromTree(orgTree.value, id)
-  if (removed) { currentNode.value = null; ElMessage.success('删除成功') }
+  if (removed) {
+    currentNode.value = null
+    ElMessage.success('删除成功')
+  }
 }
 
 function removeFromTree(nodes: any[], id: string): boolean {
   for (let i = 0; i < nodes.length; i++) {
-    if (nodes[i].id === id) { nodes.splice(i, 1); return true }
+    if (nodes[i].id === id) {
+      nodes.splice(i, 1)
+      return true
+    }
     if (nodes[i].children && removeFromTree(nodes[i].children, id)) return true
   }
   return false
@@ -82,9 +113,30 @@ function removeFromTree(nodes: any[], id: string): boolean {
 </script>
 
 <style scoped>
-.tree-wrapper { display: flex; flex-direction: column; height: 100%; }
-.tree-wrapper :deep(.el-tree) { flex: 1; overflow: auto; }
-.tree-toolbar { padding: 8px 0; border-top: 1px solid #eee; display: flex; gap: 8px; }
-.tree-node { display: flex; align-items: center; font-size: 13px; }
-.empty-tip { display: flex; align-items: center; justify-content: center; height: 100%; }
+.tree-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.tree-wrapper :deep(.el-tree) {
+  flex: 1;
+  overflow: auto;
+}
+.tree-toolbar {
+  padding: 8px 0;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 8px;
+}
+.tree-node {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+}
+.empty-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
 </style>

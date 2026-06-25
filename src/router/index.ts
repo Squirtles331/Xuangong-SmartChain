@@ -202,8 +202,18 @@ const routes: RouteRecordRaw[] = [
         name: 'bom',
         meta: { title: '研发管理', icon: 'Collection', order: 25 },
         children: [
-          { path: 'list', name: 'bomList', component: () => import('@/views/bom/list/index.vue'), meta: { title: 'BOM管理', icon: 'List', order: 1 } },
-          { path: 'editor/:id', name: 'bomEditor', component: () => import('@/views/bom/editor/index.vue'), meta: { title: 'BOM编辑器', hidden: true } },
+          {
+            path: 'list',
+            name: 'bomList',
+            component: () => import('@/views/bom/list/index.vue'),
+            meta: { title: 'BOM管理', icon: 'List', order: 1 }
+          },
+          {
+            path: 'editor/:id',
+            name: 'bomEditor',
+            component: () => import('@/views/bom/editor/index.vue'),
+            meta: { title: 'BOM编辑器', hidden: true }
+          },
           { path: 'create', name: 'bomCreate', component: () => import('@/views/bom/editor/index.vue'), meta: { title: '新建BOM', hidden: true } }
         ]
       },
@@ -220,7 +230,12 @@ const routes: RouteRecordRaw[] = [
         name: 'ecn',
         meta: { title: '变更管理', icon: 'Switch', order: 27 },
         children: [
-          { path: 'list', name: 'ecnList', component: () => import('@/views/ecn/list/index.vue'), meta: { title: 'ECN变更', icon: 'Switch', order: 1 } }
+          {
+            path: 'list',
+            name: 'ecnList',
+            component: () => import('@/views/ecn/list/index.vue'),
+            meta: { title: 'ECN变更', icon: 'Switch', order: 1 }
+          }
         ]
       },
       {

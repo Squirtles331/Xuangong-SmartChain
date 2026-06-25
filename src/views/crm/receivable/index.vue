@@ -125,7 +125,13 @@ const pagedAR = computed(() => {
   return filteredAR.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
 })
 
-watch(filteredAR, (val) => { pagination.total = val.length }, { immediate: true })
+watch(
+  filteredAR,
+  (val) => {
+    pagination.total = val.length
+  },
+  { immediate: true }
+)
 
 function handleSearch() {
   pagination.currentPage = 1

@@ -86,7 +86,13 @@ const pagedOrders = computed(() => {
   return filtered.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
 })
 
-watch(filtered, (val) => { pagination.total = val.length }, { immediate: true })
+watch(
+  filtered,
+  (val) => {
+    pagination.total = val.length
+  },
+  { immediate: true }
+)
 
 function statusStep(s: string) {
   const map: Record<string, number> = { approved: 1, in_production: 2, pending_delivery: 3, completed: 4 }

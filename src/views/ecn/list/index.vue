@@ -107,7 +107,13 @@ const pagedEcns = computed(() => {
   return filteredEcns.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
 })
 
-watch(filteredEcns, (val) => { pagination.total = val.length }, { immediate: true })
+watch(
+  filteredEcns,
+  (val) => {
+    pagination.total = val.length
+  },
+  { immediate: true }
+)
 
 function handleSearch() {
   pagination.currentPage = 1
