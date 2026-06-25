@@ -35,7 +35,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ElMessage } from 'element-plus'
 import { bomList as mockBoms } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
