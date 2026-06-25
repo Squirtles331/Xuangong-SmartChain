@@ -125,7 +125,13 @@ const pd = computed(() => {
   return fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize)
 })
 
-watch(fd, (val) => { p.total = val.length }, { immediate: true })
+watch(
+  fd,
+  (val) => {
+    p.total = val.length
+  },
+  { immediate: true }
+)
 function hs() {
   p.currentPage = 1
 }
