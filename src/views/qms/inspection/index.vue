@@ -1,5 +1,6 @@
 <template>
   <gi-page-layout :bordered="true">
+    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <gi-table :columns="cols" :data="data" border stripe>
       <template #status="{ row }"><el-tag v-if="row.status==='pending'" type="warning" size="small">待检</el-tag><el-tag v-else-if="row.status==='done'" type="success" size="small">已完成</el-tag></template>
       <template #actions="{ row }"><el-button v-if="row.status==='pending'" type="primary" link size="small" @click="inspect(row)">检验</el-button></template>

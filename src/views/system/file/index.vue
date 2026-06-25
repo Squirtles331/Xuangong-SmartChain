@@ -143,5 +143,6 @@ function deleteFile(id: string) {
     .catch(() => {})
 }
 
+function del(id:string){data.value=data.value.filter((e:any)=>e.id!==id)}
 function refresh() {}
 </script>
