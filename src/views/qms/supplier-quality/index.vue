@@ -45,10 +45,10 @@ const sc: FormColumnItem[] = [
 ]
 const cols: TableColumnItem<SQ>[] = [
   { prop: 'supplier', label: '供应商', minWidth: 180 },
-  { prop: 'total_batches', label: '总批次数', width: 100, align: 'center' },
-  { prop: 'pass_batches', label: '合格批次', width: 100, align: 'center' },
-  { label: '合格率', width: 180, slotName: 'pass_rate' },
-  { prop: 'repeat_issues', label: '重复问题', width: 90, align: 'center' },
+  { prop: 'total_batches', label: '总批次数', minWidth: 100, align: 'center' },
+  { prop: 'pass_batches', label: '合格批次', minWidth: 100, align: 'center' },
+  { label: '合格率', minWidth: 180, slotName: 'pass_rate' },
+  { prop: 'repeat_issues', label: '重复问题', minWidth: 90, align: 'center' },
   { prop: 'last_inspection', label: '最近检验', width: 110 }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })

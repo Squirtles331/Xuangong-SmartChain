@@ -58,13 +58,13 @@ const items = ref<Ret[]>([
 ])
 const cols: TableColumnItem<Ret>[] = [
   { prop: 'code', label: '单号', width: 160 },
-  { label: '类型', width: 60, slotName: 'type', align: 'center' },
+  { label: '类型', minWidth: 60, slotName: 'type', align: 'center' },
   { prop: 'source', label: '来源单号', width: 170 },
   { prop: 'material', label: '物料', minWidth: 150 },
-  { prop: 'qty', label: '数量', width: 80, align: 'center' },
+  { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { prop: 'reason', label: '原因', width: 120 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 80, slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 80, slotName: 'actions', align: 'center' }
 ]
 const vis = ref(false)
 const form = reactive({ type: 'return', source: '', material: '', qty: 1, reason: '多余退料' })

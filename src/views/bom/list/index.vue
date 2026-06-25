@@ -74,12 +74,12 @@ const searchColumns: FormColumnItem[] = [
 const columns: TableColumnItem<BOM>[] = [
   { prop: 'material_code', label: '产品编码', width: 180 },
   { prop: 'material_name', label: '产品名称', minWidth: 160 },
-  { label: 'BOM类型', width: 80, slotName: 'bom_type', align: 'center' },
-  { prop: 'version', label: '版本', width: 80, align: 'center' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
+  { label: 'BOM类型', minWidth: 80, slotName: 'bom_type', align: 'center' },
+  { prop: 'version', label: '版本', minWidth: 80, align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { prop: 'effective_date', label: '生效日期', width: 110 },
   { prop: 'created_by', label: '创建人', width: 80 },
-  { label: '操作', width: 300, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 300, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })

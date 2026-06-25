@@ -76,14 +76,14 @@ const ganttData = ref([
     code: 'WO001',
     material: '离心泵 XJP-100',
     segments: [
-      { name: '下料', wc: '下料组', left: 0, width: 8, color: '#409eff' },
-      { name: '粗车', wc: '数控车组', left: 8, width: 14, color: '#67c23a' },
-      { name: '精车', wc: '数控车组', left: 22, width: 10, color: '#e6a23c' },
-      { name: '钻孔', wc: '钻床组', left: 32, width: 8, color: '#909399' },
-      { name: '磨削', wc: '磨床组', left: 40, width: 10, color: '#f56c6c' },
-      { name: '装配', wc: '装配组', left: 50, width: 12, color: '#409eff' },
-      { name: '试压', wc: '测试组', left: 62, width: 8, color: '#67c23a' },
-      { name: '油漆', wc: '涂装组', left: 70, width: 10, color: '#e6a23c' }
+      { name: '下料', wc: '下料组', left: 0, minWidth: 8, color: '#409eff' },
+      { name: '粗车', wc: '数控车组', left: 8, minWidth: 14, color: '#67c23a' },
+      { name: '精车', wc: '数控车组', left: 22, minWidth: 10, color: '#e6a23c' },
+      { name: '钻孔', wc: '钻床组', left: 32, minWidth: 8, color: '#909399' },
+      { name: '磨削', wc: '磨床组', left: 40, minWidth: 10, color: '#f56c6c' },
+      { name: '装配', wc: '装配组', left: 50, minWidth: 12, color: '#409eff' },
+      { name: '试压', wc: '测试组', left: 62, minWidth: 8, color: '#67c23a' },
+      { name: '油漆', wc: '涂装组', left: 70, minWidth: 10, color: '#e6a23c' }
     ]
   },
   {
@@ -91,9 +91,9 @@ const ganttData = ref([
     code: 'WO002',
     material: '齿轮箱 GBX-200',
     segments: [
-      { name: '下料', wc: '下料组', left: 8, width: 6, color: '#409eff' },
-      { name: '粗车', wc: '数控车组', left: 24, width: 12, color: '#67c23a' },
-      { name: '精车', wc: '数控车组', left: 36, width: 8, color: '#e6a23c' }
+      { name: '下料', wc: '下料组', left: 8, minWidth: 6, color: '#409eff' },
+      { name: '粗车', wc: '数控车组', left: 24, minWidth: 12, color: '#67c23a' },
+      { name: '精车', wc: '数控车组', left: 36, minWidth: 8, color: '#e6a23c' }
     ]
   },
   {
@@ -101,8 +101,8 @@ const ganttData = ref([
     code: 'WO003',
     material: '传动轴 DS-50',
     segments: [
-      { name: '车削', wc: '数控车组', left: 44, width: 14, color: '#409eff' },
-      { name: '磨削', wc: '磨床组', left: 58, width: 10, color: '#f56c6c' }
+      { name: '车削', wc: '数控车组', left: 44, minWidth: 14, color: '#409eff' },
+      { name: '磨削', wc: '磨床组', left: 58, minWidth: 10, color: '#f56c6c' }
     ]
   }
 ])

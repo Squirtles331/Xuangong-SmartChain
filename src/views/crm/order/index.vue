@@ -69,11 +69,11 @@ const columns: TableColumnItem<Order>[] = [
   { prop: 'code', label: '订单编号', width: 160 },
   { prop: 'customer_name', label: '客户', minWidth: 140 },
   { prop: 'material_name', label: '产品', minWidth: 140 },
-  { prop: 'qty', label: '数量', width: 80, align: 'center' },
-  { prop: 'amount', label: '金额(元)', width: 120, align: 'right' },
+  { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
+  { prop: 'amount', label: '金额(元)', minWidth: 120, align: 'right' },
   { prop: 'delivery_date', label: '交期', width: 110 },
-  { label: '进度', width: 240, slotName: 'status' },
-  { label: '操作', width: 120, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '进度', minWidth: 240, slotName: 'status' },
+  { label: '操作', minWidth: 120, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })

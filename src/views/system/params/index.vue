@@ -46,9 +46,9 @@ const columns: TableColumnItem<Param>[] = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'code', label: '参数编码', minWidth: 200 },
   { prop: 'name', label: '参数名称', minWidth: 180 },
-  { prop: 'value', label: '参数值', width: 120, align: 'center' },
+  { prop: 'value', label: '参数值', minWidth: 120, align: 'center' },
   { prop: 'description', label: '说明', minWidth: 250 },
-  { label: '操作', width: 120, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 120, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })

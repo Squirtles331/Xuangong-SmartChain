@@ -53,8 +53,8 @@ const templates = ref<Tpl[]>([
 const cols: TableColumnItem<Tpl>[] = [
   { prop: 'name', label: '模板名称', minWidth: 200 },
   { prop: 'category', label: '适用分类', width: 120 },
-  { prop: 'items', label: '检验项目数', width: 110, align: 'center' },
-  { label: '操作', width: 160, slotName: 'actions', align: 'center' }
+  { prop: 'items', label: '检验项目数', minWidth: 110, align: 'center' },
+  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
 ]
 const vis = ref(false)
 const mode = ref<'add' | 'edit'>('add')

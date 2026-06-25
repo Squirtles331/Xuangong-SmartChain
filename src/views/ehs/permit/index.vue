@@ -76,12 +76,12 @@ const sc: FormColumnItem[] = [
 ]
 const cols: TableColumnItem<Pm>[] = [
   { prop: 'code', label: '编号', width: 160 },
-  { label: '类型', width: 80, slotName: 'type', align: 'center' },
+  { label: '类型', minWidth: 80, slotName: 'type', align: 'center' },
   { prop: 'location', label: '作业位置', width: 140 },
   { prop: 'applicant', label: '申请人', width: 80 },
   { prop: 'apply_date', label: '日期', width: 110 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() =>

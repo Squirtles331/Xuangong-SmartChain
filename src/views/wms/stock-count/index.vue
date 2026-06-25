@@ -79,11 +79,11 @@ const plans = ref<Plan[]>([
 const cols: TableColumnItem<Plan>[] = [
   { prop: 'code', label: '计划编号', width: 160 },
   { prop: 'warehouse', label: '盘点仓库', width: 120 },
-  { label: '类型', width: 80, slotName: 'type', align: 'center' },
+  { label: '类型', minWidth: 80, slotName: 'type', align: 'center' },
   { prop: 'plan_date', label: '计划日期', width: 110 },
   { prop: 'executor', label: '执行人', width: 80 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 160, slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
 ]
 function openCreate() {}
 const execVis = ref(false)

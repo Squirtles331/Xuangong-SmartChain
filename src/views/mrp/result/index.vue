@@ -80,12 +80,12 @@ const purCols: TableColumnItem<any>[] = [
   { type: 'selection', width: 50 },
   { prop: 'code', label: '物料编码', width: 180 },
   { prop: 'name', label: '物料名称', minWidth: 140 },
-  { prop: 'qty', label: '建议采购量', width: 110, align: 'center' },
+  { prop: 'qty', label: '建议采购量', minWidth: 110, align: 'center' },
   { prop: 'order_date', label: '建议下单', width: 110 },
   { prop: 'need_date', label: '需求日期', width: 110 },
   { prop: 'supplier', label: '建议供应商', width: 150 },
   { prop: 'source', label: '来源需求', width: 150 },
-  { label: '操作', width: 100, slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
 
 const productionList = ref([
@@ -116,13 +116,13 @@ const prodCols: TableColumnItem<any>[] = [
   { type: 'selection', width: 50 },
   { prop: 'code', label: '产品编码', width: 180 },
   { prop: 'name', label: '产品名称', minWidth: 140 },
-  { prop: 'qty', label: '建议生产量', width: 110, align: 'center' },
+  { prop: 'qty', label: '建议生产量', minWidth: 110, align: 'center' },
   { prop: 'start_date', label: '建议开工', width: 110 },
   { prop: 'end_date', label: '建议完工', width: 110 },
   { prop: 'bom', label: 'BOM版本', width: 110 },
   { prop: 'routing', label: '工艺版本', width: 130 },
   { prop: 'source', label: '来源需求', width: 150 },
-  { label: '操作', width: 100, slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
 
 const exceptions = ref([

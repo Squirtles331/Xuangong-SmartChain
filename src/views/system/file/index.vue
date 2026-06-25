@@ -99,9 +99,9 @@ const columns: TableColumnItem<FileItem>[] = [
   { prop: 'name', label: '文件名', minWidth: 220 },
   { prop: 'module', label: '所属模块', width: 120 },
   { prop: 'object_type', label: '关联类型', width: 120 },
-  { label: '大小', width: 100, slotName: 'size', align: 'right' },
+  { label: '大小', minWidth: 100, slotName: 'size', align: 'right' },
   { prop: 'uploaded_at', label: '上传时间', width: 170 },
-  { label: '操作', width: 200, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 function formatSize(bytes: number): string {

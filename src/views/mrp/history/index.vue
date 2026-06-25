@@ -35,10 +35,10 @@ const cols: TableColumnItem<Run>[] = [
   { prop: 'run_time', label: '运行时间', width: 170 },
   { prop: 'operator', label: '操作人', width: 80 },
   { prop: 'scope', label: '范围', width: 80 },
-  { prop: 'orders', label: '销售订单数', width: 100, align: 'center' },
-  { prop: 'suggestions', label: '建议数', width: 80, align: 'center' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 100, slotName: 'actions', align: 'center' }
+  { prop: 'orders', label: '销售订单数', minWidth: 100, align: 'center' },
+  { prop: 'suggestions', label: '建议数', minWidth: 80, align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const pd = computed(() => {

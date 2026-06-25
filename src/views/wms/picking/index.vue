@@ -56,9 +56,9 @@ const sc: FormColumnItem[] = [
 const cols: TableColumnItem<Pick>[] = [
   { prop: 'wo_code', label: '工单号', width: 170 },
   { prop: 'material', label: '产品', minWidth: 160 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { prop: 'created_at', label: '创建时间', width: 110 },
-  { label: '操作', width: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() => data.value.filter((r) => (!s.wo_code || r.wo_code.includes(s.wo_code)) && (!s.status || r.status === s.status)))

@@ -21,9 +21,9 @@ const data = ref([
 ])
 const cols: TableColumnItem<any>[] = [
   { prop: 'date', label: '日期', width: 110 },
-  { label: '类型', width: 60, slotName: 'type', align: 'center' },
+  { label: '类型', minWidth: 60, slotName: 'type', align: 'center' },
   { prop: 'workshop', label: '车间', width: 140 },
-  { prop: 'qty', label: '用量', width: 100, align: 'center' },
-  { prop: 'unit', label: '单位', width: 60, align: 'center' }
+  { prop: 'qty', label: '用量', minWidth: 100, align: 'center' },
+  { prop: 'unit', label: '单位', minWidth: 60, align: 'center' }
 ]
 </script>

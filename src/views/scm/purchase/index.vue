@@ -108,12 +108,12 @@ const cols: TableColumnItem<PO>[] = [
   { prop: 'code', label: '订单编号', width: 160 },
   { prop: 'supplier', label: '供应商', minWidth: 150 },
   { prop: 'material', label: '物料', minWidth: 140 },
-  { prop: 'qty', label: '订购数量', width: 100, align: 'center' },
-  { prop: 'received', label: '已收货', width: 80, align: 'center' },
-  { prop: 'remain', label: '未收货', width: 80, align: 'center' },
+  { prop: 'qty', label: '订购数量', minWidth: 100, align: 'center' },
+  { prop: 'received', label: '已收货', minWidth: 80, align: 'center' },
+  { prop: 'remain', label: '未收货', minWidth: 80, align: 'center' },
   { prop: 'delivery', label: '交期', width: 110 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 120, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 120, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() =>

@@ -85,11 +85,11 @@ const cols: TableColumnItem<Rpt>[] = [
   { prop: 'wo_code', label: '工单号', width: 170 },
   { prop: 'op_name', label: '工序', width: 130 },
   { prop: 'worker', label: '操作人', width: 80 },
-  { prop: 'qualified', label: '合格数', width: 80, align: 'center' },
-  { prop: 'defective', label: '不良数', width: 80, align: 'center' },
-  { prop: 'hours', label: '工时(分)', width: 90, align: 'center' },
+  { prop: 'qualified', label: '合格数', minWidth: 80, align: 'center' },
+  { prop: 'defective', label: '不良数', minWidth: 80, align: 'center' },
+  { prop: 'hours', label: '工时(分)', minWidth: 90, align: 'center' },
   { prop: 'time', label: '时间', width: 150 },
-  { label: '操作', width: 80, slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 80, slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() => reports.value.filter((r) => (!s.wo_code || r.wo_code.includes(s.wo_code)) && (!s.worker || r.worker.includes(s.worker))))

@@ -37,11 +37,11 @@ const transfers = ref<Tr[]>([
 const cols: TableColumnItem<Tr>[] = [
   { prop: 'code', label: '调拨单号', width: 160 },
   { prop: 'material', label: '物料', minWidth: 160 },
-  { prop: 'qty', label: '数量', width: 80, align: 'center' },
+  { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { prop: 'from_wh', label: '调出仓库', width: 120 },
   { prop: 'to_wh', label: '调入仓库', width: 120 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 180, slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 180, slotName: 'actions', align: 'center' }
 ]
 const vis = ref(false)
 const form = reactive({ material: '', qty: 1, from_wh: '原材料仓', to_wh: '车间线边仓' })

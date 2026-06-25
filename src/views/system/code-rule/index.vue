@@ -48,9 +48,9 @@ const columns: TableColumnItem<CodeRule>[] = [
   { prop: 'name', label: '规则名称', minWidth: 150 },
   { prop: 'prefix', label: '前缀', width: 80 },
   { prop: 'date_format', label: '日期格式', width: 120 },
-  { prop: 'serial_length', label: '流水号长度', width: 110, align: 'center' },
+  { prop: 'serial_length', label: '流水号长度', minWidth: 110, align: 'center' },
   { prop: 'example', label: '示例', minWidth: 180 },
-  { label: '操作', width: 160, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const dialogVisible = ref(false)

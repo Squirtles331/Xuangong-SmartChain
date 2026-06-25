@@ -68,9 +68,9 @@ const cols: TableColumnItem<Del>[] = [
   { prop: 'order_code', label: '销售订单', width: 160 },
   { prop: 'customer', label: '客户', minWidth: 140 },
   { prop: 'material', label: '产品', minWidth: 150 },
-  { prop: 'qty', label: '数量', width: 80, align: 'center' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const fd = computed(() => data.value.filter((r) => (!s.code || r.code.includes(s.code)) && (!s.status || r.status === s.status)))

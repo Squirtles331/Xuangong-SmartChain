@@ -57,8 +57,8 @@ const columns: TableColumnItem<ApprovalFlow>[] = [
   { prop: 'name', label: '审批流名称', minWidth: 160 },
   { prop: 'business_type', label: '关联业务', width: 160 },
   { label: '审批节点', minWidth: 250, slotName: 'nodes' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 200, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const dialogVisible = ref(false)

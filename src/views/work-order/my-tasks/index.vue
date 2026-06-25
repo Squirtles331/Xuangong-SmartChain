@@ -120,8 +120,8 @@ const completedColumns: TableColumnItem<Task>[] = [
   { prop: 'wo_code', label: '工单', width: 150 },
   { prop: 'material_name', label: '产品', minWidth: 140 },
   { prop: 'operation_name', label: '工序', width: 100 },
-  { prop: 'reported_qty', label: '报工数', width: 80, align: 'center' },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' }
+  { prop: 'reported_qty', label: '报工数', minWidth: 80, align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' }
 ]
 
 function startWork(task: Task) {

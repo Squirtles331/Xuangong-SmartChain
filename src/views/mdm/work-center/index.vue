@@ -30,7 +30,7 @@ const cols: TableColumnItem<any>[] = [
   { prop: 'workshop', label: '车间', width: 140 },
   { prop: 'capacity', label: '日产能', width: 100 },
   { prop: 'cost', label: '工时费率', width: 100 },
-  { label: '操作', width: 160, slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
 ]
 function openAdd() {}
 function openEdit(_r: any) {}

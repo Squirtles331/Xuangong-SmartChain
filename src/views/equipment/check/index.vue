@@ -67,8 +67,8 @@ const cols: TableColumnItem<Plan>[] = [
   { prop: 'check_type', label: '点检类型', width: 100 },
   { prop: 'plan_date', label: '计划日期', width: 110 },
   { prop: 'executor', label: '执行人', width: 100 },
-  { label: '状态', width: 80, slotName: 'status', align: 'center' },
-  { label: '操作', width: 160, slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
 ]
 const vis = ref(false)
 const mode = ref<'add' | 'edit'>('add')

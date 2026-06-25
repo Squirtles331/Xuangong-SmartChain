@@ -65,13 +65,13 @@ const searchColumns: FormColumnItem[] = [
 ]
 
 const columns: TableColumnItem<M>[] = [
-  { type: 'index', label: '#', width: 60, slotName: 'index', align: 'center' },
+  { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
   { prop: 'code', label: '物料编码', width: 180 },
   { prop: 'name', label: '物料名称', minWidth: 140 },
   { prop: 'spec', label: '规格型号', width: 120 },
-  { label: '物料类型', width: 80, slotName: 'type', align: 'center' },
-  { prop: 'unit', label: '单位', width: 60, align: 'center' },
-  { label: '操作', width: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '物料类型', minWidth: 80, slotName: 'type', align: 'center' },
+  { prop: 'unit', label: '单位', minWidth: 60, align: 'center' },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })

@@ -81,8 +81,8 @@ const typeColumns: TableColumnItem<DictType>[] = [
   { prop: 'code', label: '字典编码', minWidth: 180 },
   { prop: 'name', label: '字典名称', minWidth: 140 },
   { prop: 'description', label: '描述', minWidth: 200 },
-  { label: '状态', width: 100, slotName: 'status' },
-  { label: '操作', width: 200, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 100, slotName: 'status' },
+  { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
@@ -207,13 +207,13 @@ function openItems(row: DictType) {
 }
 
 // 覆盖 typeColumns 添加管理入口
-typeColumns.splice(4, 0, { label: '字典项', width: 120, slotName: 'itemCount', align: 'center' })
+typeColumns.splice(4, 0, { label: '字典项', minWidth: 120, slotName: 'itemCount', align: 'center' })
 
 // 在模板里用 #itemCount slot 显示
 // 实际上更简单的做法是直接在操作列加按钮
 typeColumns[typeColumns.length - 1] = {
   label: '操作',
-  width: 300,
+  minWidth: 300,
   fixed: 'right',
   slotName: 'actions',
   align: 'center'
@@ -280,10 +280,10 @@ const itemColumns: TableColumnItem<DictItem>[] = [
   { type: 'index', label: '#', width: 50 },
   { prop: 'code', label: '编码', width: 140 },
   { prop: 'name', label: '名称', width: 140 },
-  { prop: 'sort_order', label: '排序', width: 80, align: 'center' },
+  { prop: 'sort_order', label: '排序', minWidth: 80, align: 'center' },
   { prop: 'css_class', label: '样式', width: 100 },
-  { label: '状态', width: 80, slotName: 'status' },
-  { label: '操作', width: 160, slotName: 'itemActions', align: 'center' }
+  { label: '状态', minWidth: 80, slotName: 'status' },
+  { label: '操作', minWidth: 160, slotName: 'itemActions', align: 'center' }
 ]
 </script>
 
