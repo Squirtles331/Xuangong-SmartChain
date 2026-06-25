@@ -59,7 +59,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ElMessage } from 'element-plus'
 import { workOrders as mockWOs } from '@/mock'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
