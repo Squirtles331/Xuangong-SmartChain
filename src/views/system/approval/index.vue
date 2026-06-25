@@ -48,8 +48,6 @@ interface ApprovalFlow {
   status: string
 }
 
-import { approvalFlows as mockFlows } from '@/mock'
-
 const flows = ref<ApprovalFlow[]>(mockFlows as any)
 
 const columns: TableColumnItem<ApprovalFlow>[] = [

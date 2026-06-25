@@ -40,8 +40,6 @@ interface CodeRule {
   example: string
 }
 
-import { codeRules as mockCodeRules } from '@/mock'
-
 const rules = ref<CodeRule[]>(mockCodeRules as any)
 
 const columns: TableColumnItem<CodeRule>[] = [
