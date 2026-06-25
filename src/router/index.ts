@@ -161,6 +161,18 @@ const routes: RouteRecordRaw[] = [
             name: 'mdmResource',
             component: () => import('@/views/mdm/resource/index.vue'),
             meta: { title: '制造资源', icon: 'Cpu', order: 3 }
+          },
+          {
+            path: 'work-center',
+            name: 'mdmWorkCenter',
+            component: () => import('@/views/mdm/work-center/index.vue'),
+            meta: { title: '工作中心', icon: 'Grid', order: 4 }
+          },
+          {
+            path: 'mold',
+            name: 'mdmMold',
+            component: () => import('@/views/mdm/mold/index.vue'),
+            meta: { title: '模具管理', icon: 'Box', order: 5 }
           }
         ]
       },
@@ -451,6 +463,12 @@ const routes: RouteRecordRaw[] = [
             name: 'iotMonitor',
             component: () => import('@/views/iot/monitor/index.vue'),
             meta: { title: '设备监控', icon: 'Monitor', order: 1 }
+          },
+          {
+            path: 'config',
+            name: 'iotConfig',
+            component: () => import('@/views/iot/config/index.vue'),
+            meta: { title: '采集配置', icon: 'Setting', order: 2 }
           }
         ]
       },
@@ -464,6 +482,12 @@ const routes: RouteRecordRaw[] = [
             name: 'energyOverview',
             component: () => import('@/views/energy/overview/index.vue'),
             meta: { title: '能耗概览', icon: 'DataLine', order: 1 }
+          },
+          {
+            path: 'detail',
+            name: 'energyDetail',
+            component: () => import('@/views/energy/detail/index.vue'),
+            meta: { title: '能耗明细', icon: 'List', order: 2 }
           }
         ]
       },
@@ -477,6 +501,12 @@ const routes: RouteRecordRaw[] = [
             name: 'ehsIndex',
             component: () => import('@/views/ehs/index/index.vue'),
             meta: { title: '安全管理', icon: 'Warning', order: 1 }
+          },
+          {
+            path: 'permit',
+            name: 'ehsPermit',
+            component: () => import('@/views/ehs/permit/index.vue'),
+            meta: { title: '作业票管理', icon: 'Document', order: 2 }
           }
         ]
       },
@@ -490,6 +520,18 @@ const routes: RouteRecordRaw[] = [
             name: 'hrIndex',
             component: () => import('@/views/hr/index/index.vue'),
             meta: { title: '人资管理', icon: 'User', order: 1 }
+          },
+          {
+            path: 'attendance',
+            name: 'hrAttendance',
+            component: () => import('@/views/hr/attendance/index.vue'),
+            meta: { title: '考勤管理', icon: 'Clock', order: 2 }
+          },
+          {
+            path: 'schedule',
+            name: 'hrSchedule',
+            component: () => import('@/views/hr/schedule/index.vue'),
+            meta: { title: '班组排班', icon: 'Calendar', order: 3 }
           }
         ]
       },
@@ -503,6 +545,18 @@ const routes: RouteRecordRaw[] = [
             name: 'financeIndex',
             component: () => import('@/views/finance/index/index.vue'),
             meta: { title: '财务管理', icon: 'Money', order: 1 }
+          },
+          {
+            path: 'cost',
+            name: 'financeCost',
+            component: () => import('@/views/finance/cost/index.vue'),
+            meta: { title: '成本核算', icon: 'TrendCharts', order: 2 }
+          },
+          {
+            path: 'report',
+            name: 'financeReport',
+            component: () => import('@/views/finance/report/index.vue'),
+            meta: { title: '财务报表', icon: 'DataLine', order: 3 }
           }
         ]
       },
