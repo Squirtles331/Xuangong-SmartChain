@@ -28,12 +28,14 @@
 </template>
 <script lang="ts" setup>
 import { ref,reactive } from 'vue';import { ElMessage } from 'element-plus';import type { FormColumnItem,TableColumnItem } from 'gi-component'
+import { useConstraintStore } from '@/stores/constraint'
+const store=useConstraintStore()
 const tab=ref('mold')
-const molds=ref([{id:'1',code:'MD0000000001',name:'泵体铸造模具',applicable:'泵体铸件',life:'10000模次',available:true},{id:'2',code:'MD0000000002',name:'叶轮锻模',applicable:'叶轮铸件',life:'5000模次',available:true}])
-const moldCols:TableColumnItem<any>[]=[{prop:'code',label:'模具编码',minWidth:150},{prop:'name',label:'名称',minWidth:140},{prop:'applicable',label:'适用物料',minWidth:120},{prop:'life',label:'设计寿命',minWidth:100},{label:'操作',minWidth:180,fixed:'right',slotName:'actions',align:'center'}]
-const tools=ref([{id:'1',code:'TL00001',name:'车刀 CNMG120408',applicable:'数控车床',life:'500件',available:true},{id:'2',code:'TL00002',name:'钻头 φ10',applicable:'钻床',life:'300件',available:true}])
-const toolCols:TableColumnItem<any>[]=[{prop:'code',label:'刀具编码',minWidth:130},{prop:'name',label:'名称',minWidth:160},{prop:'applicable',label:'适用设备',minWidth:140},{prop:'life',label:'寿命',minWidth:80},{label:'操作',minWidth:180,fixed:'right',slotName:'actions',align:'center'}]
-const skills=ref([{id:'1',operation:'精车',skill:'数控车床操作',min_level:3,workers_count:4},{id:'2',operation:'装配',skill:'装配钳工',min_level:4,workers_count:3}])
+const molds=store.molds
+const moldCols:TableColumnItem<any>[]=[{prop:'code',label:'模具编码',minWidth:150},{prop:'name',label:'名称',minWidth:140},{prop:'applicable',label:'适用物料',minWidth:120},{prop:'life',label:'设计寿命',minWidth:100},{label:'可用',minWidth:70,slotName:'available',align:'center'},{label:'操作',minWidth:180,fixed:'right',slotName:'actions',align:'center'}]
+const tools=store.tools
+const toolCols:TableColumnItem<any>[]=[{prop:'code',label:'刀具编码',minWidth:130},{prop:'name',label:'名称',minWidth:160},{prop:'applicable',label:'适用设备',minWidth:140},{prop:'life',label:'寿命',minWidth:80},{label:'可用',minWidth:70,slotName:'available',align:'center'},{label:'操作',minWidth:180,fixed:'right',slotName:'actions',align:'center'}]
+const skills=store.skills
 const skillCols:TableColumnItem<any>[]=[{prop:'operation',label:'工序',minWidth:100},{prop:'skill',label:'技能要求',minWidth:160},{prop:'min_level',label:'最低等级',minWidth:80,align:'center'},{prop:'workers_count',label:'具备人数',minWidth:80,align:'center'},{label:'操作',minWidth:180,fixed:'right',slotName:'actions',align:'center'}]
 const vis=ref(false);const mode=ref<'add'|'edit'>('add');const eid=ref('');const curType=ref('')
 const form=reactive({code:'',name:'',applicable:'',life:''})

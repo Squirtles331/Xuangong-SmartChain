@@ -54,6 +54,13 @@
           <div ref="chartRef" style="height: 300px"></div>
         </el-card>
       </el-tab-pane>
+
+      <el-tab-pane label="约束冲突" name="conflicts">
+        <el-alert v-if="conflicts.length===0" title="排程通过" description="所有约束检查通过，无冲突" type="success" show-icon :closable="false" />
+        <div v-else class="conflict-list">
+          <el-alert v-for="(c,i) in conflicts" :key="i" :title="c.operation" :description="c.reasons.join('；')" :type="c.reasons.length>1?'error':'warning'" show-icon :closable="false" style="margin-bottom:8px" />
+        </div>
+      </el-tab-pane>
     </el-tabs>
   </gi-page-layout>
 </template>
@@ -62,8 +69,11 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
+import { useConstraintStore } from '@/stores/constraint'
 
 const tab = ref('gantt')
+const constraintStore = useConstraintStore()
+const conflicts = ref<{ operation: string; reasons: string[] }[]>([])
 
 // 甘特图数据
 const days = Array.from({ length: 21 }, (_, i) => {
@@ -139,7 +149,29 @@ onMounted(() => {
 })
 
 function runSchedule() {
-  ElMessage.success('排程已启动，请稍候查看结果')
+  const allOps = [
+    { op: '工序10:下料', wc: '下料组', qty: 100 },
+    { op: '工序20:粗车', wc: '数控车组', qty: 100 },
+    { op: '工序30:精车', wc: '数控车组', qty: 100 },
+    { op: '工序40:钻孔', wc: '钻床组', qty: 100 },
+    { op: '工序50:磨削', wc: '磨床组', qty: 100 },
+    { op: '工序60:装配', wc: '装配组', qty: 100 },
+    { op: '工序70:试压', wc: '测试组', qty: 100 },
+    { op: '工序80:油漆', wc: '涂装组', qty: 100 }
+  ]
+  conflicts.value = []
+  for (const op of allOps) {
+    const reasons = constraintStore.checkConflicts(op.op, op.wc, op.qty)
+    if (reasons.length > 0) {
+      conflicts.value.push({ operation: op.op, reasons })
+    }
+  }
+  if (conflicts.value.length === 0) {
+    ElMessage.success('排程完成，所有约束通过')
+  } else {
+    ElMessage.warning(`排程完成，${conflicts.value.length}道工序存在约束冲突，请查看"约束冲突"标签页`)
+    tab.value = 'conflicts'
+  }
 }
 </script>
 
