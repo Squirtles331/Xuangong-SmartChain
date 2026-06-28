@@ -205,13 +205,35 @@ export interface SystemParam {
   code: string
   name: string
   value: string
+  default_value: string
   description: string
+  category: string
+  value_type: 'string' | 'number' | 'boolean' | 'json'
+  status: 'active' | 'disabled'
+  updated_at: string
+  updated_by: string
 }
 
-export function getSystemParams() {
-  return http.get<ApiResponse<SystemParam[]>>('/system/params')
+export interface SystemParamQuery {
+  page: number
+  page_size: number
+  category?: string
+  keyword?: string
+  status?: string
+}
+
+export function getSystemParams(params?: Partial<SystemParamQuery>) {
+  return http.get<ApiResponse<{ total: number; items: SystemParam[] }>>('/system/params', { params })
 }
 
 export function updateSystemParam(id: string, value: string) {
-  return http.put(`/system/params/${id}`, { value })
+  return http.put<ApiResponse<SystemParam>>(`/system/params/${id}`, { value })
+}
+
+export function batchUpdateSystemParams(updates: { id: string; value: string }[]) {
+  return http.put<ApiResponse<null>>('/system/params/batch', { updates })
+}
+
+export function resetSystemParam(id: string) {
+  return http.put<ApiResponse<SystemParam>>(`/system/params/${id}/reset`)
 }
