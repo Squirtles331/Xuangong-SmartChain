@@ -81,6 +81,12 @@ const routes: RouteRecordRaw[] = [
             name: 'file',
             component: () => import('@/views/system/file/index.vue'),
             meta: { title: '文件管理', icon: 'FolderOpened', order: 9 }
+          },
+          {
+            path: 'notification',
+            name: 'systemNotification',
+            component: () => import('@/views/system/notification/index.vue'),
+            meta: { title: '通知配置', icon: 'Bell', order: 10 }
           }
         ]
       },
@@ -204,6 +210,12 @@ const routes: RouteRecordRaw[] = [
             name: 'scmReturn',
             component: () => import('@/views/scm/return/index.vue'),
             meta: { title: '采购退货', icon: 'Sell', order: 4 }
+          },
+          {
+            path: 'price',
+            name: 'scmPrice',
+            component: () => import('@/views/scm/price/index.vue'),
+            meta: { title: '采购价格', icon: 'Money', order: 5 }
           }
         ]
       },
@@ -253,6 +265,12 @@ const routes: RouteRecordRaw[] = [
             name: 'wmsTransfer',
             component: () => import('@/views/wms/transfer/index.vue'),
             meta: { title: '库存调拨', icon: 'Connection', order: 7 }
+          },
+          {
+            path: 'backflush',
+            name: 'wmsBackflush',
+            component: () => import('@/views/wms/backflush/index.vue'),
+            meta: { title: '倒冲领料', icon: 'RefreshLeft', order: 8 }
           }
         ]
       },
@@ -364,6 +382,18 @@ const routes: RouteRecordRaw[] = [
             meta: { title: '应收台账', icon: 'Money', order: 3 }
           },
           {
+            path: 'opportunity',
+            name: 'crmOpportunity',
+            component: () => import('@/views/crm/opportunity/index.vue'),
+            meta: { title: '商机管理', icon: 'Aim', order: 4 }
+          },
+          {
+            path: 'quotation',
+            name: 'crmQuotation',
+            component: () => import('@/views/crm/quotation/index.vue'),
+            meta: { title: '报价管理', icon: 'Tickets', order: 5 }
+          },
+          {
             path: 'order-change',
             name: 'crmOrderChange',
             component: () => import('@/views/crm/order-change/index.vue'),
@@ -419,6 +449,12 @@ const routes: RouteRecordRaw[] = [
             name: 'mrpHistory',
             component: () => import('@/views/mrp/history/index.vue'),
             meta: { title: '运行历史', icon: 'Clock', order: 2 }
+          },
+          {
+            path: 'forecast',
+            name: 'mrpForecast',
+            component: () => import('@/views/mrp/forecast/index.vue'),
+            meta: { title: '预测需求', icon: 'TrendCharts', order: 3 }
           }
         ]
       },
@@ -532,6 +568,12 @@ const routes: RouteRecordRaw[] = [
             name: 'energyDetail',
             component: () => import('@/views/energy/detail/index.vue'),
             meta: { title: '能耗明细', icon: 'List', order: 2 }
+          },
+          {
+            path: 'benchmark',
+            name: 'energyBenchmark',
+            component: () => import('@/views/energy/benchmark/index.vue'),
+            meta: { title: '能耗对标', icon: 'TrendCharts', order: 3 }
           }
         ]
       },
@@ -551,6 +593,18 @@ const routes: RouteRecordRaw[] = [
             name: 'ehsPermit',
             component: () => import('@/views/ehs/permit/index.vue'),
             meta: { title: '作业票管理', icon: 'Document', order: 2 }
+          },
+          {
+            path: 'emergency',
+            name: 'ehsEmergency',
+            component: () => import('@/views/ehs/emergency/index.vue'),
+            meta: { title: '应急预案', icon: 'WarningFilled', order: 3 }
+          },
+          {
+            path: 'training',
+            name: 'ehsTraining',
+            component: () => import('@/views/ehs/training/index.vue'),
+            meta: { title: '培训管理', icon: 'Reading', order: 4 }
           }
         ]
       },
