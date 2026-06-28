@@ -56,9 +56,18 @@
       </el-tab-pane>
 
       <el-tab-pane label="约束冲突" name="conflicts">
-        <el-alert v-if="conflicts.length===0" title="排程通过" description="所有约束检查通过，无冲突" type="success" show-icon :closable="false" />
+        <el-alert v-if="conflicts.length === 0" title="排程通过" description="所有约束检查通过，无冲突" type="success" show-icon :closable="false" />
         <div v-else class="conflict-list">
-          <el-alert v-for="(c,i) in conflicts" :key="i" :title="c.operation" :description="c.reasons.join('；')" :type="c.reasons.length>1?'error':'warning'" show-icon :closable="false" style="margin-bottom:8px" />
+          <el-alert
+            v-for="(c, i) in conflicts"
+            :key="i"
+            :title="c.operation"
+            :description="c.reasons.join('；')"
+            :type="c.reasons.length > 1 ? 'error' : 'warning'"
+            show-icon
+            :closable="false"
+            style="margin-bottom: 8px"
+          />
         </div>
       </el-tab-pane>
     </el-tabs>

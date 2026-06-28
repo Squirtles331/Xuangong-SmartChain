@@ -6,16 +6,34 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export interface MoldConstraint {
-  id: string; code: string; name: string; applicable: string; life: string; available: boolean
+  id: string
+  code: string
+  name: string
+  applicable: string
+  life: string
+  available: boolean
 }
 export interface ToolConstraint {
-  id: string; code: string; name: string; applicable: string; life: string; available: boolean
+  id: string
+  code: string
+  name: string
+  applicable: string
+  life: string
+  available: boolean
 }
 export interface SkillConstraint {
-  id: string; operation: string; skill: string; min_level: number; workers_count: number
+  id: string
+  operation: string
+  skill: string
+  min_level: number
+  workers_count: number
 }
 export interface MaterialConstraint {
-  id: string; material: string; wo_code: string; available_date: string; qty_short: number
+  id: string
+  material: string
+  wo_code: string
+  available_date: string
+  qty_short: number
 }
 
 export const useConstraintStore = defineStore('aps-constraint', () => {
@@ -40,25 +58,25 @@ export const useConstraintStore = defineStore('aps-constraint', () => {
     const conflicts: string[] = []
 
     // 1. 模具约束：检查是否有可用模具
-    const mold = molds.value.find(m => m.applicable && operation.includes(m.applicable))
+    const mold = molds.value.find((m) => m.applicable && operation.includes(m.applicable))
     if (mold && !mold.available) {
       conflicts.push(`🔧 模具冲突: ${mold.name} 不可用`)
     }
 
     // 2. 刀具约束
-    const tool = tools.value.find(t => workCenter.includes(t.applicable))
+    const tool = tools.value.find((t) => workCenter.includes(t.applicable))
     if (tool && !tool.available) {
       conflicts.push(`🔪 刀具冲突: ${tool.name} 不可用`)
     }
 
     // 3. 人员技能约束
-    const skill = skills.value.find(s => operation.includes(s.operation))
+    const skill = skills.value.find((s) => operation.includes(s.operation))
     if (skill && skill.workers_count < 2) {
       conflicts.push(`👤 技能约束: ${skill.skill} 等级${skill.min_level} 仅${skill.workers_count}人可用`)
     }
 
     // 4. 物料约束
-    const mat = materialShortages.value.find(m => operation.includes(m.material) || plannedQty > 0)
+    const mat = materialShortages.value.find((m) => operation.includes(m.material) || plannedQty > 0)
     if (mat) {
       conflicts.push(`📦 物料约束: ${mat.material} 缺${mat.qty_short}件, 预计${mat.available_date}到货`)
     }
