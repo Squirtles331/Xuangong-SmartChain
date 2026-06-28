@@ -360,8 +360,7 @@ const routes: RouteRecordRaw[] = [
         name: 'routing',
         meta: { title: '工艺路线', icon: 'Connection', order: 26, hidden: true },
         children: [
-          { path: 'editor/:id', name: 'routingEditor', component: () => import('@/views/routing/editor/index.vue'), meta: { title: '工艺路线编辑' }
-          },
+          { path: 'editor/:id', name: 'routingEditor', component: () => import('@/views/routing/editor/index.vue'), meta: { title: '工艺路线编辑' } },
           {
             path: 'parallel',
             name: 'routingParallel',
@@ -372,7 +371,8 @@ const routes: RouteRecordRaw[] = [
             path: 'auto-time',
             name: 'routingAutoTime',
             component: () => import('@/views/routing/auto-time/index.vue'),
-            meta: { title: '工时自学习', icon: 'Timer', hidden: true } }
+            meta: { title: '工时自学习', icon: 'Timer', hidden: true }
+          }
         ]
       },
       {
