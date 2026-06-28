@@ -501,6 +501,18 @@ const routes: RouteRecordRaw[] = [
             name: 'iotConfig',
             component: () => import('@/views/iot/config/index.vue'),
             meta: { title: '采集配置', icon: 'Setting', order: 2 }
+          },
+          {
+            path: 'history',
+            name: 'iotHistory',
+            component: () => import('@/views/iot/history/index.vue'),
+            meta: { title: '历史数据', icon: 'Clock', order: 3 }
+          },
+          {
+            path: 'alert',
+            name: 'iotAlert',
+            component: () => import('@/views/iot/alert/index.vue'),
+            meta: { title: '告警规则', icon: 'Bell', order: 4 }
           }
         ]
       },
@@ -564,6 +576,18 @@ const routes: RouteRecordRaw[] = [
             name: 'hrSchedule',
             component: () => import('@/views/hr/schedule/index.vue'),
             meta: { title: '班组排班', icon: 'Calendar', order: 3 }
+          },
+          {
+            path: 'piecework',
+            name: 'hrPiecework',
+            component: () => import('@/views/hr/piecework/index.vue'),
+            meta: { title: '计件工资', icon: 'Money', order: 4 }
+          },
+          {
+            path: 'skill-matrix',
+            name: 'hrSkillMatrix',
+            component: () => import('@/views/hr/skill-matrix/index.vue'),
+            meta: { title: '技能矩阵', icon: 'Grid', order: 5 }
           }
         ]
       },
@@ -589,6 +613,12 @@ const routes: RouteRecordRaw[] = [
             name: 'financeReport',
             component: () => import('@/views/finance/report/index.vue'),
             meta: { title: '财务报表', icon: 'DataLine', order: 3 }
+          },
+          {
+            path: 'ledger',
+            name: 'financeLedger',
+            component: () => import('@/views/finance/ledger/index.vue'),
+            meta: { title: '总账对账', icon: 'Notebook', order: 4 }
           }
         ]
       },
