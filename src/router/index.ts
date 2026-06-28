@@ -87,6 +87,12 @@ const routes: RouteRecordRaw[] = [
             name: 'systemNotification',
             component: () => import('@/views/system/notification/index.vue'),
             meta: { title: '通知配置', icon: 'Bell', order: 10 }
+          },
+          {
+            path: 'sso',
+            name: 'systemSSO',
+            component: () => import('@/views/system/sso/index.vue'),
+            meta: { title: 'SSO配置', icon: 'Key', order: 11 }
           }
         ]
       },
@@ -216,6 +222,12 @@ const routes: RouteRecordRaw[] = [
             name: 'scmPrice',
             component: () => import('@/views/scm/price/index.vue'),
             meta: { title: '采购价格', icon: 'Money', order: 5 }
+          },
+          {
+            path: 'portal',
+            name: 'scmPortal',
+            component: () => import('@/views/scm/portal/index.vue'),
+            meta: { title: '供应商门户', icon: 'Connection', order: 6 }
           }
         ]
       },
@@ -271,6 +283,12 @@ const routes: RouteRecordRaw[] = [
             name: 'wmsBackflush',
             component: () => import('@/views/wms/backflush/index.vue'),
             meta: { title: '倒冲领料', icon: 'RefreshLeft', order: 8 }
+          },
+          {
+            path: 'barcode',
+            name: 'wmsBarcode',
+            component: () => import('@/views/wms/barcode/index.vue'),
+            meta: { title: '条码管理', icon: 'Scan', order: 9 }
           }
         ]
       },
@@ -342,7 +360,19 @@ const routes: RouteRecordRaw[] = [
         name: 'routing',
         meta: { title: '工艺路线', icon: 'Connection', order: 26, hidden: true },
         children: [
-          { path: 'editor/:id', name: 'routingEditor', component: () => import('@/views/routing/editor/index.vue'), meta: { title: '工艺路线编辑' } }
+          { path: 'editor/:id', name: 'routingEditor', component: () => import('@/views/routing/editor/index.vue'), meta: { title: '工艺路线编辑' }
+          },
+          {
+            path: 'parallel',
+            name: 'routingParallel',
+            component: () => import('@/views/routing/parallel/index.vue'),
+            meta: { title: '并行工序', icon: 'Connection', hidden: true }
+          },
+          {
+            path: 'auto-time',
+            name: 'routingAutoTime',
+            component: () => import('@/views/routing/auto-time/index.vue'),
+            meta: { title: '工时自学习', icon: 'Timer', hidden: true } }
         ]
       },
       {
@@ -394,6 +424,18 @@ const routes: RouteRecordRaw[] = [
             meta: { title: '报价管理', icon: 'Tickets', order: 5 }
           },
           {
+            path: 'invoice',
+            name: 'crmInvoice',
+            component: () => import('@/views/crm/invoice/index.vue'),
+            meta: { title: '发票管理', icon: 'Stamp', order: 6 }
+          },
+          {
+            path: 'contract',
+            name: 'crmContract',
+            component: () => import('@/views/crm/contract/index.vue'),
+            meta: { title: '合同管理', icon: 'Document', order: 7 }
+          },
+          {
             path: 'order-change',
             name: 'crmOrderChange',
             component: () => import('@/views/crm/order-change/index.vue'),
@@ -430,6 +472,12 @@ const routes: RouteRecordRaw[] = [
             name: 'apsSchedule',
             component: () => import('@/views/aps/schedule/index.vue'),
             meta: { title: '排程管理', icon: 'Timer', order: 1 }
+          },
+          {
+            path: 'constraint',
+            name: 'apsConstraint',
+            component: () => import('@/views/aps/constraint/index.vue'),
+            meta: { title: '约束配置', icon: 'Setting', order: 2 }
           }
         ]
       },
@@ -455,6 +503,18 @@ const routes: RouteRecordRaw[] = [
             name: 'mrpForecast',
             component: () => import('@/views/mrp/forecast/index.vue'),
             meta: { title: '预测需求', icon: 'TrendCharts', order: 3 }
+          },
+          {
+            path: 'multi-plant',
+            name: 'mrpMultiPlant',
+            component: () => import('@/views/mrp/multi-plant/index.vue'),
+            meta: { title: '多工厂MRP', icon: 'Connection', order: 4 }
+          },
+          {
+            path: 'net-change',
+            name: 'mrpNetChange',
+            component: () => import('@/views/mrp/net-change/index.vue'),
+            meta: { title: '净变更MRP', icon: 'Refresh', order: 5 }
           }
         ]
       },
@@ -549,6 +609,12 @@ const routes: RouteRecordRaw[] = [
             name: 'iotAlert',
             component: () => import('@/views/iot/alert/index.vue'),
             meta: { title: '告警规则', icon: 'Bell', order: 4 }
+          },
+          {
+            path: 'auto-report',
+            name: 'iotAutoReport',
+            component: () => import('@/views/iot/auto-report/index.vue'),
+            meta: { title: '自动报工', icon: 'Connection', order: 5 }
           }
         ]
       },
