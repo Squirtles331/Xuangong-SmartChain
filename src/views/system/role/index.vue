@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout :bordered="true" :auto-collapse="false">
     <template #header> </template>
     <template #left>
       <Tree />
