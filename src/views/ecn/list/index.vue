@@ -1,15 +1,30 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" storage-key="list-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          :columns="visibleSearchColumns"
+          ref="searchFormRef"
+          v-model="searchForm"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
     <template #tool>
-      <gi-button type="add" @click="$router.push('/ecn/create')">新建变更单</gi-button>
+      <gi-button type="add" @click="openAdd">新建变更单</gi-button>
     </template>
 
-    <gi-table :columns="columns" :data="pagedEcns" :pagination="pagination" border stripe style="height: 100%">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+      style="height: 100%"
+    >
       <template #urgency="{ row }">
         <StatusTag :value="row.urgency" :options="ECN_URGENCY" />
       </template>
@@ -18,13 +33,17 @@
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="viewImpact(row)">影响分析</el-button>
-        <el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="submitEcn(row)">提交审批</el-button>
-        <el-button v-if="row.status === 'approved'" type="success" link size="small" @click="executeEcn(row)">执行</el-button>
+        <el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="submitEcn(row)">
+          提交审批
+        </el-button>
+        <el-button v-if="row.status === 'approved'" type="success" link size="small" @click="executeEcn(row)">
+          执行
+        </el-button>
       </template>
     </gi-table>
 
     <!-- 影响分析弹窗 -->
-    <el-dialog v-model="impactVisible" title="ECN 影响分析报告" width="800px">
+    <el-dialog v-model="impactVisible" title="ECN 影响分析报告" width="800px" :lock-scroll="false">
       <el-descriptions :column="2" border style="margin-bottom: 16px">
         <el-descriptions-item label="变更单号">{{ impactData.code }}</el-descriptions-item>
         <el-descriptions-item label="变更对象">{{ impactData.material }}</el-descriptions-item>
@@ -41,12 +60,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getECNList, updateECN } from '@/api/ecn'
+import { getECNList, createECN, updateECN, deleteECN } from '@/api/ecn'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import { useTable } from '@/hooks/useTable'
+import ECNFormDialog, { type ECNFormModel } from './ECNFormDialog.vue'
 
 const ECN_URGENCY = [
   { value: 'urgent', label: '紧急', type: 'danger' as const },
@@ -62,7 +83,7 @@ const ECN_STATUS = [
   { value: 'closed', label: '已关闭', type: 'info' as const }
 ]
 
-interface ECN {
+interface ECNRow {
   id: string
   code: string
   change_type: string
@@ -74,9 +95,9 @@ interface ECN {
   created_at: string
 }
 
-const ecns = ref<ECN[]>([])
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({ keyword: '', status: '' })
 
-const searchForm = reactive({ keyword: '', status: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword' } as any,
   {
@@ -95,16 +116,14 @@ const searchColumns: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
 const allSearchColumns = computed(() => searchColumns)
-// SearchSetting: 当前可见字段
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const searchFormRef = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-const columns: TableColumnItem<ECN>[] = [
+const columns: TableColumnItem<ECNRow>[] = [
   { prop: 'code', label: '变更单号', width: 170 },
   { prop: 'change_type', label: '变更类型', width: 130 },
   { prop: 'material', label: '变更对象', minWidth: 160 },
@@ -116,57 +135,63 @@ const columns: TableColumnItem<ECN>[] = [
   { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const filteredEcns = computed(() =>
-  ecns.value.filter((e) => {
-    if (searchForm.keyword && !e.material.includes(searchForm.keyword) && !e.code.includes(searchForm.keyword)) return false
-    if (searchForm.status && e.status !== searchForm.status) return false
-    return true
-  })
-)
-const pagedEcns = computed(() => {
-  return filteredEcns.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ECNRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getECNList({
+      page,
+      page_size: size,
+      code: searchForm.value.keyword || undefined,
+      material: searchForm.value.keyword || undefined,
+      status: searchForm.value.status || undefined
+    })
+    return {
+      list: (res.data.items || []).map((item: any) => ({
+        id: item.id,
+        code: item.code,
+        change_type: item.change_type,
+        material: item.material,
+        current_version: item.current_version || '',
+        status: item.status,
+        urgency: item.urgency,
+        applicant: item.applicant || '',
+        created_at: item.created_at || ''
+      })),
+      total: res.data.total || 0
+    }
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteECN(id)))
 })
 
-watch(
-  filteredEcns,
-  (val) => {
-    pagination.total = val.length
-  },
-  { immediate: true }
-)
-
-async function fetchList() {
-  try {
-    const res = await getECNList({
-      page: pagination.currentPage,
-      page_size: pagination.pageSize,
-      code: searchForm.keyword || undefined,
-      material: searchForm.keyword || undefined,
-      status: searchForm.status || undefined
-    })
-    ecns.value = (res.data.items || []) as ECN[]
-    pagination.total = res.data.total || 0
-  } catch {
-    ElMessage.error('获取ECN列表失败')
-  }
-}
-
 function handleSearch() {
-  pagination.currentPage = 1
-  fetchList()
-}
-function handleReset() {
-  searchForm.keyword = ''
-  searchForm.status = ''
-  pagination.currentPage = 1
-  fetchList()
+  search()
 }
 
+function handleReset() {
+  searchForm.value = { keyword: '', status: '' }
+  search()
+}
+
+// Dialog
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<ECNFormModel>(createDefaultFormModel())
+
+function createDefaultFormModel(): ECNFormModel {
+  return { id: '', code: '', change_type: 'BOM变更', material: '', current_version: '', status: 'draft', urgency: 'normal', applicant: '' }
+}
+
+function openAdd() {
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
+}
+
+// 影响分析
 const impactVisible = ref(false)
 const impactData = reactive({ code: '', material: '', change_type: '', current_version: '', items: [] as any[] })
 
-function viewImpact(row: ECN) {
+function viewImpact(row: ECNRow) {
   impactData.code = row.code
   impactData.material = row.material
   impactData.change_type = row.change_type
@@ -180,7 +205,7 @@ function viewImpact(row: ECN) {
   impactVisible.value = true
 }
 
-async function submitEcn(row: ECN) {
+async function submitEcn(row: ECNRow) {
   try {
     await updateECN(row.id, { status: 'approved' })
     row.status = 'approved'
@@ -189,7 +214,8 @@ async function submitEcn(row: ECN) {
     ElMessage.error('提交审批失败')
   }
 }
-async function executeEcn(row: ECN) {
+
+async function executeEcn(row: ECNRow) {
   try {
     await updateECN(row.id, { status: 'executed' })
     row.status = 'executed'
@@ -198,8 +224,4 @@ async function executeEcn(row: ECN) {
     ElMessage.error('执行失败')
   }
 }
-
-onMounted(() => {
-  fetchList()
-})
 </script>

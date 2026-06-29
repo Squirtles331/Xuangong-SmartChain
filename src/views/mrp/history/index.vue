@@ -1,14 +1,14 @@
 <template>
   <gi-page-layout>
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'completed' ? 'success' : 'danger'" size="small">{{
-          row.status === 'completed' ? '已完成' : '失败'
-        }}</el-tag></template
-      >
-      <template #actions="{ row }"
-        ><el-button type="primary" link size="small" @click="$router.push(`/mrp/result?runId=${row.id}`)">查看结果</el-button></template
-      >
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
+      <template #status="{ row }">
+        <el-tag :type="row.status === 'completed' ? 'success' : 'danger'" size="small">
+          {{ row.status === 'completed' ? '已完成' : '失败' }}
+        </el-tag>
+      </template>
+      <template #actions="{ row }">
+        <el-button type="primary" link size="small" @click="$router.push(`/mrp/result?runId=${row.id}`)">查看结果</el-button>
+      </template>
       <template #expand="{ row }">
         <div style="padding: 12px 24px">
           <el-descriptions :column="3" border size="small">
@@ -21,21 +21,11 @@
           </el-descriptions>
           <div style="margin-top: 12px; display: flex; gap: 24px; color: #606266; font-size: 13px">
             <span>输出统计：</span>
-            <span
-              >计划订单 <b>{{ row.orders }}</b></span
-            >
-            <span
-              >采购建议 <b>{{ row.purchase_suggestions || 0 }}</b></span
-            >
-            <span
-              >调拨建议 <b>{{ row.transfer_suggestions || 0 }}</b></span
-            >
-            <span
-              >生产建议 <b>{{ row.production_suggestions || 0 }}</b></span
-            >
-            <span
-              >总建议 <b>{{ row.suggestions }}</b></span
-            >
+            <span>计划订单 <b>{{ row.orders }}</b></span>
+            <span>采购建议 <b>{{ row.purchase_suggestions || 0 }}</b></span>
+            <span>调拨建议 <b>{{ row.transfer_suggestions || 0 }}</b></span>
+            <span>生产建议 <b>{{ row.production_suggestions || 0 }}</b></span>
+            <span>总建议 <b>{{ row.suggestions }}</b></span>
           </div>
         </div>
       </template>
@@ -44,9 +34,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
 import type { TableColumnItem } from 'gi-component'
-interface Run {
+import { getMRPHistory } from '@/api/mrp'
+import { useTable } from '@/hooks/useTable'
+
+interface RunRow {
   id: string
   run_time: string
   operator: string
@@ -63,60 +55,8 @@ interface Run {
   suggestions: number
   status: string
 }
-const runs = ref<Run[]>([
-  {
-    id: 'MRP20250115001',
-    run_time: '2025-01-15 08:00:00',
-    operator: '张三',
-    scope: '全厂',
-    date_range: '2025-01-15 ~ 2025-02-15',
-    include_safety_stock: true,
-    include_in_transit: true,
-    lead_time_mode: '标准',
-    strategy: '全量重算',
-    orders: 5,
-    purchase_suggestions: 4,
-    transfer_suggestions: 3,
-    production_suggestions: 5,
-    suggestions: 12,
-    status: 'completed'
-  },
-  {
-    id: 'MRP20250114001',
-    run_time: '2025-01-14 08:00:00',
-    operator: '张三',
-    scope: '全厂',
-    date_range: '2025-01-14 ~ 2025-02-14',
-    include_safety_stock: true,
-    include_in_transit: false,
-    lead_time_mode: '标准',
-    strategy: '净变更',
-    orders: 3,
-    purchase_suggestions: 2,
-    transfer_suggestions: 1,
-    production_suggestions: 5,
-    suggestions: 8,
-    status: 'completed'
-  },
-  {
-    id: 'MRP20250113001',
-    run_time: '2025-01-13 08:00:00',
-    operator: '张三',
-    scope: '全厂',
-    date_range: '2025-01-13 ~ 2025-02-13',
-    include_safety_stock: true,
-    include_in_transit: true,
-    lead_time_mode: '标准',
-    strategy: '全量重算',
-    orders: 2,
-    purchase_suggestions: 1,
-    transfer_suggestions: 0,
-    production_suggestions: 4,
-    suggestions: 5,
-    status: 'completed'
-  }
-])
-const cols: TableColumnItem<Run>[] = [
+
+const cols: TableColumnItem<RunRow>[] = [
   { type: 'expand', slotName: 'expand' },
   { prop: 'id', label: '运行编号', width: 170 },
   { prop: 'run_time', label: '运行时间', width: 170 },
@@ -127,13 +67,13 @@ const cols: TableColumnItem<Run>[] = [
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const pd = computed(() => runs.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  runs,
-  (v) => {
-    p.total = v.length
-  },
-  { immediate: true }
-)
+
+const { tableData, pagination, loading } = useTable<RunRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getMRPHistory({ page, page_size: size })
+    const items = res.data.items || res.data || []
+    return { list: items, total: res.data.total || items.length }
+  }
+})
 </script>

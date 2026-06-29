@@ -1,25 +1,49 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="auto-time-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #deviation="{ row }"
-        ><el-tag :type="row.deviation <= 10 ? 'success' : row.deviation <= 20 ? 'warning' : 'danger'" size="small"
-          >{{ row.deviation }}%</el-tag
-        ></template
-      >
-      <template #actions="{ row }"><el-button type="primary" link size="small" @click="adopt(row)">采纳</el-button></template>
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          :columns="visibleSearchColumns"
+          ref="sf"
+          v-model="searchForm"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+
+    <gi-table
+      :columns="cols"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+    >
+      <template #deviation="{ row }">
+        <el-tag
+          :type="row.deviation <= 10 ? 'success' : row.deviation <= 20 ? 'warning' : 'danger'"
+          size="small"
+        >
+          {{ row.deviation }}%
+        </el-tag>
+      </template>
+      <template #actions="{ row }">
+        <el-button type="primary" link size="small" @click="adopt(row)">采纳</el-button>
+      </template>
     </gi-table>
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-interface TD {
+import { useTable } from '@/hooks/useTable'
+
+interface AutoTimeRow {
   id: string
   operation: string
   material: string
@@ -29,50 +53,11 @@ interface TD {
   samples: number
   suggestion: string
 }
-const data = ref<TD[]>([
-  {
-    id: '1',
-    operation: '下料',
-    material: '离心泵 XJP-100',
-    std_hours: 5,
-    actual_avg: 4.2,
-    deviation: 16,
-    samples: 120,
-    suggestion: '建议调整为4.5min'
-  },
-  {
-    id: '2',
-    operation: '精车',
-    material: '离心泵 XJP-100',
-    std_hours: 18,
-    actual_avg: 20.5,
-    deviation: 14,
-    samples: 85,
-    suggestion: '建议调整为20min'
-  },
-  {
-    id: '3',
-    operation: '钻孔',
-    material: '离心泵 XJP-100',
-    std_hours: 8,
-    actual_avg: 7.8,
-    deviation: 2.5,
-    samples: 110,
-    suggestion: '偏差在合理范围'
-  },
-  {
-    id: '4',
-    operation: '磨削',
-    material: '齿轮箱 GBX-200',
-    std_hours: 15,
-    actual_avg: 18.2,
-    deviation: 21,
-    samples: 60,
-    suggestion: '建议调整为18min'
-  }
-])
-const s = reactive({ keyword: '', deviation: '' })
-const sc: FormColumnItem[] = [
+
+const sf = ref<FormInstance | null>()
+const searchForm = ref({ keyword: '', deviation: '' })
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword' } as any,
   {
     type: 'select-v2',
@@ -89,15 +74,14 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
-const cols: TableColumnItem<TD>[] = [
+
+const cols: TableColumnItem<AutoTimeRow>[] = [
   { prop: 'operation', label: '工序', minWidth: 100 },
   { prop: 'material', label: '产品', minWidth: 160 },
   { prop: 'std_hours', label: '定额工时(min)', minWidth: 120, align: 'center' },
@@ -107,34 +91,50 @@ const cols: TableColumnItem<TD>[] = [
   { prop: 'suggestion', label: '建议', minWidth: 180 },
   { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() => data.value.filter((r) => (!s.keyword || r.operation.includes(s.keyword)) && (!s.deviation || filterDeviation(r.deviation))))
 
-function filterDeviation(v: number): boolean {
-  if (s.deviation === 'low') return v <= 10
-  if (s.deviation === 'mid') return v > 10 && v <= 20
-  if (s.deviation === 'high') return v > 20
+function filterDeviation(v: number, filter: string): boolean {
+  if (filter === 'low') return v <= 10
+  if (filter === 'mid') return v > 10 && v <= 20
+  if (filter === 'high') return v > 20
   return true
 }
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
+
+const { tableData, pagination, loading, search, refresh } = useTable<AutoTimeRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    // Mock data as API source — in production this would call getRoutingList
+    const all: AutoTimeRow[] = [
+      { id: '1', operation: '下料', material: '离心泵 XJP-100', std_hours: 5, actual_avg: 4.2, deviation: 16, samples: 120, suggestion: '建议调整为4.5min' },
+      { id: '2', operation: '精车', material: '离心泵 XJP-100', std_hours: 18, actual_avg: 20.5, deviation: 14, samples: 85, suggestion: '建议调整为20min' },
+      { id: '3', operation: '钻孔', material: '离心泵 XJP-100', std_hours: 8, actual_avg: 7.8, deviation: 2.5, samples: 110, suggestion: '偏差在合理范围' },
+      { id: '4', operation: '磨削', material: '齿轮箱 GBX-200', std_hours: 15, actual_avg: 18.2, deviation: 21, samples: 60, suggestion: '建议调整为18min' }
+    ]
+    let items = all
+    if (searchForm.value.keyword) {
+      const kw = searchForm.value.keyword.toLowerCase()
+      items = items.filter((r) => r.operation.toLowerCase().includes(kw))
+    }
+    if (searchForm.value.deviation) {
+      items = items.filter((r) => filterDeviation(r.deviation, searchForm.value.deviation))
+    }
+    const start = (page - 1) * size
+    return { list: items.slice(start, start + size), total: items.length }
   },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+  deleteAPI: undefined
+})
+
+function handleSearch() {
+  search()
 }
-function hr() {
-  s.keyword = ''
-  s.deviation = ''
-  p.currentPage = 1
+
+function handleReset() {
+  searchForm.value = { keyword: '', deviation: '' }
+  search()
 }
-function adopt(r: TD) {
-  r.std_hours = Math.round(r.actual_avg)
-  r.deviation = 0
-  ElMessage.success(`已采纳建议: ${r.operation} 定额调整为 ${r.std_hours}min`)
+
+function adopt(row: AutoTimeRow) {
+  row.std_hours = Math.round(row.actual_avg)
+  row.deviation = 0
+  ElMessage.success(`已采纳建议: ${row.operation} 定额调整为 ${row.std_hours}min`)
 }
 </script>

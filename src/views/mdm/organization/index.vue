@@ -80,13 +80,20 @@ async function fetchData() {
 function onNodeClick(data: any) {
   currentNode.value = { ...data }
 }
+
 function saveNode() {
   ElMessage.success('保存成功')
 }
 
 function addNode() {
   const parent = currentNode.value
-  const typeMap: Record<string, string> = { group: 'company', company: 'plant', plant: 'workshop', workshop: 'line', line: 'workstation' }
+  const typeMap: Record<string, string> = {
+    group: 'company',
+    company: 'plant',
+    plant: 'workshop',
+    workshop: 'line',
+    line: 'workstation'
+  }
   const newType = parent ? typeMap[parent.type] : 'group'
   const newNode = { id: Date.now().toString(), name: '新节点', type: newType, children: [] }
   if (parent) {

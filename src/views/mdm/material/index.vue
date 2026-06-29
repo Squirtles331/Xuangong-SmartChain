@@ -11,44 +11,69 @@
       />
     </template>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" storage-key="material-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @reset="handleReset"
+          @search="handleSearch"
+        />
       </SearchSetting>
     </template>
     <template #tool>
       <gi-button type="add" @click="openAdd" />
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
-    <gi-table :columns="columns" :data="pagedMaterials" :pagination="pagination" border stripe>
-      <template #index="{ $index }">{{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}</template>
+
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+    >
+      <template #index="{ $index }">
+        {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
+      </template>
       <template #type="{ row }">
-        <el-tag size="small">{{ row.type === 'purchased' ? '外购' : row.type === 'manufactured' ? '自制' : '委外' }}</el-tag>
+        <el-tag size="small">
+          {{ row.type === 'purchased' ? '外购' : row.type === 'manufactured' ? '自制' : '委外' }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button type="delete" @click="remove(row.id)" />
+        <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
       </template>
     </gi-table>
-    <gi-dialog
-      v-model="dialogVisible"
-      :footer="true"
-      :on-before-ok="submitDialog"
-      :title="dialogMode === 'add' ? '新增物料' : '编辑物料'"
-      width="600px"
-    >
-      <gi-form v-model="formModel" :columns="formColumns" :label-width="100" />
-    </gi-dialog>
+
+    <MaterialFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-import { getMaterialList, getMaterialTree, createMaterial, updateMaterial, deleteMaterial } from '@/api/mdm'
+import SearchSetting from '@/components/SearchSetting.vue'
+import {
+  getMaterialList,
+  getMaterialTree,
+  createMaterial,
+  updateMaterial,
+  deleteMaterial
+} from '@/api/mdm'
+import { useTable } from '@/hooks/useTable'
+import MaterialFormDialog, { type MaterialFormModel } from './MaterialFormDialog.vue'
 
-interface M {
+interface MaterialRow {
   id: string
   code: string
   name: string
@@ -59,24 +84,25 @@ interface M {
 
 const catTree = ref<any[]>([])
 
-const materials = ref<M[]>([])
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({
+  keyword: '',
+  category: ''
+})
 
-const searchForm = reactive({ keyword: '', category: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '物料编码/名称', clearable: true } as any },
   { type: 'input', label: '分类', field: 'category', props: { disabled: true } as any }
 ]
 
-// SearchSetting: 所有可用字段
 const allSearchColumns = computed(() => searchColumns)
-// SearchSetting: 当前可见字段
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const searchFormRef = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-const columns: TableColumnItem<M>[] = [
+const columns: TableColumnItem<MaterialRow>[] = [
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
   { prop: 'code', label: '物料编码', width: 180 },
   { prop: 'name', label: '物料名称', minWidth: 140 },
@@ -86,103 +112,87 @@ const columns: TableColumnItem<M>[] = [
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const pagedMaterials = ref<M[]>([])
-
-onMounted(() => {
-  fetchTree()
-  fetchData()
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<MaterialRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: { page: number; page_size: number; code?: string; name?: string } = {
+      page,
+      page_size: size
+    }
+    if (searchForm.value.keyword) {
+      params.name = searchForm.value.keyword
+    }
+    const res = await getMaterialList(params)
+    return {
+      list: (res.data.items as any[]).map((item) => ({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        spec: item.spec || '',
+        type: item.type,
+        unit: item.unit
+      })),
+      total: res.data.total
+    }
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteMaterial(id)))
 })
 
+// Tree
 async function fetchTree() {
   const res = await getMaterialTree()
   catTree.value = res.data as any[]
 }
-
-async function fetchData() {
-  const params: { page: number; page_size: number; code?: string; name?: string } = {
-    page: pagination.currentPage,
-    page_size: pagination.pageSize
-  }
-  if (searchForm.keyword) {
-    // Try both code and name search
-    params.name = searchForm.keyword
-  }
-  const res = await getMaterialList(params)
-  materials.value = res.data.items as M[]
-  pagination.total = res.data.total
-  pagedMaterials.value = res.data.items as M[]
-}
+fetchTree()
 
 function onCatClick(data: any) {
-  searchForm.category = data.name
-  pagination.currentPage = 1
-}
-function handleSearch() {
-  pagination.currentPage = 1
-  fetchData()
-}
-function handleReset() {
-  searchForm.keyword = ''
-  searchForm.category = ''
-  pagination.currentPage = 1
-  fetchData()
-}
-function refresh() {
-  handleReset()
+  searchForm.value.category = data.name
+  search()
 }
 
+function handleSearch() {
+  search()
+}
+
+function handleReset() {
+  searchForm.value.keyword = ''
+  searchForm.value.category = ''
+  search()
+}
+
+// Dialog
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
-const editingId = ref('')
-const formModel = reactive({ code: '', name: '', spec: '', type: 'purchased', unit: '' })
-const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '物料编码', field: 'code', required: true },
-  { type: 'input', label: '物料名称', field: 'name', required: true },
-  { type: 'input', label: '规格型号', field: 'spec' },
-  {
-    type: 'select-v2',
-    label: '物料类型',
-    field: 'type',
-    required: true,
-    props: {
-      options: [
-        { label: '外购', value: 'purchased' },
-        { label: '自制', value: 'manufactured' },
-        { label: '委外', value: 'outsourced' }
-      ]
-    } as any
-  },
-  { type: 'input', label: '单位', field: 'unit', required: true }
-]
+const formModel = ref<MaterialFormModel>(createDefaultFormModel())
+
+function createDefaultFormModel(): MaterialFormModel {
+  return { id: '', code: '', name: '', spec: '', type: 'purchased', unit: '' }
+}
 
 function openAdd() {
   dialogMode.value = 'add'
-  editingId.value = ''
-  Object.assign(formModel, { code: '', name: '', spec: '', type: 'purchased', unit: '' })
+  formModel.value = createDefaultFormModel()
   dialogVisible.value = true
 }
-function openEdit(row: M) {
+
+function openEdit(row: MaterialRow) {
   dialogMode.value = 'edit'
-  editingId.value = row.id
-  Object.assign(formModel, row)
+  formModel.value = { ...row }
   dialogVisible.value = true
 }
+
 async function submitDialog() {
-  if (!formModel.code || !formModel.name) {
+  if (!formModel.value.code || !formModel.value.name) {
     ElMessage.warning('请填写必填项')
-    return false
+    return
   }
+  const payload = { ...formModel.value }
   if (dialogMode.value === 'add') {
-    await createMaterial({ ...(formModel as any) })
+    await createMaterial(payload as any)
   } else {
-    await updateMaterial(editingId.value, { ...(formModel as any) })
+    await updateMaterial(formModel.value.id, payload as any)
   }
-  await fetchData()
-  return true
-}
-async function remove(id: string) {
-  await deleteMaterial(id)
-  await fetchData()
+  dialogVisible.value = false
+  await refresh()
 }
 </script>

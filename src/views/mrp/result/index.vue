@@ -103,12 +103,12 @@ const excCols: TableColumnItem<any>[] = [
 
 type TagType = 'primary' | 'success' | 'warning' | 'info' | 'danger'
 
-// 颜色分级
 function levelTagType(level: string): TagType {
   if (level === 'severe') return 'danger'
   if (level === 'warning') return 'warning'
   return 'info'
 }
+
 function levelColor(level: string): string {
   if (level === 'severe') return '#f56c6c'
   if (level === 'warning') return '#e6a23c'
@@ -148,6 +148,7 @@ async function confirmOne(type: string, row: any) {
     ElMessage.error('确认失败')
   }
 }
+
 async function confirmAll(type: string) {
   if (type === 'purchase' && selectedPur.value.length === 0) {
     ElMessage.warning('请先选择要生成的采购建议')
@@ -175,7 +176,6 @@ async function runMRP() {
 }
 
 onMounted(async () => {
-  // 首次加载时尝试运行 MRP 获取结果
   try {
     const res = await runMRPApi()
     runId.value = res.data.run_id

@@ -1,41 +1,61 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="spare-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool
-      ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
-        style="margin-left: 8px"
-        @click="handleExport"
-        >导出</el-button
-      ></template
-    >
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe :row-class-name="rowClassName">
-      <template #stock_status="{ row }"
-        ><el-tag :type="row.qty > row.safety ? 'success' : row.qty > 0 ? 'warning' : 'danger'" size="small">{{
-          row.qty > row.safety ? '充足' : row.qty > 0 ? '偏低' : '缺货'
-        }}</el-tag></template
-      >
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          :grid-item-props="{
+            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+          }"
+          search
+          @reset="handleReset"
+          @search="handleSearch"
+        />
+      </SearchSetting>
+    </template>
+
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    </template>
+
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe :row-class-name="rowClassName">
+      <template #stock_status="{ row }">
+        <el-tag :type="row.qty > row.safety ? 'success' : row.qty > 0 ? 'warning' : 'danger'" size="small">
+          {{ row.qty > row.safety ? '充足' : row.qty > 0 ? '偏低' : '缺货' }}
+        </el-tag>
+      </template>
       <template #qty="{ row }">
         <span :style="{ color: row.qty < row.safety ? '#f56c6c' : '', fontWeight: row.qty < row.safety ? 'bold' : '' }">{{ row.qty }}</span>
       </template>
-      <template #actions="{ row }"
-        ><gi-button type="edit" @click="openEdit(row)" /><el-button type="primary" link size="small" @click="inbound(row)">入库</el-button
-        ><el-button type="warning" link size="small" @click="outbound(row)">出库</el-button></template
-      >
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <el-button type="primary" link size="small" @click="inbound(row)">入库</el-button>
+        <el-button type="warning" link size="small" @click="outbound(row)">出库</el-button>
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增备件' : '编辑备件'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <SpareFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-interface Sp {
+import SearchSetting from '@/components/SearchSetting.vue'
+import { useTable } from '@/hooks/useTable'
+import SpareFormDialog, { type SpareFormModel } from './SpareFormDialog.vue'
+
+interface SpareRow {
   id: string
   code: string
   name: string
@@ -46,54 +66,18 @@ interface Sp {
   unit: string
   location: string
 }
-const data = ref<Sp[]>([
-  {
-    id: '1',
-    code: 'SP00001',
-    name: '主轴轴承',
-    spec: '7012AC',
-    applicable_equipment: '数控车床 CK6150',
-    qty: 8,
-    safety: 5,
-    unit: '个',
-    location: '备件仓-A01'
-  },
-  {
-    id: '2',
-    code: 'SP00002',
-    name: '砂轮',
-    spec: 'φ400×40',
-    applicable_equipment: '磨床 M1432',
-    qty: 3,
-    safety: 5,
-    unit: '片',
-    location: '备件仓-A02'
-  },
-  {
-    id: '3',
-    code: 'SP00003',
-    name: '冷却泵',
-    spec: 'AB-100',
-    applicable_equipment: '钻床 Z3050',
-    qty: 2,
-    safety: 2,
-    unit: '台',
-    location: '备件仓-B01'
-  },
-  {
-    id: '4',
-    code: 'SP00004',
-    name: '刀柄',
-    spec: 'BT40',
-    applicable_equipment: '加工中心 VMC850',
-    qty: 15,
-    safety: 10,
-    unit: '个',
-    location: '备件仓-C01'
-  }
-])
-const s = reactive({ keyword: '', stock_status: '' })
-const sc: FormColumnItem[] = [
+
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({
+  keyword: '',
+  stock_status: ''
+})
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<SpareFormModel>(createDefaultFormModel())
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword' } as any,
   {
     type: 'select-v2',
@@ -110,15 +94,10 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-const cols: TableColumnItem<Sp>[] = [
+
+const cols: TableColumnItem<SpareRow>[] = [
   { prop: 'code', label: '备件编码', minWidth: 120 },
   { prop: 'name', label: '备件名称', minWidth: 140 },
   { prop: 'spec', label: '规格', minWidth: 100 },
@@ -129,84 +108,91 @@ const cols: TableColumnItem<Sp>[] = [
   { label: '状态', minWidth: 70, slotName: 'stock_status', align: 'center' },
   { label: '操作', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() => data.value.filter((r) => !s.keyword || r.name.includes(s.keyword) || r.code.includes(s.keyword)))
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
-  },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+
+const { tableData, pagination, loading, search, refresh } = useTable<SpareRow>({
+  rowKey: 'id',
+  listAPI: async () => {
+    return { list: [], total: 0 }
+  }
+})
+
+function createDefaultFormModel(): SpareFormModel {
+  return {
+    id: '',
+    code: '',
+    name: '',
+    spec: '',
+    applicable_equipment: '',
+    qty: 0,
+    safety: 5,
+    unit: '个',
+    location: ''
+  }
 }
-function hr() {
-  s.keyword = ''
-  s.stock_status = ''
-  p.currentPage = 1
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
-function refresh() {
-  hr()
+
+function handleSearch() {
+  search()
 }
+
+function handleReset() {
+  searchForm.value = { keyword: '', stock_status: '' }
+  search()
+}
+
 function handleExport() {
   ElMessage.success('导出成功')
 }
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ code: '', name: '', spec: '', applicable_equipment: '', qty: 0, safety: 5, unit: '个', location: '' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '备件编码', field: 'code', required: true },
-  { type: 'input', label: '名称', field: 'name', required: true },
-  { type: 'input', label: '规格', field: 'spec' },
-  { type: 'input', label: '适用设备', field: 'applicable_equipment' },
-  { type: 'input-number', label: '库存数量', field: 'qty', props: { min: 0 } as any },
-  { type: 'input-number', label: '安全库存', field: 'safety', props: { min: 1 } as any },
-  { type: 'input', label: '单位', field: 'unit' },
-  { type: 'input', label: '库位', field: 'location' }
-]
+
 function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { code: '', name: '', spec: '', applicable_equipment: '', qty: 0, safety: 5, unit: '个', location: '' })
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
 }
-function openEdit(r: Sp) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
-}
-async function submit() {
-  if (!form.name) {
-    ElMessage.warning('请填写必填项')
-    return false
+
+function openEdit(row: SpareRow) {
+  dialogMode.value = 'edit'
+  formModel.value = {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    spec: row.spec,
+    applicable_equipment: row.applicable_equipment,
+    qty: row.qty,
+    safety: row.safety,
+    unit: row.unit,
+    location: row.location
   }
-  if (mode.value === 'add') {
-    data.value.unshift({ id: Date.now().toString(), code: 'SP' + String(data.value.length + 1).padStart(5, '0'), ...form } as Sp)
-  } else {
-    const i = data.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
-  }
-  return true
+  dialogVisible.value = true
 }
-function inbound(r: Sp) {
-  r.qty += 1
-  ElMessage.success(`入库1${r.unit}，当前库存${r.qty}`)
+
+async function submitDialog() {
+  dialogVisible.value = false
+  await refresh()
 }
-function outbound(r: Sp) {
-  if (r.qty <= 0) {
+
+function inbound(row: SpareRow) {
+  row.qty += 1
+  ElMessage.success(`入库1${row.unit}，当前库存${row.qty}`)
+}
+
+function outbound(row: SpareRow) {
+  if (row.qty <= 0) {
     ElMessage.warning('库存不足')
     return
   }
-  r.qty -= 1
-  ElMessage.success(`出库1${r.unit}，当前库存${r.qty}`)
+  row.qty -= 1
+  ElMessage.success(`出库1${row.unit}，当前库存${row.qty}`)
 }
-function rowClassName({ row }: { row: Sp }) {
+
+function rowClassName({ row }: { row: SpareRow }) {
   return row.qty < row.safety ? 'safety-warning-row' : ''
 }
 </script>
+
 <style scoped>
 :deep(.safety-warning-row) {
   background-color: #fef0f0 !important;
