@@ -64,7 +64,7 @@ const devices = ref([
   justify-content: space-between;
   padding: 6px 0;
   font-size: 13px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #EBEEF5;
 }
 .iot-row span {
   color: #909399;

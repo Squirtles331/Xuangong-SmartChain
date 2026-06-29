@@ -159,13 +159,13 @@ function saveRouting() {
 }
 .ops-panel {
   width: 360px;
-  border-right: 1px solid #eee;
+  border-right: 1px solid #EBEEF5;
   display: flex;
   flex-direction: column;
 }
 .ops-toolbar {
   padding: 12px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #EBEEF5;
 }
 .ops-list {
   flex: 1;
@@ -173,12 +173,12 @@ function saveRouting() {
 }
 .op-item {
   padding: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #EBEEF5;
   cursor: pointer;
   transition: background 0.2s;
 }
 .op-item:hover {
-  background: #f5f7fa;
+  background: #FAFAFA;
 }
 .op-item.active {
   background: #ecf5ff;

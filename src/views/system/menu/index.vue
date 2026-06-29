@@ -207,7 +207,7 @@ function removeFromTree(nodes: MenuNode[], id: string): boolean {
 }
 .tree-toolbar {
   padding: 8px 0;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #EBEEF5;
   display: flex;
   gap: 8px;
 }
