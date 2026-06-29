@@ -199,14 +199,24 @@ const routingPreview = [
 ]
 
 function nextStep() {
+  // 增强校验
   if (!step1Form.material_code) {
-    // Mock: 自动填充产品信息
-    step1Form.material_code = '04.01.001-00001'
+    ElMessage.warning('请选择产品物料')
+    return
+  }
+  if (step1Form.planned_start && step1Form.planned_end && new Date(step1Form.planned_end) < new Date(step1Form.planned_start)) {
+    ElMessage.warning('计划完工日期不能早于计划开工日期')
+    return
+  }
+  // 自动填充产品信息
+  if (step1Form.material_code === '04.01.001-00001') {
     step1Form.material_name = '离心泵 XJP-100'
     step1Form.material_spec = '流量100m³/h'
-    step2Form.bom_version = bomVersions.value[0]
-    step2Form.routing_version = routingVersions.value[0]
+  } else if (!step1Form.material_name) {
+    step1Form.material_name = step1Form.material_code
   }
+  step2Form.bom_version = step2Form.bom_version || bomVersions.value[0]
+  step2Form.routing_version = step2Form.routing_version || routingVersions.value[0]
   activeStep.value = 1
 }
 
