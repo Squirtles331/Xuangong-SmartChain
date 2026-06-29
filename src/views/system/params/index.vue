@@ -1,7 +1,8 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #header>
-      <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" storage-key="params-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
     </template>
     <template #tool>
       <gi-button type="add" @click="openAdd" />
@@ -15,7 +16,8 @@
     </gi-table>
 
     <gi-dialog v-model="dialogVisible" :footer="true" :on-before-ok="submitDialog" :title="dialogMode === 'add' ? '新增参数' : '编辑参数'">
-      <gi-form v-model="form" :columns="formColumns" :label-width="120" />
+      <SearchSetting :columns="allSearchColumns" storage-key="params-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formColumns" :label-width="120" />
     </gi-dialog>
   </gi-page-layout>
 </template>
@@ -23,6 +25,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface Param {

@@ -1,18 +1,21 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header><SearchSetting :columns="allSearchColumns" storage-key="detail-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <gi-table :columns="cols" :data="data" border stripe size="small">
       <template #type="{ row }"
         ><el-tag :type="row.type === '电' ? 'warning' : row.type === '水' ? 'primary' : 'info'" size="small">{{ row.type }}</el-tag></template
       >
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
+      <SearchSetting :columns="allSearchColumns" storage-key="detail-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref,reactive } from 'vue';import { ElMessage } from 'element-plus';import type { FormColumnItem,TableColumnItem } from 'gi-component'
+import { ref,reactive } from 'vue';import { ElMessage } from 'element-plus';import SearchSetting from '@/components/SearchSetting.vue'
+import type { FormColumnItem,TableColumnItem } from 'gi-component'
 const s=reactive({keyword:''});const sc:FormColumnItem[]=[{type:'input',label:'关键字',field:'keyword'} as any]
 const data = ref([
   { id: '1', date: '2025-01-15', type: '电', workshop: '机加工一车间', qty: 5800, unit: 'kWh' },

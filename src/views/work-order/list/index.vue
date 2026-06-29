@@ -1,7 +1,8 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #header>
-      <gi-form
+      <SearchSetting :columns="allSearchColumns" storage-key="list-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns"
         ref="searchFormRef"
         v-model="searchForm"
         :columns="searchColumns"
@@ -51,7 +52,8 @@
       </template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
+      <SearchSetting :columns="allSearchColumns" storage-key="list-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
@@ -60,6 +62,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { workOrders as mockWOs } from '@/mock'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface WorkOrder {

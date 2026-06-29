@@ -1,7 +1,8 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #header>
-      <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" storage-key="dict-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
     </template>
     <template #tool>
       <gi-button type="add" @click="openAddType" />
@@ -26,7 +27,8 @@
       :on-before-ok="submitTypeDialog"
       :title="typeDialogMode === 'add' ? '新增字典类型' : '编辑字典类型'"
     >
-      <gi-form v-model="typeForm" :columns="typeFormColumns" :label-width="100" />
+      <SearchSetting :columns="allSearchColumns" storage-key="dict-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" v-model="typeForm" :columns="typeFormColumns" :label-width="100" />
     </gi-dialog>
 
     <!-- 字典项管理弹窗 -->
@@ -52,7 +54,8 @@
         :title="itemDialogMode === 'add' ? '新增字典项' : '编辑字典项'"
         width="500px"
       >
-        <gi-form v-model="itemForm" :columns="itemFormColumns" :label-width="100" />
+        <SearchSetting :columns="allSearchColumns" storage-key="dict-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" v-model="itemForm" :columns="itemFormColumns" :label-width="100" />
       </gi-dialog>
     </gi-dialog>
   </gi-page-layout>
@@ -61,6 +64,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import type { DictType, DictItem } from '@/api/system'
 import { dictTypes as mockDictTypes, dictItems as mockDictItems } from '@/mock'

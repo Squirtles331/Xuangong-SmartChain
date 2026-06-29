@@ -1,7 +1,8 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #header>
-      <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" storage-key="audit-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
     </template>
 
     <gi-table :columns="columns" :data="pagedLogs" :pagination="pagination" border style="height: 100%">
@@ -41,6 +42,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { auditLogs as mockLogs } from '@/mock'
 

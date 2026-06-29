@@ -1,6 +1,7 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header><SearchSetting :columns="allSearchColumns" storage-key="outsource-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <template #tool
       ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
         style="margin-left: 8px"
@@ -28,13 +29,15 @@
       >
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增委外工单' : '编辑委外工单'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
+      <SearchSetting :columns="allSearchColumns" storage-key="outsource-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface OS {
   id: string

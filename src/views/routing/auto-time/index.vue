@@ -1,6 +1,7 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header><SearchSetting :columns="allSearchColumns" storage-key="auto-time-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
       <template #deviation="{ row }"
         ><el-tag :type="row.deviation <= 10 ? 'success' : row.deviation <= 20 ? 'warning' : 'danger'" size="small"
@@ -14,6 +15,7 @@
 <script lang="ts" setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface TD {
   id: string

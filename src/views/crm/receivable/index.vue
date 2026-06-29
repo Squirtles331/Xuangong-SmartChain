@@ -1,7 +1,8 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #header>
-      <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" storage-key="receivable-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
     </template>
     <template #tool>
       <gi-button type="add" @click="openReceipt">登记回款</gi-button>
@@ -67,6 +68,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { receivables as mockARs } from '@/mock'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface AR {

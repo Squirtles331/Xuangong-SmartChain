@@ -1,6 +1,7 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header><SearchSetting :columns="allSearchColumns" storage-key="purchase-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <template #tool><gi-button type="add" @click="$router.push('/scm/purchase/create')">新建采购订单</gi-button></template>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe style="height: 100%">
       <template #status="{ row }">
@@ -38,6 +39,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { purchaseOrders as mockPOs } from '@/mock'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface PO {

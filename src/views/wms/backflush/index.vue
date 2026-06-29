@@ -1,6 +1,7 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header><SearchSetting :columns="allSearchColumns" storage-key="backflush-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <template #tool><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /></template>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
       <template #status="{ row }"
@@ -13,13 +14,15 @@
       >
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增倒冲规则' : '编辑倒冲规则'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
+      <SearchSetting :columns="allSearchColumns" storage-key="backflush-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface BF {
   id: string

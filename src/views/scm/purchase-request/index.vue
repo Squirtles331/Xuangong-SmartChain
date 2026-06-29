@@ -1,7 +1,8 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #header>
-      <gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" />
+      <SearchSetting :columns="allSearchColumns" storage-key="purchase-request-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" />
     </template>
     <template #tool>
       <gi-button type="add" @click="openAdd">手动创建</gi-button>
@@ -30,7 +31,8 @@
 
     <!-- 采购申请弹窗 -->
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新建采购申请' : '编辑采购申请'" width="700px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
+      <SearchSetting :columns="allSearchColumns" storage-key="purchase-request-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formCols" :label-width="100" />
       <el-divider />
       <div class="lines-header"><strong>申请明细</strong><el-button type="primary" size="small" @click="addLine">+ 添加物料</el-button></div>
       <el-table :data="lines" border size="small" style="margin-top: 8px">
@@ -74,6 +76,7 @@
 <script lang="ts" setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface PR {

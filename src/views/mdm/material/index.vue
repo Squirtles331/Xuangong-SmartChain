@@ -11,7 +11,8 @@
       />
     </template>
     <template #header>
-      <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" storage-key="material-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
     </template>
     <template #tool>
       <gi-button type="add" @click="openAdd" />
@@ -34,7 +35,8 @@
       :title="dialogMode === 'add' ? '新增物料' : '编辑物料'"
       width="600px"
     >
-      <gi-form v-model="formModel" :columns="formColumns" :label-width="100" />
+      <SearchSetting :columns="allSearchColumns" storage-key="material-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" v-model="formModel" :columns="formColumns" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
@@ -42,6 +44,7 @@
 <script lang="ts" setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { materialTree as mockCatTree, materialList as mockMaterials } from '@/mock'
 

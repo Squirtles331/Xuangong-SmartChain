@@ -1,6 +1,7 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><gi-form ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header><SearchSetting :columns="allSearchColumns" storage-key="trace-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
       <template #actions="{ row }"><el-button type="primary" link size="small" @click="viewDetail(row)">详情</el-button></template>
     </gi-table>
@@ -21,6 +22,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, computed, watch } from 'vue'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface Rpt {
   id: string
