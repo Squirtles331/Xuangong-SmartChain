@@ -14,7 +14,7 @@
       </el-tooltip>
     </div>
 
-    <el-drawer v-model="drawerVisible" title="查询条件配置" direction="rtl" size="360px" append-to-body>
+    <el-drawer v-model="drawerVisible" title="查询条件配置" direction="rtl" size="360px" append-to-body :lock-scroll="false">
       <div class="search-setting__drawer">
         <div class="search-setting__drawer-header">
           <div class="search-setting__drawer-title">已显示 {{ draftVisibleCount }} / {{ draftFieldList.length }}</div>

@@ -236,6 +236,26 @@ async function submitDialog() {
 }
 ```
 
+## 11. 滚动锁规范
+
+弹窗或抽屉默认关闭 `lock-scroll`：
+
+- `gi-dialog` 使用 `:lock-scroll="false"`
+- `el-drawer` 使用 `:lock-scroll="false"`
+
+原因：
+
+- 默认滚动锁会给 `body` 注入内联样式
+- 常见表现是出现 `width: calc(100% - 6px)` 这类滚动条补偿
+- 会造成页面视觉抖动，和当前项目布局冲突
+
+示例：
+
+```vue
+<gi-dialog v-model="visible" :lock-scroll="false" />
+<el-drawer v-model="drawerVisible" :lock-scroll="false" />
+```
+
 ## 11. 尽量避免 watch
 
 本轮重构要求：

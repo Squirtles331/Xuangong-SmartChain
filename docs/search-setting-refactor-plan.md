@@ -25,6 +25,7 @@
 - 勾选控制显示
 - 拖拽控制顺序
 - 点击“应用”后才更新页面查询区
+- 抽屉默认关闭 `lock-scroll`
 
 ## 2. 当前组件标准
 
@@ -34,6 +35,7 @@
 - 维护 `initial / applied / draft` 三层状态
 - 输出 `visibleFields`
 - 在应用后重挂载查询区，规避 `gi-form` 动态重排导致的内部报错
+- 关闭抽屉滚动锁，避免给 `body` 注入滚动条补偿宽度
 
 当前组件对外允许的接口只有：
 
@@ -107,6 +109,7 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
 - 禁止恢复方案保存
 - 禁止扩展额外兼容 props
 - 禁止绕过 `SearchSetting` 直接在页面里做字段拖拽
+- 禁止恢复抽屉默认滚动锁
 
 ## 6. 迁移步骤
 

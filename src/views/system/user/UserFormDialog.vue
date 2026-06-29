@@ -2,6 +2,7 @@
   <gi-dialog
     v-model="visible"
     :footer="true"
+    :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
     :title="mode === 'add' ? '新增用户' : '编辑用户'"
