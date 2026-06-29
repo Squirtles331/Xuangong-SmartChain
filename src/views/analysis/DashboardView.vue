@@ -8,9 +8,7 @@
             {{ card.value }}<span class="top-unit">{{ card.unit }}</span>
           </div>
           <div class="top-trend">
-            <span :style="{ color: card.trend > 0 ? '#f56c6c' : '#67c23a' }">
-              {{ card.trend > 0 ? '↑' : '↓' }}{{ Math.abs(card.trend) }}%
-            </span>
+            <span :style="{ color: card.trend > 0 ? '#f56c6c' : '#67c23a' }"> {{ card.trend > 0 ? '↑' : '↓' }}{{ Math.abs(card.trend) }}% </span>
             较上期
           </div>
         </el-card>

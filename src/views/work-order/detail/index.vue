@@ -222,7 +222,7 @@ async function loadOrder() {
   // 加载物料领用数据
   try {
     const bomRes = await getBOMList({ page: 1, page_size: 100, status: 'active' })
-    const items = Array.isArray(bomRes.data) ? bomRes.data : ((bomRes.data as any)?.items || [])
+    const items = Array.isArray(bomRes.data) ? bomRes.data : (bomRes.data as any)?.items || []
     materialUsage.value = (items as any[]).filter((b: any) => b.bom_type === 'EBOM')
   } catch {
     materialUsage.value = []

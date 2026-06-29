@@ -304,10 +304,10 @@ async function onBomChange(version: string) {
     const res = await getBOMPreview(step1Form.material_code)
     if (res.data) {
       const qty = step1Form.planned_qty || 100
-      const items = Array.isArray(res.data) ? res.data : (res.data.items || [])
+      const items = Array.isArray(res.data) ? res.data : res.data.items || []
       bomPreviewData.value = items.map((item: any, idx: number) => ({
         ...item,
-        available: item.available ?? (Math.floor(Math.random() * 200) + idx * 30)
+        available: item.available ?? Math.floor(Math.random() * 200) + idx * 30
       }))
     }
   } catch {
