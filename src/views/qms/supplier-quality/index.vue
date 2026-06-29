@@ -70,6 +70,7 @@ function hr() {
   p.currentPage = 1
 }
 function del(id: string) {
+  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
   data.value = data.value.filter((e: any) => e.id !== id)
 }
 const vis = ref(false)

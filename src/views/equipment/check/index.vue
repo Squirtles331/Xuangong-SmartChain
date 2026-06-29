@@ -132,6 +132,7 @@ function handleExport() {
   ElMessage.success('导出成功')
 }
 function del(id: string) {
+  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
   data.value = data.value.filter((e: any) => e.id !== id)
 }
 function refresh() {}

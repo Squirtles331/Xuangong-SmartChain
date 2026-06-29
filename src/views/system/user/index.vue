@@ -239,6 +239,7 @@ async function submitDialog() {
     if (idx > -1) users.value[idx] = { ...users.value[idx], ...formModel.value }
   }
   return true
+  }).catch(() => {})
 }
 
 function remove(id: number) {

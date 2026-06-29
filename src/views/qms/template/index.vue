@@ -110,6 +110,7 @@ async function submit() {
   return true
 }
 function del(id: string) {
+  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
   templates.value = templates.value.filter((t) => t.id !== id)
 }
 </script>

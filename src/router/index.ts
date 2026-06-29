@@ -289,6 +289,18 @@ const routes: RouteRecordRaw[] = [
             name: 'wmsBarcode',
             component: () => import('@/views/wms/barcode/index.vue'),
             meta: { title: '条码管理', icon: 'Scan', order: 9 }
+          },
+          {
+            path: 'barcode-print',
+            name: 'wmsBarcodePrint',
+            component: () => import('@/views/wms/barcode-print/index.vue'),
+            meta: { title: '条码打印', icon: 'Printer', order: 10 }
+          },
+          {
+            path: 'barcode-scan',
+            name: 'wmsBarcodeScan',
+            component: () => import('@/views/wms/barcode-scan/index.vue'),
+            meta: { title: '扫码出入库', icon: 'Scan', order: 11 }
           }
         ]
       },

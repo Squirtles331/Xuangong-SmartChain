@@ -229,6 +229,7 @@ async function submit() {
   return true
 }
 function del(id: string) {
+  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
   eqs.value = eqs.value.filter((e) => e.id !== id)
 }
 </script>

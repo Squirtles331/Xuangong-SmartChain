@@ -255,6 +255,7 @@ async function submit() {
   return true
 }
 function del(id: string) {
+  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
   prs.value = prs.value.filter((r) => r.id !== id)
 }
 function submitApprove(r: PR) {

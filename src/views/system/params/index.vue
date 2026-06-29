@@ -80,6 +80,7 @@ function handleReset() {
   pagination.currentPage = 1
 }
 function del(id: string) {
+  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
   params.value = params.value.filter((e: any) => e.id !== id)
 }
 function refresh() {

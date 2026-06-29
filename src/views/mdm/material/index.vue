@@ -163,6 +163,7 @@ async function submitDialog() {
     if (idx > -1) Object.assign(materials.value[idx], formModel)
   }
   return true
+  }).catch(() => {})
 }
 function remove(id: string) {
   materials.value = materials.value.filter((m) => m.id !== id)
