@@ -76,6 +76,8 @@ const formCols: FormColumnItem[] = [
   }
 ]
 function openAdd() {
+  mode.value = 'add'; eid.value = ''
+  Object.assign(form, { material: '', qty: 1, from_wh: '原材料仓', to_wh: '车间线边仓' })
   vis.value = true
 }
 async function submit() {

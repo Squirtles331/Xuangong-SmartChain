@@ -458,7 +458,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'analysis',
         name: 'analysis',
-        meta: { title: '数据分析', icon: 'DataLine', order: 20 },
+        meta: { title: '数据分析', icon: 'DataLine', order: 80 },
         children: [
           {
             path: 'dashboard',

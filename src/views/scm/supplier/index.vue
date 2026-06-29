@@ -68,6 +68,7 @@ function openEdit(r: S) {
   vis.value = true
 }
 async function submit() {
+  if (!form.code || !form.name) { ElMessage.warning('请填写编码和名称'); return false }
   ElMessage.success('保存成功')
   return true
 }

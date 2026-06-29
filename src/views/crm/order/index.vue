@@ -45,10 +45,10 @@ interface Order {
 
 const orders = ref<Order[]>(mockOrders as any)
 
-const searchForm = reactive({ code: '', customer: '', status: '' })
+const searchForm = reactive({ code: '', customer_name: '', status: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '订单编号', field: 'code' } as any,
-  { type: 'input', label: '客户', field: 'customer' } as any,
+  { type: 'input', label: '客户', field: 'customer_name' } as any,
   {
     type: 'select-v2',
     label: '状态',
@@ -80,7 +80,7 @@ const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 const filtered = computed(() =>
   orders.value.filter((o) => {
     if (searchForm.code && !o.code.includes(searchForm.code)) return false
-    if (searchForm.customer && !o.customer_name.includes(searchForm.customer)) return false
+    if (searchForm.customer_name && !o.customer_name.includes(searchForm.customer_name)) return false
     if (searchForm.status && o.status !== searchForm.status) return false
     return true
   })
@@ -106,7 +106,7 @@ function handleSearch() {
 }
 function handleReset() {
   searchForm.code = ''
-  searchForm.customer = ''
+  searchForm.customer_name = ''
   searchForm.status = ''
   pagination.currentPage = 1
 }

@@ -223,6 +223,7 @@ function closeDialog() {
 
 async function submitDialog() {
   if (!formModel.value.username || !formModel.value.role) {
+    ElMessage.warning('请填写用户名和角色')
     return false
   }
   if (dialogMode.value === 'add') {
@@ -239,7 +240,6 @@ async function submitDialog() {
     if (idx > -1) users.value[idx] = { ...users.value[idx], ...formModel.value }
   }
   return true
-  }).catch(() => {})
 }
 
 function remove(id: number) {
