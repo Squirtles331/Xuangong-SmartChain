@@ -101,4 +101,11 @@ function confirmReturn(r: PR) {
   r.status = 'done'
   ElMessage.success('退货完成')
 }
+const vis=ref(false);const mode=ref<'add'|'edit'>('add');const eid=ref('')
+const form=reactive({code:'',po_code:'',supplier:'',material:'',qty:1,reason:'',status:'pending'})
+const formCols:FormColumnItem[]=[{type:'input',label:'退货单号',field:'code',required:true},{type:'input',label:'采购订单',field:'po_code',required:true},{type:'input',label:'供应商',field:'supplier'},{type:'input',label:'物料',field:'material',required:true},{type:'input-number',label:'数量',field:'qty',required:true,props:{min:1} as any},{type:'input',label:'原因',field:'reason'}]
+function openAdd(){mode.value='add';eid.value='';Object.assign(form,{code:'',po_code:'',supplier:'',material:'',qty:1,reason:'',status:'pending'});vis.value=true}
+function openEdit(r:PR){mode.value='edit';eid.value=r.id;Object.assign(form,r);vis.value=true}
+async function submit(){if(!form.material){ElMessage.warning('请填写必填项');return false};if(mode.value==='add'){returns.value.unshift({id:Date.now().toString(),code:'PRT'+new Date().toISOString().slice(0,10).replace(/-/g,'')+String(returns.value.length+1).padStart(4,'0'),...form} as PR)}else{const i=returns.value.findIndex(e=>e.id===eid.value);if(i>-1)Object.assign(returns.value[i],form)};return true}
+function del(id:string){returns.value=returns.value.filter((e:any)=>e.id!==id)}
 </script>
