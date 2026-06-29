@@ -66,14 +66,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import type { DictType, DictItem } from '@/api/system'
-import {
-  getDictTypeList,
-  getDictItems,
-  createDictType,
-  createDictItem,
-  updateDictItem,
-  deleteDictItem
-} from '@/api/system'
+import { getDictTypeList, getDictItems, createDictType, createDictItem, updateDictItem, deleteDictItem } from '@/api/system'
 
 // ==================== 数据（来自 API） ====================
 const dictTypes = ref<DictType[]>([])

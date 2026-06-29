@@ -21,10 +21,7 @@ export async function runMRP(data?: { plant_id?: string }) {
 }
 
 // ==================== MRP 结果查询 ====================
-export async function getMRPResults(
-  runId: string,
-  params: { type: 'purchase' | 'production' | 'exception'; page: number; page_size: number }
-) {
+export async function getMRPResults(runId: string, params: { type: 'purchase' | 'production' | 'exception'; page: number; page_size: number }) {
   await simulateDelay()
 
   let sourceData: any[]
@@ -92,8 +89,8 @@ const mrpHistoryStore: any[] = [
 export async function getMRPHistory(params: { page: number; page_size: number; plant_id?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...mrpHistoryStore]
-  if (params.plant_id) filtered = filtered.filter(r => r.plant_id === params.plant_id)
-  if (params.status) filtered = filtered.filter(r => r.status === params.status)
+  if (params.plant_id) filtered = filtered.filter((r) => r.plant_id === params.plant_id)
+  if (params.status) filtered = filtered.filter((r) => r.status === params.status)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }

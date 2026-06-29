@@ -9,13 +9,7 @@ import { generateId } from '../shared/id'
 import { ecnOrders } from '../modules/bom'
 
 // ==================== ECN 变更单 ====================
-export async function getECNList(params: {
-  page: number
-  page_size: number
-  code?: string
-  material?: string
-  status?: string
-}) {
+export async function getECNList(params: { page: number; page_size: number; code?: string; material?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...ecnOrders]
   if (params.code) filtered = searchItems(filtered, params.code, ['code'])

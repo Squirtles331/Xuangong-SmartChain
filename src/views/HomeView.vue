@@ -67,10 +67,7 @@ const rankCols: TableColumnItem<any>[] = [
 
 async function fetchDashboardData() {
   try {
-    const [statsRes, chartsRes] = await Promise.all([
-      getDashboardStats(),
-      getHomeCharts()
-    ])
+    const [statsRes, chartsRes] = await Promise.all([getDashboardStats(), getHomeCharts()])
 
     if (statsRes.data) {
       const s = statsRes.data
@@ -135,11 +132,13 @@ function initCharts(chartData: any) {
       legend: { data: chartData?.capacity?.legend || ['一车间', '二车间', '装配车间'] },
       xAxis: { type: 'category', data: chartData?.capacity?.days || ['周一', '周二', '周三', '周四', '周五', '周六'] },
       yAxis: { type: 'value', max: 100 },
-      series: (chartData?.capacity?.series || [
-        { name: '一车间', data: [85, 88, 82, 90, 86, 45], itemStyle: { color: '#409eff' } },
-        { name: '二车间', data: [78, 80, 75, 82, 79, 40], itemStyle: { color: '#67c23a' } },
-        { name: '装配车间', data: [92, 90, 88, 95, 91, 50], itemStyle: { color: '#e6a23c' } }
-      ]).map((s: any) => ({ ...s, type: 'line' }))
+      series: (
+        chartData?.capacity?.series || [
+          { name: '一车间', data: [85, 88, 82, 90, 86, 45], itemStyle: { color: '#409eff' } },
+          { name: '二车间', data: [78, 80, 75, 82, 79, 40], itemStyle: { color: '#67c23a' } },
+          { name: '装配车间', data: [92, 90, 88, 95, 91, 50], itemStyle: { color: '#e6a23c' } }
+        ]
+      ).map((s: any) => ({ ...s, type: 'line' }))
     })
   }
 }

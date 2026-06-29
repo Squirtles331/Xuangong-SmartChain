@@ -31,15 +31,11 @@ export function paginate<T>(
 /**
  * 对数组进行简单关键词搜索（模糊匹配）
  */
-export function searchItems<T extends Record<string, any>>(
-  items: T[],
-  keyword: string,
-  fields: (keyof T)[]
-): T[] {
+export function searchItems<T extends Record<string, any>>(items: T[], keyword: string, fields: (keyof T)[]): T[] {
   if (!keyword) return items
   const kw = keyword.toLowerCase()
-  return items.filter(item =>
-    fields.some(field => {
+  return items.filter((item) =>
+    fields.some((field) => {
       const val = item[field]
       return val != null && String(val).toLowerCase().includes(kw)
     })

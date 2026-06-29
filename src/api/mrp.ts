@@ -10,10 +10,7 @@ export function runMRP(data?: { plant_id?: string }) {
 }
 
 // ==================== MRP 结果查询 ====================
-export function getMRPResults(
-  runId: string,
-  params: { type: 'purchase' | 'production' | 'exception'; page: number; page_size: number }
-) {
+export function getMRPResults(runId: string, params: { type: 'purchase' | 'production' | 'exception'; page: number; page_size: number }) {
   if (isMockMode) return mockService.getMRPResults(runId, params)
   return http.get<ApiResponse<any>>(`/mrp/runs/${runId}/results`, { params })
 }

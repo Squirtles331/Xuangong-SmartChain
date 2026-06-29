@@ -6,14 +6,7 @@ import { simulateDelay } from '../shared/delay'
 import { paginate, searchItems } from '../shared/paginate'
 import { wrapListResponse, wrapDetailResponse, wrapSuccessResponse } from '../shared/response'
 import { generateId } from '../shared/id'
-import {
-  orgTree,
-  materialTree,
-  materialList,
-  equipments,
-  workCenters,
-  molds
-} from '../modules/business'
+import { orgTree, materialTree, materialList, equipments, workCenters, molds } from '../modules/business'
 
 // ==================== 组织架构 ====================
 export async function getOrgTree() {
@@ -27,18 +20,12 @@ export async function getMaterialTree() {
   return wrapDetailResponse(materialTree)
 }
 
-export async function getMaterialList(params: {
-  page: number
-  page_size: number
-  code?: string
-  name?: string
-  type?: string
-}) {
+export async function getMaterialList(params: { page: number; page_size: number; code?: string; name?: string; type?: string }) {
   await simulateDelay()
   let filtered = [...materialList]
   if (params.code) filtered = searchItems(filtered, params.code, ['code'])
   if (params.name) filtered = searchItems(filtered, params.name, ['name'])
-  if (params.type) filtered = filtered.filter(m => (m as any).type === params.type)
+  if (params.type) filtered = filtered.filter((m) => (m as any).type === params.type)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }
@@ -65,18 +52,12 @@ export async function deleteMaterial(id: string) {
 }
 
 // ==================== 设备管理 ====================
-export async function getEquipmentList(params: {
-  page: number
-  page_size: number
-  name?: string
-  workshop?: string
-  status?: string
-}) {
+export async function getEquipmentList(params: { page: number; page_size: number; name?: string; workshop?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...equipments]
   if (params.name) filtered = searchItems(filtered, params.name, ['name'])
   if (params.workshop) filtered = searchItems(filtered, params.workshop, ['workshop'])
-  if (params.status) filtered = filtered.filter(e => (e as any).status === params.status)
+  if (params.status) filtered = filtered.filter((e) => (e as any).status === params.status)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }

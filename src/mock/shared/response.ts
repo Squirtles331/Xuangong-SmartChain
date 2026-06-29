@@ -17,12 +17,7 @@ export interface PaginatedData<T> {
 }
 
 /** 包装列表响应 */
-export function wrapListResponse<T>(
-  items: T[],
-  total: number,
-  page: number,
-  pageSize: number
-): ApiResponse<PaginatedData<T>> {
+export function wrapListResponse<T>(items: T[], total: number, page: number, pageSize: number): ApiResponse<PaginatedData<T>> {
   return {
     code: 200,
     data: { items, total, page, page_size: pageSize },

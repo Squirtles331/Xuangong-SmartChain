@@ -4,46 +4,24 @@ import { isMockMode } from './_config'
 import * as mockService from '@/mock/services/wms'
 
 // ==================== 库存管理 ====================
-export function getInventoryList(params: {
-  page: number
-  page_size: number
-  code?: string
-  name?: string
-  warehouse?: string
-}) {
+export function getInventoryList(params: { page: number; page_size: number; code?: string; name?: string; warehouse?: string }) {
   if (isMockMode) return mockService.getInventoryList(params)
   return http.get<ApiResponse<any>>('/wms/inventory', { params })
 }
 
 // ==================== 条码管理 ====================
-export function getMaterialListForBarcode(params: {
-  page: number
-  page_size: number
-  code?: string
-  name?: string
-}) {
+export function getMaterialListForBarcode(params: { page: number; page_size: number; code?: string; name?: string }) {
   if (isMockMode) return mockService.getMaterialListForBarcode(params)
   return http.get<ApiResponse<any>>('/wms/materials', { params })
 }
 
 // ==================== 盘点管理 ====================
-export function getStockCountList(params: {
-  page: number
-  page_size: number
-  plan_code?: string
-  warehouse?: string
-  status?: string
-}) {
+export function getStockCountList(params: { page: number; page_size: number; plan_code?: string; warehouse?: string; status?: string }) {
   if (isMockMode) return mockService.getStockCountList(params)
   return http.get<ApiResponse<any>>('/wms/stock-counts', { params })
 }
 
-export function getStockCountDiff(params: {
-  page: number
-  page_size: number
-  plan_code?: string
-  material?: string
-}) {
+export function getStockCountDiff(params: { page: number; page_size: number; plan_code?: string; material?: string }) {
   if (isMockMode) return mockService.getStockCountDiff(params)
   return http.get<ApiResponse<any>>('/wms/stock-count-diffs', { params })
 }
@@ -77,7 +55,14 @@ export function getPickingList(params: { page: number; page_size: number; code?:
 }
 
 /** 移库单列表（骨架） */
-export function getTransferList(params: { page: number; page_size: number; code?: string; from_warehouse?: string; to_warehouse?: string; status?: string }) {
+export function getTransferList(params: {
+  page: number
+  page_size: number
+  code?: string
+  from_warehouse?: string
+  to_warehouse?: string
+  status?: string
+}) {
   return http.get<ApiResponse<any>>('/wms/transfers', { params })
 }
 
@@ -97,6 +82,13 @@ export function getBarcodeList(params: { page: number; page_size: number; code?:
 }
 
 /** 条码扫描记录（骨架） */
-export function getBarcodeScanList(params: { page: number; page_size: number; barcode?: string; operator?: string; start_date?: string; end_date?: string }) {
+export function getBarcodeScanList(params: {
+  page: number
+  page_size: number
+  barcode?: string
+  operator?: string
+  start_date?: string
+  end_date?: string
+}) {
   return http.get<ApiResponse<any>>('/wms/barcode-scans', { params })
 }

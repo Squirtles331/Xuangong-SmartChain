@@ -9,11 +9,7 @@ import { generateId } from '../shared/id'
 import { routingOperations } from '../modules/bom'
 
 // ==================== 工艺路线 ====================
-export async function getRoutingList(params: {
-  page: number
-  page_size: number
-  material_code?: string
-}) {
+export async function getRoutingList(params: { page: number; page_size: number; material_code?: string }) {
   await simulateDelay()
   let filtered = [...routingOperations]
   if (params.material_code) filtered = searchItems(filtered, params.material_code, ['work_center'])

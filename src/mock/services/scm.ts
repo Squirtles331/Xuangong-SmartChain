@@ -9,16 +9,11 @@ import { generateId } from '../shared/id'
 import { suppliers, purchaseOrders } from '../modules/business'
 
 // ==================== 供应商管理 ====================
-export async function getSupplierList(params: {
-  page: number
-  page_size: number
-  name?: string
-  status?: string
-}) {
+export async function getSupplierList(params: { page: number; page_size: number; name?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...suppliers]
   if (params.name) filtered = searchItems(filtered, params.name, ['name'])
-  if (params.status) filtered = filtered.filter(s => (s as any).status === params.status)
+  if (params.status) filtered = filtered.filter((s) => (s as any).status === params.status)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }
@@ -45,18 +40,12 @@ export async function deleteSupplier(id: string) {
 }
 
 // ==================== 采购订单 ====================
-export async function getPurchaseOrderList(params: {
-  page: number
-  page_size: number
-  code?: string
-  supplier?: string
-  status?: string
-}) {
+export async function getPurchaseOrderList(params: { page: number; page_size: number; code?: string; supplier?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...purchaseOrders]
   if (params.code) filtered = searchItems(filtered, params.code, ['code'])
   if (params.supplier) filtered = searchItems(filtered, params.supplier, ['supplier'])
-  if (params.status) filtered = filtered.filter(o => (o as any).status === params.status)
+  if (params.status) filtered = filtered.filter((o) => (o as any).status === params.status)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }

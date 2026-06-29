@@ -9,18 +9,12 @@ import { generateId } from '../shared/id'
 import { bomList, bomTree, bomPreview } from '../modules/bom'
 
 // ==================== BOM 列表 ====================
-export async function getBOMList(params: {
-  page: number
-  page_size: number
-  material_code?: string
-  material_name?: string
-  status?: string
-}) {
+export async function getBOMList(params: { page: number; page_size: number; material_code?: string; material_name?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...bomList]
   if (params.material_code) filtered = searchItems(filtered, params.material_code, ['material_code'])
   if (params.material_name) filtered = searchItems(filtered, params.material_name, ['material_name'])
-  if (params.status) filtered = filtered.filter(b => b.status === params.status)
+  if (params.status) filtered = filtered.filter((b) => b.status === params.status)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }

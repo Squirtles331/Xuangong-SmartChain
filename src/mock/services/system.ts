@@ -6,30 +6,15 @@ import { simulateDelay } from '../shared/delay'
 import { paginate, searchItems } from '../shared/paginate'
 import { wrapListResponse, wrapDetailResponse, wrapSuccessResponse } from '../shared/response'
 import { generateId } from '../shared/id'
-import {
-  dictTypes,
-  dictItems,
-  menuTree,
-  systemParams,
-  auditLogs,
-  codeRules,
-  approvalFlows,
-  systemUsers
-} from '../modules/system'
+import { dictTypes, dictItems, menuTree, systemParams, auditLogs, codeRules, approvalFlows, systemUsers } from '../modules/system'
 
 // ==================== 用户管理 ====================
-export async function getUserList(params: {
-  page: number
-  page_size: number
-  username?: string
-  real_name?: string
-  status?: string
-}) {
+export async function getUserList(params: { page: number; page_size: number; username?: string; real_name?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...systemUsers]
   if (params.username) filtered = searchItems(filtered, params.username, ['username'])
   if (params.real_name) filtered = searchItems(filtered, params.real_name, ['real_name'])
-  if (params.status) filtered = filtered.filter(u => u.status === params.status)
+  if (params.status) filtered = filtered.filter((u) => u.status === params.status)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }
@@ -86,7 +71,10 @@ export async function updateMenu(id: string, data: any) {
   // 递归查找并更新
   const updateInTree = (nodes: any[]): boolean => {
     for (const node of nodes) {
-      if (node.id === id) { Object.assign(node, data); return true }
+      if (node.id === id) {
+        Object.assign(node, data)
+        return true
+      }
       if (node.children && updateInTree(node.children)) return true
     }
     return false
@@ -98,8 +86,11 @@ export async function updateMenu(id: string, data: any) {
 export async function deleteMenu(id: string) {
   await simulateDelay()
   const removeFromTree = (nodes: any[]): boolean => {
-    const idx = nodes.findIndex(n => n.id === id)
-    if (idx > -1) { nodes.splice(idx, 1); return true }
+    const idx = nodes.findIndex((n) => n.id === id)
+    if (idx > -1) {
+      nodes.splice(idx, 1)
+      return true
+    }
     for (const node of nodes) {
       if (node.children && removeFromTree(node.children)) return true
     }
@@ -140,7 +131,10 @@ export async function updateDictItem(id: string, data: any) {
   await simulateDelay()
   for (const items of Object.values(dictItems) as any[]) {
     const idx = items.findIndex((item: any) => String(item.id) === id)
-    if (idx > -1) { Object.assign(items[idx], data); break }
+    if (idx > -1) {
+      Object.assign(items[idx], data)
+      break
+    }
   }
   return wrapSuccessResponse('字典项更新成功')
 }
@@ -149,7 +143,10 @@ export async function deleteDictItem(id: string) {
   await simulateDelay()
   for (const items of Object.values(dictItems) as any[]) {
     const idx = items.findIndex((item: any) => String(item.id) === id)
-    if (idx > -1) { items.splice(idx, 1); break }
+    if (idx > -1) {
+      items.splice(idx, 1)
+      break
+    }
   }
   return wrapSuccessResponse('字典项删除成功')
 }
@@ -165,7 +162,7 @@ export async function getSystemParams(params?: { page?: number; page_size?: numb
 
 export async function updateSystemParam(id: string, value: string) {
   await simulateDelay()
-  const item = systemParams.find(p => p.id === id)
+  const item = systemParams.find((p) => p.id === id)
   if (item) item.value = value
   return wrapDetailResponse(item)
 }
@@ -173,7 +170,7 @@ export async function updateSystemParam(id: string, value: string) {
 export async function batchUpdateSystemParams(updates: { id: string; value: string }[]) {
   await simulateDelay()
   for (const u of updates) {
-    const item = systemParams.find(p => p.id === u.id)
+    const item = systemParams.find((p) => p.id === u.id)
     if (item) item.value = u.value
   }
   return wrapSuccessResponse('批量更新成功')
@@ -197,7 +194,7 @@ export async function getAuditLogs(params: {
   await simulateDelay()
   let filtered = [...auditLogs]
   if (params.user_name) filtered = searchItems(filtered, params.user_name, ['user_name'])
-  if (params.module) filtered = filtered.filter(l => l.module === params.module)
+  if (params.module) filtered = filtered.filter((l) => l.module === params.module)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }
@@ -216,14 +213,14 @@ export async function createCodeRule(data: any) {
 
 export async function updateCodeRule(id: string, data: any) {
   await simulateDelay()
-  const idx = codeRules.findIndex(r => r.id === id)
+  const idx = codeRules.findIndex((r) => r.id === id)
   if (idx > -1) Object.assign(codeRules[idx], data)
   return wrapSuccessResponse('编码规则更新成功')
 }
 
 export async function deleteCodeRule(id: string) {
   await simulateDelay()
-  const idx = codeRules.findIndex(r => r.id === id)
+  const idx = codeRules.findIndex((r) => r.id === id)
   if (idx > -1) codeRules.splice(idx, 1)
   return wrapSuccessResponse('编码规则删除成功')
 }
@@ -242,14 +239,14 @@ export async function createApprovalFlow(data: any) {
 
 export async function updateApprovalFlow(id: string, data: any) {
   await simulateDelay()
-  const idx = approvalFlows.findIndex(f => f.id === id)
+  const idx = approvalFlows.findIndex((f) => f.id === id)
   if (idx > -1) Object.assign(approvalFlows[idx], data)
   return wrapSuccessResponse('审批流更新成功')
 }
 
 export async function deleteApprovalFlow(id: string) {
   await simulateDelay()
-  const idx = approvalFlows.findIndex(f => f.id === id)
+  const idx = approvalFlows.findIndex((f) => f.id === id)
   if (idx > -1) approvalFlows.splice(idx, 1)
   return wrapSuccessResponse('审批流删除成功')
 }

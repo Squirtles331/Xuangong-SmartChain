@@ -16,30 +16,18 @@ export async function getDashboardStats() {
 
   // 统计工单状态
   const totalWorkOrders = workOrders.length
-  const activeWorkOrders = (workOrders as any[]).filter(
-    (wo: any) => ['approved', 'released', 'in_progress'].includes(wo.status)
-  ).length
-  const completedWorkOrders = (workOrders as any[]).filter(
-    (wo: any) => wo.status === 'completed'
-  ).length
-  const urgentWorkOrders = (workOrders as any[]).filter(
-    (wo: any) => wo.priority === 'urgent'
-  ).length
+  const activeWorkOrders = (workOrders as any[]).filter((wo: any) => ['approved', 'released', 'in_progress'].includes(wo.status)).length
+  const completedWorkOrders = (workOrders as any[]).filter((wo: any) => wo.status === 'completed').length
+  const urgentWorkOrders = (workOrders as any[]).filter((wo: any) => wo.priority === 'urgent').length
 
   // 统计质检任务
   const totalInspections = inspectionTasks.length
-  const pendingInspections = (inspectionTasks as any[]).filter(
-    (t: any) => t.status === 'pending'
-  ).length
-  const doneInspections = (inspectionTasks as any[]).filter(
-    (t: any) => t.status === 'done'
-  ).length
+  const pendingInspections = (inspectionTasks as any[]).filter((t: any) => t.status === 'pending').length
+  const doneInspections = (inspectionTasks as any[]).filter((t: any) => t.status === 'done').length
 
   // 统计库存
   const totalStockItems = inventory.length
-  const lowStockItems = (inventory as any[]).filter(
-    (i: any) => i.available < i.safety
-  ).length
+  const lowStockItems = (inventory as any[]).filter((i: any) => i.available < i.safety).length
   const totalStockQty = (inventory as any[]).reduce((sum: number, i: any) => sum + (i.qty || 0), 0)
 
   // 统计 MRP 例外
@@ -56,14 +44,10 @@ export async function getDashboardStats() {
   const todayOutput = 125
 
   // 计划完成率
-  const planCompletionRate = totalWorkOrders > 0
-    ? Math.round((completedWorkOrders / totalWorkOrders) * 100)
-    : 0
+  const planCompletionRate = totalWorkOrders > 0 ? Math.round((completedWorkOrders / totalWorkOrders) * 100) : 0
 
   // 质检合格率
-  const inspectionPassRate = totalInspections > 0
-    ? Math.round((doneInspections / totalInspections) * 100)
-    : 0
+  const inspectionPassRate = totalInspections > 0 ? Math.round((doneInspections / totalInspections) * 100) : 0
 
   return wrapDetailResponse({
     totalWorkOrders,

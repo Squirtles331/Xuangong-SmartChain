@@ -4,14 +4,7 @@ import { isMockMode } from './_config'
 import * as mockService from '@/mock/services/qms'
 
 // ==================== 质检任务管理 ====================
-export function getInspectionTaskList(params: {
-  page: number
-  page_size: number
-  code?: string
-  type?: string
-  material?: string
-  status?: string
-}) {
+export function getInspectionTaskList(params: { page: number; page_size: number; code?: string; type?: string; material?: string; status?: string }) {
   if (isMockMode) return mockService.getInspectionTaskList(params)
   return http.get<ApiResponse<any>>('/qms/inspections', { params })
 }
