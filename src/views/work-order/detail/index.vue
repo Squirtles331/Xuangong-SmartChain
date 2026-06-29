@@ -155,7 +155,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import StatusTag from '@/components/StatusTag.vue'
 import { WORK_ORDER_STATUS, WORK_ORDER_PRIORITY } from '@/common/status-maps'
-import { workOrders, workOrderOperations } from '@/mock'
+import { workOrders, workOrderOperations, bomList } from '@/mock'
 
 const route = useRoute()
 
@@ -241,23 +241,7 @@ function getOperationsSummary(param: { columns: any[]; data: any[] }) {
 }
 
 // ==================== 物料领用 ====================
-const materialUsage = ref([
-  { material_code: '01.01.001-00001', material_name: '泵体铸件', spec: 'HT200', unit: '件', planned_qty: 100, issued_qty: 80, available_qty: 150 },
-  { material_code: '02.01.001-00001', material_name: '耐磨环', spec: 'φ80', unit: '件', planned_qty: 200, issued_qty: 200, available_qty: 0 },
-  {
-    material_code: '02.02.001-00001',
-    material_name: '螺栓 M16×60',
-    spec: 'M16×60',
-    unit: '件',
-    planned_qty: 800,
-    issued_qty: 400,
-    available_qty: 500
-  },
-  { material_code: '01.01.002-00001', material_name: '叶轮铸件', spec: 'ZG35', unit: '件', planned_qty: 100, issued_qty: 100, available_qty: 30 },
-  { material_code: '02.03.001-00001', material_name: '键 8×7×30', spec: '8×7×30', unit: '件', planned_qty: 100, issued_qty: 0, available_qty: 200 },
-  { material_code: '02.04.001-00001', material_name: '轴承 6308', spec: '6308', unit: '件', planned_qty: 200, issued_qty: 100, available_qty: 80 },
-  { material_code: '01.01.003-00001', material_name: '轴承架', spec: 'HT200', unit: '件', planned_qty: 100, issued_qty: 0, available_qty: 50 }
-])
+const materialUsage = ref(bomList.filter((b) => b.bom_type === 'EBOM') as any)
 
 function handleMaterialIssue(row: any) {
   ElMessageBox.confirm(`确认领用物料 "${row.material_name}" ？`, '物料领用', { type: 'warning' })
@@ -341,14 +325,7 @@ function doTransition(targetStatus: string, opinion: string) {
 }
 
 // ==================== 操作日志 ====================
-const logs = ref([
-  { id: '1', time: '2025-01-15 10:30', type: 'primary', content: '赵六开始工序30:精车', user: '系统' },
-  { id: '2', time: '2025-01-14 17:00', type: 'success', content: '王五完成工序20:粗车，合格98件，不良1件', user: '王五' },
-  { id: '3', time: '2025-01-12 08:00', type: 'primary', content: '王五开始工序20:粗车', user: '系统' },
-  { id: '4', time: '2025-01-11 17:00', type: 'success', content: '李四完成工序10:下料，合格100件，不良2件', user: '李四' },
-  { id: '5', time: '2025-01-10 14:00', type: 'warning', content: '车间主任审批通过，工单已下发', user: '车间主任-陈七' },
-  { id: '6', time: '2025-01-09 14:00', type: 'info', content: '张三创建工单', user: '张三' }
-])
+const logs = ref([] as any[])
 </script>
 
 <style scoped>

@@ -40,51 +40,13 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
-const events = ref([
-  { id: '1', type: '销售订单变更', detail: 'SO202501150001 数量 50→60', time: '2025-01-15 14:00' },
-  { id: '2', type: '库存变化', detail: '轴承 6308 入库200件', time: '2025-01-15 10:00' },
-  { id: '3', type: 'BOM变更', detail: 'MBOM V1.2 生效', time: '2025-01-15 08:00' }
-])
+const events = ref(mrpExceptions as any)
 const eventCols: TableColumnItem<any>[] = [
   { prop: 'type', label: '变更类型', minWidth: 140 },
   { prop: 'detail', label: '变更详情', minWidth: 280 },
   { prop: 'time', label: '时间', minWidth: 160 }
 ]
-const affected = ref([
-  {
-    id: '1',
-    material: '离心泵 XJP-100',
-    old_qty: 70,
-    new_qty: 80,
-    diff: 10,
-    action: 'increase',
-    details: [
-      { source: 'SO202501150001 (XX重工集团)', old_qty: 50, new_qty: 60, diff: 10, reason: '销售订单数量变更' },
-      { source: 'SO202501100003 (YY机械)', old_qty: 20, new_qty: 20, diff: 0, reason: '无变化' }
-    ]
-  },
-  {
-    id: '2',
-    material: '泵体铸件',
-    old_qty: 100,
-    new_qty: 110,
-    diff: 10,
-    action: 'increase',
-    details: [{ source: '离心泵 XJP-100 下层需求', old_qty: 100, new_qty: 110, diff: 10, reason: '上层需求增加' }]
-  },
-  {
-    id: '3',
-    material: '螺栓 M16×60',
-    old_qty: 800,
-    new_qty: 880,
-    diff: 80,
-    action: 'increase',
-    details: [
-      { source: '离心泵 XJP-100 下层需求', old_qty: 700, new_qty: 770, diff: 70, reason: '上层需求增加' },
-      { source: '安全库存调整', old_qty: 100, new_qty: 110, diff: 10, reason: '库存变化触发' }
-    ]
-  }
-])
+const affected = ref([] as any[])
 const resultCols: TableColumnItem<any>[] = [
   { type: 'expand', slotName: 'expand' },
   { prop: 'material', label: '物料', minWidth: 160 },

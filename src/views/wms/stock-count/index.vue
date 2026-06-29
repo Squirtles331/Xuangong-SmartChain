@@ -130,12 +130,7 @@ const cols: TableColumnItem<Plan>[] = [
 ]
 function openCreate() {}
 const execVis = ref(false)
-const execItems = ref([
-  { location: 'A-01-01', material: '45#圆钢 φ50', book_qty: 350, actual: 350 },
-  { location: 'A-02-01', material: '泵体铸件', book_qty: 120, actual: 115 },
-  { location: 'B-02-03', material: '轴承 6308', book_qty: 80, actual: 82 },
-  { location: 'C-01-01', material: '离心泵 XJP-100', book_qty: 45, actual: 45 }
-])
+const execItems = ref(stockCountExec as any)
 function startCount(r: Plan) {
   r.status = 'running'
   execVis.value = true
@@ -147,10 +142,7 @@ function submitCount() {
   ElMessage.success('盘点提交成功')
 }
 const diffVis = ref(false)
-const diffItems = ref([
-  { location: 'A-02-01', material: '泵体铸件', book_qty: 120, actual: 115, diff: -5, disposition: 'loss' },
-  { location: 'B-02-03', material: '轴承 6308', book_qty: 80, actual: 82, diff: 2, disposition: 'profit' }
-])
+const diffItems = ref(stockCountDiff as any)
 function viewDiff(_r: Plan) {
   diffVis.value = true
 }

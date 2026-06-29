@@ -62,13 +62,7 @@ const cards = [
 ]
 
 // 借方数据
-const debitData = ref([
-  { code: '1001', name: '库存现金', begin_balance: 50000, amount: 120000, end_balance: 70000 },
-  { code: '1122', name: '应收账款', begin_balance: 450000, amount: 850000, end_balance: 680000 },
-  { code: '1403', name: '原材料', begin_balance: 1200000, amount: 380000, end_balance: 1160000 },
-  { code: '1601', name: '固定资产', begin_balance: 5000000, amount: 0, end_balance: 5000000 },
-  { code: '5001', name: '生产成本', begin_balance: 0, amount: 620000, end_balance: 620000 }
-])
+const debitData = ref(mockDebit as any)
 const debitCols: TableColumnItem<any>[] = [
   { prop: 'code', label: '科目编码', minWidth: 100 },
   { prop: 'name', label: '科目名称', minWidth: 150 },
@@ -79,13 +73,7 @@ const debitCols: TableColumnItem<any>[] = [
 ]
 
 // 贷方数据
-const creditData = ref([
-  { code: '2202', name: '应付账款', begin_balance: 280000, amount: 200000, end_balance: 300000 },
-  { code: '4001', name: '实收资本', begin_balance: 5000000, amount: 0, end_balance: 5000000 },
-  { code: '6001', name: '主营业务收入', begin_balance: 0, amount: 850000, end_balance: 850000 },
-  { code: '2241', name: '应交税费', begin_balance: 50000, amount: 85000, end_balance: 95000 },
-  { code: '2211', name: '应付职工薪酬', begin_balance: 150000, amount: 150000, end_balance: 180000 }
-])
+const creditData = ref(mockCredit as any)
 const creditCols: TableColumnItem<any>[] = [
   { prop: 'code', label: '科目编码', minWidth: 100 },
   { prop: 'name', label: '科目名称', minWidth: 150 },
@@ -95,14 +83,7 @@ const creditCols: TableColumnItem<any>[] = [
   { prop: 'end_balance', label: '期末余额', minWidth: 110, align: 'right' }
 ]
 
-const ledgerData = ref([
-  { code: '1001', name: '库存现金', balance_type: 'debit', begin_balance: 50000, debit: 120000, credit: 100000, end_balance: 70000 },
-  { code: '1122', name: '应收账款', balance_type: 'debit', begin_balance: 450000, debit: 850000, credit: 620000, end_balance: 680000 },
-  { code: '1403', name: '原材料', balance_type: 'debit', begin_balance: 1200000, debit: 380000, credit: 420000, end_balance: 1160000 },
-  { code: '2202', name: '应付账款', balance_type: 'credit', begin_balance: 280000, debit: 180000, credit: 200000, end_balance: 300000 },
-  { code: '4001', name: '实收资本', balance_type: 'credit', begin_balance: 5000000, debit: 0, credit: 0, end_balance: 5000000 },
-  { code: '6001', name: '主营业务收入', balance_type: 'credit', begin_balance: 0, debit: 0, credit: 850000, end_balance: 850000 }
-])
+const ledgerData = ref(mockLedger as any)
 const ledgerCols: TableColumnItem<any>[] = [
   { prop: 'code', label: '科目编码', minWidth: 100 },
   { prop: 'name', label: '科目名称', minWidth: 150 },
@@ -112,12 +93,7 @@ const ledgerCols: TableColumnItem<any>[] = [
   { prop: 'credit', label: '贷方发生', minWidth: 110, align: 'right' },
   { prop: 'end_balance', label: '期末余额', minWidth: 110, align: 'right' }
 ]
-const recData = ref([
-  { id: '1', customer: 'XX重工集团', ar_amount: 310000, ap_amount: 0, diff: 310000, status: '应收' },
-  { id: '2', customer: 'YY机械设备', ar_amount: 80000, ap_amount: 0, diff: 80000, status: '应收' },
-  { id: '3', customer: 'XX钢材有限公司', ar_amount: 0, ap_amount: 35000, diff: -35000, status: '应付' },
-  { id: '4', customer: 'ZZ标准件有限公司', ar_amount: 0, ap_amount: 0, diff: 0, status: '已平' }
-])
+const recData = ref(mockRec as any)
 const recCols: TableColumnItem<any>[] = [
   { prop: 'customer', label: '往来单位', minWidth: 180 },
   { prop: 'ar_amount', label: '应收金额', minWidth: 110, align: 'right' },

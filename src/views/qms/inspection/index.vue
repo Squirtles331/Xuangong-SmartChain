@@ -59,7 +59,7 @@ import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { inspectionTasks as mockTasks } from '@/mock'
+import { inspectionTasks } from '@/mock'
 
 const INSPECTION_VERDICT = [
   { value: '合格', label: '合格', type: 'success' as const },
@@ -168,11 +168,7 @@ const cols: TableColumnItem<T>[] = [
 const iv = ref(false)
 const ic = ref<T | null>(null)
 const ir = ref('qualified')
-const items = ref([
-  { name: '外径', standard: '50', value: '' },
-  { name: '硬度', standard: '45', value: '' },
-  { name: '外观', standard: '无裂纹', value: '' }
-])
+const items = ref(inspectionTasks as any)
 function inspect(r: T) {
   ic.value = r
   iv.value = true

@@ -39,12 +39,7 @@ interface Skill {
   cert_number: string
   expire_date: string
 }
-const employees = ref([
-  { id: '1', name: '李四', children: [] },
-  { id: '2', name: '王五', children: [] },
-  { id: '3', name: '赵六', children: [] },
-  { id: '4', name: '孙八', children: [] }
-])
+const employees = ref(skillMatrix as any)
 const currentEmp = ref<any>(null)
 const skills = ref<Skill[]>([])
 const allSkills: Record<string, Skill[]> = {

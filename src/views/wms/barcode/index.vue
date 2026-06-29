@@ -88,11 +88,7 @@ function generateBarcode() {
   ElMessage.success('条码已生成')
 }
 const tab = ref('print')
-const materials = ref([
-  { id: '1', code: '01.01.001-00001', name: '45#圆钢 φ50', barcode: 'BC20250115001', lot: 'L20250101', qty: 350 },
-  { id: '2', code: '02.04.001-00001', name: '轴承 6308', barcode: 'BC20250115002', lot: 'L20241215', qty: 80 },
-  { id: '3', code: '04.01.001-00001', name: '离心泵 XJP-100', barcode: 'BC20250115003', lot: 'WO202501150001', qty: 45 }
-])
+const materials = ref(wmsMaterials as any)
 const printCols: TableColumnItem<any>[] = [
   { type: 'selection', minWidth: 50 },
   { prop: 'barcode', label: '条码', minWidth: 180 },
