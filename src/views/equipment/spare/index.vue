@@ -11,12 +11,15 @@
         >导出</el-button
       ></template
     >
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
+    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe :row-class-name="rowClassName">
       <template #stock_status="{ row }"
         ><el-tag :type="row.qty > row.safety ? 'success' : row.qty > 0 ? 'warning' : 'danger'" size="small">{{
           row.qty > row.safety ? '充足' : row.qty > 0 ? '偏低' : '缺货'
         }}</el-tag></template
       >
+      <template #qty="{ row }">
+        <span :style="{ color: row.qty < row.safety ? '#f56c6c' : '', fontWeight: row.qty < row.safety ? 'bold' : '' }">{{ row.qty }}</span>
+      </template>
       <template #actions="{ row }"
         ><gi-button type="edit" @click="openEdit(row)" /><el-button type="primary" link size="small" @click="inbound(row)">入库</el-button
         ><el-button type="warning" link size="small" @click="outbound(row)">出库</el-button></template
@@ -120,7 +123,7 @@ const cols: TableColumnItem<Sp>[] = [
   { prop: 'name', label: '备件名称', minWidth: 140 },
   { prop: 'spec', label: '规格', minWidth: 100 },
   { prop: 'applicable_equipment', label: '适用设备', minWidth: 160 },
-  { prop: 'qty', label: '库存数量', minWidth: 80, align: 'center' },
+  { label: '库存数量', minWidth: 80, slotName: 'qty', align: 'center' },
   { prop: 'safety', label: '安全库存', minWidth: 80, align: 'center' },
   { prop: 'unit', label: '单位', minWidth: 50, align: 'center' },
   { label: '状态', minWidth: 70, slotName: 'stock_status', align: 'center' },
@@ -200,4 +203,12 @@ function outbound(r: Sp) {
   r.qty -= 1
   ElMessage.success(`出库1${r.unit}，当前库存${r.qty}`)
 }
+function rowClassName({ row }: { row: Sp }) {
+  return row.qty < row.safety ? 'safety-warning-row' : ''
+}
 </script>
+<style scoped>
+:deep(.safety-warning-row) {
+  background-color: #fef0f0 !important;
+}
+</style>

@@ -1,7 +1,10 @@
 <template>
   <gi-page-layout :bordered="true">
+    <template #header>
+      <gi-form v-model="searchForm" :columns="searchColumns" search @reset="handleReset" @search="handleSearch" />
+    </template>
     <template #tool><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /></template>
-    <gi-table :columns="cols" :data="items" border stripe>
+    <gi-table :columns="cols" :data="pagedItems" :pagination="pagination" border stripe>
       <template #status="{ row }"
         ><el-tag
           :type="row.status === 'sent' ? 'primary' : row.status === 'approved' ? 'success' : row.status === 'lost' ? 'danger' : 'warning'"
@@ -17,7 +20,7 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface QT {
@@ -55,6 +58,47 @@ const items = ref<QT[]>([
     status: 'draft'
   }
 ])
+
+const searchForm = ref({ code: '', customer: '', status: '' })
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '报价单号', field: 'code' },
+  { type: 'input', label: '客户名称', field: 'customer' },
+  {
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    props: {
+      options: [
+        { label: '草稿', value: 'draft' },
+        { label: '已发出', value: 'sent' },
+        { label: '已中标', value: 'approved' },
+        { label: '已丢单', value: 'lost' }
+      ]
+    } as any
+  }
+]
+
+const filteredItems = computed(() => {
+  return items.value.filter(
+    (it) =>
+      (!searchForm.value.code || it.code.includes(searchForm.value.code)) &&
+      (!searchForm.value.customer || it.customer.includes(searchForm.value.customer)) &&
+      (!searchForm.value.status || it.status === searchForm.value.status)
+  )
+})
+
+const pagination = ref({
+  currentPage: 1,
+  pageSize: 10,
+  total: computed(() => filteredItems.value.length)
+}) as any
+
+const pagedItems = computed(() => {
+  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
+  const end = start + pagination.value.pageSize
+  return filteredItems.value.slice(start, end)
+})
+
 const cols: TableColumnItem<QT>[] = [
   { prop: 'code', label: '报价单号', minWidth: 170 },
   { prop: 'customer', label: '客户', minWidth: 150 },
@@ -92,6 +136,16 @@ const formCols: FormColumnItem[] = [
     } as any
   }
 ]
+
+function handleSearch() {
+  pagination.value.currentPage = 1
+}
+
+function handleReset() {
+  searchForm.value = { code: '', customer: '', status: '' }
+  pagination.value.currentPage = 1
+}
+
 function openAdd() {
   mode.value = 'add'
   Object.assign(form, { code: '', customer: '', product: '', qty: 1, price: 0, amount: 0, valid_date: '', status: 'draft' })
@@ -122,5 +176,7 @@ async function submit() {
   }
   return true
 }
-function refresh() {}
+function refresh() {
+  pagination.value.currentPage = 1
+}
 </script>

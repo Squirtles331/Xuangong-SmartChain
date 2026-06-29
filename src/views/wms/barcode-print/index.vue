@@ -1,28 +1,121 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #tool><el-button type="primary" @click="printBarcode">批量打印</el-button></template>
-    <gi-table :columns="cols" :data="materials" border stripe size="small" @selection-change="onSelect" />
+    <template #tool>
+      <el-button type="primary" @click="printBarcode">打印</el-button>
+    </template>
+
+    <el-card shadow="never" style="margin-bottom: 16px">
+      <el-form :inline="true">
+        <el-form-item label="选择物料">
+          <el-select v-model="selectedMaterial" placeholder="请选择物料" filterable style="width: 280px" @change="onMaterialChange">
+            <el-option v-for="m in materialList" :key="m.id" :label="`${m.code} - ${m.name}`" :value="m.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="打印数量">
+          <el-input-number v-model="printQty" :min="1" :max="100" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="generatePreview">生成预览</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <el-card v-if="previewList.length" shadow="never" header="条码预览">
+      <div class="barcode-grid">
+        <div v-for="(item, idx) in previewList" :key="idx" class="barcode-item">
+          <div class="barcode-lines">
+            <div v-for="n in 20" :key="n" class="barcode-bar" :style="{ width: barWidth(n) + 'px' }" />
+          </div>
+          <div class="barcode-text">{{ item.barcode }}</div>
+          <div class="barcode-info">{{ item.name }}</div>
+        </div>
+      </div>
+    </el-card>
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { TableColumnItem } from 'gi-component'
-const materials = ref([
-  { id: '1', code: '01.01.001-00001', name: '45#圆钢 φ50', barcode: 'BC20250115001', lot: 'L20250101', qty: 350 },
-  { id: '2', code: '02.04.001-00001', name: '轴承 6308', barcode: 'BC20250115002', lot: 'L20241215', qty: 80 },
-  { id: '3', code: '04.01.001-00001', name: '离心泵 XJP-100', barcode: 'BC20250115003', lot: 'WO202501150001', qty: 45 }
-])
-const cols: TableColumnItem<any>[] = [
-  { type: 'selection', minWidth: 50 },
-  { prop: 'barcode', label: '条码', minWidth: 180 },
-  { prop: 'code', label: '物料编码', minWidth: 170 },
-  { prop: 'name', label: '物料名称', minWidth: 160 },
-  { prop: 'lot', label: '批号', minWidth: 160 },
-  { prop: 'qty', label: '库存', minWidth: 80, align: 'center' }
-]
-function onSelect(_rows: any) {}
+import { materialList as mockMaterialList } from '@/mock'
+
+interface Material {
+  id: string
+  code: string
+  name: string
+  spec: string
+  type: string
+  unit: string
+}
+
+const materialList = ref<Material[]>(mockMaterialList as any)
+const selectedMaterial = ref('')
+const printQty = ref(1)
+const previewList = ref<{ barcode: string; name: string }[]>([])
+
+function onMaterialChange() {}
+
+function generatePreview() {
+  if (!selectedMaterial.value) {
+    ElMessage.warning('请先选择物料')
+    return
+  }
+  const material = materialList.value.find((m) => m.id === selectedMaterial.value)
+  if (!material) return
+  previewList.value = Array.from({ length: printQty.value }, () => ({
+    barcode: `BC${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`,
+    name: material.name
+  }))
+}
+
+function barWidth(n: number): number {
+  const widths = [2, 3, 1, 3, 2, 1, 3, 2, 1, 2, 3, 1, 2, 3, 2, 1, 3, 1, 2, 3]
+  return widths[n - 1] || 2
+}
+
 function printBarcode() {
+  if (!previewList.value.length) {
+    ElMessage.warning('请先生成条码预览')
+    return
+  }
+  window.print()
   ElMessage.success('条码打印任务已发送')
 }
 </script>
+<style scoped>
+.barcode-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: flex-start;
+}
+.barcode-item {
+  border: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  border-radius: 4px;
+  text-align: center;
+  min-width: 200px;
+  background: #fff;
+}
+.barcode-lines {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 1px;
+  height: 60px;
+  margin-bottom: 8px;
+}
+.barcode-bar {
+  background: #000;
+  height: 100%;
+}
+.barcode-text {
+  font-family: monospace;
+  font-size: 14px;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.barcode-info {
+  font-size: 12px;
+  color: #666;
+}
+</style>

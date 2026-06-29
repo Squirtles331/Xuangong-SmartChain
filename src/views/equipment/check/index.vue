@@ -1,7 +1,8 @@
 <template>
   <gi-page-layout :bordered="true">
+    <template #header><gi-form :columns="searchCols" ref="sf" v-model="s" search @search="hs" @reset="hr" /></template>
     <template #tool><gi-button type="add" @click="openAdd" /> <gi-button style="margin-left: 8px" type="reset" @click="refresh" /></template>
-    <gi-table :columns="cols" :data="plans" border stripe>
+    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
       <template #status="{ row }">
         <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'done' ? 'success' : 'danger'" size="small">{{
           row.status === 'pending' ? '待执行' : row.status === 'done' ? '已完成' : '已逾期'
@@ -35,7 +36,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface Plan {
@@ -47,7 +48,7 @@ interface Plan {
   executor: string
   status: string
 }
-const plans = ref<Plan[]>([
+const data = ref<Plan[]>([
   {
     id: '1',
     code: 'CK20250115001',
@@ -61,6 +62,36 @@ const plans = ref<Plan[]>([
   { id: '3', code: 'CK20250114001', equipment: '磨床 M1432', check_type: '周点检', plan_date: '2025-01-14', executor: '赵六', status: 'done' },
   { id: '4', code: 'CK20250113001', equipment: '加工中心 VMC850', check_type: '日点检', plan_date: '2025-01-13', executor: '孙八', status: 'overdue' }
 ])
+const s = reactive({ keyword: '', check_type: '', status: '' })
+const searchCols: FormColumnItem[] = [
+  { type: 'input', label: '设备名称', field: 'keyword', props: { placeholder: '请输入设备名称' } } as any,
+  {
+    type: 'select-v2',
+    label: '点检类型',
+    field: 'check_type',
+    props: {
+      options: [
+        { label: '全部', value: '' },
+        { label: '日检', value: '日点检' },
+        { label: '周检', value: '周点检' },
+        { label: '月检', value: '月点检' }
+      ]
+    }
+  } as any,
+  {
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    props: {
+      options: [
+        { label: '全部', value: '' },
+        { label: '待执行', value: 'pending' },
+        { label: '已完成', value: 'done' },
+        { label: '已逾期', value: 'overdue' }
+      ]
+    }
+  } as any
+]
 const cols: TableColumnItem<Plan>[] = [
   { prop: 'code', label: '计划编号', width: 160 },
   { prop: 'equipment', label: '设备', minWidth: 160 },
@@ -70,6 +101,32 @@ const cols: TableColumnItem<Plan>[] = [
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
 ]
+const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
+const fd = computed(() =>
+  data.value.filter(
+    (e) => (!s.keyword || e.equipment.includes(s.keyword)) && (!s.check_type || e.check_type === s.check_type) && (!s.status || e.status === s.status)
+  )
+)
+const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
+watch(
+  fd,
+  (v) => {
+    p.total = v.length
+  },
+  { immediate: true }
+)
+function hs() {
+  p.currentPage = 1
+}
+function hr() {
+  s.keyword = ''
+  s.check_type = ''
+  s.status = ''
+  p.currentPage = 1
+}
+function refresh() {
+  hr()
+}
 const vis = ref(false)
 const mode = ref<'add' | 'edit'>('add')
 const eid = ref('')
@@ -121,10 +178,10 @@ async function submit() {
     return false
   }
   if (mode.value === 'add') {
-    plans.value.unshift({ id: Date.now().toString(), ...form, status: 'pending' } as Plan)
+    data.value.unshift({ id: Date.now().toString(), ...form, status: 'pending' } as Plan)
   } else {
-    const i = plans.value.findIndex((p) => p.id === eid.value)
-    if (i > -1) Object.assign(plans.value[i], form)
+    const i = data.value.findIndex((p) => p.id === eid.value)
+    if (i > -1) Object.assign(data.value[i], form)
   }
   return true
 }
@@ -134,14 +191,14 @@ function handleExport() {
 function del(id: string) {
   ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
     .then(() => {
-      plans.value = plans.value.filter((p) => p.id !== id)
+      data.value = data.value.filter((p) => p.id !== id)
       ElMessage.success('删除成功')
     })
     .catch(() => {})
 }
-function refresh() {}
 const execVis = ref(false)
 const execForm = reactive({ remark: '' })
+const execPlanId = ref('')
 const items = ref([
   { name: '设备外观', result: 'normal' },
   { name: '运行声音', result: 'normal' },
@@ -150,10 +207,13 @@ const items = ref([
   { name: '仪表读数', result: 'normal' }
 ])
 function execute(r: Plan) {
+  execPlanId.value = r.id
+  execForm.remark = ''
+  items.value.forEach((item) => (item.result = 'normal'))
   execVis.value = true
 }
 function confirmExec() {
-  const p = plans.value.find((p) => p.status === 'pending')
+  const p = data.value.find((p) => p.id === execPlanId.value)
   if (p) p.status = 'done'
   execVis.value = false
   ElMessage.success('点检完成')
