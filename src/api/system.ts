@@ -55,6 +55,7 @@ export interface UserQuery {
   page_size: number
   username?: string
   real_name?: string
+  role?: string
   status?: string
 }
 

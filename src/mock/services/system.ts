@@ -9,11 +9,19 @@ import { generateId } from '../shared/id'
 import { dictTypes, dictItems, menuTree, systemParams, auditLogs, codeRules, approvalFlows, systemUsers } from '../modules/system'
 
 // ==================== 用户管理 ====================
-export async function getUserList(params: { page: number; page_size: number; username?: string; real_name?: string; status?: string }) {
+export async function getUserList(params: {
+  page: number
+  page_size: number
+  username?: string
+  real_name?: string
+  role?: string
+  status?: string
+}) {
   await simulateDelay()
   let filtered = [...systemUsers]
   if (params.username) filtered = searchItems(filtered, params.username, ['username'])
   if (params.real_name) filtered = searchItems(filtered, params.real_name, ['real_name'])
+  if (params.role) filtered = filtered.filter((u) => Array.isArray(u.roles) && u.roles.includes(params.role))
   if (params.status) filtered = filtered.filter((u) => u.status === params.status)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
