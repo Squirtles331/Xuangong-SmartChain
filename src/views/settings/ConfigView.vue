@@ -16,15 +16,7 @@
       </div>
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      @selection-change="onSelectionChange"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe @selection-change="onSelectionChange">
       <template #category="{ row }">
         <el-tag :type="categoryTagType(row.category)" size="small">{{ categoryLabel(row.category) }}</el-tag>
       </template>
@@ -74,12 +66,7 @@
       </template>
     </gi-table>
 
-    <ConfigFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <ConfigFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -88,13 +75,7 @@ import { ref, reactive } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { Plus, Refresh, Select, CloseBold, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  getSystemParams,
-  updateSystemParam,
-  batchUpdateSystemParams,
-  resetSystemParam,
-  type SystemParam
-} from '@/api/system'
+import { getSystemParams, updateSystemParam, batchUpdateSystemParams, resetSystemParam, type SystemParam } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import ConfigFormDialog, { type ConfigFormModel } from './ConfigFormDialog.vue'
 
@@ -305,13 +286,15 @@ function remove(row: SystemParam) {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
-  }).then(() => {
-    allParams.value = allParams.value.filter((p) => p.id !== row.id)
-    refresh()
-    ElMessage.success('删除成功')
-  }).catch(() => {
-    // 取消
   })
+    .then(() => {
+      allParams.value = allParams.value.filter((p) => p.id !== row.id)
+      refresh()
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {
+      // 取消
+    })
 }
 
 // ==================== 对话框 ====================

@@ -3,18 +3,8 @@
     <el-tabs v-model="activeTab">
       <el-tab-pane label="待开工" name="assigned">
         <div class="search-bar">
-          <el-input
-            v-model="assignedSearch.keyword"
-            placeholder="搜索工单号"
-            clearable
-            style="width: 200px"
-          />
-          <el-select
-            v-model="assignedSearch.priority"
-            placeholder="优先级"
-            clearable
-            style="width: 120px; margin-left: 8px"
-          >
+          <el-input v-model="assignedSearch.keyword" placeholder="搜索工单号" clearable style="width: 200px" />
+          <el-select v-model="assignedSearch.priority" placeholder="优先级" clearable style="width: 120px; margin-left: 8px">
             <el-option label="紧急" value="urgent" />
             <el-option label="高" value="high" />
             <el-option label="普通" value="normal" />
@@ -58,18 +48,8 @@
 
       <el-tab-pane label="生产中" name="running">
         <div class="search-bar">
-          <el-input
-            v-model="runningSearch.keyword"
-            placeholder="搜索工单号"
-            clearable
-            style="width: 200px"
-          />
-          <el-select
-            v-model="runningSearch.priority"
-            placeholder="优先级"
-            clearable
-            style="width: 120px; margin-left: 8px"
-          >
+          <el-input v-model="runningSearch.keyword" placeholder="搜索工单号" clearable style="width: 200px" />
+          <el-select v-model="runningSearch.priority" placeholder="优先级" clearable style="width: 120px; margin-left: 8px">
             <el-option label="紧急" value="urgent" />
             <el-option label="高" value="high" />
             <el-option label="普通" value="normal" />
@@ -119,11 +99,7 @@
       </el-tab-pane>
     </el-tabs>
 
-    <ExceptionFormDialog
-      v-model:visible="exceptionVisible"
-      v-model:form="exceptionForm"
-      @confirm="submitException"
-    />
+    <ExceptionFormDialog v-model:visible="exceptionVisible" v-model:form="exceptionForm" @confirm="submitException" />
   </gi-page-layout>
 </template>
 

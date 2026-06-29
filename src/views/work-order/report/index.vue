@@ -62,14 +62,7 @@
 
       <!-- 报工历史 -->
       <el-card header="报工记录" shadow="never" style="margin-top: 16px">
-        <gi-table
-          :columns="historyColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          border
-          size="small"
-        >
+        <gi-table :columns="historyColumns" :data="tableData" :pagination="pagination" :loading="loading" border size="small">
           <template #defect_reasons="{ row }">
             <span>{{ row.defect_reasons }}</span>
           </template>

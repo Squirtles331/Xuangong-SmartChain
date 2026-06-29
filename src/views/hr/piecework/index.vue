@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
 
@@ -38,12 +31,7 @@
       </template>
     </gi-table>
 
-    <PieceworkFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <PieceworkFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -78,9 +66,7 @@ const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<PieceworkFormModel>(createDefaultFormModel())
 
-const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '工序名称', field: 'keyword' } as any
-]
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: '工序名称', field: 'keyword' } as any]
 
 const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])

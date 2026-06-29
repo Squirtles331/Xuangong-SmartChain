@@ -1,14 +1,7 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <gi-form
-        ref="searchFormRef"
-        v-model="searchForm"
-        :columns="searchColumns"
-        search
-        @reset="handleReset"
-        @search="handleSearch"
-      />
+      <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @reset="handleReset" @search="handleSearch" />
     </template>
 
     <template #tool>
@@ -28,12 +21,7 @@
       </template>
     </gi-table>
 
-    <CheckFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <CheckFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
 
     <!-- 执行弹窗 -->
     <el-dialog v-model="execVis" title="执行点检" width="500px">

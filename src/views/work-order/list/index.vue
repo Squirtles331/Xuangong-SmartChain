@@ -19,15 +19,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      style="height: 100%"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
       <template #priority="{ row }">
         <StatusTag :value="row.priority" :options="WORK_ORDER_PRIORITY" />
       </template>
@@ -61,12 +53,7 @@
       </template>
     </gi-table>
 
-    <WorkOrderFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <WorkOrderFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -215,7 +202,7 @@ function mapWorkOrderRow(item: any): WorkOrderRow {
     material_spec: item.material_spec || '',
     planned_qty: item.planned_qty,
     completed_qty: item.completed_qty || 0,
-    progress: item.planned_qty > 0 ? Math.round((item.completed_qty || 0) / item.planned_qty * 100) : 0,
+    progress: item.planned_qty > 0 ? Math.round(((item.completed_qty || 0) / item.planned_qty) * 100) : 0,
     status: item.status,
     priority: item.priority,
     workshop_name: item.workshop_name || '',

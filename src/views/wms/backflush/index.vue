@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -24,9 +17,7 @@
         </el-tag>
       </template>
       <template #diff="{ row }">
-        <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '#909399' }">
-          {{ row.diff > 0 ? '+' : '' }}{{ row.diff }}
-        </span>
+        <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '#909399' }"> {{ row.diff > 0 ? '+' : '' }}{{ row.diff }} </span>
       </template>
       <template #diff_rate="{ row }">
         <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '#909399' }">

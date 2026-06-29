@@ -4,14 +4,7 @@
       <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @reset="handleReset" @search="handleSearch" />
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      style="height: 100%"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border style="height: 100%">
       <template #index="{ $index }">
         {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
       </template>

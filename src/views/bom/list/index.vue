@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          :columns="visibleSearchColumns"
-          ref="searchFormRef"
-          v-model="searchForm"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -17,15 +10,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      style="height: 100%"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
       <template #bom_type="{ row }">
         <StatusTag :value="row.bom_type" :options="BOM_TYPE" />
       </template>
@@ -35,9 +20,7 @@
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="openEditor(row)">编辑</el-button>
         <el-button type="primary" link size="small" @click="openCompare(row)">比较</el-button>
-        <el-button v-if="row.bom_type === 'EBOM'" type="warning" link size="small" @click="convertToMBOM(row)">
-          转MBOM
-        </el-button>
+        <el-button v-if="row.bom_type === 'EBOM'" type="warning" link size="small" @click="convertToMBOM(row)"> 转MBOM </el-button>
         <gi-button type="delete" size="small" @click="onDelete(row)" />
       </template>
     </gi-table>
@@ -193,9 +176,7 @@ const compareVersion = ref('')
 
 const otherVersions = computed(() => {
   if (!compareBom.value) return []
-  return tableData.value.filter(
-    (b) => b.material_code === compareBom.value!.material_code && b.id !== compareBom.value!.id
-  )
+  return tableData.value.filter((b) => b.material_code === compareBom.value!.material_code && b.id !== compareBom.value!.id)
 })
 
 function openCompare(row: BOMRow) {

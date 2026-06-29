@@ -1,11 +1,5 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    :title="title"
-    width="480px"
-    :close-on-click-modal="false"
-    :lock-scroll="false"
-  >
+  <el-dialog v-model="visible" :title="title" width="480px" :close-on-click-modal="false" :lock-scroll="false">
     <el-form :model="formData" label-width="100px">
       <el-form-item label="当前状态">
         <el-tag :type="currentStatusTagType">{{ currentStatusLabel }}</el-tag>

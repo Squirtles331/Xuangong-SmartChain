@@ -40,7 +40,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const title = computed(() => props.mode === 'add' ? 'Add Rule' : 'Edit Rule')
+const title = computed(() => (props.mode === 'add' ? 'Add Rule' : 'Edit Rule'))
 
 const formColumns = computed<FormColumnItem[]>(() => [
   {

@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -17,15 +10,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="cols"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      size="small"
-    >
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe size="small">
       <template #index="{ $index }">
         {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
       </template>
@@ -33,10 +18,7 @@
         <el-progress :percentage="getUsagePercent(row)" :color="getProgressColor(row)" :stroke-width="16" />
       </template>
       <template #status="{ row }">
-        <el-tag
-          :type="row.status === 'using' ? 'success' : row.status === 'idle' ? 'info' : 'warning'"
-          size="small"
-        >
+        <el-tag :type="row.status === 'using' ? 'success' : row.status === 'idle' ? 'info' : 'warning'" size="small">
           {{ row.status === 'using' ? '使用中' : row.status === 'idle' ? '空闲' : '维护中' }}
         </el-tag>
       </template>
@@ -46,12 +28,7 @@
       </template>
     </gi-table>
 
-    <MoldFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <MoldFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -147,10 +124,7 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<M
     // Client-side filter
     if (searchForm.value.keyword) {
       const kw = searchForm.value.keyword.toLowerCase()
-      items = items.filter(
-        (m: any) =>
-          (m.code || '').toLowerCase().includes(kw) || (m.name || '').toLowerCase().includes(kw)
-      )
+      items = items.filter((m: any) => (m.code || '').toLowerCase().includes(kw) || (m.name || '').toLowerCase().includes(kw))
     }
     if (searchForm.value.type) {
       items = items.filter((m: any) => m.type === searchForm.value.type)

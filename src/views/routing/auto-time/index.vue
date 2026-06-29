@@ -2,32 +2,13 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          :columns="visibleSearchColumns"
-          ref="sf"
-          v-model="searchForm"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
 
-    <gi-table
-      :columns="cols"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-    >
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #deviation="{ row }">
-        <el-tag
-          :type="row.deviation <= 10 ? 'success' : row.deviation <= 20 ? 'warning' : 'danger'"
-          size="small"
-        >
-          {{ row.deviation }}%
-        </el-tag>
+        <el-tag :type="row.deviation <= 10 ? 'success' : row.deviation <= 20 ? 'warning' : 'danger'" size="small"> {{ row.deviation }}% </el-tag>
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="adopt(row)">采纳</el-button>
@@ -104,10 +85,46 @@ const { tableData, pagination, loading, search, refresh } = useTable<AutoTimeRow
   listAPI: async ({ page, size }) => {
     // Mock data as API source — in production this would call getRoutingList
     const all: AutoTimeRow[] = [
-      { id: '1', operation: '下料', material: '离心泵 XJP-100', std_hours: 5, actual_avg: 4.2, deviation: 16, samples: 120, suggestion: '建议调整为4.5min' },
-      { id: '2', operation: '精车', material: '离心泵 XJP-100', std_hours: 18, actual_avg: 20.5, deviation: 14, samples: 85, suggestion: '建议调整为20min' },
-      { id: '3', operation: '钻孔', material: '离心泵 XJP-100', std_hours: 8, actual_avg: 7.8, deviation: 2.5, samples: 110, suggestion: '偏差在合理范围' },
-      { id: '4', operation: '磨削', material: '齿轮箱 GBX-200', std_hours: 15, actual_avg: 18.2, deviation: 21, samples: 60, suggestion: '建议调整为18min' }
+      {
+        id: '1',
+        operation: '下料',
+        material: '离心泵 XJP-100',
+        std_hours: 5,
+        actual_avg: 4.2,
+        deviation: 16,
+        samples: 120,
+        suggestion: '建议调整为4.5min'
+      },
+      {
+        id: '2',
+        operation: '精车',
+        material: '离心泵 XJP-100',
+        std_hours: 18,
+        actual_avg: 20.5,
+        deviation: 14,
+        samples: 85,
+        suggestion: '建议调整为20min'
+      },
+      {
+        id: '3',
+        operation: '钻孔',
+        material: '离心泵 XJP-100',
+        std_hours: 8,
+        actual_avg: 7.8,
+        deviation: 2.5,
+        samples: 110,
+        suggestion: '偏差在合理范围'
+      },
+      {
+        id: '4',
+        operation: '磨削',
+        material: '齿轮箱 GBX-200',
+        std_hours: 15,
+        actual_avg: 18.2,
+        deviation: 21,
+        samples: 60,
+        suggestion: '建议调整为18min'
+      }
     ]
     let items = all
     if (searchForm.value.keyword) {

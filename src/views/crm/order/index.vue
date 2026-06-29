@@ -21,15 +21,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      style="height: 100%"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
       <template #status="{ row }">
         <el-steps :active="statusStep(row.status)" align-center style="min-width: 280px">
           <el-step title="审批" />

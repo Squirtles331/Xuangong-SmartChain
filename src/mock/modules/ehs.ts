@@ -1,8 +1,35 @@
 // EHS mock data
 export const ehsHazards = [
-  { id: '1', code: 'YH20250115001', location: '机加工一车间', desc: '冷却液泄漏', level: 'moderate', status: 'open', finder: '李四', found_at: '2025-01-15' },
-  { id: '2', code: 'YH20250110002', location: '装配车间', desc: '安全护栏损坏', level: 'major', status: 'processing', finder: '王五', found_at: '2025-01-10' },
-  { id: '3', code: 'YH20250105003', location: '热处理车间', desc: '通风不畅', level: 'minor', status: 'closed', finder: '赵六', found_at: '2025-01-05' }
+  {
+    id: '1',
+    code: 'YH20250115001',
+    location: '机加工一车间',
+    desc: '冷却液泄漏',
+    level: 'moderate',
+    status: 'open',
+    finder: '李四',
+    found_at: '2025-01-15'
+  },
+  {
+    id: '2',
+    code: 'YH20250110002',
+    location: '装配车间',
+    desc: '安全护栏损坏',
+    level: 'major',
+    status: 'processing',
+    finder: '王五',
+    found_at: '2025-01-10'
+  },
+  {
+    id: '3',
+    code: 'YH20250105003',
+    location: '热处理车间',
+    desc: '通风不畅',
+    level: 'minor',
+    status: 'closed',
+    finder: '赵六',
+    found_at: '2025-01-05'
+  }
 ]
 
 export const ehsEmergencyPlans = [

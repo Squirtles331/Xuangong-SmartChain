@@ -30,12 +30,7 @@
       </template>
     </gi-table>
 
-    <InspectionFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <InspectionFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
 
     <el-dialog v-model="iv" title="执行检验" width="700px">
       <el-descriptions :column="2" border>

@@ -12,14 +12,7 @@
     </template>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @reset="handleReset"
-          @search="handleSearch"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @reset="handleReset" @search="handleSearch" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -27,14 +20,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #index="{ $index }">
         {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
       </template>
@@ -49,12 +35,7 @@
       </template>
     </gi-table>
 
-    <MaterialFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <MaterialFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -63,13 +44,7 @@ import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import {
-  getMaterialList,
-  getMaterialTree,
-  createMaterial,
-  updateMaterial,
-  deleteMaterial
-} from '@/api/mdm'
+import { getMaterialList, getMaterialTree, createMaterial, updateMaterial, deleteMaterial } from '@/api/mdm'
 import { useTable } from '@/hooks/useTable'
 import MaterialFormDialog, { type MaterialFormModel } from './MaterialFormDialog.vue'
 

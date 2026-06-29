@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
 
@@ -78,10 +71,7 @@ const searchColumns: FormColumnItem[] = [
     label: '部门',
     field: 'department',
     props: {
-      options: [
-        { label: '全部', value: '' },
-        ...departmentOptions
-      ]
+      options: [{ label: '全部', value: '' }, ...departmentOptions]
     }
   } as any
 ]
@@ -102,10 +92,46 @@ const columns: TableColumnItem<EmployeeRow>[] = [
 
 // Inline mock data
 const mockEmployees = ref<EmployeeRow[]>([
-  { id: '1', code: 'E00000001', name: '李四', department: '机加工一车间', position: '数控操作工', phone: '13800000001', hire_date: '2022-03-01', status: 'active' },
-  { id: '2', code: 'E00000002', name: '王五', department: '机加工一车间', position: '钻床操作工', phone: '13800000002', hire_date: '2023-06-15', status: 'active' },
-  { id: '3', code: 'E00000003', name: '赵六', department: '装配车间', position: '装配钳工', phone: '13800000003', hire_date: '2021-09-01', status: 'active' },
-  { id: '4', code: 'E00000004', name: '孙八', department: '机加工二车间', position: '加工中心操作工', phone: '13800000004', hire_date: '2024-01-10', status: 'active' }
+  {
+    id: '1',
+    code: 'E00000001',
+    name: '李四',
+    department: '机加工一车间',
+    position: '数控操作工',
+    phone: '13800000001',
+    hire_date: '2022-03-01',
+    status: 'active'
+  },
+  {
+    id: '2',
+    code: 'E00000002',
+    name: '王五',
+    department: '机加工一车间',
+    position: '钻床操作工',
+    phone: '13800000002',
+    hire_date: '2023-06-15',
+    status: 'active'
+  },
+  {
+    id: '3',
+    code: 'E00000003',
+    name: '赵六',
+    department: '装配车间',
+    position: '装配钳工',
+    phone: '13800000003',
+    hire_date: '2021-09-01',
+    status: 'active'
+  },
+  {
+    id: '4',
+    code: 'E00000004',
+    name: '孙八',
+    department: '机加工二车间',
+    position: '加工中心操作工',
+    phone: '13800000004',
+    hire_date: '2024-01-10',
+    status: 'active'
+  }
 ])
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<EmployeeRow>({
@@ -121,9 +147,12 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<E
     const start = (page - 1) * size
     return { list: filtered.slice(start, start + size), total: filtered.length }
   },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => {
-    mockEmployees.value = mockEmployees.value.filter((e) => e.id !== id)
-  }))
+  deleteAPI: (ids) =>
+    Promise.all(
+      ids.map((id) => {
+        mockEmployees.value = mockEmployees.value.filter((e) => e.id !== id)
+      })
+    )
 })
 
 function createDefaultFormModel(): HrEmployeeFormModel {

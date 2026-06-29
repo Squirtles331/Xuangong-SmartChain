@@ -40,7 +40,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const title = computed(() => props.mode === 'add' ? '新增隐患' : '编辑隐患')
+const title = computed(() => (props.mode === 'add' ? '新增隐患' : '编辑隐患'))
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '编号', field: 'code', required: true },

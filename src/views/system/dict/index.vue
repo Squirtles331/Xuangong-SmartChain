@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" :required-fields="['keyword']" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -17,14 +10,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="typeColumns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      style="height: 100%"
-    >
+    <gi-table :columns="typeColumns" :data="tableData" :pagination="pagination" :loading="loading" border style="height: 100%">
       <template #status="{ row }">
         <el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ row.status === 'active' ? '启用' : '禁用' }}</el-tag>
       </template>
@@ -36,12 +22,7 @@
     </gi-table>
 
     <!-- 字典类型弹窗 -->
-    <DictTypeDialog
-      v-model:visible="typeDialogVisible"
-      v-model:form="typeFormModel"
-      :mode="typeDialogMode"
-      @submit="submitTypeDialog"
-    />
+    <DictTypeDialog v-model:visible="typeDialogVisible" v-model:form="typeFormModel" :mode="typeDialogMode" @submit="submitTypeDialog" />
 
     <!-- 字典项管理弹窗 -->
     <gi-dialog v-model="itemDialogVisible" :footer="false" :title="`字典项管理 — ${currentType?.name || ''}`" width="800px" @close="closeItemDialog">
@@ -59,12 +40,7 @@
       </gi-table>
 
       <!-- 字典项弹窗 -->
-      <DictItemDialog
-        v-model:visible="itemFormVisible"
-        v-model:form="itemFormModel"
-        :mode="itemDialogMode"
-        @submit="submitItemDialog"
-      />
+      <DictItemDialog v-model:visible="itemFormVisible" v-model:form="itemFormModel" :mode="itemDialogMode" @submit="submitItemDialog" />
     </gi-dialog>
   </gi-page-layout>
 </template>
@@ -161,7 +137,12 @@ async function submitTypeDialog() {
     return
   }
   if (typeDialogMode.value === 'add') {
-    await createDictType({ code: typeFormModel.value.code, name: typeFormModel.value.name, description: typeFormModel.value.description, status: 'active' })
+    await createDictType({
+      code: typeFormModel.value.code,
+      name: typeFormModel.value.name,
+      description: typeFormModel.value.description,
+      status: 'active'
+    })
     ElMessage.success('新增成功')
   } else {
     // Update locally via refresh

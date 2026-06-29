@@ -19,15 +19,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      style="height: 100%"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
       <template #status="{ row }">
         <el-tag :type="row.status === 'active' ? 'success' : 'danger'" size="small">
           {{ row.status === 'active' ? '正常' : '黑名单' }}
@@ -42,12 +34,7 @@
       </template>
     </gi-table>
 
-    <CustomerFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <CustomerFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 

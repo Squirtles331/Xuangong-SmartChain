@@ -38,7 +38,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const title = computed(() => props.mode === 'add' ? 'Add Record' : 'Edit Record')
+const title = computed(() => (props.mode === 'add' ? 'Add Record' : 'Edit Record'))
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: 'Period', field: 'date', required: true },

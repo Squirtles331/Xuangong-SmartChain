@@ -46,12 +46,7 @@
       </gi-form>
     </div>
 
-    <MenuFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="dialogFormModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <MenuFormDialog v-model:visible="dialogVisible" v-model:form="dialogFormModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 

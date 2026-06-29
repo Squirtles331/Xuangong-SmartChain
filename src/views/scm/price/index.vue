@@ -18,27 +18,14 @@
       </el-col>
     </el-row>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      style="margin-top: 16px"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="margin-top: 16px">
       <template #actions="{ row }">
         <gi-button type="edit" @click="openEdit(row)" />
         <gi-button style="margin-left: 8px" type="delete" @click="remove(row)" />
       </template>
     </gi-table>
 
-    <PriceFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <PriceFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 

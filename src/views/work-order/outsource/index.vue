@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
 
@@ -41,12 +34,7 @@
       </template>
     </gi-table>
 
-    <OutsourceFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <OutsourceFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -118,9 +106,42 @@ const columns: TableColumnItem<OutsourceRow>[] = [
 
 // Local data for outsource (no real API for this module)
 const localData = ref<OutsourceRow[]>([
-  { id: '1', code: 'WO20250115001', material: '离心泵 XJP-100', qty: 50, supplier: 'XX热处理有限公司', operation: '工序50:热处理', send_date: '2025-01-15', due_date: '2025-01-25', price: 15000, status: 'sent' },
-  { id: '2', code: 'WO20250110002', material: '齿轮箱 GBX-200', qty: 30, supplier: 'YY表面处理厂', operation: '工序40:镀锌', send_date: '2025-01-10', due_date: '2025-01-20', price: 9000, status: 'processing' },
-  { id: '3', code: 'WO20250105003', material: '传动轴 DS-50', qty: 100, supplier: 'ZZ精密加工', operation: '工序30:磨削', send_date: '2025-01-05', due_date: '2025-01-12', price: 25000, status: 'received' }
+  {
+    id: '1',
+    code: 'WO20250115001',
+    material: '离心泵 XJP-100',
+    qty: 50,
+    supplier: 'XX热处理有限公司',
+    operation: '工序50:热处理',
+    send_date: '2025-01-15',
+    due_date: '2025-01-25',
+    price: 15000,
+    status: 'sent'
+  },
+  {
+    id: '2',
+    code: 'WO20250110002',
+    material: '齿轮箱 GBX-200',
+    qty: 30,
+    supplier: 'YY表面处理厂',
+    operation: '工序40:镀锌',
+    send_date: '2025-01-10',
+    due_date: '2025-01-20',
+    price: 9000,
+    status: 'processing'
+  },
+  {
+    id: '3',
+    code: 'WO20250105003',
+    material: '传动轴 DS-50',
+    qty: 100,
+    supplier: 'ZZ精密加工',
+    operation: '工序30:磨削',
+    send_date: '2025-01-05',
+    due_date: '2025-01-12',
+    price: 25000,
+    status: 'received'
+  }
 ])
 
 const { tableData, pagination, loading, search, refresh } = useTable<OutsourceRow>({

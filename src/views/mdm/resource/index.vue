@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -17,23 +10,12 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="cols"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      size="small"
-    >
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe size="small">
       <template #index="{ $index }">
         {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
       </template>
       <template #status="{ row }">
-        <el-tag
-          :type="row.status === 'running' ? 'success' : row.status === 'idle' ? 'info' : 'danger'"
-          size="small"
-        >
+        <el-tag :type="row.status === 'running' ? 'success' : row.status === 'idle' ? 'info' : 'danger'" size="small">
           {{ row.status === 'running' ? '运行' : row.status === 'idle' ? '空闲' : '维修' }}
         </el-tag>
       </template>
@@ -43,12 +25,7 @@
       </template>
     </gi-table>
 
-    <ResourceFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <ResourceFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -57,12 +34,7 @@ import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import {
-  getEquipmentList,
-  createEquipment,
-  updateEquipment,
-  deleteEquipment
-} from '@/api/mdm'
+import { getEquipmentList, createEquipment, updateEquipment, deleteEquipment } from '@/api/mdm'
 import { useTable } from '@/hooks/useTable'
 import ResourceFormDialog, { type ResourceFormModel } from './ResourceFormDialog.vue'
 

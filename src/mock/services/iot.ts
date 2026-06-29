@@ -24,7 +24,7 @@ export async function getIoTAutoReportList(params: { page: number; page_size: nu
 
 export async function getIoTDeviceHistory(params: { page: number; page_size: number; device?: string }) {
   await simulateDelay()
-  let filtered = [...iotHistoryLogs]
+  const filtered = [...iotHistoryLogs]
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }

@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
 
@@ -31,12 +24,7 @@
       </template>
     </gi-table>
 
-    <EnergyDetailFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <EnergyDetailFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -65,9 +53,7 @@ const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<EnergyDetailFormModel>(createDefaultFormModel())
 
-const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: 'Keyword', field: 'keyword' } as any
-]
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: 'Keyword', field: 'keyword' } as any]
 
 const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
@@ -89,9 +75,7 @@ const { tableData, pagination, loading, search, refresh } = useTable<EnergyRow>(
     let filtered = allRows.value
     if (searchForm.value.keyword) {
       const kw = searchForm.value.keyword.trim().toLowerCase()
-      filtered = filtered.filter((item) =>
-        item.workshop.toLowerCase().includes(kw) || item.type.toLowerCase().includes(kw)
-      )
+      filtered = filtered.filter((item) => item.workshop.toLowerCase().includes(kw) || item.type.toLowerCase().includes(kw))
     }
     const start = (page - 1) * size
     return { list: filtered.slice(start, start + size), total: filtered.length }

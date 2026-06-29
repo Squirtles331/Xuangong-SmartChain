@@ -9,7 +9,16 @@
         <div style="margin-bottom: 12px">
           <el-button type="primary" @click="printBarcode">Batch Print</el-button>
         </div>
-        <gi-table :columns="printColumns" :data="tableData" :pagination="pagination" :loading="loading" border stripe size="small" @selection-change="onSelect" />
+        <gi-table
+          :columns="printColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          border
+          stripe
+          size="small"
+          @selection-change="onSelect"
+        />
       </el-tab-pane>
 
       <el-tab-pane label="Generate" name="generate">

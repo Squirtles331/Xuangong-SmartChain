@@ -1,11 +1,5 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
-    :title="mode === 'add' ? '新增角色' : '编辑角色'"
-  >
+  <gi-dialog v-model="visible" :footer="true" :lock-scroll="false" :on-before-ok="handleSubmit" :title="mode === 'add' ? '新增角色' : '编辑角色'">
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
   </gi-dialog>
 </template>

@@ -22,14 +22,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #status="{ row }">
         <StatusTag :value="row.status" :options="PR_STATUS" />
       </template>
@@ -46,12 +39,7 @@
       </template>
     </gi-table>
 
-    <PurchaseRequestFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <PurchaseRequestFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
 
     <!-- 转采购订单弹窗 (business-specific) -->
     <el-dialog v-model="poVisible" title="生成采购订单" width="600px" :lock-scroll="false">

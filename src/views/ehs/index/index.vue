@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
 
@@ -32,12 +25,7 @@
       </template>
     </gi-table>
 
-    <EhsIndexFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <EhsIndexFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -137,10 +125,13 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<H
     })
     return { list: res.data.items, total: res.data.total }
   },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => {
-    // mock delete: filter out
-    tableData.value = tableData.value.filter((item) => item.id !== id)
-  }))
+  deleteAPI: (ids) =>
+    Promise.all(
+      ids.map((id) => {
+        // mock delete: filter out
+        tableData.value = tableData.value.filter((item) => item.id !== id)
+      })
+    )
 })
 
 function createDefaultFormModel(): EhsHazardFormModel {

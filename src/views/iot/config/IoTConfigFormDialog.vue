@@ -39,7 +39,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const title = computed(() => props.mode === 'add' ? '新增连接配置' : '编辑连接配置')
+const title = computed(() => (props.mode === 'add' ? '新增连接配置' : '编辑连接配置'))
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '设备名称', field: 'name', required: true },

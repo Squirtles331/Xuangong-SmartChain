@@ -46,12 +46,7 @@
       </template>
     </gi-table>
 
-    <ContractFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <ContractFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -159,9 +154,7 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<C
     let filtered = [...localData.value]
     const s = searchForm.value
     if (s.keyword) {
-      filtered = filtered.filter(
-        (r) => r.customer.includes(s.keyword) || r.code.includes(s.keyword)
-      )
+      filtered = filtered.filter((r) => r.customer.includes(s.keyword) || r.code.includes(s.keyword))
     }
     if (s.status) {
       filtered = filtered.filter((r) => r.status === s.status)

@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    title="工序派工"
-    width="500px"
-    :lock-scroll="false"
-  >
+  <el-dialog v-model="visible" title="工序派工" width="500px" :lock-scroll="false">
     <el-form :model="formData" label-width="100px">
       <el-form-item label="工单">{{ opInfo?.wo_code }}</el-form-item>
       <el-form-item label="工序">{{ opInfo?.operation_no }}: {{ opInfo?.name }}</el-form-item>

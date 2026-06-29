@@ -2,29 +2,14 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          :columns="visibleSearchColumns"
-          ref="searchFormRef"
-          v-model="searchForm"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
       <gi-button type="add" @click="openAdd">新建变更单</gi-button>
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      style="height: 100%"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
       <template #urgency="{ row }">
         <StatusTag :value="row.urgency" :options="ECN_URGENCY" />
       </template>
@@ -33,12 +18,8 @@
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="viewImpact(row)">影响分析</el-button>
-        <el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="submitEcn(row)">
-          提交审批
-        </el-button>
-        <el-button v-if="row.status === 'approved'" type="success" link size="small" @click="executeEcn(row)">
-          执行
-        </el-button>
+        <el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="submitEcn(row)"> 提交审批 </el-button>
+        <el-button v-if="row.status === 'approved'" type="success" link size="small" @click="executeEcn(row)"> 执行 </el-button>
       </template>
     </gi-table>
 

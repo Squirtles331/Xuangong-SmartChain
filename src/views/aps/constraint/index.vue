@@ -4,15 +4,7 @@
     <el-tabs v-model="tab">
       <el-tab-pane label="模具约束" name="mold">
         <template #tool><gi-button type="add" @click="openAdd('mold')" /></template>
-        <gi-table
-          :columns="moldCols"
-          :data="moldData"
-          :pagination="moldPagination"
-          :loading="moldLoading"
-          border
-          stripe
-          size="small"
-        >
+        <gi-table :columns="moldCols" :data="moldData" :pagination="moldPagination" :loading="moldLoading" border stripe size="small">
           <template #available="{ row }">
             <el-tag :type="row.available ? 'success' : 'danger'" size="small">{{ row.available ? '是' : '否' }}</el-tag>
           </template>
@@ -27,15 +19,7 @@
       </el-tab-pane>
       <el-tab-pane label="刀具约束" name="tool">
         <template #tool><gi-button type="add" @click="openAdd('tool')" /></template>
-        <gi-table
-          :columns="toolCols"
-          :data="toolData"
-          :pagination="toolPagination"
-          :loading="toolLoading"
-          border
-          stripe
-          size="small"
-        >
+        <gi-table :columns="toolCols" :data="toolData" :pagination="toolPagination" :loading="toolLoading" border stripe size="small">
           <template #available="{ row }">
             <el-tag :type="row.available ? 'success' : 'danger'" size="small">{{ row.available ? '是' : '否' }}</el-tag>
           </template>
@@ -50,15 +34,7 @@
       </el-tab-pane>
       <el-tab-pane label="人员技能约束" name="skill">
         <template #tool><gi-button type="add" @click="openAdd('skill')" /></template>
-        <gi-table
-          :columns="skillCols"
-          :data="skillData"
-          :pagination="skillPagination"
-          :loading="skillLoading"
-          border
-          stripe
-          size="small"
-        >
+        <gi-table :columns="skillCols" :data="skillData" :pagination="skillPagination" :loading="skillLoading" border stripe size="small">
           <template #utilization="{ row }">
             <el-progress :percentage="getSkillUtil(row)" :stroke-width="8" :color="utilColor(getSkillUtil(row))" />
           </template>
@@ -120,7 +96,12 @@ const skillCols: TableColumnItem<any>[] = [
 ]
 
 // ==================== useTable ====================
-const { tableData: moldData, pagination: moldPagination, loading: moldLoading, refresh: refreshMolds } = useTable<any>({
+const {
+  tableData: moldData,
+  pagination: moldPagination,
+  loading: moldLoading,
+  refresh: refreshMolds
+} = useTable<any>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const start = (page - 1) * size
@@ -131,7 +112,12 @@ const { tableData: moldData, pagination: moldPagination, loading: moldLoading, r
   }
 })
 
-const { tableData: toolData, pagination: toolPagination, loading: toolLoading, refresh: refreshTools } = useTable<any>({
+const {
+  tableData: toolData,
+  pagination: toolPagination,
+  loading: toolLoading,
+  refresh: refreshTools
+} = useTable<any>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const start = (page - 1) * size
@@ -142,7 +128,12 @@ const { tableData: toolData, pagination: toolPagination, loading: toolLoading, r
   }
 })
 
-const { tableData: skillData, pagination: skillPagination, loading: skillLoading, refresh: refreshSkills } = useTable<any>({
+const {
+  tableData: skillData,
+  pagination: skillPagination,
+  loading: skillLoading,
+  refresh: refreshSkills
+} = useTable<any>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const start = (page - 1) * size

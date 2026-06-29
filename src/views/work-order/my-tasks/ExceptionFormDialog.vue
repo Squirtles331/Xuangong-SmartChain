@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    title="异常上报"
-    width="500px"
-    :lock-scroll="false"
-  >
+  <el-dialog v-model="visible" title="异常上报" width="500px" :lock-scroll="false">
     <el-form :model="formData" label-width="100px">
       <el-form-item label="异常类型" required>
         <el-select v-model="formData.type" style="width: 100%">

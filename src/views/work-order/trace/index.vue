@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
 
@@ -82,10 +75,50 @@ const columns: TableColumnItem<TraceRow>[] = [
 
 // Local data for trace (no real API for this module)
 const localData = ref<TraceRow[]>([
-  { id: '1', wo_code: 'WO202501150001', op_name: '工序10:下料', worker: '李四', qualified: 100, defective: 2, reasons: '尺寸超差', hours: 510, time: '2025-01-11 17:00' },
-  { id: '2', wo_code: 'WO202501150001', op_name: '工序20:粗车', worker: '王五', qualified: 98, defective: 1, reasons: '外观缺陷', hours: 960, time: '2025-01-14 12:00' },
-  { id: '3', wo_code: 'WO202501150001', op_name: '工序30:精车', worker: '赵六', qualified: 45, defective: 3, reasons: '尺寸超差,设备精度', hours: 720, time: '2025-01-15 14:00' },
-  { id: '4', wo_code: 'WO202501150005', op_name: '工序20:车削', worker: '孙八', qualified: 120, defective: 0, reasons: '', hours: 1440, time: '2025-01-15 10:00' }
+  {
+    id: '1',
+    wo_code: 'WO202501150001',
+    op_name: '工序10:下料',
+    worker: '李四',
+    qualified: 100,
+    defective: 2,
+    reasons: '尺寸超差',
+    hours: 510,
+    time: '2025-01-11 17:00'
+  },
+  {
+    id: '2',
+    wo_code: 'WO202501150001',
+    op_name: '工序20:粗车',
+    worker: '王五',
+    qualified: 98,
+    defective: 1,
+    reasons: '外观缺陷',
+    hours: 960,
+    time: '2025-01-14 12:00'
+  },
+  {
+    id: '3',
+    wo_code: 'WO202501150001',
+    op_name: '工序30:精车',
+    worker: '赵六',
+    qualified: 45,
+    defective: 3,
+    reasons: '尺寸超差,设备精度',
+    hours: 720,
+    time: '2025-01-15 14:00'
+  },
+  {
+    id: '4',
+    wo_code: 'WO202501150005',
+    op_name: '工序20:车削',
+    worker: '孙八',
+    qualified: 120,
+    defective: 0,
+    reasons: '',
+    hours: 1440,
+    time: '2025-01-15 10:00'
+  }
 ])
 
 function filterDateRange(time: string): boolean {
@@ -98,7 +131,7 @@ function filterDateRange(time: string): boolean {
 const { tableData, pagination, loading, search, refresh } = useTable<TraceRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    let filtered = localData.value.filter(
+    const filtered = localData.value.filter(
       (r) =>
         (!searchForm.wo_code || r.wo_code.includes(searchForm.wo_code)) &&
         (!searchForm.worker || r.worker.includes(searchForm.worker)) &&

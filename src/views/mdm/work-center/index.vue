@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -17,23 +10,12 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="cols"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      size="small"
-    >
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe size="small">
       <template #index="{ $index }">
         {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
       </template>
       <template #status="{ row }">
-        <el-tag
-          :type="row.status === 'running' ? 'success' : row.status === 'idle' ? 'info' : 'danger'"
-          size="small"
-        >
+        <el-tag :type="row.status === 'running' ? 'success' : row.status === 'idle' ? 'info' : 'danger'" size="small">
           {{ row.status === 'running' ? '运行' : row.status === 'idle' ? '空闲' : '维修' }}
         </el-tag>
       </template>
@@ -43,12 +25,7 @@
       </template>
     </gi-table>
 
-    <WorkCenterFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <WorkCenterFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -122,9 +99,7 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<W
       const kw = searchForm.value.keyword.toLowerCase()
       items = items.filter(
         (w: any) =>
-          (w.code || '').toLowerCase().includes(kw) ||
-          (w.name || '').toLowerCase().includes(kw) ||
-          (w.workshop || '').toLowerCase().includes(kw)
+          (w.code || '').toLowerCase().includes(kw) || (w.name || '').toLowerCase().includes(kw) || (w.workshop || '').toLowerCase().includes(kw)
       )
     }
     if (searchForm.value.workshop) {

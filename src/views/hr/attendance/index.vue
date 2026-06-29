@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
 
@@ -29,12 +22,7 @@
       </template>
     </gi-table>
 
-    <AttendanceFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <AttendanceFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -101,9 +89,12 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<A
     const start = (page - 1) * size
     return { list: filtered.slice(start, start + size), total: filtered.length }
   },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => {
-    mockData.value = mockData.value.filter((e) => e.id !== id)
-  }))
+  deleteAPI: (ids) =>
+    Promise.all(
+      ids.map((id) => {
+        mockData.value = mockData.value.filter((e) => e.id !== id)
+      })
+    )
 })
 
 function createDefaultFormModel(): AttendanceFormModel {

@@ -38,12 +38,7 @@
       <div ref="forecastChartRef" style="width: 100%; height: 400px"></div>
     </el-card>
 
-    <ForecastFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <ForecastFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -117,10 +112,13 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<F
     const items = res.data.items || res.data || []
     return { list: items, total: res.data.total || items.length }
   },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => {
-    // Delete is handled via local data mutation for now
-    return Promise.resolve()
-  }))
+  deleteAPI: (ids) =>
+    Promise.all(
+      ids.map((id) => {
+        // Delete is handled via local data mutation for now
+        return Promise.resolve()
+      })
+    )
 })
 
 function createDefaultFormModel(): ForecastFormModel {

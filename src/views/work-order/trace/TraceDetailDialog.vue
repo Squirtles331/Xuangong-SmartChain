@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    title="报工详情"
-    width="600px"
-    :lock-scroll="false"
-  >
+  <el-dialog v-model="visible" title="报工详情" width="600px" :lock-scroll="false">
     <el-descriptions :column="2" border>
       <el-descriptions-item label="工单">{{ detail?.wo_code }}</el-descriptions-item>
       <el-descriptions-item label="工序">{{ detail?.op_name }}</el-descriptions-item>

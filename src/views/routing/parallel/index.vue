@@ -6,15 +6,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="cols"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      size="small"
-    >
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe size="small">
       <template #operations="{ row }">
         <el-tag v-for="(op, i) in row.operations" :key="i" size="small" style="margin: 2px">{{ op }}</el-tag>
       </template>
@@ -24,12 +16,7 @@
       </template>
     </gi-table>
 
-    <ParallelFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <ParallelFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 

@@ -21,11 +21,21 @@
           </el-descriptions>
           <div style="margin-top: 12px; display: flex; gap: 24px; color: #606266; font-size: 13px">
             <span>输出统计：</span>
-            <span>计划订单 <b>{{ row.orders }}</b></span>
-            <span>采购建议 <b>{{ row.purchase_suggestions || 0 }}</b></span>
-            <span>调拨建议 <b>{{ row.transfer_suggestions || 0 }}</b></span>
-            <span>生产建议 <b>{{ row.production_suggestions || 0 }}</b></span>
-            <span>总建议 <b>{{ row.suggestions }}</b></span>
+            <span
+              >计划订单 <b>{{ row.orders }}</b></span
+            >
+            <span
+              >采购建议 <b>{{ row.purchase_suggestions || 0 }}</b></span
+            >
+            <span
+              >调拨建议 <b>{{ row.transfer_suggestions || 0 }}</b></span
+            >
+            <span
+              >生产建议 <b>{{ row.production_suggestions || 0 }}</b></span
+            >
+            <span
+              >总建议 <b>{{ row.suggestions }}</b></span
+            >
           </div>
         </div>
       </template>

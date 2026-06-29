@@ -35,9 +35,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '名称', field: 'name', required: true }
-]
+const formColumns: FormColumnItem[] = [{ type: 'input', label: '名称', field: 'name', required: true }]
 
 function handleCancel() {
   visible.value = false

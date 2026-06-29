@@ -32,12 +32,9 @@
       </template>
       <template #actions="{ row }">
         <gi-button type="edit" @click="openEdit(row)" />
-        <el-button
-          :type="row.status === 'active' ? 'warning' : 'success'"
-          link
-          size="small"
-          @click="toggle(row)"
-        >{{ row.status === 'active' ? '停用' : '启用' }}</el-button>
+        <el-button :type="row.status === 'active' ? 'warning' : 'success'" link size="small" @click="toggle(row)">{{
+          row.status === 'active' ? '停用' : '启用'
+        }}</el-button>
       </template>
     </gi-table>
 
@@ -114,7 +111,15 @@ const columns: TableColumnItem<AutoReportRow>[] = [
 ]
 
 function createDefaultFormModel(): AutoReportFormModel {
-  return { id: '', equipment: '数控车床 CK6150', trigger: 'cycle_complete', threshold: 1, wo_field: 'qualified_qty', default_qty: 1, status: 'active' }
+  return {
+    id: '',
+    equipment: '数控车床 CK6150',
+    trigger: 'cycle_complete',
+    threshold: 1,
+    wo_field: 'qualified_qty',
+    default_qty: 1,
+    status: 'active'
+  }
 }
 
 function openAdd() {

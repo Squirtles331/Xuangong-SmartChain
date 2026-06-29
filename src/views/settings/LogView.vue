@@ -4,14 +4,7 @@
       <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      style="height: 100%"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border style="height: 100%">
       <template #action_type="{ row }">
         <StatusTag :value="row.action" :options="AUDIT_ACTION" />
       </template>
@@ -20,11 +13,7 @@
       </template>
     </gi-table>
 
-    <LogFormDialog
-      v-model:visible="detailVisible"
-      v-model:detail-log="detailLog"
-      @close="detailVisible = false"
-    />
+    <LogFormDialog v-model:visible="detailVisible" v-model:detail-log="detailLog" @close="detailVisible = false" />
   </gi-page-layout>
 </template>
 

@@ -22,14 +22,7 @@
       <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #status="{ row }">
         <el-tag
           :type="row.status === 'issued' ? 'success' : row.status === 'draft' ? 'warning' : row.status === 'voided' ? 'danger' : 'info'"
@@ -44,12 +37,7 @@
       </template>
     </gi-table>
 
-    <InvoiceFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <InvoiceFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -167,9 +155,7 @@ const { tableData, pagination, loading, search, refresh } = useTable<InvoiceRow>
     let filtered = [...localData.value]
     const s = searchForm.value
     if (s.keyword) {
-      filtered = filtered.filter(
-        (r) => r.customer.includes(s.keyword) || r.code.includes(s.keyword) || r.order_code.includes(s.keyword)
-      )
+      filtered = filtered.filter((r) => r.customer.includes(s.keyword) || r.code.includes(s.keyword) || r.order_code.includes(s.keyword))
     }
     if (s.status) filtered = filtered.filter((r) => r.status === s.status)
     const total = filtered.length

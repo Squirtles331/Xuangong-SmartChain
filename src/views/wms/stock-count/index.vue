@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -64,9 +57,7 @@
         <el-table-column prop="actual_qty" label="Actual Qty" width="90" align="center" />
         <el-table-column label="Diff" width="90" align="center">
           <template #default="{ row }">
-            <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '' }">
-              {{ row.diff > 0 ? '+' : '' }}{{ row.diff }}
-            </span>
+            <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '' }"> {{ row.diff > 0 ? '+' : '' }}{{ row.diff }} </span>
           </template>
         </el-table-column>
         <el-table-column label="Disposition" width="140">
@@ -108,9 +99,7 @@ interface PlanRow {
 const searchFormRef = ref<FormInstance | null>()
 const searchForm = ref({ keyword: '' })
 
-const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: 'Keyword', field: 'keyword' } as any
-]
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: 'Keyword', field: 'keyword' } as any]
 
 const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
@@ -179,10 +168,7 @@ function buildPlans(lines: any[]) {
 const { tableData, pagination, loading, search, refresh } = useTable<PlanRow>({
   rowKey: 'id',
   listAPI: async () => {
-    const [execRes, diffRes] = await Promise.all([
-      getStockCountList({ page: 1, page_size: 100 }),
-      getStockCountDiff({ page: 1, page_size: 100 })
-    ])
+    const [execRes, diffRes] = await Promise.all([getStockCountList({ page: 1, page_size: 100 }), getStockCountDiff({ page: 1, page_size: 100 })])
 
     rawExecLines.value = (execRes.data.items || []).map((item: any) => ({
       ...item,
@@ -230,9 +216,7 @@ function submitCount() {
 }
 
 function viewDiff(plan: PlanRow) {
-  diffItems.value = rawDiffLines.value
-    .filter((item) => item.plan_code === plan.code)
-    .map((item) => ({ ...item }))
+  diffItems.value = rawDiffLines.value.filter((item) => item.plan_code === plan.code).map((item) => ({ ...item }))
   diffVisible.value = true
 }
 

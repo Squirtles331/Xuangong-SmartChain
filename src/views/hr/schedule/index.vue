@@ -18,12 +18,7 @@
       </template>
     </gi-table>
 
-    <ScheduleFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <ScheduleFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -65,9 +60,12 @@ const { tableData, pagination, loading, refresh, onDelete } = useTable<ScheduleR
     const start = (page - 1) * size
     return { list: mockData.value.slice(start, start + size), total: mockData.value.length }
   },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => {
-    mockData.value = mockData.value.filter((e) => e.id !== id)
-  }))
+  deleteAPI: (ids) =>
+    Promise.all(
+      ids.map((id) => {
+        mockData.value = mockData.value.filter((e) => e.id !== id)
+      })
+    )
 })
 
 function createDefaultFormModel(): ScheduleFormModel {

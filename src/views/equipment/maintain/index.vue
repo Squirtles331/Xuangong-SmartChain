@@ -1,14 +1,7 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <gi-form
-        ref="searchFormRef"
-        v-model="searchForm"
-        :columns="searchColumns"
-        search
-        @reset="handleReset"
-        @search="handleSearch"
-      />
+      <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @reset="handleReset" @search="handleSearch" />
     </template>
 
     <template #tool>
@@ -33,12 +26,7 @@
       </template>
     </gi-table>
 
-    <MaintainFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <MaintainFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
 
     <el-dialog v-model="execVis" title="执行保养" width="500px">
       <el-table :data="items" border size="small">

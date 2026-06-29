@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" :required-fields="['keyword']" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="sf"
-          v-model="s"
-          :columns="visibleSearchColumns"
-          search
-          @search="hs"
-          @reset="hr"
-        />
+        <gi-form ref="sf" v-model="s" :columns="visibleSearchColumns" search @search="hs" @reset="hr" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -19,14 +12,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      style="height: 100%"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border style="height: 100%">
       <template #name="{ row }">
         <span style="display: flex; align-items: center; gap: 8px">
           <el-icon :size="20" :color="fileIconColor(row.type)">
@@ -82,9 +68,7 @@ interface FileItem {
 const s = ref({ keyword: '' })
 const sf = ref<FormInstance | null>()
 
-const sc: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword' } as any
-]
+const sc: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword' } as any]
 
 const allSearchColumns = computed(() => sc)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
@@ -130,20 +114,44 @@ const columns: TableColumnItem<FileItem>[] = [
 // Mock seed data
 const seedFiles: FileItem[] = [
   {
-    id: '1', name: '离心泵装配图.pdf', module: 'BOM管理', object_type: '物料图纸',
-    size: 2.5 * 1024 * 1024, type: 'pdf', url: '', uploaded_at: '2025-01-15 09:00:00'
+    id: '1',
+    name: '离心泵装配图.pdf',
+    module: 'BOM管理',
+    object_type: '物料图纸',
+    size: 2.5 * 1024 * 1024,
+    type: 'pdf',
+    url: '',
+    uploaded_at: '2025-01-15 09:00:00'
   },
   {
-    id: '2', name: '工单异常照片.jpg', module: '工单管理', object_type: '异常附件',
-    size: 1.2 * 1024 * 1024, type: 'image', url: 'https://via.placeholder.com/800x600', uploaded_at: '2025-01-15 10:30:00'
+    id: '2',
+    name: '工单异常照片.jpg',
+    module: '工单管理',
+    object_type: '异常附件',
+    size: 1.2 * 1024 * 1024,
+    type: 'image',
+    url: 'https://via.placeholder.com/800x600',
+    uploaded_at: '2025-01-15 10:30:00'
   },
   {
-    id: '3', name: '来料检验报告.xlsx', module: '质检管理', object_type: '检验报告',
-    size: 0.5 * 1024 * 1024, type: 'excel', url: '', uploaded_at: '2025-01-14 14:00:00'
+    id: '3',
+    name: '来料检验报告.xlsx',
+    module: '质检管理',
+    object_type: '检验报告',
+    size: 0.5 * 1024 * 1024,
+    type: 'excel',
+    url: '',
+    uploaded_at: '2025-01-14 14:00:00'
   },
   {
-    id: '4', name: '作业指导书_SOP.docx', module: '工艺路线', object_type: '操作指导',
-    size: 3.1 * 1024 * 1024, type: 'word', url: '', uploaded_at: '2025-01-13 11:00:00'
+    id: '4',
+    name: '作业指导书_SOP.docx',
+    module: '工艺路线',
+    object_type: '操作指导',
+    size: 3.1 * 1024 * 1024,
+    type: 'word',
+    url: '',
+    uploaded_at: '2025-01-13 11:00:00'
   }
 ]
 
@@ -151,10 +159,8 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<F
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const kw = s.value.keyword?.toLowerCase() || ''
-    let filtered = kw
-      ? seedFiles.filter(
-          (f) => f.name.toLowerCase().includes(kw) || f.module.toLowerCase().includes(kw) || f.object_type.toLowerCase().includes(kw)
-        )
+    const filtered = kw
+      ? seedFiles.filter((f) => f.name.toLowerCase().includes(kw) || f.module.toLowerCase().includes(kw) || f.object_type.toLowerCase().includes(kw))
       : seedFiles
     const start = (page - 1) * size
     return {

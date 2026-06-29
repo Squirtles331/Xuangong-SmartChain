@@ -26,14 +26,7 @@
       <div ref="funnelRef" style="width: 100%; height: 300px"></div>
     </div>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #stage="{ row }">
         <el-steps :active="stageStep(row.stage)" align-center style="min-width: 200px">
           <el-step title="初步" />
@@ -56,12 +49,7 @@
       </template>
     </gi-table>
 
-    <OpportunityFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <OpportunityFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -170,9 +158,7 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<O
     let filtered = [...localData.value]
     const s = searchForm.value
     if (s.keyword) {
-      filtered = filtered.filter(
-        (r) => r.customer.includes(s.keyword) || r.product.includes(s.keyword) || r.owner.includes(s.keyword)
-      )
+      filtered = filtered.filter((r) => r.customer.includes(s.keyword) || r.product.includes(s.keyword) || r.owner.includes(s.keyword))
     }
     if (s.stage) filtered = filtered.filter((r) => r.stage === s.stage)
     const total = filtered.length

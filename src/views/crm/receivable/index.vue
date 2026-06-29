@@ -21,15 +21,7 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table
-      :columns="columns"
-      :data="tableData"
-      :pagination="pagination"
-      :loading="loading"
-      border
-      stripe
-      style="height: 100%"
-    >
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
       <template #aging="{ row }">
         <el-tag v-if="row.aging <= 0" type="success" size="small">未到期</el-tag>
         <el-tag v-else-if="row.aging <= 30" type="success" size="small">逾期{{ row.aging }}天</el-tag>

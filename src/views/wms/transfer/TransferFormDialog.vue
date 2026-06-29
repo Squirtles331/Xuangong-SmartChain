@@ -1,12 +1,5 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
-    title="新建调拨单"
-    width="550px"
-  >
+  <gi-dialog v-model="visible" :footer="true" :lock-scroll="false" :on-before-ok="handleSubmit" title="新建调拨单" width="550px">
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
   </gi-dialog>
 </template>

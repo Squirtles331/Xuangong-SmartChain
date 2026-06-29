@@ -2,14 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
-          :columns="visibleSearchColumns"
-          search
-          @search="handleSearch"
-          @reset="handleReset"
-        />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
 
@@ -31,12 +24,7 @@
       </template>
     </gi-table>
 
-    <FinanceIndexFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
+    <FinanceIndexFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
@@ -99,7 +87,16 @@ const columns: TableColumnItem<PayableRow>[] = [
 ]
 
 const mockData = ref<PayableRow[]>([
-  { id: '1', code: 'AP20250115001', supplier: 'XX钢材有限公司', amount: 85000, paid: 50000, balance: 35000, due_date: '2025-02-15', status: 'partial' },
+  {
+    id: '1',
+    code: 'AP20250115001',
+    supplier: 'XX钢材有限公司',
+    amount: 85000,
+    paid: 50000,
+    balance: 35000,
+    due_date: '2025-02-15',
+    status: 'partial'
+  },
   { id: '2', code: 'AP20250110002', supplier: 'YY轴承制造厂', amount: 120000, paid: 0, balance: 120000, due_date: '2025-03-10', status: 'open' }
 ])
 
@@ -113,9 +110,12 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<P
     const start = (page - 1) * size
     return { list: filtered.slice(start, start + size), total: filtered.length }
   },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => {
-    mockData.value = mockData.value.filter((e) => e.id !== id)
-  }))
+  deleteAPI: (ids) =>
+    Promise.all(
+      ids.map((id) => {
+        mockData.value = mockData.value.filter((e) => e.id !== id)
+      })
+    )
 })
 
 function createDefaultFormModel(): FinancePayableFormModel {
