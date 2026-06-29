@@ -61,10 +61,7 @@ const cols: TableColumnItem<Log>[] = [
   { prop: 'vibration', label: '振动(mm/s)', minWidth: 110, align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const pd = computed(() => {
-  p.total = logs.value.length
-  return logs.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize)
-})
+const pd = computed(() => logs.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
 watch(
   logs,
   (v) => {

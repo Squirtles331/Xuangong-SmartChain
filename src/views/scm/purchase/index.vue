@@ -51,41 +51,7 @@ interface PO {
   delivery: string
   status: string
 }
-const pos = ref<PO[]>([
-  {
-    id: '1',
-    code: 'PO202501150001',
-    supplier: 'XX钢材有限公司',
-    material: '45#圆钢 φ50',
-    qty: 500,
-    received: 200,
-    remain: 300,
-    delivery: '2025-01-20',
-    status: 'partial'
-  },
-  {
-    id: '2',
-    code: 'PO202501100002',
-    supplier: 'YY轴承制造厂',
-    material: '轴承 6308',
-    qty: 200,
-    received: 0,
-    remain: 200,
-    delivery: '2025-01-18',
-    status: 'sent'
-  },
-  {
-    id: '3',
-    code: 'PO202501050003',
-    supplier: 'ZZ标准件有限公司',
-    material: '螺栓 M16×60',
-    qty: 2000,
-    received: 2000,
-    remain: 0,
-    delivery: '2025-01-10',
-    status: 'received'
-  }
-])
+const pos = ref<PO[]>(mockPOs as any)
 const s = reactive({ code: '', supplier: '', status: '' })
 const sc: FormColumnItem[] = [
   { type: 'input', label: '订单编号', field: 'code' } as any,

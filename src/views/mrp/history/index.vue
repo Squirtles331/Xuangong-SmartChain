@@ -41,10 +41,7 @@ const cols: TableColumnItem<Run>[] = [
   { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const pd = computed(() => {
-  p.total = runs.value.length
-  return runs.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize)
-})
+const pd = computed(() => runs.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
 watch(
   runs,
   (v) => {

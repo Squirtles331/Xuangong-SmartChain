@@ -202,7 +202,8 @@ const itemFormColumns: FormColumnItem[] = [
 // 简单实现：双击类型行打开字典项管理
 function openItems(row: DictType) {
   currentType.value = row
-  currentItems.value = dictItemsMap.value[row.id] || []
+  // 修复：mock 中 key 是 dict_type_code，用 row.code 查找
+  currentItems.value = dictItemsMap.value[row.code] || []
   itemDialogVisible.value = true
 }
 
@@ -257,7 +258,7 @@ async function submitItemDialog() {
     if (idx > -1) Object.assign(currentItems.value[idx], itemForm)
     ElMessage.success('编辑成功')
   }
-  dictItemsMap.value[currentType.value!.id] = currentItems.value
+  dictItemsMap.value[currentType.value!.code] = currentItems.value
   return true
 }
 
@@ -265,7 +266,7 @@ function deleteItem(id: string) {
   ElMessageBox.confirm('确定删除该字典项？', '提示', { type: 'warning' })
     .then(() => {
       currentItems.value = currentItems.value.filter((i) => i.id !== id)
-      dictItemsMap.value[currentType.value!.id] = currentItems.value
+      dictItemsMap.value[currentType.value!.code] = currentItems.value
       ElMessage.success('删除成功')
     })
     .catch(() => {})

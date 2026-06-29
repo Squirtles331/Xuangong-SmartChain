@@ -34,29 +34,7 @@ interface S {
   status: string
   qualified: boolean
 }
-const suppliers = ref<S[]>([
-  {
-    id: '1',
-    code: 'SUP00000001',
-    name: 'XX钢材有限公司',
-    contact: '周经理',
-    phone: '13900000001',
-    terms: '月结30天',
-    status: 'active',
-    qualified: true
-  },
-  { id: '2', code: 'SUP00000002', name: 'YY轴承制造厂', contact: '吴工', phone: '13900000002', terms: '月结60天', status: 'active', qualified: true },
-  {
-    id: '3',
-    code: 'SUP00000003',
-    name: 'ZZ标准件有限公司',
-    contact: '郑经理',
-    phone: '13900000003',
-    terms: '款到发货',
-    status: 'active',
-    qualified: true
-  }
-])
+const suppliers = ref<S[]>(mockSuppliers as any)
 const columns: TableColumnItem<S>[] = [
   { prop: 'code', label: '编码', width: 150 },
   { prop: 'name', label: '名称', minWidth: 180 },

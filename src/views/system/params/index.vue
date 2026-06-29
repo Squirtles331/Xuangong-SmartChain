@@ -80,7 +80,7 @@ function handleReset() {
   pagination.currentPage = 1
 }
 function del(id: string) {
-  data.value = data.value.filter((e: any) => e.id !== id)
+  params.value = params.value.filter((e: any) => e.id !== id)
 }
 function refresh() {
   handleReset()
@@ -121,7 +121,6 @@ async function submitDialog() {
 }
 
 // 自动更新分页total
-import { watch } from 'vue'
 watch(
   filteredData,
   (val) => {

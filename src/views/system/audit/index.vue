@@ -130,7 +130,6 @@ function showDetail(row: Log) {
 }
 
 // 自动更新分页total
-import { watch } from 'vue'
 watch(
   filteredLogs,
   (val) => {
