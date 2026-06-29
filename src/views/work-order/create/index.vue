@@ -37,7 +37,6 @@
             <el-option v-for="r in routingVersionOptions" :key="r.value" :label="r.label" :value="r.value" />
           </el-select>
         </el-descriptions-item>
-        <!-- 产能校验 -->
         <el-descriptions-item label="产线负荷" :span="1">
           <span :style="{ color: lineCapacityStatus.color, fontWeight: 'bold' }">
             {{ lineCapacityStatus.text }}
@@ -45,7 +44,6 @@
         </el-descriptions-item>
       </el-descriptions>
 
-      <!-- 产能超负荷警告 -->
       <el-alert
         v-if="lineCapacityStatus.overloaded"
         :title="`产线「${step1Form.line || '-'}」当前负荷已达 ${lineCapacityStatus.rate}%，建议调整计划或选择其他产线`"
@@ -55,7 +53,6 @@
         style="margin-bottom: 16px"
       />
 
-      <!-- BOM预览 -->
       <el-card v-if="step2Form.bom_version" header="BOM 物料清单预览" shadow="never" style="margin-bottom: 16px">
         <el-table :data="bomPreviewData" border size="small">
           <el-table-column prop="level" label="层级" width="60" />
@@ -83,7 +80,6 @@
         </el-table>
       </el-card>
 
-      <!-- 工艺预览 -->
       <el-card v-if="step2Form.routing_version" header="工艺路线预览" shadow="never">
         <el-table :data="routingPreviewData" border size="small">
           <el-table-column prop="op_no" label="工序号" width="80" align="center" />
@@ -251,7 +247,7 @@ async function fetchBOMVersions() {
   }
 }
 
-// ==================== 工艺版本选项（从 mock 动态获取） ====================
+// ==================== 工艺版本选项 ====================
 const routingVersionOptions = computed(() => {
   return [
     { label: '标准工艺 V1.1 (生效中)', value: '标准工艺 V1.1' },
@@ -266,7 +262,6 @@ const lines = [
   { label: '产线C (日产能 10台)', value: '产线C' }
 ]
 
-// 模拟产线负荷数据
 const lineLoadMap: Record<string, number> = {
   '产线A': 75,
   '产线B': 40,
@@ -303,7 +298,6 @@ async function onBomChange(version: string) {
   try {
     const res = await getBOMPreview(step1Form.material_code)
     if (res.data) {
-      const qty = step1Form.planned_qty || 100
       const items = Array.isArray(res.data) ? res.data : res.data.items || []
       bomPreviewData.value = items.map((item: any, idx: number) => ({
         ...item,
@@ -351,7 +345,6 @@ async function nextStep() {
     ElMessage.warning('计划完工日期不能早于计划开工日期')
     return
   }
-  // 自动填充产品信息
   if (step1Form.material_code === '04.01.001-00001') {
     step1Form.material_name = '离心泵 XJP-100'
     step1Form.material_spec = '流量100m³/h'
@@ -359,10 +352,8 @@ async function nextStep() {
     step1Form.material_name = step1Form.material_code
   }
 
-  // 加载 BOM 版本选项
   await fetchBOMVersions()
 
-  // 默认选择第一个 BOM/工艺版本
   if (!step2Form.bom_version && bomVersionOptions.value.length > 0) {
     step2Form.bom_version = bomVersionOptions.value[0].value
     onBomChange(step2Form.bom_version)

@@ -1,8 +1,15 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" storage-key="params-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" :required-fields="['keyword']" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
     <template #tool>
@@ -10,27 +17,39 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="pagedData" :pagination="pagination" border style="height: 100%">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      style="height: 100%"
+    >
       <template #actions="{ row }">
         <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button type="delete" @click="del(row.id)" />
+        <gi-button type="delete" @click="onDelete(row)" />
       </template>
     </gi-table>
 
-    <gi-dialog v-model="dialogVisible" :footer="true" :on-before-ok="submitDialog" :title="dialogMode === 'add' ? '新增参数' : '编辑参数'">
-      <gi-form v-model="form" :columns="formColumns" :label-width="120" />
-    </gi-dialog>
+    <ParamFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import SearchSetting from '@/components/SearchSetting.vue'
+import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-import { getSystemParams, updateSystemParam, batchUpdateSystemParams, resetSystemParam } from '@/api/system'
+import SearchSetting from '@/components/SearchSetting.vue'
+import { getSystemParams, updateSystemParam, batchUpdateSystemParams, type SystemParam } from '@/api/system'
+import { useTable } from '@/hooks/useTable'
+import ParamFormDialog, { type ParamFormModel } from './ParamFormDialog.vue'
 
-interface Param {
+interface ParamRow {
   id: string
   code: string
   name: string
@@ -38,28 +57,21 @@ interface Param {
   description: string
 }
 
-const params = ref<Param[]>([])
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({ keyword: '' })
 
-onMounted(async () => {
-  const res = await getSystemParams({ page: 1, page_size: 1000 })
-  params.value = res.data.items
-})
-
-const searchForm = reactive({ keyword: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '编码/名称', clearable: true } as any }
 ]
 
-// SearchSetting: 所有可用字段
 const allSearchColumns = computed(() => searchColumns)
-// SearchSetting: 当前可见字段
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const searchFormRef = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-const columns: TableColumnItem<Param>[] = [
+const columns: TableColumnItem<ParamRow>[] = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'code', label: '参数编码', minWidth: 200 },
   { prop: 'name', label: '参数名称', minWidth: 180 },
@@ -68,93 +80,86 @@ const columns: TableColumnItem<Param>[] = [
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const filteredData = computed(() => {
-  const kw = searchForm.keyword?.toLowerCase() || ''
-  return kw ? params.value.filter((p) => p.code.toLowerCase().includes(kw) || p.name.toLowerCase().includes(kw)) : params.value
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ParamRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params = {
+      page,
+      page_size: size,
+      keyword: searchForm.value.keyword || undefined
+    }
+    const response = await getSystemParams(params)
+    return {
+      list: (response.data.items as SystemParam[]).map(mapParamRow),
+      total: response.data.total
+    }
+  }
 })
-const pagedData = computed(() => {
-  const s = (pagination.currentPage - 1) * pagination.pageSize
-  return filteredData.value.slice(s, s + pagination.pageSize)
-})
+
+function mapParamRow(p: SystemParam): ParamRow {
+  return {
+    id: p.id,
+    code: p.code,
+    name: p.name,
+    value: p.value,
+    description: p.description
+  }
+}
+
+function handleSearch() {
+  search()
+}
+
+function handleReset() {
+  searchForm.value.keyword = ''
+  search()
+}
 
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
-const editingId = ref('')
-const form = reactive({ code: '', name: '', value: '', description: '' })
-const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '参数编码', field: 'code', required: true },
-  { type: 'input', label: '参数名称', field: 'name', required: true },
-  { type: 'input', label: '参数值', field: 'value', required: true },
-  { type: 'input', label: '说明', field: 'description', props: { type: 'textarea', rows: 2 } as any }
-]
+const formModel = ref<ParamFormModel>(createDefaultFormModel())
 
-function handleSearch() {
-  pagination.currentPage = 1
-}
-function handleReset() {
-  searchForm.keyword = ''
-  pagination.currentPage = 1
-}
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      params.value = params.value.filter((e: any) => e.id !== id)
-      if ((pagination.currentPage - 1) * pagination.pageSize >= filteredData.value.length) {
-        pagination.currentPage = Math.max(1, pagination.currentPage - 1)
-      }
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
-}
-function refresh() {
-  handleReset()
+function createDefaultFormModel(): ParamFormModel {
+  return { id: '', code: '', name: '', value: '', description: '' }
 }
 
 function openAdd() {
   dialogMode.value = 'add'
-  form.code = ''
-  form.name = ''
-  form.value = ''
-  form.description = ''
+  formModel.value = createDefaultFormModel()
   dialogVisible.value = true
 }
-function openEdit(row: Param) {
+
+function openEdit(row: ParamRow) {
   dialogMode.value = 'edit'
-  editingId.value = row.id
-  form.code = row.code
-  form.name = row.name
-  form.value = row.value
-  form.description = row.description
+  formModel.value = {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    value: row.value,
+    description: row.description
+  }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
-  if (!form.code || !form.name) {
+  if (!formModel.value.code || !formModel.value.name) {
     ElMessage.warning('请填写必填项')
-    return false
+    return
   }
   if (dialogMode.value === 'add') {
-    await batchUpdateSystemParams([{ id: '', value: form.value }])
-    // Reload list
-    const res = await getSystemParams({ page: 1, page_size: 1000 })
-    params.value = res.data.items
+    await batchUpdateSystemParams([{ id: '', value: formModel.value.value }])
     ElMessage.success('新增成功')
   } else {
-    await updateSystemParam(editingId.value, form.value)
-    const p = params.value.find((p) => p.id === editingId.value)
-    if (p) Object.assign(p, form)
+    await updateSystemParam(formModel.value.id, formModel.value.value)
     ElMessage.success('保存成功')
   }
-  return true
+  dialogVisible.value = false
+  await refresh()
 }
-
-// 自动更新分页total
-watch(
-  filteredData,
-  (val) => {
-    pagination.total = val.length
-  },
-  { immediate: true }
-)
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

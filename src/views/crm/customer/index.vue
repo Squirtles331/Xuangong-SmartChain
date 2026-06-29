@@ -1,43 +1,65 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <gi-form v-model="searchForm" :columns="searchColumns" search @reset="handleReset" @search="handleSearch" />
+      <gi-form
+        ref="searchFormRef"
+        v-model="searchForm"
+        :columns="searchColumns"
+        :grid-item-props="{
+          span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+        }"
+        search
+        @reset="handleReset"
+        @search="handleSearch"
+      />
     </template>
+
     <template #tool>
       <gi-button type="add" @click="openAdd" />
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
-    <gi-table :columns="columns" :data="pagedCustomers" :pagination="pagination" border stripe style="height: 100%">
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'active' ? 'success' : 'danger'" size="small">{{
-          row.status === 'active' ? '正常' : '黑名单'
-        }}</el-tag></template
-      >
-      <template #credit_limit="{ row }">{{ formatNumber(row.credit_limit) }}</template>
+
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+      style="height: 100%"
+    >
+      <template #status="{ row }">
+        <el-tag :type="row.status === 'active' ? 'success' : 'danger'" size="small">
+          {{ row.status === 'active' ? '正常' : '黑名单' }}
+        </el-tag>
+      </template>
+      <template #credit_limit="{ row }">
+        {{ formatNumber(row.credit_limit) }}
+      </template>
       <template #actions="{ row }">
         <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button type="delete" @click="deleteCust(row.id)" />
+        <gi-button style="margin-left: 8px" type="delete" @click="remove(row)" />
       </template>
     </gi-table>
-    <gi-dialog
-      v-model="dialogVisible"
-      :footer="true"
-      :on-before-ok="submitDialog"
-      :title="dialogMode === 'add' ? '新增客户' : '编辑客户'"
-      width="600px"
-    >
-      <gi-form v-model="form" :columns="formColumns" :label-width="120" />
-    </gi-dialog>
+
+    <CustomerFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
-<script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { getCustomerList, createCustomer, updateCustomer, deleteCustomer } from '@/api/crm'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+<script lang="ts" setup>
+import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import { createCustomer, deleteCustomer, getCustomerList, updateCustomer, type Customer, type CustomerQuery } from '@/api/crm'
+import { useTable } from '@/hooks/useTable'
+import CustomerFormDialog, { type CustomerFormModel } from './CustomerFormDialog.vue'
 
-interface Customer {
+interface CustomerRow {
   id: string
   code: string
   name: string
@@ -48,9 +70,17 @@ interface Customer {
   status: string
 }
 
-const customers = ref<Customer[]>([])
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({
+  code: '',
+  name: '',
+  status: ''
+})
 
-const searchForm = ref({ code: '', name: '', status: '' })
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<CustomerFormModel>(createDefaultFormModel())
+
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '客户编码', field: 'code' },
   { type: 'input', label: '客户名称', field: 'name' },
@@ -67,19 +97,7 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const pagination = ref({
-  currentPage: 1,
-  pageSize: 10,
-  total: 0
-}) as any
-
-const pagedCustomers = ref<Customer[]>([])
-
-function formatNumber(n: number) {
-  return n.toLocaleString('en-US')
-}
-
-const columns: TableColumnItem<Customer>[] = [
+const columns: TableColumnItem<CustomerRow>[] = [
   { prop: 'code', label: '客户编码', width: 150 },
   { prop: 'name', label: '客户名称', minWidth: 180 },
   { prop: 'contact_person', label: '联系人', width: 100 },
@@ -90,87 +108,117 @@ const columns: TableColumnItem<Customer>[] = [
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const editingId = ref('')
-const form = reactive({ code: '', name: '', contact_person: '', contact_phone: '', payment_terms: '月结30天', credit_limit: 0 })
-const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '客户编码', field: 'code', required: true },
-  { type: 'input', label: '客户名称', field: 'name', required: true },
-  { type: 'input', label: '联系人', field: 'contact_person' },
-  { type: 'input', label: '联系电话', field: 'contact_phone' },
-  { type: 'input', label: '付款条款', field: 'payment_terms' },
-  { type: 'input-number', label: '信用额度', field: 'credit_limit', props: { min: 0, step: 10000 } as any }
-]
-
-onMounted(() => {
-  fetchData()
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<CustomerRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: CustomerQuery = {
+      page,
+      page_size: size,
+      name: searchForm.value.name || undefined,
+      status: searchForm.value.status || undefined
+    }
+    const res = await getCustomerList(params)
+    return {
+      list: res.data.items.map(mapCustomerRow),
+      total: res.data.total
+    }
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteCustomer(id)))
 })
 
-async function fetchData() {
-  const params = {
-    page: pagination.value.currentPage,
-    page_size: pagination.value.pageSize,
-    name: searchForm.value.name || undefined,
-    status: searchForm.value.status || undefined
+function createDefaultFormModel(): CustomerFormModel {
+  return {
+    id: '',
+    code: '',
+    name: '',
+    contact_person: '',
+    contact_phone: '',
+    payment_terms: '月结30天',
+    credit_limit: 0,
+    status: 'active'
   }
-  const res = await getCustomerList(params)
-  customers.value = res.data.items
-  pagination.value.total = res.data.total
-  pagedCustomers.value = res.data.items
+}
+
+function formatNumber(n: number) {
+  return n.toLocaleString('en-US')
+}
+
+function mapCustomerRow(customer: Customer): CustomerRow {
+  return {
+    id: String(customer.id),
+    code: customer.code,
+    name: customer.name,
+    contact_person: customer.contact_person || '-',
+    contact_phone: customer.contact_phone || '-',
+    payment_terms: customer.payment_terms || '-',
+    credit_limit: customer.credit_limit ?? 0,
+    status: customer.status
+  }
 }
 
 function handleSearch() {
-  pagination.value.currentPage = 1
-  fetchData()
+  search()
 }
 
 function handleReset() {
   searchForm.value = { code: '', name: '', status: '' }
-  pagination.value.currentPage = 1
-  fetchData()
-}
-
-function refresh() {
-  pagination.value.currentPage = 1
-  fetchData()
+  search()
 }
 
 function openAdd() {
   dialogMode.value = 'add'
-  Object.assign(form, { code: '', name: '', contact_person: '', contact_phone: '', payment_terms: '月结30天', credit_limit: 0 })
+  formModel.value = createDefaultFormModel()
   dialogVisible.value = true
 }
-function openEdit(row: Customer) {
+
+function openEdit(row: CustomerRow) {
   dialogMode.value = 'edit'
-  editingId.value = row.id
-  Object.assign(form, row)
+  formModel.value = {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    contact_person: row.contact_person === '-' ? '' : row.contact_person,
+    contact_phone: row.contact_phone === '-' ? '' : row.contact_phone,
+    payment_terms: row.payment_terms === '-' ? '月结30天' : row.payment_terms,
+    credit_limit: row.credit_limit,
+    status: row.status
+  }
   dialogVisible.value = true
 }
+
 async function submitDialog() {
-  if (!form.code || !form.name) {
+  if (!formModel.value.code || !formModel.value.name) {
     ElMessage.warning('请填写编码和名称')
-    return false
+    return
   }
+
+  const payload = {
+    code: formModel.value.code,
+    name: formModel.value.name,
+    contact_person: formModel.value.contact_person,
+    contact_phone: formModel.value.contact_phone,
+    payment_terms: formModel.value.payment_terms,
+    credit_limit: formModel.value.credit_limit,
+    status: formModel.value.status
+  }
+
   if (dialogMode.value === 'add') {
-    await createCustomer({ ...form })
+    await createCustomer(payload)
   } else {
-    await updateCustomer(editingId.value, { ...form })
+    await updateCustomer(formModel.value.id, payload)
   }
-  ElMessage.success(dialogMode.value === 'add' ? '新增成功' : '保存成功')
-  await fetchData()
-  return true
+
+  dialogVisible.value = false
+  await refresh()
 }
-async function deleteCust(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(async () => {
-      await deleteCustomer(id)
-      if ((pagination.value.currentPage - 1) * pagination.value.pageSize >= pagination.value.total - 1) {
-        pagination.value.currentPage = Math.max(1, pagination.value.currentPage - 1)
-      }
-      await fetchData()
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+
+function remove(row: CustomerRow) {
+  onDelete(row)
 }
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

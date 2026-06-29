@@ -1,31 +1,63 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="return-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'done' ? 'success' : 'info'" size="small">{{
-          row.status === 'pending' ? '待退货' : row.status === 'done' ? '已退货' : '已取消'
-        }}</el-tag></template
-      >
-      <template #actions="{ row }"
-        ><el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="confirmReturn(row)">确认退货</el-button></template
-      >
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="sf"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          :grid-item-props="{
+            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+          }"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    </template>
+
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+    >
+      <template #status="{ row }">
+        <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'done' ? 'success' : 'info'" size="small">
+          {{ row.status === 'pending' ? '待退货' : row.status === 'done' ? '已退货' : '已取消' }}
+        </el-tag>
+      </template>
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="confirmReturn(row)">确认退货</el-button>
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <ReturnFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-interface PR {
+import SearchSetting from '@/components/SearchSetting.vue'
+import { useTable } from '@/hooks/useTable'
+import ReturnFormDialog, { type ReturnFormModel } from './ReturnFormDialog.vue'
+
+interface ReturnRow {
   id: string
   code: string
   po_code: string
@@ -35,7 +67,8 @@ interface PR {
   reason: string
   status: string
 }
-const returns = ref<PR[]>([
+
+const localData = ref<ReturnRow[]>([
   {
     id: '1',
     code: 'PRT20250115001',
@@ -57,8 +90,18 @@ const returns = ref<PR[]>([
     status: 'done'
   }
 ])
-const s = reactive({ code: '', status: '' })
-const sc: FormColumnItem[] = [
+
+const sf = ref<FormInstance | null>()
+const searchForm = ref({
+  code: '',
+  status: ''
+})
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<ReturnFormModel>(createDefaultFormModel())
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '退货单号', field: 'code' } as any,
   {
     type: 'select-v2',
@@ -74,15 +117,14 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
-const cols: TableColumnItem<PR>[] = [
+
+const columns: TableColumnItem<ReturnRow>[] = [
   { prop: 'code', label: '退货单号', width: 170 },
   { prop: 'po_code', label: '采购订单', width: 170 },
   { prop: 'supplier', label: '供应商', minWidth: 150 },
@@ -90,72 +132,90 @@ const cols: TableColumnItem<PR>[] = [
   { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { prop: 'reason', label: '原因', width: 120 },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() => returns.value.filter((r) => (!s.code || r.code.includes(s.code)) && (!s.status || r.status === s.status)))
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
-  },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+
+const { tableData, pagination, loading, search, refresh } = useTable<ReturnRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    let filtered = [...localData.value]
+    const s = searchForm.value
+    if (s.code) filtered = filtered.filter((r) => r.code.includes(s.code))
+    if (s.status) filtered = filtered.filter((r) => r.status === s.status)
+    const total = filtered.length
+    const start = (page - 1) * size
+    return {
+      list: filtered.slice(start, start + size),
+      total
+    }
+  }
+})
+
+function createDefaultFormModel(): ReturnFormModel {
+  return {
+    id: '',
+    code: '',
+    po_code: '',
+    supplier: '',
+    material: '',
+    qty: 1,
+    reason: '',
+    status: 'pending'
+  }
 }
-function hr() {
-  s.code = ''
-  s.status = ''
-  p.currentPage = 1
+
+function handleSearch() {
+  search()
 }
-function confirmReturn(r: PR) {
-  r.status = 'done'
+
+function handleReset() {
+  searchForm.value = { code: '', status: '' }
+  search()
+}
+
+function openAdd() {
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
+}
+
+function openEdit(row: ReturnRow) {
+  dialogMode.value = 'edit'
+  formModel.value = { ...row }
+  dialogVisible.value = true
+}
+
+async function submitDialog() {
+  if (!formModel.value.material) {
+    ElMessage.warning('请填写必填项')
+    return
+  }
+
+  if (dialogMode.value === 'add') {
+    localData.value.unshift({
+      id: Date.now().toString(),
+      code: 'PRT' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(localData.value.length + 1).padStart(4, '0'),
+      ...formModel.value
+    } as ReturnRow)
+  } else {
+    const idx = localData.value.findIndex((r) => r.id === formModel.value.id)
+    if (idx > -1) {
+      localData.value[idx] = { ...formModel.value }
+    }
+  }
+
+  dialogVisible.value = false
+  await refresh()
+}
+
+function confirmReturn(row: ReturnRow) {
+  row.status = 'done'
   ElMessage.success('退货完成')
 }
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ code: '', po_code: '', supplier: '', material: '', qty: 1, reason: '', status: 'pending' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '退货单号', field: 'code', required: true },
-  { type: 'input', label: '采购订单', field: 'po_code', required: true },
-  { type: 'input', label: '供应商', field: 'supplier' },
-  { type: 'input', label: '物料', field: 'material', required: true },
-  { type: 'input-number', label: '数量', field: 'qty', required: true, props: { min: 1 } as any },
-  { type: 'input', label: '原因', field: 'reason' }
-]
-function openAdd() {
-  mode.value = 'add'
-  eid.value = ''
-  Object.assign(form, { code: '', po_code: '', supplier: '', material: '', qty: 1, reason: '', status: 'pending' })
-  vis.value = true
-}
-function openEdit(r: PR) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
-}
-async function submit() {
-  if (!form.material) {
-    ElMessage.warning('请填写必填项')
-    return false
-  }
-  if (mode.value === 'add') {
-    returns.value.unshift({
-      id: Date.now().toString(),
-      code: 'PRT' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(returns.value.length + 1).padStart(4, '0'),
-      ...form
-    } as PR)
-  } else {
-    const i = returns.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(returns.value[i], form)
-  }
-  return true
-}
-function del(id: string) {
-  returns.value = returns.value.filter((e: any) => e.id !== id)
-}
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

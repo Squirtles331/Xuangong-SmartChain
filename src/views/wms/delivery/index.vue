@@ -1,39 +1,53 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="delivery-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool
-      ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
-        style="margin-left: 8px"
-        @click="handleExport"
-        >导出</el-button
-      ></template
-    >
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    </template>
+
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #status="{ row }">
         <StatusTag :value="row.status" :options="DELIVERY_STATUS" />
       </template>
-      <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <gi-button type="delete" @click="remove(row)" />
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增发货单' : '编辑发货单'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <DeliveryFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import { getDeliveryList } from '@/api/wms'
+import { useTable } from '@/hooks/useTable'
+import DeliveryFormDialog, { type DeliveryFormModel } from './DeliveryFormDialog.vue'
 
 const DELIVERY_STATUS = [
   { value: 'pending', label: '待发货', type: 'warning' as const },
   { value: 'completed', label: '已发货', type: 'success' as const }
 ]
-interface Del {
+
+interface DeliveryRow {
   id: string
   code: string
   order_code: string
@@ -43,20 +57,11 @@ interface Del {
   status: string
   created_at: string
 }
-const data = ref<Del[]>([
-  {
-    id: '1',
-    code: 'DN20250115001',
-    order_code: 'SO202501100002',
-    customer: 'YY机械设备',
-    material: '齿轮箱 GBX-200',
-    qty: 20,
-    status: 'pending',
-    created_at: '2025-01-15'
-  }
-])
-const s = reactive({ code: '', status: '' })
-const sc: FormColumnItem[] = [
+
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({ code: '', status: '' })
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '发货单号', field: 'code' } as any,
   {
     type: 'select-v2',
@@ -72,15 +77,14 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
-const cols: TableColumnItem<Del>[] = [
+
+const cols: TableColumnItem<DeliveryRow>[] = [
   { prop: 'code', label: '发货单号', width: 160 },
   { prop: 'order_code', label: '销售订单', width: 160 },
   { prop: 'customer', label: '客户', minWidth: 140 },
@@ -89,76 +93,84 @@ const cols: TableColumnItem<Del>[] = [
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() => data.value.filter((r) => (!s.code || r.code.includes(s.code)) && (!s.status || r.status === s.status)))
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
-  },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<DeliveryRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getDeliveryList({
+      page,
+      page_size: size,
+      code: searchForm.value.code || undefined,
+      customer: undefined,
+      status: searchForm.value.status || undefined
+    })
+    return {
+      list: (res.data.items || []).map(mapRow),
+      total: res.data.total
+    }
+  }
+})
+
+function mapRow(item: any): DeliveryRow {
+  return {
+    id: String(item.id),
+    code: item.code || '',
+    order_code: item.order_code || '',
+    customer: item.customer || '',
+    material: item.material || '',
+    qty: Number(item.qty ?? 0),
+    status: item.status || '',
+    created_at: item.created_at || ''
+  }
 }
-function hr() {
-  s.code = ''
-  s.status = ''
-  p.currentPage = 1
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<DeliveryFormModel>(createDefaultForm())
+
+function createDefaultForm(): DeliveryFormModel {
+  return { id: '', code: '', order_code: '', customer: '', material: '', qty: 1, status: 'pending' }
 }
-function refresh() {
-  hr()
+
+function handleSearch() {
+  search()
 }
+
+function handleReset() {
+  searchForm.value = { code: '', status: '' }
+  search()
+}
+
 function handleExport() {
   ElMessage.success('导出成功')
 }
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ code: '', order_code: '', customer: '', material: '', qty: 1, status: 'pending' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '发货单号', field: 'code', required: true },
-  { type: 'input', label: '销售订单', field: 'order_code', required: true },
-  { type: 'input', label: '客户', field: 'customer' },
-  { type: 'input', label: '产品', field: 'material', required: true },
-  { type: 'input-number', label: '数量', field: 'qty', required: true, props: { min: 1 } as any }
-]
+
 function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { code: '', order_code: '', customer: '', material: '', qty: 1, status: 'pending' })
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultForm()
+  dialogVisible.value = true
 }
-function openEdit(r: Del) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
-}
-async function submit() {
-  if (!form.material) {
-    ElMessage.warning('请填写必填项')
-    return false
+
+function openEdit(row: DeliveryRow) {
+  dialogMode.value = 'edit'
+  formModel.value = {
+    id: row.id,
+    code: row.code,
+    order_code: row.order_code,
+    customer: row.customer,
+    material: row.material,
+    qty: row.qty,
+    status: row.status
   }
-  if (mode.value === 'add') {
-    data.value.unshift({
-      id: Date.now().toString(),
-      code: 'DN' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(data.value.length + 1).padStart(4, '0'),
-      created_at: new Date().toISOString().slice(0, 10),
-      ...form
-    } as Del)
-  } else {
-    const i = data.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
-  }
-  return true
+  dialogVisible.value = true
 }
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      data.value = data.value.filter((e) => e.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+
+async function submitDialog() {
+  dialogVisible.value = false
+  await refresh()
+}
+
+function remove(row: DeliveryRow) {
+  onDelete(row)
 }
 </script>

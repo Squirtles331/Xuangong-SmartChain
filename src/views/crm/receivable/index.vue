@@ -1,15 +1,35 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" storage-key="receivable-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          :grid-item-props="{
+            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+          }"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
+
     <template #tool>
       <gi-button type="add" @click="openReceipt">登记回款</gi-button>
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="pagedAR" :pagination="pagination" border stripe style="height: 100%">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+      style="height: 100%"
+    >
       <template #aging="{ row }">
         <el-tag v-if="row.aging <= 0" type="success" size="small">未到期</el-tag>
         <el-tag v-else-if="row.aging <= 30" type="success" size="small">逾期{{ row.aging }}天</el-tag>
@@ -28,26 +48,35 @@
     </gi-table>
 
     <!-- 回款登记弹窗 -->
-    <el-dialog v-model="receiptVisible" title="登记回款" width="500px">
+    <el-dialog v-model="receiptVisible" title="登记回款" width="500px" :lock-scroll="false">
       <el-form :model="receiptForm" label-width="100px">
-        <el-form-item label="客户" required
-          ><el-select v-model="receiptForm.customer" style="width: 100%"
-            ><el-option v-for="c in customerNames" :key="c" :label="c" :value="c" /></el-select
-        ></el-form-item>
-        <el-form-item label="回款金额" required><el-input-number v-model="receiptForm.amount" :min="0" style="width: 100%" /></el-form-item>
-        <el-form-item label="回款日期" required><el-date-picker v-model="receiptForm.date" style="width: 100%" /></el-form-item>
-        <el-form-item label="回款方式" required
-          ><el-select v-model="receiptForm.method" style="width: 100%"
-            ><el-option label="银行转账" value="bank" /><el-option label="现金" value="cash" /><el-option label="承兑汇票" value="draft" /></el-select
-        ></el-form-item>
+        <el-form-item label="客户" required>
+          <el-select v-model="receiptForm.customer" style="width: 100%">
+            <el-option v-for="c in customerNames" :key="c" :label="c" :value="c" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="回款金额" required>
+          <el-input-number v-model="receiptForm.amount" :min="0" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="回款日期" required>
+          <el-date-picker v-model="receiptForm.date" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="回款方式" required>
+          <el-select v-model="receiptForm.method" style="width: 100%">
+            <el-option label="银行转账" value="bank" />
+            <el-option label="现金" value="cash" />
+            <el-option label="承兑汇票" value="draft" />
+          </el-select>
+        </el-form-item>
       </el-form>
-      <template #footer
-        ><el-button @click="receiptVisible = false">取消</el-button><el-button type="primary" @click="submitReceipt">确认</el-button></template
-      >
+      <template #footer>
+        <el-button @click="receiptVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitReceipt">确认</el-button>
+      </template>
     </el-dialog>
 
     <!-- 核销弹窗 -->
-    <el-dialog v-model="settleVisible" title="回款核销" width="650px">
+    <el-dialog v-model="settleVisible" title="回款核销" width="650px" :lock-scroll="false">
       <p>
         当前回款余额: <strong>{{ receiptForm.amount.toLocaleString() }} 元</strong>
       </p>
@@ -71,21 +100,23 @@
           </template>
         </el-table-column>
       </el-table>
-      <template #footer
-        ><el-button @click="settleVisible = false">取消</el-button><el-button type="primary" @click="submitSettle">确认核销</el-button></template
-      >
+      <template #footer>
+        <el-button @click="settleVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitSettle">确认核销</el-button>
+      </template>
     </el-dialog>
   </gi-page-layout>
 </template>
 
-<script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+<script lang="ts" setup>
+import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getReceivableList, createReceipt } from '@/api/crm'
-import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
+import { createReceipt, getReceivableList, type Receivable, type ReceivableQuery } from '@/api/crm'
+import { useTable } from '@/hooks/useTable'
 
-interface AR {
+interface ARRow {
   id: string
   code: string
   customer: string
@@ -96,9 +127,12 @@ interface AR {
   aging: number
 }
 
-const ars = ref<AR[]>([])
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({
+  customer: '',
+  aging: ''
+})
 
-const searchForm = reactive({ customer: '', aging: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '客户', field: 'customer' } as any,
   {
@@ -118,16 +152,14 @@ const searchColumns: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
 const allSearchColumns = computed(() => searchColumns)
-// SearchSetting: 当前可见字段
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const searchFormRef = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-const columns: TableColumnItem<AR>[] = [
+const columns: TableColumnItem<ARRow>[] = [
   { prop: 'code', label: '应收单号', width: 160 },
   { prop: 'customer', label: '客户', minWidth: 140 },
   { prop: 'amount', label: '应收金额', minWidth: 120, align: 'right' },
@@ -139,50 +171,59 @@ const columns: TableColumnItem<AR>[] = [
   { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const pagedAR = ref<AR[]>([])
-
-onMounted(() => {
-  fetchData()
+const { tableData, pagination, loading, search, refresh } = useTable<ARRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    let statusParam: 'overdue' | 'settled' | 'pending' | undefined
+    if (searchForm.value.aging) {
+      if (searchForm.value.aging === '0') statusParam = 'pending'
+      else statusParam = 'overdue'
+    }
+    const params: ReceivableQuery = {
+      page,
+      page_size: size,
+      customer: searchForm.value.customer || undefined,
+      status: statusParam
+    }
+    const res = await getReceivableList(params)
+    return {
+      list: res.data.items.map(mapARRow),
+      total: res.data.total
+    }
+  }
 })
 
-async function fetchData() {
-  // Map aging filter to API status param
-  let statusParam: 'overdue' | 'settled' | 'pending' | undefined
-  if (searchForm.aging) {
-    if (searchForm.aging === '0') statusParam = 'pending'
-    else statusParam = 'overdue'
+function mapARRow(ar: Receivable): ARRow {
+  return {
+    id: String(ar.id),
+    code: ar.code,
+    customer: ar.customer,
+    amount: ar.amount,
+    settled: ar.settled,
+    balance: ar.balance,
+    due_date: ar.due_date,
+    aging: ar.aging
   }
-  const params = {
-    page: pagination.currentPage,
-    page_size: pagination.pageSize,
-    customer: searchForm.customer || undefined,
-    status: statusParam
-  }
-  const res = await getReceivableList(params)
-  ars.value = res.data.items
-  pagination.total = res.data.total
-  pagedAR.value = res.data.items
 }
 
 function handleSearch() {
-  pagination.currentPage = 1
-  fetchData()
+  search()
 }
+
 function handleReset() {
-  searchForm.customer = ''
-  searchForm.aging = ''
-  pagination.currentPage = 1
-  fetchData()
+  searchForm.value = { customer: '', aging: '' }
+  search()
 }
 
 const customerNames = ['XX重工集团', 'YY机械设备', 'ZZ泵业科技']
 
 const receiptVisible = ref(false)
 const receiptForm = reactive({ customer: 'XX重工集团', amount: 0, date: new Date().toISOString().slice(0, 10), method: 'bank' })
+
 function openReceipt() {
   receiptVisible.value = true
 }
+
 async function submitReceipt() {
   await createReceipt({
     customer: receiptForm.customer,
@@ -190,25 +231,27 @@ async function submitReceipt() {
   })
   receiptVisible.value = false
   ElMessage.success('回款已登记，请核销')
-  await fetchData()
+  await refresh()
 }
 
 const settleVisible = ref(false)
-const settleList = ref<AR[]>([])
-const selectedSettle = ref<AR[]>([])
+const settleList = ref<ARRow[]>([])
+const selectedSettle = ref<ARRow[]>([])
 const settleAmountMap = reactive<Record<string, number>>({})
-function openSettle(row: AR) {
-  settleList.value = ars.value.filter((a) => a.customer === row.customer && a.balance > 0)
+
+function openSettle(row: ARRow) {
+  settleList.value = (tableData.value as ARRow[]).filter((a) => a.customer === row.customer && a.balance > 0)
   selectedSettle.value = []
-  // Initialize settle amounts to 0 for each row
   settleList.value.forEach((a) => {
     settleAmountMap[a.id] = 0
   })
   settleVisible.value = true
 }
-function onSettleSelect(rows: AR[]) {
+
+function onSettleSelect(rows: ARRow[]) {
   selectedSettle.value = rows
 }
+
 function submitSettle() {
   let totalSettled = 0
   settleList.value.forEach((a) => {
@@ -227,3 +270,9 @@ function submitSettle() {
   ElMessage.success(`已核销 ${totalSettled.toLocaleString()} 元`)
 }
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

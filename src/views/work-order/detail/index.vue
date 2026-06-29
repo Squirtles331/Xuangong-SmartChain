@@ -128,24 +128,16 @@
       </el-tab-pane>
     </el-tabs>
 
-    <!-- 状态流转审批意见弹窗 -->
-    <el-dialog v-model="approvalVisible" :title="approvalDialogTitle" width="480px" :close-on-click-modal="false">
-      <el-form :model="approvalForm" label-width="100px">
-        <el-form-item label="当前状态">
-          <el-tag :type="currentStatusTagType">{{ currentStatusLabel }}</el-tag>
-        </el-form-item>
-        <el-form-item label="目标状态">
-          <el-tag :type="targetStatusTagType">{{ targetStatusLabel }}</el-tag>
-        </el-form-item>
-        <el-form-item label="审批意见" required>
-          <el-input v-model="approvalForm.opinion" type="textarea" :rows="3" placeholder="请输入审批意见（通过/拒绝时必填）" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="approvalVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmApproval">确认</el-button>
-      </template>
-    </el-dialog>
+    <ApprovalDialog
+      v-model:visible="approvalVisible"
+      v-model:form="approvalForm"
+      :title="approvalDialogTitle"
+      :current-status-label="currentStatusLabel"
+      :current-status-tag-type="currentStatusTagType"
+      :target-status-label="targetStatusLabel"
+      :target-status-tag-type="targetStatusTagType"
+      @confirm="confirmApproval"
+    />
   </gi-page-layout>
 </template>
 
@@ -157,6 +149,7 @@ import StatusTag from '@/components/StatusTag.vue'
 import { WORK_ORDER_STATUS, WORK_ORDER_PRIORITY } from '@/common/status-maps'
 import { getWorkOrderDetail, getWorkOrderOperations, approveWorkOrder, releaseWorkOrder, closeWorkOrder } from '@/api/work-order'
 import { getBOMList } from '@/api/bom'
+import ApprovalDialog, { type ApprovalFormModel } from './ApprovalDialog.vue'
 
 const route = useRoute()
 
@@ -273,7 +266,7 @@ const currentStatusLabel = ref('')
 const currentStatusTagType = ref<any>('')
 const targetStatusLabel = ref('')
 const targetStatusTagType = ref<any>('')
-const approvalForm = reactive({ opinion: '', targetStatus: '' })
+const approvalForm = ref<ApprovalFormModel>({ opinion: '', targetStatus: '' })
 
 function getStatusInfo(status: string) {
   const found = WORK_ORDER_STATUS.find((s) => s.value === status)
@@ -301,8 +294,7 @@ function handleTransition(targetStatus: string) {
     targetStatusLabel.value = toInfo.label
     targetStatusTagType.value = toInfo.type
     approvalDialogTitle.value = rule.label
-    approvalForm.opinion = ''
-    approvalForm.targetStatus = targetStatus
+    approvalForm.value = { opinion: '', targetStatus }
     approvalVisible.value = true
   } else {
     ElMessageBox.confirm(`确认将工单从「${fromInfo.label}」变更为「${toInfo.label}」？`, rule.label, { type: 'warning' })
@@ -314,11 +306,11 @@ function handleTransition(targetStatus: string) {
 }
 
 function confirmApproval() {
-  if (!approvalForm.opinion.trim()) {
+  if (!approvalForm.value.opinion.trim()) {
     ElMessage.warning('请填写审批意见')
     return
   }
-  doTransition(approvalForm.targetStatus, approvalForm.opinion.trim())
+  doTransition(approvalForm.value.targetStatus, approvalForm.value.opinion.trim())
   approvalVisible.value = false
 }
 
@@ -331,8 +323,6 @@ async function doTransition(targetStatus: string, opinion: string) {
     } else if (targetStatus === 'closed') {
       await closeWorkOrder(order.id, { close_type: 'normal', reason: opinion })
     } else {
-      // For statuses not directly mapped to API (e.g., in_progress, completed, draft-revert),
-      // update locally and log
       order.status = targetStatus
     }
 

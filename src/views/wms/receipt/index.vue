@@ -1,36 +1,49 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="receipt-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool
-      ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
-        style="margin-left: 8px"
-        @click="handleExport"
-        >导出</el-button
-      ></template
-    >
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    </template>
+
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #type="{ row }">
         <StatusTag :value="row.type" :options="RECEIPT_TYPE" />
       </template>
       <template #status="{ row }">
         <StatusTag :value="row.status" :options="RECEIPT_STATUS" />
       </template>
-      <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <gi-button type="delete" @click="remove(row)" />
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增入库单' : '编辑入库单'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <ReceiptFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import { getReceiptList } from '@/api/wms'
+import { useTable } from '@/hooks/useTable'
+import ReceiptFormDialog, { type ReceiptFormModel } from './ReceiptFormDialog.vue'
 
 const RECEIPT_TYPE = [
   { value: 'purchase', label: '采购入库', type: 'primary' as const },
@@ -42,7 +55,8 @@ const RECEIPT_STATUS = [
   { value: 'pending', label: '待入库', type: 'warning' as const },
   { value: 'completed', label: '已入库', type: 'success' as const }
 ]
-interface In {
+
+interface ReceiptRow {
   id: string
   code: string
   type: string
@@ -52,30 +66,11 @@ interface In {
   status: string
   created_at: string
 }
-const data = ref<In[]>([
-  {
-    id: '1',
-    code: 'RK20250115001',
-    type: 'purchase',
-    material: '45#圆钢 φ50',
-    qty: 500,
-    warehouse: '原材料仓',
-    status: 'pending',
-    created_at: '2025-01-15'
-  },
-  {
-    id: '2',
-    code: 'RK20250115002',
-    type: 'production',
-    material: '离心泵 XJP-100',
-    qty: 45,
-    warehouse: '成品仓',
-    status: 'completed',
-    created_at: '2025-01-15'
-  }
-])
-const s = reactive({ code: '', type: '', status: '' })
-const sc: FormColumnItem[] = [
+
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({ code: '', type: '', status: '' })
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '入库单号', field: 'code' } as any,
   {
     type: 'select-v2',
@@ -103,15 +98,14 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
-const cols: TableColumnItem<In>[] = [
+
+const cols: TableColumnItem<ReceiptRow>[] = [
   { prop: 'code', label: '入库单号', width: 160 },
   { label: '类型', minWidth: 100, slotName: 'type', align: 'center' },
   { prop: 'material', label: '物料', minWidth: 160 },
@@ -120,101 +114,84 @@ const cols: TableColumnItem<In>[] = [
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() =>
-  data.value.filter((r) => (!s.code || r.code.includes(s.code)) && (!s.type || r.type === s.type) && (!s.status || r.status === s.status))
-)
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
-  },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ReceiptRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getReceiptList({
+      page,
+      page_size: size,
+      code: searchForm.value.code || undefined,
+      supplier: searchForm.value.type || undefined,
+      status: searchForm.value.status || undefined
+    })
+    return {
+      list: (res.data.items || []).map(mapRow),
+      total: res.data.total
+    }
+  }
+})
+
+function mapRow(item: any): ReceiptRow {
+  return {
+    id: String(item.id),
+    code: item.code || '',
+    type: item.type || '',
+    material: item.material || '',
+    qty: Number(item.qty ?? 0),
+    warehouse: item.warehouse || '',
+    status: item.status || '',
+    created_at: item.created_at || ''
+  }
 }
-function hr() {
-  s.code = ''
-  s.type = ''
-  s.status = ''
-  p.currentPage = 1
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<ReceiptFormModel>(createDefaultForm())
+
+function createDefaultForm(): ReceiptFormModel {
+  return { id: '', code: '', type: 'purchase', material: '', qty: 1, warehouse: '原材料仓', status: 'pending' }
 }
-function refresh() {
-  hr()
+
+function handleSearch() {
+  search()
 }
+
+function handleReset() {
+  searchForm.value = { code: '', type: '', status: '' }
+  search()
+}
+
 function handleExport() {
   ElMessage.success('导出成功')
 }
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ code: '', type: 'purchase', material: '', qty: 1, warehouse: '原材料仓', status: 'pending' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '入库单号', field: 'code', required: true },
-  {
-    type: 'select-v2',
-    label: '类型',
-    field: 'type',
-    required: true,
-    props: {
-      options: [
-        { label: '采购入库', value: 'purchase' },
-        { label: '生产入库', value: 'production' }
-      ]
-    } as any
-  },
-  { type: 'input', label: '物料', field: 'material', required: true },
-  { type: 'input-number', label: '数量', field: 'qty', required: true, props: { min: 1 } as any },
-  {
-    type: 'select-v2',
-    label: '仓库',
-    field: 'warehouse',
-    props: {
-      options: [
-        { label: '原材料仓', value: '原材料仓' },
-        { label: '成品仓', value: '成品仓' },
-        { label: '备件仓', value: '备件仓' }
-      ]
-    } as any
-  }
-]
+
 function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { code: '', type: 'purchase', material: '', qty: 1, warehouse: '原材料仓', status: 'pending' })
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultForm()
+  dialogVisible.value = true
 }
-function openEdit(r: In) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
-}
-async function submit() {
-  if (!form.material) {
-    ElMessage.warning('请填写必填项')
-    return false
+
+function openEdit(row: ReceiptRow) {
+  dialogMode.value = 'edit'
+  formModel.value = {
+    id: row.id,
+    code: row.code,
+    type: row.type,
+    material: row.material,
+    qty: row.qty,
+    warehouse: row.warehouse,
+    status: row.status
   }
-  if (mode.value === 'add') {
-    data.value.unshift({
-      id: Date.now().toString(),
-      code: 'RK' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(data.value.length + 1).padStart(4, '0'),
-      created_at: new Date().toISOString().slice(0, 10),
-      ...form
-    } as In)
-  } else {
-    const i = data.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
-  }
-  return true
+  dialogVisible.value = true
 }
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      data.value = data.value.filter((e) => e.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+
+async function submitDialog() {
+  dialogVisible.value = false
+  await refresh()
+}
+
+function remove(row: ReceiptRow) {
+  onDelete(row)
 }
 </script>

@@ -1,47 +1,60 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="picking-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool
-      ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
-        style="margin-left: 8px"
-        @click="handleExport"
-        >导出</el-button
-      ></template
-    >
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'picked' ? 'primary' : 'success'" size="small">{{
-          row.status === 'pending' ? '待拣货' : row.status === 'picked' ? '已拣货' : '已出库'
-        }}</el-tag></template
-      >
-      <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    </template>
+
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
+      <template #status="{ row }">
+        <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'picked' ? 'primary' : 'success'" size="small">
+          {{ row.status === 'pending' ? '待拣货' : row.status === 'picked' ? '已拣货' : '已出库' }}
+        </el-tag>
+      </template>
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <gi-button type="delete" @click="remove(row)" />
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增领料单' : '编辑领料单'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <PickingFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-interface Pick {
+import { getPickingList } from '@/api/wms'
+import { useTable } from '@/hooks/useTable'
+import PickingFormDialog, { type PickingFormModel } from './PickingFormDialog.vue'
+
+interface PickingRow {
   id: string
   wo_code: string
   material: string
   status: string
   created_at: string
 }
-const data = ref<Pick[]>([
-  { id: '1', wo_code: 'WO202501150001', material: '离心泵 XJP-100', status: 'pending', created_at: '2025-01-15' },
-  { id: '2', wo_code: 'WO202501150002', material: '齿轮箱 GBX-200', status: 'pending', created_at: '2025-01-15' }
-])
-const s = reactive({ wo_code: '', status: '' })
-const sc: FormColumnItem[] = [
+
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({ wo_code: '', status: '' })
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '工单号', field: 'wo_code' } as any,
   {
     type: 'select-v2',
@@ -58,95 +71,92 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
-const cols: TableColumnItem<Pick>[] = [
+
+const cols: TableColumnItem<PickingRow>[] = [
   { prop: 'wo_code', label: '工单号', width: 170 },
   { prop: 'material', label: '产品', minWidth: 160 },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { prop: 'created_at', label: '创建时间', width: 110 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() => data.value.filter((r) => (!s.wo_code || r.wo_code.includes(s.wo_code)) && (!s.status || r.status === s.status)))
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
-  },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<PickingRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getPickingList({
+      page,
+      page_size: size,
+      code: searchForm.value.wo_code || undefined,
+      warehouse: undefined,
+      status: searchForm.value.status || undefined
+    })
+    return {
+      list: (res.data.items || []).map(mapRow),
+      total: res.data.total
+    }
+  }
+})
+
+function mapRow(item: any): PickingRow {
+  return {
+    id: String(item.id),
+    wo_code: item.wo_code || '',
+    material: item.material || '',
+    status: item.status || '',
+    created_at: item.created_at || ''
+  }
 }
-function hr() {
-  s.wo_code = ''
-  s.status = ''
-  p.currentPage = 1
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<PickingFormModel>(createDefaultForm())
+
+function createDefaultForm(): PickingFormModel {
+  return { id: '', wo_code: '', material: '', status: 'pending' }
 }
-function refresh() {
-  hr()
+
+function handleSearch() {
+  search()
 }
+
+function handleReset() {
+  searchForm.value = { wo_code: '', status: '' }
+  search()
+}
+
 function handleExport() {
   ElMessage.success('导出成功')
 }
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ wo_code: '', material: '', status: 'pending' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '工单号', field: 'wo_code', required: true },
-  { type: 'input', label: '产品', field: 'material', required: true },
-  {
-    type: 'select-v2',
-    label: '状态',
-    field: 'status',
-    props: {
-      options: [
-        { label: '待拣货', value: 'pending' },
-        { label: '已拣货', value: 'picked' },
-        { label: '已出库', value: 'completed' }
-      ]
-    } as any
-  }
-]
+
 function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { wo_code: '', material: '', status: 'pending' })
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultForm()
+  dialogVisible.value = true
 }
-function openEdit(r: Pick) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
-}
-async function submit() {
-  if (!form.wo_code) {
-    ElMessage.warning('请填写必填项')
-    return false
+
+function openEdit(row: PickingRow) {
+  dialogMode.value = 'edit'
+  formModel.value = {
+    id: row.id,
+    wo_code: row.wo_code,
+    material: row.material,
+    status: row.status
   }
-  if (mode.value === 'add') {
-    data.value.unshift({ id: Date.now().toString(), created_at: new Date().toISOString().slice(0, 10), ...form } as Pick)
-  } else {
-    const i = data.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
-  }
-  return true
+  dialogVisible.value = true
 }
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      data.value = data.value.filter((e) => e.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+
+async function submitDialog() {
+  dialogVisible.value = false
+  await refresh()
+}
+
+function remove(row: PickingRow) {
+  onDelete(row)
 }
 </script>

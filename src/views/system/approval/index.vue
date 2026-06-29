@@ -2,9 +2,17 @@
   <gi-page-layout>
     <template #tool>
       <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="flows" border style="height: 100%">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      style="height: 100%"
+    >
       <template #status="{ row }">
         <el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag>
       </template>
@@ -23,27 +31,26 @@
         <el-button :type="row.status === 'active' ? 'warning' : 'success'" link size="small" @click="toggleStatus(row)">
           {{ row.status === 'active' ? '停用' : '启用' }}
         </el-button>
-        <gi-button type="delete" @click="deleteFlow(row.id)" />
+        <gi-button type="delete" @click="onDelete(row)" />
       </template>
     </gi-table>
 
-    <gi-dialog
-      v-model="dialogVisible"
-      :footer="true"
-      :on-before-ok="submitDialog"
-      :title="dialogMode === 'add' ? '新增审批流' : '编辑审批流'"
-      width="600px"
-    >
-      <gi-form v-model="form" :columns="formColumns" :label-width="120" />
-    </gi-dialog>
+    <ApprovalFlowFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { TableColumnItem } from 'gi-component'
 import { getApprovalFlows, createApprovalFlow, updateApprovalFlow, deleteApprovalFlow } from '@/api/system'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import { useTable } from '@/hooks/useTable'
+import ApprovalFlowFormDialog, { type ApprovalFlowFormModel } from './ApprovalFlowFormDialog.vue'
 
 interface ApprovalFlow {
   id: string
@@ -53,103 +60,83 @@ interface ApprovalFlow {
   status: string
 }
 
-const flows = ref<ApprovalFlow[]>([])
-
-onMounted(async () => {
-  const res = await getApprovalFlows()
-  flows.value = res.data
-})
-
 const columns: TableColumnItem<ApprovalFlow>[] = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'name', label: '审批流名称', minWidth: 160 },
   { prop: 'business_type', label: '关联业务', width: 160 },
   { label: '审批节点', minWidth: 250, slotName: 'nodes' },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ApprovalFlow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const response = await getApprovalFlows()
+    const allItems = (response.data || []) as ApprovalFlow[]
+    const start = (page - 1) * size
+    return {
+      list: allItems.slice(start, start + size),
+      total: allItems.length
+    }
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteApprovalFlow(id)))
+})
 
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
-const editingId = ref('')
-const form = reactive({ name: '', business_type: '', nodes: '车间主任' })
-const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '审批流名称', field: 'name', required: true },
-  {
-    type: 'select-v2',
-    label: '关联业务',
-    field: 'business_type',
-    required: true,
-    props: {
-      options: [
-        { label: '普通工单', value: 'work_order_normal' },
-        { label: '紧急工单', value: 'work_order_urgent' },
-        { label: 'BOM/工艺', value: 'bom_routing' },
-        { label: 'ECN变更', value: 'ecn' },
-        { label: '销售订单', value: 'sales_order' },
-        { label: '采购订单', value: 'purchase_order' }
-      ]
-    } as any
-  },
-  { type: 'input', label: '审批节点', field: 'nodes', required: true, props: { placeholder: '多个节点用逗号分隔，如：车间主任,生产部长' } as any }
-]
+const formModel = ref<ApprovalFlowFormModel>(createDefaultFormModel())
+
+function createDefaultFormModel(): ApprovalFlowFormModel {
+  return { id: '', name: '', business_type: '', nodes: '' }
+}
 
 function openAdd() {
   dialogMode.value = 'add'
-  form.name = ''
-  form.business_type = ''
-  form.nodes = ''
+  formModel.value = createDefaultFormModel()
   dialogVisible.value = true
 }
+
 function openEdit(row: ApprovalFlow) {
   dialogMode.value = 'edit'
-  editingId.value = row.id
-  form.name = row.name
-  form.business_type = row.business_type
-  form.nodes = row.nodes.join(',')
+  formModel.value = {
+    id: row.id,
+    name: row.name,
+    business_type: row.business_type,
+    nodes: row.nodes.join(',')
+  }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
-  if (!form.name || !form.business_type || !form.nodes) {
+  if (!formModel.value.name || !formModel.value.business_type || !formModel.value.nodes) {
     ElMessage.warning('请填写必填项')
-    return false
+    return
   }
-  const nodes = form.nodes
+  const nodes = formModel.value.nodes
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
+
   if (dialogMode.value === 'add') {
-    await createApprovalFlow({ name: form.name, business_type: form.business_type, nodes, status: 'active' })
-    // Reload list
-    const res = await getApprovalFlows()
-    flows.value = res.data
+    await createApprovalFlow({ name: formModel.value.name, business_type: formModel.value.business_type, nodes, status: 'active' })
     ElMessage.success('新增成功')
   } else {
-    await updateApprovalFlow(editingId.value, { name: form.name, business_type: form.business_type, nodes })
-    const f = flows.value.find((f) => f.id === editingId.value)
-    if (f) {
-      f.name = form.name
-      f.business_type = form.business_type
-      f.nodes = nodes
-    }
+    await updateApprovalFlow(formModel.value.id, { name: formModel.value.name, business_type: formModel.value.business_type, nodes })
     ElMessage.success('保存成功')
   }
-  return true
+  dialogVisible.value = false
+  await refresh()
 }
 
 function toggleStatus(row: ApprovalFlow) {
   row.status = row.status === 'active' ? 'disabled' : 'active'
   ElMessage.success(row.status === 'active' ? '已启用' : '已停用')
 }
-
-function deleteFlow(id: string) {
-  ElMessageBox.confirm('确定删除该审批流？', '提示', { type: 'warning' })
-    .then(async () => {
-      await deleteApprovalFlow(id)
-      flows.value = flows.value.filter((f) => f.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
-}
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

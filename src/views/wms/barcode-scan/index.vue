@@ -21,17 +21,20 @@
       </el-descriptions>
     </el-card>
 
-    <gi-table :columns="cols" :data="records" :pagination="recordPagination" border stripe>
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #type="{ row }">
         <el-tag :type="row.type === '入库' ? 'success' : 'warning'" size="small">{{ row.type }}</el-tag>
       </template>
     </gi-table>
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
+import { getBarcodeScanList } from '@/api/wms'
+import { useTable } from '@/hooks/useTable'
 
 interface ScanResult {
   barcode: string
@@ -42,6 +45,7 @@ interface ScanResult {
 }
 
 interface ScanRecord {
+  id: string
   barcode: string
   materialCode: string
   materialName: string
@@ -53,20 +57,7 @@ interface ScanRecord {
 
 const scanCode = ref('')
 const scanInputRef = ref<any>(null)
-const records = ref<ScanRecord[]>([])
 const currentResult = ref<ScanResult | null>(null)
-
-const recordPagination = ref({
-  currentPage: 1,
-  pageSize: 10,
-  total: computed(() => records.value.length)
-}) as any
-
-const pagedRecords = computed(() => {
-  const start = (recordPagination.value.currentPage - 1) * recordPagination.value.pageSize
-  const end = start + recordPagination.value.pageSize
-  return records.value.slice(start, end)
-})
 
 const cols: TableColumnItem<ScanRecord>[] = [
   { prop: 'barcode', label: '条码', minWidth: 180 },
@@ -77,6 +68,35 @@ const cols: TableColumnItem<ScanRecord>[] = [
   { prop: 'location', label: '库位', minWidth: 100 },
   { prop: 'time', label: '操作时间', minWidth: 170 }
 ]
+
+const { tableData, pagination, loading, search } = useTable<ScanRecord>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getBarcodeScanList({
+      page,
+      page_size: size,
+      barcode: undefined,
+      operator: undefined
+    })
+    return {
+      list: (res.data.items || []).map(mapRow),
+      total: res.data.total
+    }
+  }
+})
+
+function mapRow(item: any): ScanRecord {
+  return {
+    id: String(item.id),
+    barcode: item.barcode || '',
+    materialCode: item.materialCode || item.material_code || '',
+    materialName: item.materialName || item.material_name || '',
+    qty: Number(item.qty ?? 0),
+    location: item.location || '',
+    type: item.type || '',
+    time: item.time || ''
+  }
+}
 
 function parseBarcode(code: string): ScanResult | null {
   if (!code) return null
@@ -109,39 +129,31 @@ function handleScan() {
   }
 }
 
-function handleScanIn() {
+function addRecord(type: string) {
   if (!currentResult.value) {
     ElMessage.warning('请先扫描条码')
     return
   }
-  records.value.unshift({
+  // Prepend to tableData and refresh
+  tableData.value.unshift({
+    id: Date.now().toString(),
     ...currentResult.value,
-    type: '入库',
+    type,
     time: new Date().toLocaleString()
   })
   currentResult.value = null
-  recordPagination.value.currentPage = 1
-  ElMessage.success('入库成功')
+  pagination.currentPage = 1
+  ElMessage.success(type === '入库' ? '入库成功' : '出库成功')
   nextTick(() => {
     scanInputRef.value?.focus?.()
   })
 }
 
+function handleScanIn() {
+  addRecord('入库')
+}
+
 function handleScanOut() {
-  if (!currentResult.value) {
-    ElMessage.warning('请先扫描条码')
-    return
-  }
-  records.value.unshift({
-    ...currentResult.value,
-    type: '出库',
-    time: new Date().toLocaleString()
-  })
-  currentResult.value = null
-  recordPagination.value.currentPage = 1
-  ElMessage.success('出库成功')
-  nextTick(() => {
-    scanInputRef.value?.focus?.()
-  })
+  addRecord('出库')
 }
 </script>

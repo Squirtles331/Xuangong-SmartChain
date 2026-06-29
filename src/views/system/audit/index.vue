@@ -1,39 +1,37 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" storage-key="audit-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" :required-fields="['user_name']" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
 
-    <gi-table :columns="columns" :data="pagedLogs" :pagination="pagination" border stripe style="height: 100%" @row-click="toggleExpand">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+      style="height: 100%"
+    >
       <template #action_type="{ row }">
         <StatusTag :value="row.action" :options="AUDIT_ACTION" />
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click.stop="showDetail(row)">详情</el-button>
       </template>
-      <template #expand="{ row }">
-        <div class="log-detail">
-          <el-descriptions :column="2" size="small" border>
-            <el-descriptions-item label="操作人">{{ row.user_name }}</el-descriptions-item>
-            <el-descriptions-item label="操作时间">{{ row.created_at }}</el-descriptions-item>
-            <el-descriptions-item label="模块">{{ row.module }}</el-descriptions-item>
-            <el-descriptions-item label="操作类型">
-              <StatusTag :value="row.action" :options="AUDIT_ACTION" />
-            </el-descriptions-item>
-            <el-descriptions-item label="操作对象">{{ row.target }}</el-descriptions-item>
-            <el-descriptions-item label="IP地址">{{ row.ip }}</el-descriptions-item>
-            <el-descriptions-item label="请求参数" :span="2">
-              <pre class="json-preview">{{ row.request_params || '-' }}</pre>
-            </el-descriptions-item>
-          </el-descriptions>
-        </div>
-      </template>
     </gi-table>
 
     <!-- 详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="操作日志详情" width="600px">
+    <el-dialog v-model="detailVisible" title="操作日志详情" width="600px" :lock-scroll="false">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="操作人">{{ detailLog?.user_name }}</el-descriptions-item>
         <el-descriptions-item label="操作时间">{{ detailLog?.created_at }}</el-descriptions-item>
@@ -52,11 +50,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, computed } from 'vue'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-import { getAuditLogs } from '@/api/system'
+import { getAuditLogs, type AuditLog } from '@/api/system'
+import { useTable } from '@/hooks/useTable'
 
 const AUDIT_ACTION = [
   { value: 'CREATE', label: '新增', type: 'success' as const },
@@ -66,34 +65,14 @@ const AUDIT_ACTION = [
   { value: 'LOGIN', label: '登录', type: 'info' as const }
 ]
 
-interface Log {
-  id: string
-  user_name: string
-  module: string
-  action: string
-  target: string
-  ip: string
-  request_params?: string
-  created_at: string
-}
-
-const logs = ref<Log[]>([])
-
-async function loadLogs() {
-  const res = await getAuditLogs({
-    page: 1,
-    page_size: 1000,
-    user_name: searchForm.user_name || undefined,
-    module: searchForm.module || undefined
-  })
-  logs.value = res.data.items
-}
-
-onMounted(() => {
-  loadLogs()
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({
+  user_name: '',
+  module: '',
+  action: '',
+  date_range: [] as string[]
 })
 
-const searchForm = reactive({ user_name: '', module: '', action: '', date_range: [] as string[] })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '操作人', field: 'user_name' },
   { type: 'input', label: '模块', field: 'module' },
@@ -120,16 +99,14 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-// SearchSetting: 所有可用字段
 const allSearchColumns = computed(() => searchColumns)
-// SearchSetting: 当前可见字段
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const searchFormRef = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-const columns: TableColumnItem<Log>[] = [
+const columns: TableColumnItem<AuditLog>[] = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'user_name', label: '操作人', width: 100 },
   { prop: 'module', label: '模块', width: 120 },
@@ -140,55 +117,49 @@ const columns: TableColumnItem<Log>[] = [
   { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-
-const filteredLogs = computed(() => {
-  return logs.value
-})
-
-const pagedLogs = computed(() => {
-  const s = (pagination.currentPage - 1) * pagination.pageSize
-  return filteredLogs.value.slice(s, s + pagination.pageSize)
+const { tableData, pagination, loading, search, refresh } = useTable<AuditLog>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const sf = searchForm.value
+    const params: any = {
+      page,
+      page_size: size,
+      user_name: sf.user_name || undefined,
+      module: sf.module || undefined
+    }
+    if (sf.date_range?.length === 2) {
+      params.start_date = sf.date_range[0]
+      params.end_date = sf.date_range[1]
+    }
+    const response = await getAuditLogs(params)
+    return {
+      list: response.data.items as AuditLog[],
+      total: response.data.total
+    }
+  }
 })
 
 function handleSearch() {
-  pagination.currentPage = 1
-  loadLogs()
+  search()
 }
+
 function handleReset() {
-  searchForm.user_name = ''
-  searchForm.module = ''
-  searchForm.action = ''
-  searchForm.date_range = []
-  pagination.currentPage = 1
-  loadLogs()
+  searchForm.value = {
+    user_name: '',
+    module: '',
+    action: '',
+    date_range: []
+  }
+  search()
 }
 
 const detailVisible = ref(false)
-const detailLog = ref<Log | null>(null)
-const expandedRows = ref<Set<string>>(new Set())
+const detailLog = ref<AuditLog | null>(null)
 
-function toggleExpand(row: Log) {
-  if (expandedRows.value.has(row.id)) {
-    expandedRows.value.delete(row.id)
-  } else {
-    expandedRows.value.add(row.id)
-  }
-}
-
-function showDetail(row: Log) {
+function showDetail(row: AuditLog) {
   detailLog.value = row
   detailVisible.value = true
 }
-
-// 自动更新分页total
-watch(
-  filteredLogs,
-  (val) => {
-    pagination.total = val.length
-  },
-  { immediate: true }
-)
 </script>
 
 <style scoped>

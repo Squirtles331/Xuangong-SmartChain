@@ -1,29 +1,62 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <gi-form v-model="searchForm" :columns="searchColumns" search @reset="handleReset" @search="handleSearch" />
+      <gi-form
+        ref="searchFormRef"
+        v-model="searchForm"
+        :columns="searchColumns"
+        :grid-item-props="{
+          span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+        }"
+        search
+        @reset="handleReset"
+        @search="handleSearch"
+      />
     </template>
-    <template #tool><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /></template>
-    <gi-table :columns="cols" :data="pagedItems" :pagination="pagination" border stripe>
-      <template #status="{ row }"
-        ><el-tag
+
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    </template>
+
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+    >
+      <template #status="{ row }">
+        <el-tag
           :type="row.status === 'sent' ? 'primary' : row.status === 'approved' ? 'success' : row.status === 'lost' ? 'danger' : 'warning'"
           size="small"
-          >{{ row.status === 'sent' ? '已发出' : row.status === 'approved' ? '已中标' : row.status === 'lost' ? '已丢单' : '草稿' }}</el-tag
-        ></template
-      >
-      <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /></template>
+        >
+          {{ row.status === 'sent' ? '已发出' : row.status === 'approved' ? '已中标' : row.status === 'lost' ? '已丢单' : '草稿' }}
+        </el-tag>
+      </template>
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增报价单' : '编辑报价单'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <QuotationFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
-interface QT {
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import { useTable } from '@/hooks/useTable'
+import QuotationFormDialog, { type QuotationFormModel } from './QuotationFormDialog.vue'
+
+interface QuotationRow {
   id: string
   code: string
   customer: string
@@ -34,7 +67,9 @@ interface QT {
   valid_date: string
   status: string
 }
-const items = ref<QT[]>([
+
+// Local data store
+const localData = ref<QuotationRow[]>([
   {
     id: '1',
     code: 'QT20250115001',
@@ -59,7 +94,17 @@ const items = ref<QT[]>([
   }
 ])
 
-const searchForm = ref({ code: '', customer: '', status: '' })
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({
+  code: '',
+  customer: '',
+  status: ''
+})
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<QuotationFormModel>(createDefaultFormModel())
+
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '报价单号', field: 'code' },
   { type: 'input', label: '客户名称', field: 'customer' },
@@ -78,28 +123,7 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const filteredItems = computed(() => {
-  return items.value.filter(
-    (it) =>
-      (!searchForm.value.code || it.code.includes(searchForm.value.code)) &&
-      (!searchForm.value.customer || it.customer.includes(searchForm.value.customer)) &&
-      (!searchForm.value.status || it.status === searchForm.value.status)
-  )
-})
-
-const pagination = ref({
-  currentPage: 1,
-  pageSize: 10,
-  total: computed(() => filteredItems.value.length)
-}) as any
-
-const pagedItems = computed(() => {
-  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
-  const end = start + pagination.value.pageSize
-  return filteredItems.value.slice(start, end)
-})
-
-const cols: TableColumnItem<QT>[] = [
+const columns: TableColumnItem<QuotationRow>[] = [
   { prop: 'code', label: '报价单号', minWidth: 170 },
   { prop: 'customer', label: '客户', minWidth: 150 },
   { prop: 'product', label: '产品', minWidth: 160 },
@@ -110,73 +134,88 @@ const cols: TableColumnItem<QT>[] = [
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 120, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ code: '', customer: '', product: '', qty: 1, price: 0, amount: 0, valid_date: '', status: 'draft' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '报价单号', field: 'code', required: true },
-  { type: 'input', label: '客户', field: 'customer', required: true },
-  { type: 'input', label: '产品', field: 'product', required: true },
-  { type: 'input-number', label: '数量', field: 'qty', required: true, props: { min: 1 } as any },
-  { type: 'input-number', label: '单价(元)', field: 'price', required: true, props: { min: 0 } as any },
-  { type: 'input-number', label: '总价(元)', field: 'amount', props: { disabled: true } as any },
-  { type: 'date-picker', label: '有效期', field: 'valid_date' },
-  {
-    type: 'select-v2',
-    label: '状态',
-    field: 'status',
-    props: {
-      options: [
-        { label: '草稿', value: 'draft' },
-        { label: '已发出', value: 'sent' },
-        { label: '已中标', value: 'approved' },
-        { label: '已丢单', value: 'lost' }
-      ]
-    } as any
+
+const { tableData, pagination, loading, search, refresh } = useTable<QuotationRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    let filtered = [...localData.value]
+    const s = searchForm.value
+    if (s.code) filtered = filtered.filter((r) => r.code.includes(s.code))
+    if (s.customer) filtered = filtered.filter((r) => r.customer.includes(s.customer))
+    if (s.status) filtered = filtered.filter((r) => r.status === s.status)
+    const total = filtered.length
+    const start = (page - 1) * size
+    return {
+      list: filtered.slice(start, start + size),
+      total
+    }
   }
-]
+})
+
+function createDefaultFormModel(): QuotationFormModel {
+  return {
+    id: '',
+    code: '',
+    customer: '',
+    product: '',
+    qty: 1,
+    price: 0,
+    amount: 0,
+    valid_date: '',
+    status: 'draft'
+  }
+}
 
 function handleSearch() {
-  pagination.value.currentPage = 1
+  search()
 }
 
 function handleReset() {
   searchForm.value = { code: '', customer: '', status: '' }
-  pagination.value.currentPage = 1
+  search()
 }
 
 function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { code: '', customer: '', product: '', qty: 1, price: 0, amount: 0, valid_date: '', status: 'draft' })
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
 }
-function openEdit(r: QT) {
-  mode.value = 'edit'
-  eid.value = r.id
-  form.amount = r.price * r.qty
-  Object.assign(form, r)
-  vis.value = true
+
+function openEdit(row: QuotationRow) {
+  dialogMode.value = 'edit'
+  formModel.value = { ...row }
+  dialogVisible.value = true
 }
-async function submit() {
-  if (!form.customer) {
+
+async function submitDialog() {
+  if (!formModel.value.customer) {
     ElMessage.warning('请填写必填项')
-    return false
+    return
   }
-  form.amount = form.price * form.qty
-  if (mode.value === 'add') {
-    items.value.unshift({
+
+  formModel.value.amount = formModel.value.price * formModel.value.qty
+
+  if (dialogMode.value === 'add') {
+    const newItem: QuotationRow = {
       id: Date.now().toString(),
-      code: 'QT' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(items.value.length + 1).padStart(4, '0'),
-      ...form
-    } as QT)
+      code: 'QT' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(localData.value.length + 1).padStart(4, '0'),
+      ...formModel.value
+    }
+    localData.value.unshift(newItem)
   } else {
-    const i = items.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(items.value[i], form)
+    const idx = localData.value.findIndex((r) => r.id === formModel.value.id)
+    if (idx > -1) {
+      localData.value[idx] = { ...formModel.value }
+    }
   }
-  return true
-}
-function refresh() {
-  pagination.value.currentPage = 1
+
+  dialogVisible.value = false
+  await refresh()
 }
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

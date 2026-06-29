@@ -9,7 +9,7 @@
         <div style="margin-bottom: 12px">
           <el-button type="primary" @click="printBarcode">Batch Print</el-button>
         </div>
-        <gi-table :columns="printColumns" :data="materials" border stripe size="small" @selection-change="onSelect" />
+        <gi-table :columns="printColumns" :data="tableData" :pagination="pagination" :loading="loading" border stripe size="small" @selection-change="onSelect" />
       </el-tab-pane>
 
       <el-tab-pane label="Generate" name="generate">
@@ -70,13 +70,13 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
 import { getMaterialListForBarcode } from '@/api/wms'
+import { useTable } from '@/hooks/useTable'
 
 const tab = ref('print')
-const materials = ref<any[]>([])
 const selectedRows = ref<any[]>([])
 const previewBarcode = ref('')
 const scanInCode = ref('')
@@ -112,17 +112,21 @@ const scanOutColumns: TableColumnItem<any>[] = [
   { prop: 'time', label: 'Outbound Time', minWidth: 170 }
 ]
 
-async function loadMaterials() {
-  const res = await getMaterialListForBarcode({ page: 1, page_size: 100 })
-  materials.value = (res.data.items || []).map((item: any, index: number) => ({
-    id: String(item.id),
-    barcode: `BC${String(index + 1).padStart(5, '0')}${String(item.code).replace(/\W/g, '').slice(-6)}`,
-    code: item.code,
-    name: item.name,
-    lot: `LOT-${String(index + 1).padStart(4, '0')}`,
-    qty: item.stock ?? item.qty ?? 0
-  }))
-}
+const { tableData, pagination, loading } = useTable<any>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getMaterialListForBarcode({ page, page_size: size })
+    const items = (res.data.items || []).map((item: any, index: number) => ({
+      id: String(item.id),
+      barcode: `BC${String(index + 1).padStart(5, '0')}${String(item.code).replace(/\W/g, '').slice(-6)}`,
+      code: item.code,
+      name: item.name,
+      lot: `LOT-${String(index + 1).padStart(4, '0')}`,
+      qty: item.stock ?? item.qty ?? 0
+    }))
+    return { list: items, total: items.length }
+  }
+})
 
 function generateBarcode() {
   if (!genForm.code) {
@@ -145,7 +149,7 @@ function printBarcode() {
 }
 
 function resolveMaterial(barcode: string) {
-  return materials.value.find((item) => item.barcode === barcode)?.name || 'Unknown Material'
+  return tableData.value.find((item) => item.barcode === barcode)?.name || 'Unknown Material'
 }
 
 function handleScanIn() {
@@ -161,10 +165,6 @@ function handleScanOut() {
   scanOutCode.value = ''
   ElMessage.success('Outbound confirmed')
 }
-
-onMounted(() => {
-  loadMaterials()
-})
 </script>
 
 <style scoped>

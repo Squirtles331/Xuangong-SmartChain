@@ -2,21 +2,18 @@
   <gi-page-layout>
     <el-tabs v-model="activeTab">
       <el-tab-pane label="待开工" name="assigned">
-        <!-- 搜索+筛选 -->
         <div class="search-bar">
           <el-input
             v-model="assignedSearch.keyword"
             placeholder="搜索工单号"
             clearable
             style="width: 200px"
-            @input="assignedPagination.currentPage = 1"
           />
           <el-select
             v-model="assignedSearch.priority"
             placeholder="优先级"
             clearable
             style="width: 120px; margin-left: 8px"
-            @change="assignedPagination.currentPage = 1"
           >
             <el-option label="紧急" value="urgent" />
             <el-option label="高" value="high" />
@@ -48,9 +45,9 @@
           </el-card>
         </div>
         <el-pagination
-          v-if="filteredAssigned.length > assignedPagination.pageSize"
-          v-model:current-page="assignedPagination.currentPage"
-          v-model:page-size="assignedPagination.pageSize"
+          v-if="filteredAssigned.length > assignedPageSize"
+          v-model:current-page="assignedPage"
+          v-model:page-size="assignedPageSize"
           :total="filteredAssigned.length"
           :page-sizes="[6, 12, 18]"
           layout="total, sizes, prev, pager, next"
@@ -66,14 +63,12 @@
             placeholder="搜索工单号"
             clearable
             style="width: 200px"
-            @input="runningPagination.currentPage = 1"
           />
           <el-select
             v-model="runningSearch.priority"
             placeholder="优先级"
             clearable
             style="width: 120px; margin-left: 8px"
-            @change="runningPagination.currentPage = 1"
           >
             <el-option label="紧急" value="urgent" />
             <el-option label="高" value="high" />
@@ -103,9 +98,9 @@
           </el-card>
         </div>
         <el-pagination
-          v-if="filteredRunning.length > runningPagination.pageSize"
-          v-model:current-page="runningPagination.currentPage"
-          v-model:page-size="runningPagination.pageSize"
+          v-if="filteredRunning.length > runningPageSize"
+          v-model:current-page="runningPage"
+          v-model:page-size="runningPageSize"
           :total="filteredRunning.length"
           :page-sizes="[6, 12, 18]"
           layout="total, sizes, prev, pager, next"
@@ -124,26 +119,11 @@
       </el-tab-pane>
     </el-tabs>
 
-    <!-- 异常上报弹窗 -->
-    <el-dialog v-model="exceptionVisible" title="异常上报" width="500px">
-      <el-form :model="exceptionForm" label-width="100px">
-        <el-form-item label="异常类型" required>
-          <el-select v-model="exceptionForm.type" style="width: 100%">
-            <el-option label="设备故障" value="equipment" />
-            <el-option label="来料不良" value="material" />
-            <el-option label="图纸/工艺错误" value="process" />
-            <el-option label="其他" value="other" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="描述" required>
-          <el-input v-model="exceptionForm.description" type="textarea" :rows="3" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="exceptionVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitException">提交</el-button>
-      </template>
-    </el-dialog>
+    <ExceptionFormDialog
+      v-model:visible="exceptionVisible"
+      v-model:form="exceptionForm"
+      @confirm="submitException"
+    />
   </gi-page-layout>
 </template>
 
@@ -152,6 +132,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getMyTasks } from '@/api/work-order'
 import type { TableColumnItem } from 'gi-component'
+import ExceptionFormDialog, { type ExceptionFormModel } from './ExceptionFormDialog.vue'
 
 interface Task {
   id: string
@@ -199,8 +180,10 @@ onMounted(() => {
 const assignedSearch = reactive({ keyword: '', priority: '' })
 const runningSearch = reactive({ keyword: '', priority: '' })
 
-const assignedPagination = reactive({ currentPage: 1, pageSize: 6 })
-const runningPagination = reactive({ currentPage: 1, pageSize: 6 })
+const assignedPage = ref(1)
+const assignedPageSize = ref(6)
+const runningPage = ref(1)
+const runningPageSize = ref(6)
 
 const filteredAssigned = computed(() => {
   return assignedTasks.value.filter((t) => {
@@ -219,13 +202,13 @@ const filteredRunning = computed(() => {
 })
 
 const pagedAssigned = computed(() => {
-  const s = (assignedPagination.currentPage - 1) * assignedPagination.pageSize
-  return filteredAssigned.value.slice(s, s + assignedPagination.pageSize)
+  const s = (assignedPage.value - 1) * assignedPageSize.value
+  return filteredAssigned.value.slice(s, s + assignedPageSize.value)
 })
 
 const pagedRunning = computed(() => {
-  const s = (runningPagination.currentPage - 1) * runningPagination.pageSize
-  return filteredRunning.value.slice(s, s + runningPagination.pageSize)
+  const s = (runningPage.value - 1) * runningPageSize.value
+  return filteredRunning.value.slice(s, s + runningPageSize.value)
 })
 
 const completedColumns: TableColumnItem<Task>[] = [
@@ -244,10 +227,13 @@ function startWork(task: Task) {
 }
 
 const exceptionVisible = ref(false)
-const exceptionForm = reactive({ type: 'equipment', description: '' })
+const exceptionForm = ref<ExceptionFormModel>({ type: 'equipment', description: '' })
+
 function reportException(_task: Task) {
+  exceptionForm.value = { type: 'equipment', description: '' }
   exceptionVisible.value = true
 }
+
 function submitException() {
   ElMessage.success('异常已上报，维修人员已通知')
   exceptionVisible.value = false

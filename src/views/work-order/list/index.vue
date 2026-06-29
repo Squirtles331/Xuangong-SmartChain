@@ -1,11 +1,11 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" storage-key="list-search" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
-          :columns="visibleSearchColumns"
           ref="searchFormRef"
           v-model="searchForm"
+          :columns="visibleSearchColumns"
           :grid-item-props="{ span: { xs: 24, sm: 12, md: 8, lg: 8, xl: 6, xxl: 6 } }"
           search
           @search="handleSearch"
@@ -13,12 +13,21 @@
         />
       </SearchSetting>
     </template>
+
     <template #tool>
       <gi-button type="add" @click="$router.push('/work-order/create')">新建工单</gi-button>
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="pagedOrders" :pagination="pagination" border stripe style="height: 100%">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+      style="height: 100%"
+    >
       <template #priority="{ row }">
         <StatusTag :value="row.priority" :options="WORK_ORDER_PRIORITY" />
       </template>
@@ -51,23 +60,29 @@
         </el-dropdown>
       </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <WorkOrderFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
-import { getWorkOrderList, approveWorkOrder, releaseWorkOrder, closeWorkOrder } from '@/api/work-order'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { WORK_ORDER_STATUS, WORK_ORDER_PRIORITY } from '@/common/status-maps'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import { getWorkOrderList, approveWorkOrder, releaseWorkOrder, closeWorkOrder } from '@/api/work-order'
+import { useTable } from '@/hooks/useTable'
+import WorkOrderFormDialog, { type WorkOrderFormModel } from './WorkOrderFormDialog.vue'
 
-interface WorkOrder {
+interface WorkOrderRow {
   id: string
   code: string
   wo_type: string
@@ -85,42 +100,18 @@ interface WorkOrder {
   planned_end_date: string
 }
 
-// ==================== 数据加载 ====================
-const orders = ref<WorkOrder[]>([])
-const total = ref(0)
-const loading = ref(false)
-
-async function fetchOrders() {
-  loading.value = true
-  try {
-    const params: any = {
-      page: pagination.currentPage,
-      page_size: pagination.pageSize
-    }
-    if (searchForm.code) params.code = searchForm.code
-    if (searchForm.status) params.status = searchForm.status
-    if (searchForm.priority) params.priority = searchForm.priority
-    if (searchForm.date_range && searchForm.date_range.length === 2) {
-      const start = searchForm.date_range[0]
-      const end = searchForm.date_range[1]
-      if (start) params.start_date = start
-      if (end) params.end_date = end
-    }
-
-    const res = await getWorkOrderList(params)
-    orders.value = res.data.items as WorkOrder[]
-    total.value = res.data.total
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  fetchOrders()
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({
+  code: '',
+  status: '',
+  priority: '',
+  date_range: [] as string[]
 })
 
-// ==================== 搜索 ====================
-const searchForm = reactive({ code: '', status: '', priority: '', workshop: '', date_range: [] as string[] })
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<WorkOrderFormModel>({ id: '', code: '', name: '' })
+
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '工单编号', field: 'code', props: { placeholder: 'WO...' } as any },
   {
@@ -161,16 +152,14 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-// SearchSetting: 所有可用字段
 const allSearchColumns = computed(() => searchColumns)
-// SearchSetting: 当前可见字段
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const searchFormRef = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-const columns: TableColumnItem<WorkOrder>[] = [
+const columns: TableColumnItem<WorkOrderRow>[] = [
   { prop: 'code', label: '工单编号', width: 160 },
   { prop: 'material_name', label: '产品', minWidth: 140 },
   { prop: 'planned_qty', label: '计划数量', minWidth: 100, align: 'center' },
@@ -183,118 +172,123 @@ const columns: TableColumnItem<WorkOrder>[] = [
   { label: '操作', minWidth: 140, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-
-// 分页使用 API 服务端分页，数据直接绑定
-const pagedOrders = computed(() => orders.value)
-
-// 同步 pagination.total
-watch(total, (val) => {
-  pagination.total = val
+const { tableData, pagination, loading, search, refresh } = useTable<WorkOrderRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: any = {
+      page,
+      page_size: size
+    }
+    if (searchForm.value.code) params.code = searchForm.value.code
+    if (searchForm.value.status) params.status = searchForm.value.status
+    if (searchForm.value.priority) params.priority = searchForm.value.priority
+    if (searchForm.value.date_range && searchForm.value.date_range.length === 2) {
+      const start = searchForm.value.date_range[0]
+      const end = searchForm.value.date_range[1]
+      if (start) params.start_date = start
+      if (end) params.end_date = end
+    }
+    const res = await getWorkOrderList(params)
+    return {
+      list: (res.data.items as WorkOrderRow[]).map(mapWorkOrderRow),
+      total: res.data.total
+    }
+  }
 })
-
-// 监听分页变化重新请求
-watch(
-  () => pagination.currentPage,
-  () => fetchOrders()
-)
-watch(
-  () => pagination.pageSize,
-  () => {
-    pagination.currentPage = 1
-    fetchOrders()
-  }
-)
-
-function handleSearch() {
-  pagination.currentPage = 1
-  fetchOrders()
-}
-function handleReset() {
-  Object.assign(searchForm, { code: '', status: '', priority: '', date_range: [] })
-  pagination.currentPage = 1
-  fetchOrders()
-}
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      orders.value = orders.value.filter((e: any) => e.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
-}
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ name: '' })
-const formCols: FormColumnItem[] = [{ type: 'input', label: '名称', field: 'name', required: true }]
-function openAdd() {
-  mode.value = 'add'
-  eid.value = ''
-  vis.value = true
-}
-function openEdit(r: any) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
-}
-async function submit() {
-  if (!form.name) {
-    ElMessage.warning('请填写必填项')
-    return false
-  }
-  if (mode.value === 'add') {
-    orders.value.unshift({ id: Date.now().toString(), ...form } as any)
-  } else {
-    const i = orders.value.findIndex((e: any) => e.id === eid.value)
-    if (i > -1) Object.assign(orders.value[i], form)
-  }
-  return true
-}
-function refresh() {
-  handleReset()
-}
-
-function isOverdue(row: WorkOrder) {
-  if (row.status === 'completed' || row.status === 'closed') return false
-  return new Date(row.planned_end_date) < new Date()
-}
-
-async function submitApproval(row: WorkOrder) {
-  const res = await approveWorkOrder(row.id, true)
-  ElMessage.success(res.message || `工单 ${row.code} 已提交审批`)
-  fetchOrders()
-}
-
-async function releaseOrder(row: WorkOrder) {
-  const res = await releaseWorkOrder(row.id)
-  ElMessage.success(res.message || `工单 ${row.code} 已下发到车间`)
-  fetchOrders()
-}
-
-async function closeOrder(row: WorkOrder) {
-  ElMessageBox.confirm('确认关闭该工单？', '确认', { type: 'warning' })
-    .then(async () => {
-      const res = await closeWorkOrder(row.id, { close_type: 'normal' })
-      ElMessage.success(res.message || '工单已关闭')
-      fetchOrders()
-    })
-    .catch(() => {})
-}
 
 function deleteOrder(id: string) {
   ElMessageBox.confirm('确定删除该工单？', '警告', { type: 'warning' })
     .then(() => {
-      orders.value = orders.value.filter((o) => o.id !== id)
       ElMessage.success('删除成功')
+      refresh()
     })
     .catch(() => {})
+}
+
+function mapWorkOrderRow(item: any): WorkOrderRow {
+  return {
+    id: item.id,
+    code: item.code,
+    wo_type: item.wo_type,
+    material_code: item.material_code,
+    material_name: item.material_name,
+    material_spec: item.material_spec || '',
+    planned_qty: item.planned_qty,
+    completed_qty: item.completed_qty || 0,
+    progress: item.planned_qty > 0 ? Math.round((item.completed_qty || 0) / item.planned_qty * 100) : 0,
+    status: item.status,
+    priority: item.priority,
+    workshop_name: item.workshop_name || '',
+    current_operation: item.current_operation || '',
+    planned_start_date: item.planned_start_date || '',
+    planned_end_date: item.planned_end_date || ''
+  }
+}
+
+function handleSearch() {
+  search()
+}
+
+function handleReset() {
+  searchForm.value = { code: '', status: '', priority: '', date_range: [] }
+  search()
+}
+
+function refresh() {
+  handleReset()
+}
+
+function isOverdue(row: WorkOrderRow) {
+  if (row.status === 'completed' || row.status === 'closed') return false
+  if (!row.planned_end_date) return false
+  return new Date(row.planned_end_date) < new Date()
+}
+
+async function submitApproval(row: WorkOrderRow) {
+  const res = await approveWorkOrder(row.id, true)
+  ElMessage.success(res.message || `工单 ${row.code} 已提交审批`)
+  refresh()
+}
+
+async function releaseOrder(row: WorkOrderRow) {
+  const res = await releaseWorkOrder(row.id)
+  ElMessage.success(res.message || `工单 ${row.code} 已下发到车间`)
+  refresh()
+}
+
+async function closeOrder(row: WorkOrderRow) {
+  ElMessageBox.confirm('确认关闭该工单？', '确认', { type: 'warning' })
+    .then(async () => {
+      const res = await closeWorkOrder(row.id, { close_type: 'normal' })
+      ElMessage.success(res.message || '工单已关闭')
+      refresh()
+    })
+    .catch(() => {})
+}
+
+function openAdd() {
+  dialogMode.value = 'add'
+  formModel.value = { id: '', code: '', name: '' }
+  dialogVisible.value = true
+}
+
+function openEdit(row: WorkOrderRow) {
+  dialogMode.value = 'edit'
+  formModel.value = { id: row.id, code: row.code, name: row.material_name }
+  dialogVisible.value = true
+}
+
+async function submitDialog() {
+  dialogVisible.value = false
+  await refresh()
 }
 </script>
 
 <style scoped>
 .progress-cell {
   min-width: 120px;
+}
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
 }
 </style>

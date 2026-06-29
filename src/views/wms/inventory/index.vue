@@ -1,33 +1,48 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="inventory-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe style="height: 100%">
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+
+    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
       <template #qty="{ row }">
         <div class="qty-cell">
           <span :class="{ 'qty-warn': row.qty < row.safety }">{{ row.qty }}</span>
           <el-tag v-if="row.qty < row.safety" type="danger" size="small" class="qty-tag">低于安全库存</el-tag>
         </div>
       </template>
-      <template #actions="{ row }"><el-button type="primary" link size="small" @click="trace(row)">追溯</el-button></template>
+      <template #actions="{ row }">
+        <el-button type="primary" link size="small" @click="trace(row)">追溯</el-button>
+      </template>
     </gi-table>
-    <el-dialog v-model="tv" title="批次追溯" width="700px">
-      <div v-if="td.length">
-        <el-timeline
-          ><el-timeline-item v-for="(t, i) in td" :key="i" :timestamp="t.time" :type="t.type">{{ t.desc }}</el-timeline-item></el-timeline
-        >
+
+    <el-dialog v-model="traceVisible" title="批次追溯" width="700px">
+      <div v-if="traceData.length">
+        <el-timeline>
+          <el-timeline-item v-for="(t, i) in traceData" :key="i" :timestamp="t.time" :type="t.type">{{ t.desc }}</el-timeline-item>
+        </el-timeline>
       </div>
     </el-dialog>
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { computed, ref } from 'vue'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-interface Inv {
+import { getInventoryList } from '@/api/wms'
+import { useTable } from '@/hooks/useTable'
+
+interface InvRow {
   id: string
   code: string
   name: string
@@ -41,52 +56,11 @@ interface Inv {
   safety: number
   unit: string
 }
-const invs = ref<Inv[]>([
-  {
-    id: '1',
-    code: '01.01.001-00001',
-    name: '45#圆钢',
-    spec: 'φ50',
-    warehouse: '原材料仓',
-    location: 'A-01-01',
-    lot: 'L20250101',
-    qty: 350,
-    reserved: 200,
-    available: 150,
-    safety: 100,
-    unit: 'kg'
-  },
-  {
-    id: '2',
-    code: '02.04.001-00001',
-    name: '轴承 6308',
-    spec: 'SKF',
-    warehouse: '原材料仓',
-    location: 'B-02-03',
-    lot: 'L20241215',
-    qty: 80,
-    reserved: 50,
-    available: 30,
-    safety: 50,
-    unit: '个'
-  },
-  {
-    id: '3',
-    code: '04.01.001-00001',
-    name: '离心泵 XJP-100',
-    spec: '流量100m³/h',
-    warehouse: '成品仓',
-    location: 'C-01-01',
-    lot: 'WO202501150001',
-    qty: 45,
-    reserved: 0,
-    available: 45,
-    safety: 10,
-    unit: '台'
-  }
-])
-const s = reactive({ keyword: '', warehouse: '' })
-const sc: FormColumnItem[] = [
+
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({ keyword: '', warehouse: '' })
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword' } as any,
   {
     type: 'select-v2',
@@ -103,15 +77,14 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
-const cols: TableColumnItem<Inv>[] = [
+
+const cols: TableColumnItem<InvRow>[] = [
   { prop: 'code', label: '物料编码', width: 170 },
   { prop: 'name', label: '名称', minWidth: 130 },
   { prop: 'spec', label: '规格', width: 120 },
@@ -124,40 +97,63 @@ const cols: TableColumnItem<Inv>[] = [
   { prop: 'available', label: '可用', minWidth: 80, align: 'center' },
   { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() =>
-  invs.value.filter((i) => (!s.keyword || i.name.includes(s.keyword) || i.code.includes(s.keyword)) && (!s.warehouse || i.warehouse === s.warehouse))
-)
-const pd = computed(() => {
-  return fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize)
+
+const { tableData, pagination, loading, search, refresh } = useTable<InvRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getInventoryList({
+      page,
+      page_size: size,
+      code: searchForm.value.keyword || undefined,
+      name: searchForm.value.keyword || undefined,
+      warehouse: searchForm.value.warehouse || undefined
+    })
+    return {
+      list: (res.data.items || []).map(mapInvRow),
+      total: res.data.total
+    }
+  }
 })
 
-watch(
-  fd,
-  (val) => {
-    p.total = val.length
-  },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+function mapInvRow(item: any): InvRow {
+  return {
+    id: String(item.id),
+    code: item.code || '',
+    name: item.name || '',
+    spec: item.spec || '',
+    warehouse: item.warehouse || '',
+    location: item.location || '',
+    lot: item.lot || '',
+    qty: Number(item.qty ?? 0),
+    reserved: Number(item.reserved ?? 0),
+    available: Number(item.available ?? 0),
+    safety: Number(item.safety ?? 0),
+    unit: item.unit || ''
+  }
 }
-function hr() {
-  s.keyword = ''
-  s.warehouse = ''
-  p.currentPage = 1
+
+function handleSearch() {
+  search()
 }
-const tv = ref(false)
-const td = ref<any[]>([])
-function trace(row: Inv) {
-  td.value = [
+
+function handleReset() {
+  searchForm.value = { keyword: '', warehouse: '' }
+  search()
+}
+
+const traceVisible = ref(false)
+const traceData = ref<any[]>([])
+
+function trace(row: InvRow) {
+  traceData.value = [
     { time: '2025-01-15 14:00', type: 'primary', desc: `成品入库: ${row.name} 入库 ${row.qty}${row.unit}` },
     { time: '2025-01-14 10:00', type: 'success', desc: `工序报工: 工单 WO202501150001 完工` },
     { time: '2025-01-05 08:00', type: 'warning', desc: `来料入库: 批号 ${row.lot} 从 PO202501010005 收货` }
   ]
-  tv.value = true
+  traceVisible.value = true
 }
 </script>
+
 <style scoped>
 .qty-cell {
   display: flex;

@@ -1,8 +1,15 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" storage-key="file-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" />
+      <SearchSetting :columns="allSearchColumns" :required-fields="['keyword']" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="sf"
+          v-model="s"
+          :columns="visibleSearchColumns"
+          search
+          @search="hs"
+          @reset="hr"
+        />
       </SearchSetting>
     </template>
     <template #tool>
@@ -12,7 +19,14 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="filteredFiles" border style="height: 100%">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      style="height: 100%"
+    >
       <template #name="{ row }">
         <span style="display: flex; align-items: center; gap: 8px">
           <el-icon :size="20" :color="fileIconColor(row.type)">
@@ -27,12 +41,12 @@
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="previewFile(row)">预览</el-button>
         <el-button type="primary" link size="small" @click="downloadFile(row)">下载</el-button>
-        <gi-button type="delete" size="small" @click="deleteFile(row.id)" />
+        <gi-button type="delete" size="small" @click="onDelete(row)" />
       </template>
     </gi-table>
 
     <!-- 预览弹窗 -->
-    <el-dialog v-model="previewVisible" title="文件预览" width="800px">
+    <el-dialog v-model="previewVisible" title="文件预览" width="800px" :lock-scroll="false">
       <div v-if="previewFileData?.type === 'image'" style="text-align: center">
         <img :src="previewFileData.url" style="max-width: 100%; max-height: 500px" />
       </div>
@@ -46,31 +60,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, shallowRef } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Document, Picture, VideoCamera, Files, Grid } from '@element-plus/icons-vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { UploadFile } from 'element-plus'
-
-const s = ref({ keyword: '' })
-const sc: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword' } as any]
-
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
-const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-function hs() {}
-function hr() {
-  s.value.keyword = ''
-}
-function refresh() {
-  hr()
-}
+import { useTable } from '@/hooks/useTable'
 
 interface FileItem {
   id: string
@@ -83,57 +79,19 @@ interface FileItem {
   uploaded_at: string
 }
 
-const files = ref<FileItem[]>([
-  {
-    id: '1',
-    name: '离心泵装配图.pdf',
-    module: 'BOM管理',
-    object_type: '物料图纸',
-    size: 2.5 * 1024 * 1024,
-    type: 'pdf',
-    url: '',
-    uploaded_at: '2025-01-15 09:00:00'
-  },
-  {
-    id: '2',
-    name: '工单异常照片.jpg',
-    module: '工单管理',
-    object_type: '异常附件',
-    size: 1.2 * 1024 * 1024,
-    type: 'image',
-    url: 'https://via.placeholder.com/800x600',
-    uploaded_at: '2025-01-15 10:30:00'
-  },
-  {
-    id: '3',
-    name: '来料检验报告.xlsx',
-    module: '质检管理',
-    object_type: '检验报告',
-    size: 0.5 * 1024 * 1024,
-    type: 'excel',
-    url: '',
-    uploaded_at: '2025-01-14 14:00:00'
-  },
-  {
-    id: '4',
-    name: '作业指导书_SOP.docx',
-    module: '工艺路线',
-    object_type: '操作指导',
-    size: 3.1 * 1024 * 1024,
-    type: 'word',
-    url: '',
-    uploaded_at: '2025-01-13 11:00:00'
-  }
-])
+const s = ref({ keyword: '' })
+const sf = ref<FormInstance | null>()
 
-// 搜索过滤逻辑
-const filteredFiles = computed(() => {
-  const kw = s.value.keyword?.toLowerCase() || ''
-  if (!kw) return files.value
-  return files.value.filter(
-    (f) => f.name.toLowerCase().includes(kw) || f.module.toLowerCase().includes(kw) || f.object_type.toLowerCase().includes(kw)
-  )
-})
+const sc: FormColumnItem[] = [
+  { type: 'input', label: '关键字', field: 'keyword' } as any
+]
+
+const allSearchColumns = computed(() => sc)
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 
 const fileIconMap: Record<string, any> = {
   pdf: Document,
@@ -169,6 +127,52 @@ const columns: TableColumnItem<FileItem>[] = [
   { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
+// Mock seed data
+const seedFiles: FileItem[] = [
+  {
+    id: '1', name: '离心泵装配图.pdf', module: 'BOM管理', object_type: '物料图纸',
+    size: 2.5 * 1024 * 1024, type: 'pdf', url: '', uploaded_at: '2025-01-15 09:00:00'
+  },
+  {
+    id: '2', name: '工单异常照片.jpg', module: '工单管理', object_type: '异常附件',
+    size: 1.2 * 1024 * 1024, type: 'image', url: 'https://via.placeholder.com/800x600', uploaded_at: '2025-01-15 10:30:00'
+  },
+  {
+    id: '3', name: '来料检验报告.xlsx', module: '质检管理', object_type: '检验报告',
+    size: 0.5 * 1024 * 1024, type: 'excel', url: '', uploaded_at: '2025-01-14 14:00:00'
+  },
+  {
+    id: '4', name: '作业指导书_SOP.docx', module: '工艺路线', object_type: '操作指导',
+    size: 3.1 * 1024 * 1024, type: 'word', url: '', uploaded_at: '2025-01-13 11:00:00'
+  }
+]
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<FileItem>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const kw = s.value.keyword?.toLowerCase() || ''
+    let filtered = kw
+      ? seedFiles.filter(
+          (f) => f.name.toLowerCase().includes(kw) || f.module.toLowerCase().includes(kw) || f.object_type.toLowerCase().includes(kw)
+        )
+      : seedFiles
+    const start = (page - 1) * size
+    return {
+      list: filtered.slice(start, start + size),
+      total: filtered.length
+    }
+  }
+})
+
+function hs() {
+  search()
+}
+
+function hr() {
+  s.value.keyword = ''
+  search()
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
@@ -176,36 +180,25 @@ function formatSize(bytes: number): string {
 }
 
 function handleUpload(file: UploadFile) {
-  const ext = file.name.split('.').pop() || 'unknown'
-  const newFile: FileItem = {
-    id: Date.now().toString(),
-    name: file.name,
-    module: '文件管理',
-    object_type: '通用文件',
-    size: file.size || 0,
-    type: ext,
-    url: '',
-    uploaded_at: new Date().toLocaleString('zh-CN')
-  }
-  files.value.unshift(newFile)
   ElMessage.success('上传成功')
+  refresh()
 }
 
 const previewVisible = ref(false)
 const previewFileData = ref<FileItem | null>(null)
+
 function previewFile(row: FileItem) {
   previewFileData.value = row
   previewVisible.value = true
 }
+
 function downloadFile(row: FileItem) {
   ElMessage.success(`开始下载: ${row.name}`)
 }
-function deleteFile(id: string) {
-  ElMessageBox.confirm('确定删除该文件？', '提示', { type: 'warning' })
-    .then(() => {
-      files.value = files.value.filter((f) => f.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
-}
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

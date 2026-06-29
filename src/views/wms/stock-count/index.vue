@@ -1,8 +1,15 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" storage-key="stock-count-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
     <template #tool>
@@ -18,11 +25,9 @@
       </el-col>
     </el-row>
 
-    <gi-table :columns="planColumns" :data="plans" border stripe>
+    <gi-table :columns="planColumns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #type="{ row }">
-        <el-tag :type="row.type === 'full' ? 'danger' : 'warning'" size="small">
-          {{ row.type }}
-        </el-tag>
+        <el-tag :type="row.type === 'full' ? 'danger' : 'warning'" size="small">{{ row.type }}</el-tag>
       </template>
       <template #status="{ row }">
         <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'running' ? 'primary' : 'success'" size="small">
@@ -59,7 +64,9 @@
         <el-table-column prop="actual_qty" label="Actual Qty" width="90" align="center" />
         <el-table-column label="Diff" width="90" align="center">
           <template #default="{ row }">
-            <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '' }"> {{ row.diff > 0 ? '+' : '' }}{{ row.diff }} </span>
+            <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '' }">
+              {{ row.diff > 0 ? '+' : '' }}{{ row.diff }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column label="Disposition" width="140">
@@ -81,13 +88,14 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import { getStockCountDiff, getStockCountList } from '@/api/wms'
+import { useTable } from '@/hooks/useTable'
 
-interface PlanItem {
+interface PlanRow {
   id: string
   code: string
   warehouse: string
@@ -97,22 +105,25 @@ interface PlanItem {
   status: string
 }
 
+const searchFormRef = ref<FormInstance | null>()
 const searchForm = ref({ keyword: '' })
-const searchColumns: FormColumnItem[] = [{ type: 'input', label: 'Keyword', field: 'keyword' } as any]
+
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: 'Keyword', field: 'keyword' } as any
+]
+
 const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const searchFormRef = ref<FormInstance | null>()
 
 const rawExecLines = ref<any[]>([])
 const rawDiffLines = ref<any[]>([])
-const plans = ref<PlanItem[]>([])
 const execItems = ref<any[]>([])
 const diffItems = ref<any[]>([])
 const execVisible = ref(false)
 const diffVisible = ref(false)
 const currentPlanCode = ref('')
 
-const planColumns: TableColumnItem<PlanItem>[] = [
+const planColumns: TableColumnItem<PlanRow>[] = [
   { prop: 'code', label: 'Plan Code', width: 160 },
   { prop: 'warehouse', label: 'Warehouse', width: 140 },
   { label: 'Type', minWidth: 80, slotName: 'type', align: 'center' },
@@ -142,7 +153,7 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
 }
 
 function buildPlans(lines: any[]) {
-  const map = new Map<string, PlanItem>()
+  const map = new Map<string, PlanRow>()
 
   lines.forEach((line, index) => {
     const code = String(line.plan_code)
@@ -165,36 +176,44 @@ function buildPlans(lines: any[]) {
   return keyword ? result.filter((item) => item.code.toLowerCase().includes(keyword) || item.warehouse.toLowerCase().includes(keyword)) : result
 }
 
-async function loadData() {
-  const [execRes, diffRes] = await Promise.all([getStockCountList({ page: 1, page_size: 100 }), getStockCountDiff({ page: 1, page_size: 100 })])
+const { tableData, pagination, loading, search, refresh } = useTable<PlanRow>({
+  rowKey: 'id',
+  listAPI: async () => {
+    const [execRes, diffRes] = await Promise.all([
+      getStockCountList({ page: 1, page_size: 100 }),
+      getStockCountDiff({ page: 1, page_size: 100 })
+    ])
 
-  rawExecLines.value = (execRes.data.items || []).map((item: any) => ({
-    ...item,
-    id: String(item.id),
-    actual: Number(item.actual_qty ?? item.book_qty ?? 0)
-  }))
-  rawDiffLines.value = (diffRes.data.items || []).map((item: any) => ({
-    ...item,
-    id: String(item.id),
-    disposition: 'ignore'
-  }))
-  plans.value = buildPlans(rawExecLines.value)
-}
+    rawExecLines.value = (execRes.data.items || []).map((item: any) => ({
+      ...item,
+      id: String(item.id),
+      actual: Number(item.actual_qty ?? item.book_qty ?? 0)
+    }))
+    rawDiffLines.value = (diffRes.data.items || []).map((item: any) => ({
+      ...item,
+      id: String(item.id),
+      disposition: 'ignore'
+    }))
+
+    const plans = buildPlans(rawExecLines.value)
+    return { list: plans, total: plans.length }
+  }
+})
 
 function handleSearch() {
-  plans.value = buildPlans(rawExecLines.value)
+  search()
 }
 
 function handleReset() {
   searchForm.value.keyword = ''
-  plans.value = buildPlans(rawExecLines.value)
+  search()
 }
 
 function openCreate() {
   ElMessage.info('Create flow is not implemented in mock mode yet')
 }
 
-function startCount(plan: PlanItem) {
+function startCount(plan: PlanRow) {
   currentPlanCode.value = plan.code
   plan.status = 'running'
   execItems.value = rawExecLines.value
@@ -204,14 +223,16 @@ function startCount(plan: PlanItem) {
 }
 
 function submitCount() {
-  const plan = plans.value.find((item) => item.code === currentPlanCode.value)
+  const plan = tableData.value.find((item) => item.code === currentPlanCode.value)
   if (plan) plan.status = 'completed'
   execVisible.value = false
   ElMessage.success('Count submitted')
 }
 
-function viewDiff(plan: PlanItem) {
-  diffItems.value = rawDiffLines.value.filter((item) => item.plan_code === plan.code).map((item) => ({ ...item }))
+function viewDiff(plan: PlanRow) {
+  diffItems.value = rawDiffLines.value
+    .filter((item) => item.plan_code === plan.code)
+    .map((item) => ({ ...item }))
   diffVisible.value = true
 }
 
@@ -219,10 +240,6 @@ function confirmDiff() {
   diffVisible.value = false
   ElMessage.success('Diff confirmed')
 }
-
-onMounted(() => {
-  loadData()
-})
 </script>
 
 <style scoped>

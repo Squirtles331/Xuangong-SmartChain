@@ -62,7 +62,14 @@
 
       <!-- 报工历史 -->
       <el-card header="报工记录" shadow="never" style="margin-top: 16px">
-        <gi-table :columns="historyColumns" :data="pagedHistory" :pagination="historyPagination" border size="small">
+        <gi-table
+          :columns="historyColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          border
+          size="small"
+        >
           <template #defect_reasons="{ row }">
             <span>{{ row.defect_reasons }}</span>
           </template>
@@ -84,6 +91,7 @@ import { getReportHistory, reportOperation } from '@/api/work-order'
 import { useRouter } from 'vue-router'
 import type { TableColumnItem } from 'gi-component'
 import * as echarts from 'echarts'
+import { useTable } from '@/hooks/useTable'
 
 const router = useRouter()
 
@@ -99,12 +107,12 @@ const report = reactive({
 })
 
 // ==================== 计时器 ====================
-const elapsed = ref(65) // 分钟，模拟已过时间
+const elapsed = ref(65)
 let timer: ReturnType<typeof setInterval>
 
 onMounted(() => {
   timer = setInterval(() => elapsed.value++, 60000)
-  fetchReportHistory()
+  refresh()
   nextTick(() => initParetoChart())
 })
 
@@ -143,33 +151,8 @@ const form = reactive({
   remark: ''
 })
 
-// watch elapsed 实时更新 actual_hours
 watch(elapsed, (val) => {
   form.actual_hours = val
-})
-
-const reportHistory = ref<any[]>([])
-
-async function fetchReportHistory() {
-  try {
-    const res = await getReportHistory()
-    reportHistory.value = (res.data as any[]) || []
-  } catch {
-    reportHistory.value = []
-  }
-}
-
-const historyPagination = reactive({ currentPage: 1, pageSize: 5, total: 0 })
-watch(
-  reportHistory,
-  (val) => {
-    historyPagination.total = val.length
-  },
-  { immediate: true }
-)
-const pagedHistory = computed(() => {
-  const s = (historyPagination.currentPage - 1) * historyPagination.pageSize
-  return reportHistory.value.slice(s, s + historyPagination.pageSize)
 })
 
 const historyColumns: TableColumnItem<any>[] = [
@@ -180,6 +163,19 @@ const historyColumns: TableColumnItem<any>[] = [
   { prop: 'actual_hours', label: '工时(分)', width: 90, align: 'center' },
   { prop: 'worker', label: '操作人', width: 100 }
 ]
+
+const { tableData, pagination, loading, refresh } = useTable<any>({
+  rowKey: 'time',
+  listAPI: async ({ page, size }) => {
+    const res = await getReportHistory()
+    const all = (res.data as any[]) || []
+    const start = (page - 1) * size
+    return {
+      list: all.slice(start, start + size),
+      total: all.length
+    }
+  }
+})
 
 // ==================== 提交报工 ====================
 async function submitReport() {
@@ -206,10 +202,8 @@ async function submitReport() {
           actual_hours: form.actual_hours
         })
 
-        // 报工成功后重新拉取报工历史
-        await fetchReportHistory()
+        await refresh()
 
-        // 报工后自动更新工单进度
         const totalReported = form.qualified_qty + form.defective_qty
         report.reported_qty += totalReported
 
@@ -218,7 +212,6 @@ async function submitReport() {
           setTimeout(() => router.push('/work-order/list'), 1500)
         } else {
           ElMessage.success(`报工成功！当前进度 ${completionProgress.value}% (${report.reported_qty}/${report.planned_qty})`)
-          // 重置表单，预填剩余数量
           form.qualified_qty = maxReportQty.value
           form.defective_qty = 0
           form.defect_reasons = []
@@ -244,7 +237,7 @@ function initParetoChart() {
   paretoChart = echarts.init(paretoChartRef.value)
 
   const reasonMap: Record<string, number> = {}
-  reportHistory.value.forEach((r: any) => {
+  ;(tableData.value || []).forEach((r: any) => {
     const reasons = (r.defect_reasons || '')
       .split(',')
       .map((s: string) => s.trim())
@@ -299,7 +292,7 @@ function initParetoChart() {
   })
 }
 
-watch(reportHistory, () => {
+watch(tableData, () => {
   nextTick(() => initParetoChart())
 })
 </script>

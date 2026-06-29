@@ -16,7 +16,9 @@
       </el-tab-pane>
       <el-tab-pane label="发货通知" name="delivery">
         <gi-table :columns="delCols" :data="deliveries" border stripe size="small">
-          <template #actions="{ row }"><el-button type="primary" link size="small" @click="confirmDel(row.id)">确认发货</el-button></template>
+          <template #actions="{ row }">
+            <el-button type="primary" link size="small" @click="confirmDel(row.id)">确认发货</el-button>
+          </template>
         </gi-table>
       </el-tab-pane>
       <el-tab-pane label="订单状态时间线" name="timeline">
@@ -98,20 +100,20 @@ async function loadPortalData() {
 }
 
 async function confirm(id: string) {
-  const res = await confirmPortalOrder(id)
-  ElMessage.success(res.message || '已确认订单')
+  await confirmPortalOrder(id)
+  ElMessage.success('已确认订单')
   await loadPortalData()
 }
 
 async function reject(id: string) {
-  const res = await rejectPortalOrder(id)
-  ElMessage.success(res.message || '已拒绝订单')
+  await rejectPortalOrder(id)
+  ElMessage.success('已拒绝订单')
   await loadPortalData()
 }
 
 async function confirmDel(id: string) {
-  const res = await confirmPortalDelivery(id)
-  ElMessage.success(res.message || '发货确认成功')
+  await confirmPortalDelivery(id)
+  ElMessage.success('发货确认成功')
 }
 
 onMounted(() => {

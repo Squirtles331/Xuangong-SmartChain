@@ -1,47 +1,80 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="opportunity-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /></template>
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="sf"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          :grid-item-props="{
+            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+          }"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    </template>
+
     <div style="margin-bottom: 16px; padding: 16px; background: #fafafa; border-radius: 4px">
       <div style="text-align: center; font-weight: bold; margin-bottom: 8px">商机阶段漏斗</div>
       <div ref="funnelRef" style="width: 100%; height: 300px"></div>
     </div>
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #stage="{ row }"
-        ><el-steps :active="stageStep(row.stage)" align-center style="min-width: 200px"
-          ><el-step title="初步" /><el-step title="方案" /><el-step title="报价" /><el-step title="成交" /></el-steps
-      ></template>
-      <template #probability="{ row }"
-        ><el-progress
+
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+    >
+      <template #stage="{ row }">
+        <el-steps :active="stageStep(row.stage)" align-center style="min-width: 200px">
+          <el-step title="初步" />
+          <el-step title="方案" />
+          <el-step title="报价" />
+          <el-step title="成交" />
+        </el-steps>
+      </template>
+      <template #probability="{ row }">
+        <el-progress
           :percentage="row.probability"
           :stroke-width="8"
           :color="row.probability >= 70 ? '#67c23a' : row.probability >= 40 ? '#e6a23c' : '#909399'"
-      /></template>
-      <template #actions="{ row }"
-        ><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /><el-button
-          type="success"
-          link
-          size="small"
-          @click="convertToOrder(row)"
-          >转订单</el-button
-        ></template
-      >
+        />
+      </template>
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <gi-button style="margin-left: 8px" type="delete" @click="remove(row)" />
+        <el-button type="success" link size="small" @click="convertToOrder(row)">转订单</el-button>
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增商机' : '编辑商机'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <OpportunityFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
-import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-interface Opp {
+import SearchSetting from '@/components/SearchSetting.vue'
+import { useTable } from '@/hooks/useTable'
+import OpportunityFormDialog, { type OpportunityFormModel } from './OpportunityFormDialog.vue'
+
+interface OpportunityRow {
   id: string
   customer: string
   product: string
@@ -51,7 +84,8 @@ interface Opp {
   owner: string
   close_date: string
 }
-const data = ref<Opp[]>([
+
+const localData = ref<OpportunityRow[]>([
   {
     id: '1',
     customer: 'XX重工集团',
@@ -83,8 +117,18 @@ const data = ref<Opp[]>([
     close_date: '2025-06-01'
   }
 ])
-const s = reactive({ keyword: '', stage: '' })
-const sc: FormColumnItem[] = [
+
+const sf = ref<FormInstance | null>()
+const searchForm = ref({
+  keyword: '',
+  stage: ''
+})
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<OpportunityFormModel>(createDefaultFormModel())
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword' } as any,
   {
     type: 'select-v2',
@@ -102,15 +146,14 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
-const cols: TableColumnItem<Opp>[] = [
+
+const columns: TableColumnItem<OpportunityRow>[] = [
   { prop: 'customer', label: '客户', minWidth: 150 },
   { prop: 'product', label: '商机描述', minWidth: 200 },
   { prop: 'amount', label: '预计金额', minWidth: 110, align: 'right' },
@@ -120,100 +163,100 @@ const cols: TableColumnItem<Opp>[] = [
   { prop: 'close_date', label: '预计成交', minWidth: 110 },
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() =>
-  data.value.filter(
-    (r) =>
-      (!s.keyword || r.customer.includes(s.keyword) || r.product.includes(s.keyword) || r.owner.includes(s.keyword)) &&
-      (!s.stage || r.stage === s.stage)
-  )
-)
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<OpportunityRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    let filtered = [...localData.value]
+    const s = searchForm.value
+    if (s.keyword) {
+      filtered = filtered.filter(
+        (r) => r.customer.includes(s.keyword) || r.product.includes(s.keyword) || r.owner.includes(s.keyword)
+      )
+    }
+    if (s.stage) filtered = filtered.filter((r) => r.stage === s.stage)
+    const total = filtered.length
+    const start = (page - 1) * size
+    return {
+      list: filtered.slice(start, start + size),
+      total
+    }
   },
-  { immediate: true }
-)
+  deleteAPI: (ids) => {
+    localData.value = localData.value.filter((r) => !ids.includes(r.id))
+    return Promise.resolve()
+  }
+})
+
+function createDefaultFormModel(): OpportunityFormModel {
+  return {
+    id: '',
+    customer: '',
+    product: '',
+    amount: 0,
+    stage: 'initial',
+    probability: 20,
+    owner: '',
+    close_date: ''
+  }
+}
+
 function stageStep(s: string) {
   const m: Record<string, number> = { initial: 1, solution: 2, quotation: 3, won: 4 }
   return m[s] || 0
 }
-function hs() {
-  p.currentPage = 1
+
+function handleSearch() {
+  search()
 }
-function hr() {
-  s.keyword = ''
-  s.stage = ''
-  p.currentPage = 1
+
+function handleReset() {
+  searchForm.value = { keyword: '', stage: '' }
+  search()
 }
-function refresh() {
-  hr()
-}
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ customer: '', product: '', amount: 0, stage: 'initial', probability: 20, owner: '', close_date: '' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '客户', field: 'customer', required: true },
-  { type: 'input', label: '商机描述', field: 'product', required: true },
-  { type: 'input-number', label: '预计金额', field: 'amount', props: { min: 0, step: 10000 } as any },
-  {
-    type: 'select-v2',
-    label: '阶段',
-    field: 'stage',
-    props: {
-      options: [
-        { label: '初步接触', value: 'initial' },
-        { label: '方案制定', value: 'solution' },
-        { label: '报价中', value: 'quotation' },
-        { label: '成交', value: 'won' }
-      ]
-    } as any
-  },
-  { type: 'input-number', label: '赢单率(%)', field: 'probability', props: { min: 0, max: 100 } as any },
-  { type: 'input', label: '负责人', field: 'owner' },
-  { type: 'date-picker', label: '预计成交', field: 'close_date' }
-]
+
 function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { customer: '', product: '', amount: 0, stage: 'initial', probability: 20, owner: '', close_date: '' })
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
 }
-function openEdit(r: Opp) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
+
+function openEdit(row: OpportunityRow) {
+  dialogMode.value = 'edit'
+  formModel.value = { ...row }
+  dialogVisible.value = true
 }
-async function submit() {
-  if (!form.customer) {
+
+async function submitDialog() {
+  if (!formModel.value.customer) {
     ElMessage.warning('请填写必填项')
-    return false
+    return
   }
-  if (mode.value === 'add') {
-    data.value.unshift({ id: Date.now().toString(), ...form } as Opp)
+
+  if (dialogMode.value === 'add') {
+    localData.value.unshift({ id: Date.now().toString(), ...formModel.value } as OpportunityRow)
   } else {
-    const i = data.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
+    const idx = localData.value.findIndex((r) => r.id === formModel.value.id)
+    if (idx > -1) {
+      localData.value[idx] = { ...formModel.value }
+    }
   }
-  return true
+
+  dialogVisible.value = false
+  await refresh()
 }
-function convertToOrder(r: Opp) {
-  r.stage = 'won'
-  r.probability = 100
+
+function convertToOrder(row: OpportunityRow) {
+  row.stage = 'won'
+  row.probability = 100
   ElMessage.success('已转为销售订单')
 }
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      data.value = data.value.filter((e) => e.id !== id)
-      ElMessage.success('删除成功')
-      renderFunnel()
-    })
-    .catch(() => {})
+
+function remove(row: OpportunityRow) {
+  onDelete(row)
 }
+
+// Funnel chart
 const funnelRef = ref<HTMLElement | null>(null)
 let funnelChart: echarts.ECharts | null = null
 
@@ -227,7 +270,7 @@ function renderFunnel() {
     funnelChart = echarts.init(funnelRef.value)
   }
   const stageCount: Record<string, number> = { initial: 0, solution: 0, quotation: 0, won: 0 }
-  data.value.forEach((r) => {
+  localData.value.forEach((r) => {
     if (stageCount[r.stage] !== undefined) stageCount[r.stage]++
   })
   const stageNames: Record<string, string> = { initial: '初步接触', solution: '方案制定', quotation: '报价中', won: '成交' }
@@ -257,7 +300,9 @@ function renderFunnel() {
     ]
   })
 }
-watch(data, () => nextTick(renderFunnel), { deep: true })
+
+watch(localData, () => nextTick(renderFunnel), { deep: true })
+
 onMounted(() => {
   nextTick(renderFunnel)
   window.addEventListener('resize', handleFunnelResize)
@@ -268,3 +313,9 @@ onBeforeUnmount(() => {
   funnelChart?.dispose()
 })
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

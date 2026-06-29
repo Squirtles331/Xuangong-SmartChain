@@ -1,41 +1,67 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="invoice-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool
-      ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
-        style="margin-left: 8px"
-        @click="handleExport"
-        >导出</el-button
-      ></template
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="sf"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          :grid-item-props="{
+            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+          }"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    </template>
+
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
     >
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #status="{ row }"
-        ><el-tag
+      <template #status="{ row }">
+        <el-tag
           :type="row.status === 'issued' ? 'success' : row.status === 'draft' ? 'warning' : row.status === 'voided' ? 'danger' : 'info'"
           size="small"
-          >{{ row.status === 'issued' ? '已开具' : row.status === 'draft' ? '草稿' : row.status === 'voided' ? '已作废' : '已红冲' }}</el-tag
-        ></template
-      >
-      <template #actions="{ row }"
-        ><gi-button type="edit" @click="openEdit(row)" /><el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="issue(row)"
-          >开具</el-button
-        ></template
-      >
+        >
+          {{ row.status === 'issued' ? '已开具' : row.status === 'draft' ? '草稿' : row.status === 'voided' ? '已作废' : '已红冲' }}
+        </el-tag>
+      </template>
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="issue(row)">开具</el-button>
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增发票' : '编辑发票'" width="650px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <InvoiceFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-interface Inv {
+import SearchSetting from '@/components/SearchSetting.vue'
+import { useTable } from '@/hooks/useTable'
+import InvoiceFormDialog, { type InvoiceFormModel } from './InvoiceFormDialog.vue'
+
+interface InvoiceRow {
   id: string
   code: string
   customer: string
@@ -47,7 +73,8 @@ interface Inv {
   issue_date: string
   status: string
 }
-const data = ref<Inv[]>([
+
+const localData = ref<InvoiceRow[]>([
   {
     id: '1',
     code: 'INV20250115001',
@@ -85,8 +112,18 @@ const data = ref<Inv[]>([
     status: 'draft'
   }
 ])
-const s = reactive({ keyword: '', status: '' })
-const sc: FormColumnItem[] = [
+
+const sf = ref<FormInstance | null>()
+const searchForm = ref({
+  keyword: '',
+  status: ''
+})
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<InvoiceFormModel>(createDefaultFormModel())
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword' } as any,
   {
     type: 'select-v2',
@@ -104,15 +141,14 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
+
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
-const cols: TableColumnItem<Inv>[] = [
+
+const columns: TableColumnItem<InvoiceRow>[] = [
   { prop: 'code', label: '发票号码', minWidth: 170 },
   { prop: 'customer', label: '客户', minWidth: 150 },
   { prop: 'order_code', label: '销售订单', minWidth: 170 },
@@ -124,91 +160,103 @@ const cols: TableColumnItem<Inv>[] = [
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() =>
-  data.value.filter(
-    (r) =>
-      (!s.keyword || r.customer.includes(s.keyword) || r.code.includes(s.keyword) || r.order_code.includes(s.keyword)) &&
-      (!s.status || r.status === s.status)
-  )
-)
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
-  },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+
+const { tableData, pagination, loading, search, refresh } = useTable<InvoiceRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    let filtered = [...localData.value]
+    const s = searchForm.value
+    if (s.keyword) {
+      filtered = filtered.filter(
+        (r) => r.customer.includes(s.keyword) || r.code.includes(s.keyword) || r.order_code.includes(s.keyword)
+      )
+    }
+    if (s.status) filtered = filtered.filter((r) => r.status === s.status)
+    const total = filtered.length
+    const start = (page - 1) * size
+    return {
+      list: filtered.slice(start, start + size),
+      total
+    }
+  }
+})
+
+function createDefaultFormModel(): InvoiceFormModel {
+  return {
+    id: '',
+    code: '',
+    customer: '',
+    order_code: '',
+    amount: 0,
+    tax_rate: 13,
+    tax_amount: 0,
+    total: 0,
+    issue_date: '',
+    status: 'draft'
+  }
 }
-function hr() {
-  s.keyword = ''
-  s.status = ''
-  p.currentPage = 1
+
+function handleSearch() {
+  search()
 }
-function refresh() {
-  hr()
+
+function handleReset() {
+  searchForm.value = { keyword: '', status: '' }
+  search()
 }
+
 function handleExport() {
   ElMessage.success('导出成功')
 }
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ code: '', customer: '', order_code: '', amount: 0, tax_rate: 13, tax_amount: 0, total: 0, issue_date: '', status: 'draft' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '发票号码', field: 'code', required: true },
-  { type: 'input', label: '客户', field: 'customer', required: true },
-  { type: 'input', label: '销售订单', field: 'order_code' },
-  { type: 'input-number', label: '不含税金额', field: 'amount', required: true, props: { min: 0, precision: 2 } as any },
-  { type: 'input-number', label: '税率(%)', field: 'tax_rate', required: true, props: { min: 0, max: 100 } as any },
-  { type: 'input-number', label: '税额', field: 'tax_amount', props: { disabled: true } as any },
-  { type: 'input-number', label: '价税合计', field: 'total', props: { disabled: true } as any },
-  { type: 'date-picker', label: '开票日期', field: 'issue_date' }
-]
+
 function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { code: '', customer: '', order_code: '', amount: 0, tax_rate: 13, tax_amount: 0, total: 0, issue_date: '', status: 'draft' })
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
 }
-// Auto-calculate tax amount and total when amount or tax rate changes
-watch(
-  () => [form.amount, form.tax_rate],
-  () => {
-    form.tax_amount = Math.round(((form.amount * form.tax_rate) / 100) * 100) / 100
-    form.total = Math.round((form.amount + form.tax_amount) * 100) / 100
-  }
-)
-function openEdit(r: Inv) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
+
+function openEdit(row: InvoiceRow) {
+  dialogMode.value = 'edit'
+  formModel.value = { ...row }
+  dialogVisible.value = true
 }
-async function submit() {
-  if (!form.customer) {
+
+async function submitDialog() {
+  if (!formModel.value.customer) {
     ElMessage.warning('请填写必填项')
-    return false
+    return
   }
-  form.tax_amount = Math.round(((form.amount * form.tax_rate) / 100) * 100) / 100
-  form.total = form.amount + form.tax_amount
-  if (mode.value === 'add') {
-    data.value.unshift({
+
+  formModel.value.tax_amount = Math.round(((formModel.value.amount * formModel.value.tax_rate) / 100) * 100) / 100
+  formModel.value.total = formModel.value.amount + formModel.value.tax_amount
+
+  if (dialogMode.value === 'add') {
+    const newItem: InvoiceRow = {
       id: Date.now().toString(),
-      code: 'INV' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(data.value.length + 1).padStart(4, '0'),
-      ...form
-    } as Inv)
+      code: 'INV' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(localData.value.length + 1).padStart(4, '0'),
+      ...formModel.value
+    }
+    localData.value.unshift(newItem)
   } else {
-    const i = data.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
+    const idx = localData.value.findIndex((r) => r.id === formModel.value.id)
+    if (idx > -1) {
+      localData.value[idx] = { ...formModel.value }
+    }
   }
-  return true
+
+  dialogVisible.value = false
+  await refresh()
 }
-function issue(r: Inv) {
-  r.status = 'issued'
-  r.issue_date = new Date().toISOString().slice(0, 10)
+
+function issue(row: InvoiceRow) {
+  row.status = 'issued'
+  row.issue_date = new Date().toISOString().slice(0, 10)
   ElMessage.success('发票已开具')
 }
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

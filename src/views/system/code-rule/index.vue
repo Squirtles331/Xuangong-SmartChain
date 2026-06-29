@@ -5,35 +5,36 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="rules" border style="height: 100%">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      style="height: 100%"
+    >
       <template #actions="{ row }">
         <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button type="delete" @click="deleteRule(row.id)" />
+        <gi-button type="delete" @click="onDelete(row)" />
       </template>
     </gi-table>
 
-    <gi-dialog
-      v-model="dialogVisible"
-      :footer="true"
-      :on-before-ok="submitDialog"
-      :title="dialogMode === 'add' ? '新增编码规则' : '编辑编码规则'"
-      width="550px"
-    >
-      <gi-form v-model="form" :columns="formColumns" :label-width="120" />
-      <!-- 实时预览 -->
-      <div class="preview-box" style="margin-top: 16px; padding: 12px; background: #f5f7fa; border-radius: 6px">
-        <span style="font-size: 13px; color: #606266">编码预览：</span>
-        <span style="font-size: 16px; font-weight: bold; color: #409eff; margin-left: 8px">{{ previewCode }}</span>
-      </div>
-    </gi-dialog>
+    <CodeRuleFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { TableColumnItem } from 'gi-component'
 import { getCodeRules, createCodeRule, updateCodeRule, deleteCodeRule } from '@/api/system'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import { useTable } from '@/hooks/useTable'
+import CodeRuleFormDialog, { type CodeRuleFormModel } from './CodeRuleFormDialog.vue'
 
 interface CodeRule {
   id: string
@@ -44,13 +45,6 @@ interface CodeRule {
   serial_length: number
   example: string
 }
-
-const rules = ref<CodeRule[]>([])
-
-onMounted(async () => {
-  const res = await getCodeRules()
-  rules.value = res.data
-})
 
 const columns: TableColumnItem<CodeRule>[] = [
   { type: 'index', label: '#', width: 60 },
@@ -63,116 +57,67 @@ const columns: TableColumnItem<CodeRule>[] = [
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const editingId = ref('')
-const form = reactive({ code: '', name: '', prefix: '', date_format: 'YYYYMMDD', serial_length: 4 })
-
-const previewCode = computed(() => {
-  const prefix = form.prefix || '???'
-  const now = new Date()
-  const y = now.getFullYear().toString()
-  const m = (now.getMonth() + 1).toString().padStart(2, '0')
-  const d = now.getDate().toString().padStart(2, '0')
-  let dateStr = ''
-  switch (form.date_format) {
-    case 'YYYYMMDD':
-      dateStr = y + m + d
-      break
-    case 'YYMMDD':
-      dateStr = y.slice(2) + m + d
-      break
-    case 'YYYYMM':
-      dateStr = y + m
-      break
-    default:
-      dateStr = y + m + d
-  }
-  const serial = '1'.padStart(form.serial_length || 4, '0')
-  return `${prefix}${dateStr}${serial}`
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<CodeRule>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const response = await getCodeRules()
+    const allItems = (response.data || []) as CodeRule[]
+    const start = (page - 1) * size
+    return {
+      list: allItems.slice(start, start + size),
+      total: allItems.length
+    }
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteCodeRule(id)))
 })
 
-const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '规则编码', field: 'code', required: true },
-  { type: 'input', label: '规则名称', field: 'name', required: true },
-  { type: 'input', label: '前缀', field: 'prefix', required: true },
-  {
-    type: 'select-v2',
-    label: '日期格式',
-    field: 'date_format',
-    required: true,
-    props: {
-      options: [
-        { label: 'YYYYMMDD', value: 'YYYYMMDD' },
-        { label: 'YYMMDD', value: 'YYMMDD' },
-        { label: 'YYYYMM', value: 'YYYYMM' }
-      ]
-    } as any
-  },
-  { type: 'input-number', label: '流水号长度', field: 'serial_length', required: true, props: { min: 2, max: 10 } as any }
-]
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<CodeRuleFormModel>(createDefaultFormModel())
+
+function createDefaultFormModel(): CodeRuleFormModel {
+  return { id: '', code: '', name: '', prefix: '', date_format: 'YYYYMMDD', serial_length: 4 }
+}
 
 function openAdd() {
   dialogMode.value = 'add'
-  form.code = ''
-  form.name = ''
-  form.prefix = ''
-  form.date_format = 'YYYYMMDD'
-  form.serial_length = 4
+  formModel.value = createDefaultFormModel()
   dialogVisible.value = true
 }
+
 function openEdit(row: CodeRule) {
   dialogMode.value = 'edit'
-  editingId.value = row.id
-  form.code = row.code
-  form.name = row.name
-  form.prefix = row.prefix
-  form.date_format = row.date_format
-  form.serial_length = row.serial_length
+  formModel.value = {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    prefix: row.prefix,
+    date_format: row.date_format,
+    serial_length: row.serial_length
+  }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
-  if (!form.code || !form.name || !form.prefix) {
+  if (!formModel.value.code || !formModel.value.name || !formModel.value.prefix) {
     ElMessage.warning('请填写必填项')
-    return false
+    return
   }
-  const example = `${form.prefix}20250115${'0'.repeat(form.serial_length - 1)}1`
+  const example = `${formModel.value.prefix}20250115${'0'.repeat(formModel.value.serial_length - 1)}1`
   if (dialogMode.value === 'add') {
-    await createCodeRule({ ...form, example })
-    // Reload list
-    const res = await getCodeRules()
-    rules.value = res.data
+    await createCodeRule({ ...formModel.value, example })
     ElMessage.success('新增成功')
   } else {
-    await updateCodeRule(editingId.value, { ...form, example })
-    const r = rules.value.find((r) => r.id === editingId.value)
-    if (r) {
-      Object.assign(r, form)
-      r.example = example
-    }
+    await updateCodeRule(formModel.value.id, { ...formModel.value, example })
     ElMessage.success('保存成功')
   }
-  return true
+  dialogVisible.value = false
+  await refresh()
 }
-
-function deleteRule(id: string) {
-  ElMessageBox.confirm('确定删除该编码规则？', '提示', { type: 'warning' })
-    .then(async () => {
-      await deleteCodeRule(id)
-      rules.value = rules.value.filter((r) => r.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
-}
-
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      rules.value = rules.value.filter((r) => r.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
-}
-function refresh() {}
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

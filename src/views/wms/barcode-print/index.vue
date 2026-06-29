@@ -7,7 +7,7 @@
     <el-card shadow="never" style="margin-bottom: 16px">
       <el-form :inline="true">
         <el-form-item label="选择物料">
-          <el-select v-model="selectedMaterial" placeholder="请选择物料" filterable style="width: 280px" @change="onMaterialChange">
+          <el-select v-model="selectedMaterial" placeholder="请选择物料" filterable style="width: 280px">
             <el-option v-for="m in materialList" :key="m.id" :label="`${m.code} - ${m.name}`" :value="m.id" />
           </el-select>
         </el-form-item>
@@ -33,6 +33,7 @@
     </el-card>
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -51,8 +52,6 @@ const materialList = ref<Material[]>([])
 const selectedMaterial = ref('')
 const printQty = ref(1)
 const previewList = ref<{ barcode: string; name: string }[]>([])
-
-function onMaterialChange() {}
 
 function generatePreview() {
   if (!selectedMaterial.value) {
@@ -94,6 +93,7 @@ onMounted(() => {
   fetchMaterials()
 })
 </script>
+
 <style scoped>
 .barcode-grid {
   display: flex;

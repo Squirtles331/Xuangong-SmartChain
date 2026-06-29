@@ -1,8 +1,9 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><h3>销售订单变更 — {{ order?.code }}</h3></template
-    >
+    <template #header>
+      <h3>销售订单变更 — {{ order?.code }}</h3>
+    </template>
+
     <el-descriptions :column="2" border style="margin-bottom: 16px">
       <el-descriptions-item label="订单编号">{{ order?.code }}</el-descriptions-item>
       <el-descriptions-item label="客户">{{ order?.customer }}</el-descriptions-item>
@@ -17,31 +18,36 @@
       <el-table :data="diffData" border stripe size="small">
         <el-table-column prop="field" label="字段" width="120" />
         <el-table-column label="变更前" width="160">
-          <template #default="{ row }"
-            ><span style="color: #f56c6c; text-decoration: line-through">{{ row.old }}</span></template
-          >
+          <template #default="{ row }">
+            <span style="color: #f56c6c; text-decoration: line-through">{{ row.old }}</span>
+          </template>
         </el-table-column>
         <el-table-column label="变更后" width="160">
-          <template #default="{ row }"
-            ><span style="color: #67c23a; font-weight: 600">{{ row.new }}</span></template
-          >
+          <template #default="{ row }">
+            <span style="color: #67c23a; font-weight: 600">{{ row.new }}</span>
+          </template>
         </el-table-column>
       </el-table>
     </el-card>
 
     <el-card header="变更信息" shadow="never">
       <el-form :model="form" label-width="120px" style="max-width: 500px">
-        <el-form-item label="变更类型" required
-          ><el-select v-model="form.type" style="width: 100%"
-            ><el-option label="数量调整" value="qty" /><el-option label="交期调整" value="date" /><el-option
-              label="数量+交期"
-              value="both" /></el-select
-        ></el-form-item>
-        <el-form-item v-if="form.type !== 'date'" label="新数量" required
-          ><el-input-number v-model="form.new_qty" :min="1" style="width: 100%"
-        /></el-form-item>
-        <el-form-item v-if="form.type !== 'qty'" label="新交期" required><el-date-picker v-model="form.new_date" style="width: 100%" /></el-form-item>
-        <el-form-item label="变更原因" required><el-input v-model="form.reason" type="textarea" :rows="2" /></el-form-item>
+        <el-form-item label="变更类型" required>
+          <el-select v-model="form.type" style="width: 100%">
+            <el-option label="数量调整" value="qty" />
+            <el-option label="交期调整" value="date" />
+            <el-option label="数量+交期" value="both" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="form.type !== 'date'" label="新数量" required>
+          <el-input-number v-model="form.new_qty" :min="1" style="width: 100%" />
+        </el-form-item>
+        <el-form-item v-if="form.type !== 'qty'" label="新交期" required>
+          <el-date-picker v-model="form.new_date" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="变更原因" required>
+          <el-input v-model="form.reason" type="textarea" :rows="2" />
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="previewChange">预览变更</el-button>
           <el-button type="success" @click="submitChange">提交变更</el-button>
@@ -53,13 +59,23 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter, useRoute } from 'vue-router'
+
 const router = useRouter()
 const route = useRoute()
 
-const order = ref({
+interface OrderInfo {
+  code: string
+  customer: string
+  material: string
+  qty: number
+  delivery_date: string
+  status: string
+}
+
+const order = ref<OrderInfo>({
   code: '',
   customer: '',
   material: '',
@@ -68,17 +84,14 @@ const order = ref({
   status: ''
 })
 
-// 从路由参数读取订单ID
 onMounted(() => {
   const orderId = route.query.id as string
   if (orderId) {
-    // 模拟根据ID加载订单数据
     loadOrder(orderId)
   }
 })
 
 function loadOrder(id: string) {
-  // 模拟数据加载 — 实际项目中替换为API调用
   order.value = {
     code: id || 'SO202501150001',
     customer: 'XX重工集团',
@@ -89,7 +102,12 @@ function loadOrder(id: string) {
   }
 }
 
-const form = reactive({ type: 'qty', new_qty: 60, new_date: '2025-02-20', reason: '' })
+const form = reactive({
+  type: 'qty' as 'qty' | 'date' | 'both',
+  new_qty: 60,
+  new_date: '2025-02-20',
+  reason: ''
+})
 
 const showDiff = ref(false)
 const diffData = ref<{ field: string; old: string | number; new: string | number }[]>([])

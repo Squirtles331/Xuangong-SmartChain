@@ -33,45 +33,35 @@
     <template #header>
       <h3 style="margin: 0">{{ currentNode ? (currentNode.id ? '编辑' : '新增') + '菜单节点' : '请选择左侧节点' }}</h3>
     </template>
-    <div v-if="!currentNode" class="empty-tip"><el-empty description="选择左侧菜单节点进行编辑，或点击下方按钮新增" /></div>
-    <gi-form v-else v-model="nodeForm" :columns="formColumns" :label-width="100" style="padding: 16px">
-      <!-- 图标选择器 -->
-      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #ebeef5">
-        <el-form-item label="图标预览">
-          <div style="display: flex; align-items: center; gap: 12px">
-            <el-icon v-if="nodeForm.icon" :size="28"><component :is="iconComponent" /></el-icon>
-            <span v-else style="color: #999">未选择</span>
-            <el-button type="primary" link @click="iconDialogVisible = true">选择图标</el-button>
-          </div>
-        </el-form-item>
-      </div>
-      <template #footer>
-        <el-button type="primary" @click="saveNode">保存</el-button>
-        <el-button v-if="currentNode?.id" type="danger" @click="removeNode">删除</el-button>
-        <el-button @click="currentNode = null">取消</el-button>
-      </template>
-    </gi-form>
+    <div v-if="!currentNode" class="empty-tip">
+      <el-empty description="选择左侧菜单节点进行编辑，或点击下方按钮新增" />
+    </div>
+    <div v-else class="form-wrapper">
+      <gi-form v-model="nodeForm" :columns="formColumns" :label-width="100">
+        <template #footer>
+          <el-button type="primary" @click="openDialog">打开编辑对话框</el-button>
+          <el-button v-if="currentNode.id" type="danger" @click="removeNode">删除</el-button>
+          <el-button @click="currentNode = null">取消</el-button>
+        </template>
+      </gi-form>
+    </div>
 
-    <!-- 图标选择对话框 -->
-    <el-dialog v-model="iconDialogVisible" title="选择图标" width="700px">
-      <el-input v-model="iconSearch" placeholder="搜索图标名称..." clearable style="margin-bottom: 12px" />
-      <div class="icon-grid">
-        <div v-for="name in filteredIcons" :key="name" class="icon-item" :class="{ active: nodeForm.icon === name }" @click="selectIcon(name)">
-          <el-icon :size="24"><component :is="name" /></el-icon>
-          <span class="icon-name">{{ name }}</span>
-        </div>
-      </div>
-      <el-empty v-if="!filteredIcons.length" description="未找到匹配图标" />
-    </el-dialog>
+    <MenuFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="dialogFormModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Folder, Document, Operation } from '@element-plus/icons-vue'
 import type { FormColumnItem } from 'gi-component'
-import { getMenuTree, createMenu, updateMenu, deleteMenu } from '@/api/system'
+import { getMenuTree, createMenu, updateMenu, deleteMenu, type SysMenu } from '@/api/system'
+import MenuFormDialog, { type MenuFormModel } from './MenuFormDialog.vue'
 
 interface MenuNode {
   id: string
@@ -87,20 +77,21 @@ interface MenuNode {
   children?: MenuNode[]
 }
 
-type MenuNodeType = MenuNode['type']
-type MenuForm = Omit<MenuNode, 'id' | 'parent_id' | 'children'>
-
 const menuTree = ref<MenuNode[]>([])
-
-onMounted(async () => {
-  const res = await getMenuTree()
-  menuTree.value = (res.data || []) as MenuNode[]
-})
 const currentNode = ref<MenuNode | null>(null)
 
-const nodeForm = reactive<MenuForm>({
+onMounted(async () => {
+  await loadTree()
+})
+
+async function loadTree() {
+  const res = await getMenuTree()
+  menuTree.value = (res.data || []) as MenuNode[]
+}
+
+const nodeForm = reactive({
   name: '',
-  type: 'menu',
+  type: 'menu' as MenuNode['type'],
   path: '',
   component: '',
   permission_code: '',
@@ -132,110 +123,24 @@ const formColumns: FormColumnItem[] = [
   { type: 'switch', label: '是否可见', field: 'visible' }
 ]
 
-// 图标选择
-const iconSearch = ref('')
-const iconDialogVisible = ref(false)
-const commonIcons = ref([
-  'HomeFilled',
-  'Setting',
-  'User',
-  'Lock',
-  'Key',
-  'List',
-  'Grid',
-  'Menu',
-  'Document',
-  'Folder',
-  'FolderOpened',
-  'Edit',
-  'Delete',
-  'Plus',
-  'Minus',
-  'Check',
-  'Close',
-  'Search',
-  'Refresh',
-  'Upload',
-  'Download',
-  'Share',
-  'Message',
-  'Bell',
-  'Warning',
-  'InfoFilled',
-  'CircleCheck',
-  'Clock',
-  'Calendar',
-  'Picture',
-  'VideoCamera',
-  'Monitor',
-  'DataAnalysis',
-  'TrendCharts',
-  'Histogram',
-  'PieChart',
-  'Connection',
-  'Link',
-  'Switch',
-  'Operation',
-  'Tools',
-  'Platform',
-  'Management',
-  'Promotion',
-  'Collection',
-  'Tickets',
-  'Postcard',
-  'Box',
-  'Goods',
-  'ShoppingBag',
-  'ShoppingCart',
-  'PriceTag',
-  'Coin',
-  'Money',
-  'Wallet',
-  'CreditCard',
-  'BankCard',
-  'MapLocation',
-  'Position',
-  'LocationFilled',
-  'Aim',
-  'Compass',
-  'ChatDotRound',
-  'ChatLineRound',
-  'ChatLineSquare',
-  'ChatRound',
-  'Service',
-  'Headset',
-  'Phone',
-  'PhoneFilled',
-  'MessageBox',
-  'View',
-  'Hide',
-  'Unlock',
-  'Finished',
-  'More',
-  'MoreFilled',
-  'Star',
-  'StarFilled',
-  'Thumb',
-  'Pointer',
-  'Flag',
-  'Sell',
-  'Filter',
-  'Sort',
-  'Rank',
-  'Guide',
-  'Opportunity'
-])
-const filteredIcons = computed(() => {
-  if (!iconSearch.value) return commonIcons.value
-  const kw = iconSearch.value.toLowerCase()
-  return commonIcons.value.filter((i) => i.toLowerCase().includes(kw))
-})
+// Dialog
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const dialogFormModel = ref<MenuFormModel>(createDefaultFormModel())
 
-const iconComponent = computed(() => nodeForm.icon || undefined)
-
-function selectIcon(name: string) {
-  nodeForm.icon = name
-  iconDialogVisible.value = false
+function createDefaultFormModel(): MenuFormModel {
+  return {
+    id: '',
+    parent_id: null,
+    name: '',
+    type: 'menu',
+    path: '',
+    component: '',
+    permission_code: '',
+    icon: '',
+    sort_order: 1,
+    visible: true
+  }
 }
 
 function onNodeClick(data: MenuNode) {
@@ -250,7 +155,7 @@ function onNodeClick(data: MenuNode) {
   nodeForm.visible = data.visible
 }
 
-function addNode(type: MenuNodeType) {
+function addNode(type: MenuNode['type']) {
   const parent = currentNode.value
   const newNode: MenuNode = {
     id: '',
@@ -275,66 +180,68 @@ function addNode(type: MenuNodeType) {
   nodeForm.visible = true
 }
 
-async function saveNode() {
-  if (!nodeForm.name || !nodeForm.permission_code) {
+function openDialog() {
+  dialogMode.value = currentNode.value?.id ? 'edit' : 'add'
+  dialogFormModel.value = {
+    id: currentNode.value?.id || '',
+    parent_id: currentNode.value?.parent_id || null,
+    name: nodeForm.name,
+    type: nodeForm.type,
+    path: nodeForm.path,
+    component: nodeForm.component,
+    permission_code: nodeForm.permission_code,
+    icon: nodeForm.icon,
+    sort_order: nodeForm.sort_order,
+    visible: nodeForm.visible
+  }
+  dialogVisible.value = true
+}
+
+async function submitDialog() {
+  if (!dialogFormModel.value.name || !dialogFormModel.value.permission_code) {
     ElMessage.warning('请填写名称和权限编码')
     return
   }
-  if (currentNode.value!.id) {
-    await updateMenu(currentNode.value!.id, { ...nodeForm })
-    Object.assign(currentNode.value, nodeForm)
+
+  if (dialogMode.value === 'edit') {
+    await updateMenu(dialogFormModel.value.id, {
+      name: dialogFormModel.value.name,
+      type: dialogFormModel.value.type,
+      path: dialogFormModel.value.path || undefined,
+      component: dialogFormModel.value.component || undefined,
+      permission_code: dialogFormModel.value.permission_code,
+      icon: dialogFormModel.value.icon || undefined,
+      sort_order: dialogFormModel.value.sort_order,
+      visible: dialogFormModel.value.visible
+    })
     ElMessage.success('保存成功')
   } else {
-    const newNode: MenuNode = {
-      id: '',
-      parent_id: currentNode.value!.parent_id,
-      name: nodeForm.name,
-      type: nodeForm.type,
-      path: nodeForm.path,
-      component: nodeForm.component,
-      permission_code: nodeForm.permission_code,
-      icon: nodeForm.icon,
-      sort_order: nodeForm.sort_order,
-      visible: nodeForm.visible
-    }
-    await createMenu(newNode)
-    // Reload tree to get server-assigned id
-    const res = await getMenuTree()
-    menuTree.value = (res.data || []) as MenuNode[]
+    await createMenu({
+      parent_id: dialogFormModel.value.parent_id || null,
+      name: dialogFormModel.value.name,
+      type: dialogFormModel.value.type,
+      path: dialogFormModel.value.path || undefined,
+      component: dialogFormModel.value.component || undefined,
+      permission_code: dialogFormModel.value.permission_code,
+      icon: dialogFormModel.value.icon || undefined,
+      sort_order: dialogFormModel.value.sort_order,
+      visible: dialogFormModel.value.visible
+    })
     ElMessage.success('新增成功')
   }
+
+  dialogVisible.value = false
   currentNode.value = null
+  await loadTree()
 }
 
 async function removeNode() {
   if (!currentNode.value?.id) return
   const id = currentNode.value.id
   await deleteMenu(id)
-  removeFromTree(menuTree.value, id)
   currentNode.value = null
+  await loadTree()
   ElMessage.success('删除成功')
-}
-
-function findNode(nodes: MenuNode[], id: string): MenuNode | null {
-  for (const n of nodes) {
-    if (n.id === id) return n
-    if (n.children) {
-      const f = findNode(n.children, id)
-      if (f) return f
-    }
-  }
-  return null
-}
-
-function removeFromTree(nodes: MenuNode[], id: string): boolean {
-  for (let i = 0; i < nodes.length; i++) {
-    if (nodes[i].id === id) {
-      nodes.splice(i, 1)
-      return true
-    }
-    if (nodes[i].children && removeFromTree(nodes[i].children!, id)) return true
-  }
-  return false
 }
 </script>
 
@@ -365,36 +272,7 @@ function removeFromTree(nodes: MenuNode[], id: string): boolean {
   justify-content: center;
   height: 100%;
 }
-.icon-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  max-height: 400px;
-  overflow: auto;
-}
-.icon-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px 4px;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.icon-item:hover {
-  border-color: #409eff;
-  background: #ecf5ff;
-}
-.icon-item.active {
-  border-color: #409eff;
-  background: #d9ecff;
-}
-.icon-name {
-  font-size: 11px;
-  margin-top: 6px;
-  color: #666;
-  text-align: center;
-  word-break: break-all;
+.form-wrapper {
+  padding: 16px;
 }
 </style>

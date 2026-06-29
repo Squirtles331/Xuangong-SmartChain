@@ -109,32 +109,15 @@
       </div>
     </div>
 
-    <!-- 派工弹窗 -->
-    <el-dialog v-model="assignVisible" title="工序派工" width="500px">
-      <el-form :model="assignForm" label-width="100px">
-        <el-form-item label="工单">{{ currentAssignOp?.wo_code }}</el-form-item>
-        <el-form-item label="工序">{{ currentAssignOp?.operation_no }}: {{ currentAssignOp?.name }}</el-form-item>
-        <el-form-item label="执行班组" required>
-          <el-select v-model="assignForm.team" style="width: 100%">
-            <el-option v-for="t in teams" :key="t" :label="t" :value="t" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="操作工">
-          <el-select v-model="assignForm.worker" style="width: 100%">
-            <el-option v-for="w in workers" :key="w" :label="w" :value="w" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="执行设备">
-          <el-select v-model="assignForm.equipment" style="width: 100%">
-            <el-option v-for="e in equipment" :key="e" :label="e" :value="e" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="assignVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmAssign">确认派工</el-button>
-      </template>
-    </el-dialog>
+    <AssignFormDialog
+      v-model:visible="assignVisible"
+      v-model:form="assignForm"
+      :op-info="currentAssignOp"
+      :teams="teams"
+      :workers="workers"
+      :equipment="equipment"
+      @confirm="confirmAssign"
+    />
   </div>
 </template>
 
@@ -142,6 +125,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getKanbanData, assignOperation } from '@/api/work-order'
+import AssignFormDialog, { type AssignFormModel } from './AssignFormDialog.vue'
 
 interface KanbanOp {
   id: string
@@ -174,7 +158,6 @@ async function loadWorkshopData() {
   }
 }
 
-// 初始化
 onMounted(() => {
   loadWorkshopData()
 })
@@ -203,7 +186,6 @@ function onDragStart(e: DragEvent, op: KanbanOp) {
   if (e.dataTransfer!.effectAllowed !== undefined) {
     e.dataTransfer!.effectAllowed = 'move'
   }
-  // 拖拽样式
   const el = e.target as HTMLElement
   setTimeout(() => {
     el.style.opacity = '0.5'
@@ -225,7 +207,6 @@ function onDrop(e: DragEvent, targetStatus: string) {
   const op = ops.value.find((o) => o.id === opId)
   if (!op) return
 
-  // 校验状态流转合法性
   const allowedTransitions: Record<string, string[]> = {
     'pending': ['assigned'],
     'assigned': ['running', 'pending'],
@@ -239,10 +220,8 @@ function onDrop(e: DragEvent, targetStatus: string) {
     return
   }
 
-  // 更新状态
   op.status = targetStatus
 
-  // 目标状态附加字段处理
   if (targetStatus === 'running' && !op.progress) {
     op.progress = 0
   }
@@ -252,7 +231,6 @@ function onDrop(e: DragEvent, targetStatus: string) {
 
   ElMessage.success(`${op.wo_code} 工序${op.operation_no} 已移至「${statusLabel(targetStatus)}」`)
 
-  // 恢复拖拽样式
   const cards = document.querySelectorAll('.kanban-card')
   cards.forEach((c) => ((c as HTMLElement).style.opacity = '1'))
 
@@ -272,13 +250,14 @@ function statusLabel(status: string): string {
 // ==================== 派工 ====================
 const assignVisible = ref(false)
 const currentAssignOp = ref<KanbanOp | null>(null)
-const assignForm = ref({ team: '甲班', worker: '', equipment: '' })
+const assignForm = ref<AssignFormModel>({ team: '甲班', worker: '', equipment: '' })
 const teams = ['甲班', '乙班', '丙班']
 const workers = ['李四', '王五', '赵六', '孙八']
 const equipment = ['数控车床-01', '数控车床-02', '钻床-01', '磨床-01']
 
 function openAssign(op: KanbanOp) {
-  currentAssignOp.value = op
+  currentAssignOp.value = { ...op }
+  assignForm.value = { team: '甲班', worker: '', equipment: '' }
   assignVisible.value = true
 }
 
@@ -297,7 +276,6 @@ async function confirmAssign() {
       ElMessage.error('派工失败')
     }
   }
-  assignVisible.value = false
 }
 </script>
 
