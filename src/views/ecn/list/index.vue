@@ -2,7 +2,7 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -18,42 +18,31 @@
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="viewImpact(row)">影响分析</el-button>
-        <el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="submitEcn(row)"> 提交审批 </el-button>
-        <el-button v-if="row.status === 'approved'" type="success" link size="small" @click="executeEcn(row)"> 执行 </el-button>
+        <el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="submitEcn(row)">提交审批</el-button>
+        <el-button v-if="row.status === 'approved'" type="success" link size="small" @click="executeEcn(row)">执行</el-button>
       </template>
     </gi-table>
 
-    <!-- 影响分析弹窗 -->
-    <el-dialog v-model="impactVisible" title="ECN 影响分析报告" width="800px" :lock-scroll="false">
-      <el-descriptions :column="2" border style="margin-bottom: 16px">
-        <el-descriptions-item label="变更单号">{{ impactData.code }}</el-descriptions-item>
-        <el-descriptions-item label="变更对象">{{ impactData.material }}</el-descriptions-item>
-        <el-descriptions-item label="变更类型">{{ impactData.change_type }}</el-descriptions-item>
-        <el-descriptions-item label="当前版本">{{ impactData.current_version }}</el-descriptions-item>
-      </el-descriptions>
-      <el-table :data="impactData.items" border>
-        <el-table-column prop="dimension" label="影响维度" width="120" />
-        <el-table-column prop="detail" label="详情" />
-        <el-table-column prop="count" label="数量" width="80" align="center" />
-      </el-table>
-    </el-dialog>
+    <ECNFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    <ECNImpactDialog v-model:visible="impactVisible" v-model:data="impactData" />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getECNList, createECN, updateECN, deleteECN } from '@/api/ecn'
+import { createECN, deleteECN, getECNList, updateECN } from '@/api/ecn'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import { useTable } from '@/hooks/useTable'
 import ECNFormDialog, { type ECNFormModel } from './ECNFormDialog.vue'
+import ECNImpactDialog, { type ECNImpactModel } from './ECNImpactDialog.vue'
 
 const ECN_URGENCY = [
   { value: 'urgent', label: '紧急', type: 'danger' as const },
   { value: 'normal', label: '普通', type: 'warning' as const },
-  { value: 'planned', label: '计划性', type: 'info' as const }
+  { value: 'planned', label: '计划', type: 'info' as const }
 ]
 
 const ECN_STATUS = [
@@ -116,7 +105,7 @@ const columns: TableColumnItem<ECNRow>[] = [
   { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ECNRow>({
+const { tableData, pagination, loading, search, refresh } = useTable<ECNRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getECNList({
@@ -153,7 +142,6 @@ function handleReset() {
   search()
 }
 
-// Dialog
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ECNFormModel>(createDefaultFormModel())
@@ -168,21 +156,46 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-// 影响分析
+async function submitDialog() {
+  const payload = {
+    ...formModel.value,
+    change_type: formModel.value.change_type as 'BOM变更' | '工艺变更' | 'BOM+工艺变更',
+    status: formModel.value.status as 'draft' | 'approved' | 'executed' | 'verified' | 'closed',
+    urgency: formModel.value.urgency as 'urgent' | 'normal' | 'planned'
+  }
+  if (dialogMode.value === 'add') {
+    await createECN(payload)
+    ElMessage.success('新增成功')
+  } else {
+    await updateECN(formModel.value.id, payload)
+    ElMessage.success('编辑成功')
+  }
+  dialogVisible.value = false
+  await refresh()
+}
+
 const impactVisible = ref(false)
-const impactData = reactive({ code: '', material: '', change_type: '', current_version: '', items: [] as any[] })
+const impactData = ref<ECNImpactModel>({
+  code: '',
+  material: '',
+  change_type: '',
+  current_version: '',
+  items: []
+})
 
 function viewImpact(row: ECNRow) {
-  impactData.code = row.code
-  impactData.material = row.material
-  impactData.change_type = row.change_type
-  impactData.current_version = row.current_version
-  impactData.items = [
-    { dimension: '在制工单', detail: 'WO202501150001 离心泵 XJP-100 (生产中, 在制45台)', count: 1 },
-    { dimension: '库存', detail: '旧版物料"泵体铸件(旧)"库存 120件', count: 120 },
-    { dimension: '在途采购', detail: 'PO202501100008 泵体铸件 200件 (预计1月20日到货)', count: 200 },
-    { dimension: '下游产品', detail: '被"供水系统 XJ-SYS"引用', count: 1 }
-  ]
+  impactData.value = {
+    code: row.code,
+    material: row.material,
+    change_type: row.change_type,
+    current_version: row.current_version,
+    items: [
+      { dimension: '在制工单', detail: 'WO202501150001 离心泵 XJP-100 在制 45 台', count: 1 },
+      { dimension: '库存', detail: '旧版物料库存 120 件', count: 120 },
+      { dimension: '在途采购', detail: 'PO202501100008 泵体铸件 200 件，预计 1 月 20 日到货', count: 200 },
+      { dimension: '下游产品', detail: '被供水系统 XJ-SYS 引用', count: 1 }
+    ]
+  }
   impactVisible.value = true
 }
 

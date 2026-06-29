@@ -27,29 +27,7 @@
     </gi-table>
 
     <MaintainFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-
-    <el-dialog v-model="execVis" title="执行保养" width="500px">
-      <el-table :data="items" border size="small">
-        <el-table-column prop="name" label="保养项目" />
-        <el-table-column label="结果" width="200">
-          <template #default="{ row }">
-            <el-radio-group v-model="row.result" size="small">
-              <el-radio value="done">已完成</el-radio>
-              <el-radio value="issue">有问题</el-radio>
-            </el-radio-group>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-form label-width="80px" style="margin-top: 12px">
-        <el-form-item label="备注">
-          <el-input v-model="execForm.remark" type="textarea" :rows="2" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="execVis = false">取消</el-button>
-        <el-button type="primary" @click="confirmExec">提交</el-button>
-      </template>
-    </el-dialog>
+    <MaintainExecuteDialog v-model:visible="execVis" v-model:items="items" v-model:form="execForm" @submit="confirmExec" />
   </gi-page-layout>
 </template>
 
@@ -59,6 +37,7 @@ import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import { useTable } from '@/hooks/useTable'
 import MaintainFormDialog, { type MaintainFormModel } from './MaintainFormDialog.vue'
+import MaintainExecuteDialog, { type MaintainExecuteFormModel, type MaintainExecuteItem } from './MaintainExecuteDialog.vue'
 
 interface MaintainRow {
   id: string
@@ -123,9 +102,7 @@ const cols: TableColumnItem<MaintainRow>[] = [
 
 const { tableData, pagination, loading, search, refresh } = useTable<MaintainRow>({
   rowKey: 'id',
-  listAPI: async () => {
-    return { list: [], total: 0 }
-  }
+  listAPI: async () => ({ list: [], total: 0 })
 })
 
 function createDefaultFormModel(): MaintainFormModel {
@@ -175,9 +152,9 @@ async function submitDialog() {
 }
 
 const execVis = ref(false)
-const execForm = ref({ remark: '' })
+const execForm = ref<MaintainExecuteFormModel>({ remark: '' })
 const execPlanId = ref('')
-const items = ref([
+const items = ref<MaintainExecuteItem[]>([
   { name: '清洁设备表面', result: 'done' },
   { name: '检查润滑油', result: 'done' },
   { name: '紧固螺栓', result: 'done' },
@@ -185,15 +162,15 @@ const items = ref([
   { name: '电气检查', result: 'done' }
 ])
 
-function execute(r: MaintainRow) {
-  execPlanId.value = r.id
-  execForm.value.remark = ''
-  items.value.forEach((item) => (item.result = 'done'))
+function execute(row: MaintainRow) {
+  execPlanId.value = row.id
+  execForm.value = { remark: '' }
+  items.value = items.value.map((item) => ({ ...item, result: 'done' }))
   execVis.value = true
 }
 
 function confirmExec() {
-  const item = tableData.value.find((p) => p.id === execPlanId.value)
+  const item = tableData.value.find((plan) => plan.id === execPlanId.value)
   if (item) item.status = 'done'
   execVis.value = false
   ElMessage.success('保养完成')

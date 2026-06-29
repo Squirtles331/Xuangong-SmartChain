@@ -21,42 +21,31 @@
       </template>
     </gi-table>
 
-    <!-- 字典类型弹窗 -->
     <DictTypeDialog v-model:visible="typeDialogVisible" v-model:form="typeFormModel" :mode="typeDialogMode" @submit="submitTypeDialog" />
 
-    <!-- 字典项管理弹窗 -->
-    <gi-dialog v-model="itemDialogVisible" :footer="false" :title="`字典项管理 — ${currentType?.name || ''}`" width="800px" @close="closeItemDialog">
-      <div class="dict-items-header">
-        <gi-button type="add" size="small" @click="openAddItem">新增字典项</gi-button>
-      </div>
-      <gi-table :columns="itemColumns" :data="currentItems" border size="small" style="margin-top: 12px">
-        <template #status="{ row }">
-          <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">{{ row.status === 'active' ? '启用' : '禁用' }}</el-tag>
-        </template>
-        <template #itemActions="{ row }">
-          <gi-button type="edit" size="small" @click="openEditItem(row)" />
-          <gi-button type="delete" size="small" @click="deleteItem(row.id)" />
-        </template>
-      </gi-table>
-
-      <!-- 字典项弹窗 -->
-      <DictItemDialog v-model:visible="itemFormVisible" v-model:form="itemFormModel" :mode="itemDialogMode" @submit="submitItemDialog" />
-    </gi-dialog>
+    <DictItemsDialog
+      v-model:visible="itemDialogVisible"
+      v-model:items="currentItems"
+      :dict-type-name="currentType?.name || ''"
+      @close="closeItemDialog"
+      @create-item="createItemFromDialog"
+      @update-item="updateItemFromDialog"
+      @delete-item="deleteItem"
+    />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { DictType, DictItem } from '@/api/system'
-import { getDictTypeList, getDictItems, createDictType, createDictItem, updateDictItem, deleteDictItem } from '@/api/system'
+import type { DictItem, DictType } from '@/api/system'
+import { createDictItem, createDictType, deleteDictItem, getDictItems, getDictTypeList, updateDictItem } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
+import DictItemsDialog from './DictItemsDialog.vue'
 import DictTypeDialog, { type DictTypeFormModel } from './DictTypeDialog.vue'
-import DictItemDialog, { type DictItemFormModel } from './DictItemDialog.vue'
 
-// ==================== useTable ====================
 const searchForm = ref({ keyword: '' })
 const searchFormRef = ref<FormInstance | null>()
 
@@ -80,20 +69,16 @@ const typeColumns: TableColumnItem<DictType>[] = [
   { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<DictType>({
+const { tableData, pagination, loading, search, refresh } = useTable<DictType>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const params = {
-      page,
-      page_size: size
-    }
-    const response = await getDictTypeList(params)
+    const response = await getDictTypeList({ page, page_size: size })
     return {
       list: response.data.items as DictType[],
       total: response.data.total
     }
   },
-  deleteAPI: (ids) => Promise.resolve()
+  deleteAPI: () => Promise.resolve()
 })
 
 function handleSearch() {
@@ -105,7 +90,6 @@ function handleReset() {
   search()
 }
 
-// ==================== 字典类型 CRUD ====================
 const typeDialogVisible = ref(false)
 const typeDialogMode = ref<'add' | 'edit'>('add')
 const typeFormModel = ref<DictTypeFormModel>(createDefaultTypeForm())
@@ -136,6 +120,7 @@ async function submitTypeDialog() {
     ElMessage.warning('请填写必填项')
     return
   }
+
   if (typeDialogMode.value === 'add') {
     await createDictType({
       code: typeFormModel.value.code,
@@ -145,34 +130,25 @@ async function submitTypeDialog() {
     })
     ElMessage.success('新增成功')
   } else {
-    // Update locally via refresh
     ElMessage.success('编辑成功')
   }
+
   typeDialogVisible.value = false
   await refresh()
 }
 
 function deleteType(row: DictType) {
-  ElMessageBox.confirm('删除字典类型将同时删除其下所有字典项，确定删除？', '警告', { type: 'warning' })
+  ElMessageBox.confirm('删除字典类型将同时删除其下所有字典项，确认删除？', '警告', { type: 'warning' })
     .then(async () => {
-      // Local delete + refresh
       await refresh()
       ElMessage.success('删除成功')
     })
     .catch(() => {})
 }
 
-// ==================== 字典项管理 ====================
 const itemDialogVisible = ref(false)
 const currentType = ref<DictType | null>(null)
 const currentItems = ref<DictItem[]>([])
-const itemFormVisible = ref(false)
-const itemDialogMode = ref<'add' | 'edit'>('add')
-const itemFormModel = ref<DictItemFormModel>(createDefaultItemForm())
-
-function createDefaultItemForm(): DictItemFormModel {
-  return { id: '', code: '', name: '', sort_order: 1, css_class: '' }
-}
 
 async function openItems(row: DictType) {
   currentType.value = row
@@ -181,87 +157,65 @@ async function openItems(row: DictType) {
   itemDialogVisible.value = true
 }
 
-function openAddItem() {
-  itemDialogMode.value = 'add'
-  itemFormModel.value = createDefaultItemForm()
-  itemFormVisible.value = true
-}
-
-function openEditItem(row: DictItem) {
-  itemDialogMode.value = 'edit'
-  itemFormModel.value = {
-    id: row.id,
-    code: row.code,
-    name: row.name,
-    sort_order: row.sort_order,
-    css_class: row.css_class || ''
-  }
-  itemFormVisible.value = true
-}
-
-async function submitItemDialog() {
-  if (!itemFormModel.value.code || !itemFormModel.value.name) {
+async function createItemFromDialog(form: { id: string; code: string; name: string; sort_order: number; css_class: string }) {
+  if (!form.code || !form.name) {
     ElMessage.warning('请填写必填项')
     return
   }
-  if (itemDialogMode.value === 'add') {
-    await createDictItem({
-      dict_type_id: currentType.value!.id,
-      code: itemFormModel.value.code,
-      name: itemFormModel.value.name,
-      sort_order: itemFormModel.value.sort_order,
-      css_class: itemFormModel.value.css_class || undefined,
-      status: 'active'
-    })
-    ElMessage.success('新增成功')
-  } else {
-    await updateDictItem(itemFormModel.value.id, {
-      code: itemFormModel.value.code,
-      name: itemFormModel.value.name,
-      sort_order: itemFormModel.value.sort_order,
-      css_class: itemFormModel.value.css_class || undefined
-    })
-    ElMessage.success('编辑成功')
+
+  if (!currentType.value) return
+
+  await createDictItem({
+    dict_type_id: currentType.value.id,
+    code: form.code,
+    name: form.name,
+    sort_order: form.sort_order,
+    css_class: form.css_class || undefined,
+    status: 'active'
+  })
+  ElMessage.success('新增成功')
+  await reloadCurrentItems()
+}
+
+async function updateItemFromDialog(form: { id: string; code: string; name: string; sort_order: number; css_class: string }) {
+  if (!form.code || !form.name) {
+    ElMessage.warning('请填写必填项')
+    return
   }
-  itemFormVisible.value = false
-  // Reload items
-  if (currentType.value) {
-    const res = await getDictItems(currentType.value.code)
-    currentItems.value = (res.data || []) as DictItem[]
-  }
+
+  await updateDictItem(form.id, {
+    code: form.code,
+    name: form.name,
+    sort_order: form.sort_order,
+    css_class: form.css_class || undefined
+  })
+  ElMessage.success('编辑成功')
+  await reloadCurrentItems()
 }
 
 function deleteItem(id: string) {
   ElMessageBox.confirm('确定删除该字典项？', '提示', { type: 'warning' })
     .then(async () => {
       await deleteDictItem(id)
-      currentItems.value = currentItems.value.filter((i) => i.id !== id)
+      currentItems.value = currentItems.value.filter((item) => item.id !== id)
       ElMessage.success('删除成功')
     })
     .catch(() => {})
+}
+
+async function reloadCurrentItems() {
+  if (!currentType.value) return
+  const res = await getDictItems(currentType.value.code)
+  currentItems.value = (res.data || []) as DictItem[]
 }
 
 function closeItemDialog() {
   currentType.value = null
   currentItems.value = []
 }
-
-const itemColumns: TableColumnItem<DictItem>[] = [
-  { type: 'index', label: '#', width: 50 },
-  { prop: 'code', label: '编码', width: 140 },
-  { prop: 'name', label: '名称', width: 140 },
-  { prop: 'sort_order', label: '排序', minWidth: 80, align: 'center' },
-  { prop: 'css_class', label: '样式', width: 100 },
-  { label: '状态', minWidth: 80, slotName: 'status' },
-  { label: '操作', minWidth: 160, slotName: 'itemActions', align: 'center' }
-]
 </script>
 
 <style scoped lang="scss">
-.dict-items-header {
-  display: flex;
-  justify-content: flex-end;
-}
 :deep(.gi-page-layout__tool) {
   gap: 8px;
 }

@@ -29,17 +29,16 @@
       </template>
     </gi-table>
 
-    <gi-dialog v-model="dialogVisible" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? 'Add Skill' : 'Edit Skill'" width="500px">
-      <gi-form v-model="form" :columns="formColumns" :label-width="100" />
-    </gi-dialog>
+    <SkillMatrixFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="mode" @submit="submit" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { TableColumnItem } from 'gi-component'
 import { getSkillMatrixData } from '@/api/hr'
+import SkillMatrixFormDialog, { type SkillMatrixFormModel } from './SkillMatrixFormDialog.vue'
 
 interface SkillItem {
   id: string
@@ -56,14 +55,7 @@ const skillsByEmployee = ref<Record<string, SkillItem[]>>({})
 const dialogVisible = ref(false)
 const mode = ref<'add' | 'edit'>('add')
 const editingId = ref('')
-
-const form = reactive<SkillItem>({
-  id: '',
-  skill_name: '',
-  level: 1,
-  cert_number: '',
-  expire_date: ''
-})
+const formModel = ref<SkillMatrixFormModel>(createDefaultForm())
 
 const columns: TableColumnItem<SkillItem>[] = [
   { prop: 'skill_name', label: 'Skill', minWidth: 180 },
@@ -73,18 +65,15 @@ const columns: TableColumnItem<SkillItem>[] = [
   { label: 'Actions', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const formColumns: FormColumnItem[] = [
-  { type: 'input', label: 'Skill', field: 'skill_name', required: true },
-  {
-    type: 'input-number',
-    label: 'Level',
-    field: 'level',
-    required: true,
-    props: { min: 1, max: 5 } as any
-  },
-  { type: 'input', label: 'Certificate', field: 'cert_number' },
-  { type: 'date-picker', label: 'Expire Date', field: 'expire_date' }
-]
+function createDefaultForm(): SkillMatrixFormModel {
+  return {
+    id: '',
+    skill_name: '',
+    level: 1,
+    cert_number: '',
+    expire_date: ''
+  }
+}
 
 function flattenFirstEmployee(nodes: any[]): any | null {
   for (const node of nodes) {
@@ -121,19 +110,19 @@ function openAdd() {
 
   mode.value = 'add'
   editingId.value = ''
-  Object.assign(form, { id: '', skill_name: '', level: 1, cert_number: '', expire_date: '' })
+  formModel.value = createDefaultForm()
   dialogVisible.value = true
 }
 
 function openEdit(skill: SkillItem) {
   mode.value = 'edit'
   editingId.value = skill.id
-  Object.assign(form, skill)
+  formModel.value = { ...skill }
   dialogVisible.value = true
 }
 
 async function submit() {
-  if (!form.skill_name) {
+  if (!formModel.value.skill_name) {
     ElMessage.warning('Skill is required')
     return false
   }
@@ -143,15 +132,15 @@ async function submit() {
 
   const target = skillsByEmployee.value[employeeId] || []
   if (mode.value === 'add') {
-    const item = { ...form, id: Date.now().toString() }
-    target.unshift(item)
+    target.unshift({ ...formModel.value, id: Date.now().toString() })
   } else {
     const index = target.findIndex((item) => item.id === editingId.value)
-    if (index > -1) Object.assign(target[index], form)
+    if (index > -1) Object.assign(target[index], formModel.value)
   }
 
   skillsByEmployee.value[employeeId] = target
   skills.value = [...target]
+  dialogVisible.value = false
   return true
 }
 

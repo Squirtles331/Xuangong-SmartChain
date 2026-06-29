@@ -40,11 +40,7 @@
 当前组件对外允许的接口只有：
 
 ```vue
-<SearchSetting
-  :columns="allSearchColumns"
-  :required-fields="['username']"
-  @update:visible-fields="onSearchFieldsChange"
->
+<SearchSetting :columns="allSearchColumns" :required-fields="['username']" @update:visible-fields="onSearchFieldsChange">
   <gi-form ... />
 </SearchSetting>
 ```
@@ -68,11 +64,7 @@
 标准写法：
 
 ```vue
-<SearchSetting
-  :columns="allSearchColumns"
-  :required-fields="requiredSearchFields"
-  @update:visible-fields="onSearchFieldsChange"
->
+<SearchSetting :columns="allSearchColumns" :required-fields="requiredSearchFields" @update:visible-fields="onSearchFieldsChange">
   <gi-form
     v-model="searchForm"
     :columns="visibleSearchColumns"

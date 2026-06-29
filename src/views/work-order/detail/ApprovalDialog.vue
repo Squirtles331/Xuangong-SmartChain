@@ -29,9 +29,9 @@ export interface ApprovalFormModel {
 interface Props {
   title: string
   currentStatusLabel: string
-  currentStatusTagType: string
+  currentStatusTagType: 'success' | 'danger' | 'warning' | 'info' | 'primary'
   targetStatusLabel: string
-  targetStatusTagType: string
+  targetStatusTagType: 'success' | 'danger' | 'warning' | 'info' | 'primary'
 }
 
 const props = defineProps<Props>()

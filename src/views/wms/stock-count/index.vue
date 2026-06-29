@@ -33,48 +33,8 @@
       </template>
     </gi-table>
 
-    <el-dialog v-model="execVisible" title="Count Execution" width="700px">
-      <el-table :data="execItems" border size="small">
-        <el-table-column prop="location" label="Location" width="120" />
-        <el-table-column prop="material" label="Material" min-width="180" />
-        <el-table-column prop="book_qty" label="Book Qty" width="90" align="center" />
-        <el-table-column label="Actual Qty" width="130">
-          <template #default="{ row }">
-            <el-input-number v-model="row.actual" :min="0" size="small" />
-          </template>
-        </el-table-column>
-      </el-table>
-      <template #footer>
-        <el-button @click="execVisible = false">Save Draft</el-button>
-        <el-button type="primary" @click="submitCount">Submit</el-button>
-      </template>
-    </el-dialog>
-
-    <el-dialog v-model="diffVisible" title="Count Diff" width="700px">
-      <el-table :data="diffItems" border size="small">
-        <el-table-column prop="material" label="Material" min-width="180" />
-        <el-table-column prop="book_qty" label="Book Qty" width="90" align="center" />
-        <el-table-column prop="actual_qty" label="Actual Qty" width="90" align="center" />
-        <el-table-column label="Diff" width="90" align="center">
-          <template #default="{ row }">
-            <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '' }"> {{ row.diff > 0 ? '+' : '' }}{{ row.diff }} </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="Disposition" width="140">
-          <template #default="{ row }">
-            <el-select v-model="row.disposition" size="small">
-              <el-option label="profit" value="profit" />
-              <el-option label="loss" value="loss" />
-              <el-option label="ignore" value="ignore" />
-            </el-select>
-          </template>
-        </el-table-column>
-      </el-table>
-      <template #footer>
-        <el-button @click="diffVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="confirmDiff">Confirm</el-button>
-      </template>
-    </el-dialog>
+    <StockCountExecuteDialog v-model:visible="execVisible" v-model:items="execItems" @submit="submitCount" />
+    <StockCountDiffDialog v-model:visible="diffVisible" v-model:items="diffItems" @submit="confirmDiff" />
   </gi-page-layout>
 </template>
 
@@ -85,6 +45,8 @@ import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component
 import SearchSetting from '@/components/SearchSetting.vue'
 import { getStockCountDiff, getStockCountList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
+import StockCountExecuteDialog, { type StockCountExecuteItem } from './StockCountExecuteDialog.vue'
+import StockCountDiffDialog, { type StockCountDiffItem } from './StockCountDiffDialog.vue'
 
 interface PlanRow {
   id: string
@@ -106,8 +68,8 @@ const visibleSearchColumns = ref<FormColumnItem[]>([])
 
 const rawExecLines = ref<any[]>([])
 const rawDiffLines = ref<any[]>([])
-const execItems = ref<any[]>([])
-const diffItems = ref<any[]>([])
+const execItems = ref<StockCountExecuteItem[]>([])
+const diffItems = ref<StockCountDiffItem[]>([])
 const execVisible = ref(false)
 const diffVisible = ref(false)
 const currentPlanCode = ref('')

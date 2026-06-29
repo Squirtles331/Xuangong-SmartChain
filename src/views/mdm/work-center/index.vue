@@ -160,10 +160,10 @@ async function submitDialog() {
     return
   }
   if (dialogMode.value === 'add') {
-    tableData.unshift({ ...formModel.value } as WorkCenterRow)
+    tableData.value.unshift({ ...formModel.value } as WorkCenterRow)
   } else {
-    const idx = tableData.findIndex((w) => w.id === formModel.value.id)
-    if (idx > -1) tableData[idx] = { ...formModel.value } as WorkCenterRow
+    const idx = tableData.value.findIndex((w) => w.id === formModel.value.id)
+    if (idx > -1) tableData.value[idx] = { ...formModel.value } as WorkCenterRow
   }
   dialogVisible.value = false
 }

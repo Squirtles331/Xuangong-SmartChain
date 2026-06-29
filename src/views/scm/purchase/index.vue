@@ -6,9 +6,7 @@
           ref="sf"
           v-model="searchForm"
           :columns="visibleSearchColumns"
-          :grid-item-props="{
-            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-          }"
+          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
           search
           @search="handleSearch"
           @reset="handleReset"
@@ -45,38 +43,19 @@
       </template>
     </gi-table>
 
-    <!-- 收货弹窗 (business-specific, kept inline) -->
-    <el-dialog v-model="receiveVisible" title="采购收货" width="500px" :lock-scroll="false">
-      <el-descriptions :column="1" border>
-        <el-descriptions-item label="采购订单">{{ receiveCurrent?.code }}</el-descriptions-item>
-        <el-descriptions-item label="供应商">{{ receiveCurrent?.supplier }}</el-descriptions-item>
-        <el-descriptions-item label="物料">{{ receiveCurrent?.material }}</el-descriptions-item>
-        <el-descriptions-item label="订购数量">{{ receiveCurrent?.qty }}</el-descriptions-item>
-      </el-descriptions>
-      <el-form label-width="100px" style="margin-top: 16px">
-        <el-form-item label="实收数量">
-          <el-input-number v-model="receiveForm.qty" :min="1" :max="receiveCurrent?.remain || 1" />
-        </el-form-item>
-        <el-form-item label="批号">
-          <el-input v-model="receiveForm.lot" placeholder="批次管理物料必填" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="receiveVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmReceive">确认收货</el-button>
-      </template>
-    </el-dialog>
+    <PurchaseReceiveDialog v-model:visible="receiveVisible" v-model:form="receiveForm" :current-order="receiveCurrent" @submit="confirmReceive" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { getPurchaseOrderList, updatePurchaseOrder, type PurchaseOrder, type PurchaseOrderQuery } from '@/api/scm'
 import { useTable } from '@/hooks/useTable'
+import PurchaseReceiveDialog, { type PurchaseReceiveFormModel } from './PurchaseReceiveDialog.vue'
 
 const PO_STATUS = [
   { value: 'sent', label: '已发送', type: 'warning' as const },
@@ -181,22 +160,20 @@ function handleReset() {
   search()
 }
 
-// Receive dialog
 const receiveVisible = ref(false)
 const receiveCurrent = ref<PORow | null>(null)
-const receiveForm = reactive({ qty: 1, lot: '' })
+const receiveForm = ref<PurchaseReceiveFormModel>({ qty: 1, lot: '' })
 
 function receive(row: PORow) {
   receiveCurrent.value = row
-  receiveForm.qty = row.remain
-  receiveForm.lot = ''
+  receiveForm.value = { qty: row.remain, lot: '' }
   receiveVisible.value = true
 }
 
 async function confirmReceive() {
   if (receiveCurrent.value) {
-    receiveCurrent.value.received += receiveForm.qty
-    receiveCurrent.value.remain -= receiveForm.qty
+    receiveCurrent.value.received += receiveForm.value.qty
+    receiveCurrent.value.remain -= receiveForm.value.qty
     const newStatus = receiveCurrent.value.remain === 0 ? 'received' : 'partial'
     receiveCurrent.value.status = newStatus
     await updatePurchaseOrder(receiveCurrent.value.id, {

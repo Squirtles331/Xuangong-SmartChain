@@ -31,28 +31,19 @@
       </template>
     </gi-table>
 
-    <!-- 预览弹窗 -->
-    <el-dialog v-model="previewVisible" title="文件预览" width="800px" :lock-scroll="false">
-      <div v-if="previewFileData?.type === 'image'" style="text-align: center">
-        <img :src="previewFileData.url" style="max-width: 100%; max-height: 500px" />
-      </div>
-      <div v-else style="text-align: center; padding: 40px">
-        <el-icon :size="64" color="#909399"><component :is="fileIcon(previewFileData?.type || '')" /></el-icon>
-        <p style="margin-top: 16px; color: #909399">{{ previewFileData?.name }}</p>
-        <p style="color: #c0c4cc; font-size: 12px">暂不支持在线预览，请下载后查看</p>
-      </div>
-    </el-dialog>
+    <FilePreviewDialog v-model:visible="previewVisible" :file="previewFileData" :icon-component="fileIcon" />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Document, Picture, VideoCamera, Files, Grid } from '@element-plus/icons-vue'
+import { Document, Files, Grid, Picture, VideoCamera } from '@element-plus/icons-vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { UploadFile } from 'element-plus'
 import { useTable } from '@/hooks/useTable'
+import FilePreviewDialog from './FilePreviewDialog.vue'
 
 interface FileItem {
   id: string
@@ -111,7 +102,6 @@ const columns: TableColumnItem<FileItem>[] = [
   { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-// Mock seed data
 const seedFiles: FileItem[] = [
   {
     id: '1',
@@ -145,7 +135,7 @@ const seedFiles: FileItem[] = [
   },
   {
     id: '4',
-    name: '作业指导书_SOP.docx',
+    name: '作业指导书 SOP.docx',
     module: '工艺路线',
     object_type: '操作指导',
     size: 3.1 * 1024 * 1024,
@@ -158,9 +148,14 @@ const seedFiles: FileItem[] = [
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<FileItem>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const kw = s.value.keyword?.toLowerCase() || ''
-    const filtered = kw
-      ? seedFiles.filter((f) => f.name.toLowerCase().includes(kw) || f.module.toLowerCase().includes(kw) || f.object_type.toLowerCase().includes(kw))
+    const keyword = s.value.keyword?.toLowerCase() || ''
+    const filtered = keyword
+      ? seedFiles.filter(
+          (item) =>
+            item.name.toLowerCase().includes(keyword) ||
+            item.module.toLowerCase().includes(keyword) ||
+            item.object_type.toLowerCase().includes(keyword)
+        )
       : seedFiles
     const start = (page - 1) * size
     return {
@@ -185,7 +180,7 @@ function formatSize(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
-function handleUpload(file: UploadFile) {
+function handleUpload(_file: UploadFile) {
   ElMessage.success('上传成功')
   refresh()
 }
@@ -199,7 +194,7 @@ function previewFile(row: FileItem) {
 }
 
 function downloadFile(row: FileItem) {
-  ElMessage.success(`开始下载: ${row.name}`)
+  ElMessage.success(`开始下载 ${row.name}`)
 }
 </script>
 

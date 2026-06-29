@@ -64,7 +64,7 @@ interface SupplierRow {
   contact: string
   phone: string
   terms: string
-  status: string
+  status: 'active' | 'frozen' | 'eliminated'
   qualified: boolean
   score?: number
 }
@@ -196,7 +196,7 @@ async function submitDialog() {
     contact: formModel.value.contact,
     phone: formModel.value.phone,
     terms: formModel.value.terms,
-    status: formModel.value.status
+    status: formModel.value.status as 'active' | 'frozen'
   }
 
   if (dialogMode.value === 'add') {

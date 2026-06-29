@@ -88,18 +88,18 @@ async function submitDialog() {
   }
   const ops = [...formModel.value.operations]
   if (dialogMode.value === 'add') {
-    tableData.unshift({
+    tableData.value.unshift({
       id: Date.now().toString(),
       routing_name: formModel.value.routing_name,
       operations: ops,
       merge_rule: formModel.value.merge_rule
     } as ParallelGroupRow)
   } else {
-    const idx = tableData.findIndex((e) => e.id === formModel.value.id)
+    const idx = tableData.value.findIndex((e) => e.id === formModel.value.id)
     if (idx > -1) {
-      tableData[idx].routing_name = formModel.value.routing_name
-      tableData[idx].operations = ops
-      tableData[idx].merge_rule = formModel.value.merge_rule
+      tableData.value[idx].routing_name = formModel.value.routing_name
+      tableData.value[idx].operations = ops
+      tableData.value[idx].merge_rule = formModel.value.merge_rule
     }
   }
   dialogVisible.value = false

@@ -6,9 +6,7 @@
           ref="searchFormRef"
           v-model="searchForm"
           :columns="visibleSearchColumns"
-          :grid-item-props="{
-            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-          }"
+          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
           search
           @reset="handleReset"
           @search="handleSearch"
@@ -31,42 +29,7 @@
     </gi-table>
 
     <InspectionFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-
-    <el-dialog v-model="iv" title="执行检验" width="700px">
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="任务编号">{{ ic?.code }}</el-descriptions-item>
-        <el-descriptions-item label="物料">{{ ic?.material }}</el-descriptions-item>
-      </el-descriptions>
-      <el-table :data="items" border style="margin-top: 16px">
-        <el-table-column prop="name" label="检验项目" width="140" />
-        <el-table-column prop="standard" label="标准值" width="140" />
-        <el-table-column label="实测值" width="140">
-          <template #default="{ row }">
-            <el-input v-model="row.value" size="small" />
-          </template>
-        </el-table-column>
-        <el-table-column label="判定" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.value ? (Math.abs(Number(row.value) - Number(row.standard)) < 0.5 ? 'success' : 'danger') : 'info'" size="small">
-              {{ row.value ? (Math.abs(Number(row.value) - Number(row.standard)) < 0.5 ? '合格' : '不合格') : '-' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div style="margin-top: 16px">
-        <el-radio-group v-model="ir">
-          <el-radio value="qualified">合格</el-radio>
-          <el-radio value="concession">让步接收</el-radio>
-          <el-radio value="sorting">挑选使用</el-radio>
-          <el-radio value="return">退货</el-radio>
-          <el-radio value="scrap">报废</el-radio>
-        </el-radio-group>
-      </div>
-      <template #footer>
-        <el-button @click="iv = false">取消</el-button>
-        <el-button type="primary" @click="submitInspect">提交</el-button>
-      </template>
-    </el-dialog>
+    <InspectionExecuteDialog v-model:visible="iv" v-model:items="items" v-model:result="ir" :task="ic" @submit="submitInspect" />
   </gi-page-layout>
 </template>
 
@@ -79,6 +42,7 @@ import StatusTag from '@/components/StatusTag.vue'
 import { getInspectionTaskList, updateInspectionTask } from '@/api/qms'
 import { useTable } from '@/hooks/useTable'
 import InspectionFormDialog, { type InspectionFormModel } from './InspectionFormDialog.vue'
+import InspectionExecuteDialog, { type InspectionExecuteItem, type InspectionExecuteTask } from './InspectionExecuteDialog.vue'
 
 const INSPECTION_VERDICT = [
   { value: '合格', label: '合格', type: 'success' as const },
@@ -187,7 +151,7 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<I
     const items = (res.data.items || res.data || []).map(mapRow)
     return { list: items, total: res.data.total || items.length }
   },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => Promise.resolve()))
+  deleteAPI: (ids) => Promise.all(ids.map(() => Promise.resolve()))
 })
 
 function createDefaultFormModel(): InspectionFormModel {
@@ -242,13 +206,14 @@ async function submitDialog() {
 }
 
 const iv = ref(false)
-const ic = ref<InspectionRow | null>(null)
+const ic = ref<InspectionExecuteTask | null>(null)
 const ir = ref('qualified')
-const items = ref<any[]>([])
+const items = ref<InspectionExecuteItem[]>([])
 
-function inspect(r: InspectionRow) {
-  ic.value = r
+function inspect(row: InspectionRow) {
+  ic.value = { code: row.code, material: row.material }
   iv.value = true
+  ir.value = 'qualified'
   items.value = [
     { name: '尺寸', standard: '100.00', value: '' },
     { name: '硬度', standard: '45', value: '' },
@@ -266,13 +231,15 @@ async function submitInspect() {
       scrap: '报废'
     }
     try {
-      await updateInspectionTask(ic.value.id, {
+      const target = tableData.value.find((row) => row.code === ic.value?.code)
+      if (!target) return
+      await updateInspectionTask(target.id, {
         status: 'done',
         verdict: verdictMap[ir.value] || ''
       })
-      ic.value.status = 'done'
-      ic.value.verdict = verdictMap[ir.value] || ''
-      ElMessage.success(`检验完成: ${ir.value}`)
+      target.status = 'done'
+      target.verdict = verdictMap[ir.value] || ''
+      ElMessage.success(`检验完成: ${verdictMap[ir.value] || ''}`)
     } catch {
       ElMessage.error('提交检验结果失败')
     }

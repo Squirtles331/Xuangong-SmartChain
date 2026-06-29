@@ -39,38 +39,16 @@
       </el-card>
     </div>
 
-    <el-dialog v-model="detailVisible" :title="detailDevice?.name || 'Device'" width="500px">
-      <el-descriptions v-if="detailDevice" :column="2" border>
-        <el-descriptions-item label="Device">{{ detailDevice.name }}</el-descriptions-item>
-        <el-descriptions-item label="Online">
-          <el-tag :type="detailDevice.online ? 'success' : 'danger'" size="small">{{ detailDevice.online ? 'Yes' : 'No' }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="Status">
-          <el-tag :type="detailDevice.running ? 'success' : 'info'" size="small">{{ detailDevice.running ? 'Running' : 'Idle' }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="RPM">{{ detailDevice.rpm }} rpm</el-descriptions-item>
-        <el-descriptions-item label="Temp">{{ detailDevice.temp.toFixed(1) }} C</el-descriptions-item>
-        <el-descriptions-item label="Current">{{ detailDevice.current.toFixed(1) }} A</el-descriptions-item>
-        <el-descriptions-item label="Last report" :span="2">{{ detailDevice.last_report }}</el-descriptions-item>
-      </el-descriptions>
-    </el-dialog>
+    <DeviceDetailDialog v-model:visible="detailVisible" :device="detailDevice" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref } from 'vue'
 import { getIoTDeviceList } from '@/api/wms'
+import DeviceDetailDialog, { type DeviceDetailModel } from './DeviceDetailDialog.vue'
 
-interface DeviceItem {
-  id: string
-  name: string
-  online: boolean
-  running: boolean
-  rpm: number
-  temp: number
-  current: number
-  last_report: string
-}
+type DeviceItem = DeviceDetailModel
 
 const devices = ref<DeviceItem[]>([])
 const detailVisible = ref(false)

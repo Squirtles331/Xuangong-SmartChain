@@ -22,30 +22,7 @@
     </gi-table>
 
     <CheckFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-
-    <!-- 执行弹窗 -->
-    <el-dialog v-model="execVis" title="执行点检" width="500px">
-      <el-table :data="items" border size="small">
-        <el-table-column prop="name" label="点检项目" />
-        <el-table-column label="结果" width="200">
-          <template #default="{ row }">
-            <el-radio-group v-model="row.result" size="small">
-              <el-radio value="normal">正常</el-radio>
-              <el-radio value="abnormal">异常</el-radio>
-            </el-radio-group>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-form label-width="80px" style="margin-top: 12px">
-        <el-form-item label="备注">
-          <el-input v-model="execForm.remark" type="textarea" :rows="2" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="execVis = false">取消</el-button>
-        <el-button type="primary" @click="confirmExec">提交</el-button>
-      </template>
-    </el-dialog>
+    <CheckExecuteDialog v-model:visible="execVis" v-model:items="items" v-model:form="execForm" @submit="confirmExec" />
   </gi-page-layout>
 </template>
 
@@ -55,6 +32,7 @@ import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import { useTable } from '@/hooks/useTable'
 import CheckFormDialog, { type CheckFormModel } from './CheckFormDialog.vue'
+import CheckExecuteDialog, { type CheckExecuteFormModel, type CheckExecuteItem } from './CheckExecuteDialog.vue'
 
 interface CheckRow {
   id: string
@@ -119,9 +97,7 @@ const cols: TableColumnItem<CheckRow>[] = [
 
 const { tableData, pagination, loading, search, refresh } = useTable<CheckRow>({
   rowKey: 'id',
-  listAPI: async () => {
-    return { list: [], total: 0 }
-  }
+  listAPI: async () => ({ list: [], total: 0 })
 })
 
 function createDefaultFormModel(): CheckFormModel {
@@ -171,9 +147,9 @@ async function submitDialog() {
 }
 
 const execVis = ref(false)
-const execForm = ref({ remark: '' })
+const execForm = ref<CheckExecuteFormModel>({ remark: '' })
 const execPlanId = ref('')
-const items = ref([
+const items = ref<CheckExecuteItem[]>([
   { name: '设备外观', result: 'normal' },
   { name: '运行声音', result: 'normal' },
   { name: '润滑油位', result: 'normal' },
@@ -181,15 +157,15 @@ const items = ref([
   { name: '仪表读数', result: 'normal' }
 ])
 
-function execute(r: CheckRow) {
-  execPlanId.value = r.id
-  execForm.value.remark = ''
-  items.value.forEach((item) => (item.result = 'normal'))
+function execute(row: CheckRow) {
+  execPlanId.value = row.id
+  execForm.value = { remark: '' }
+  items.value = items.value.map((item) => ({ ...item, result: 'normal' }))
   execVis.value = true
 }
 
 function confirmExec() {
-  const item = tableData.value.find((p) => p.id === execPlanId.value)
+  const item = tableData.value.find((plan) => plan.id === execPlanId.value)
   if (item) item.status = 'done'
   execVis.value = false
   ElMessage.success('点检完成')

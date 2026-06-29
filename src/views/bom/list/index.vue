@@ -2,11 +2,11 @@
   <gi-page-layout>
     <template #header>
       <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
-      <gi-button type="add" @click="openAdd">新建BOM</gi-button>
+      <gi-button type="add" @click="openAdd">新建 BOM</gi-button>
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
@@ -20,33 +20,18 @@
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="openEditor(row)">编辑</el-button>
         <el-button type="primary" link size="small" @click="openCompare(row)">比较</el-button>
-        <el-button v-if="row.bom_type === 'EBOM'" type="warning" link size="small" @click="convertToMBOM(row)"> 转MBOM </el-button>
+        <el-button v-if="row.bom_type === 'EBOM'" type="warning" link size="small" @click="convertToMBOM(row)">转 MBOM</el-button>
         <gi-button type="delete" size="small" @click="onDelete(row)" />
       </template>
     </gi-table>
 
-    <!-- 版本比较选择弹窗 -->
-    <el-dialog v-model="compareVisible" title="选择比较版本" width="500px" :lock-scroll="false">
-      <el-form label-width="80px">
-        <el-form-item label="当前BOM">
-          <el-tag>{{ compareBom?.material_code }} {{ compareBom?.material_name }} {{ compareBom?.version }}</el-tag>
-        </el-form-item>
-        <el-form-item label="比较版本">
-          <el-select v-model="compareVersion" placeholder="选择要比较的版本" style="width: 100%">
-            <el-option
-              v-for="b in otherVersions"
-              :key="b.id"
-              :label="`${b.version} (${b.status === 'active' ? '生效中' : b.status === 'draft' ? '草稿' : '已归档'})`"
-              :value="b.id"
-            />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="compareVisible = false">取消</el-button>
-        <el-button type="primary" :disabled="!compareVersion" @click="doCompare">开始比较</el-button>
-      </template>
-    </el-dialog>
+    <BOMCompareDialog
+      v-model:visible="compareVisible"
+      v-model:selected-version-id="compareVersion"
+      :current-bom="compareBom"
+      :versions="otherVersions"
+      @submit="doCompare"
+    />
   </gi-page-layout>
 </template>
 
@@ -54,11 +39,12 @@
 import { computed, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { getBOMList, saveBOM, deleteBOM as deleteBOMApi } from '@/api/bom'
+import { deleteBOM as deleteBOMApi, getBOMList, saveBOM } from '@/api/bom'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import { useTable } from '@/hooks/useTable'
+import BOMCompareDialog from './BOMCompareDialog.vue'
 
 const BOM_TYPE = [
   { value: 'EBOM', label: 'EBOM', type: 'primary' as const },
@@ -85,7 +71,6 @@ interface BOMRow {
 }
 
 const router = useRouter()
-
 const searchFormRef = ref<FormInstance | null>()
 const searchForm = ref({ keyword: '', bom_type: '' })
 
@@ -93,7 +78,7 @@ const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '物料编码/名称' } as any },
   {
     type: 'select-v2',
-    label: 'BOM类型',
+    label: 'BOM 类型',
     field: 'bom_type',
     props: {
       options: [
@@ -116,7 +101,7 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
 const columns: TableColumnItem<BOMRow>[] = [
   { prop: 'material_code', label: '产品编码', width: 180 },
   { prop: 'material_name', label: '产品名称', minWidth: 160 },
-  { label: 'BOM类型', minWidth: 80, slotName: 'bom_type', align: 'center' },
+  { label: 'BOM 类型', minWidth: 80, slotName: 'bom_type', align: 'center' },
   { prop: 'version', label: '版本', minWidth: 80, align: 'center' },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { prop: 'effective_date', label: '生效日期', width: 110 },
@@ -169,14 +154,13 @@ function openEditor(row: BOMRow) {
   router.push(`/bom/editor/${row.id}`)
 }
 
-// 版本比较
 const compareVisible = ref(false)
 const compareBom = ref<BOMRow | null>(null)
 const compareVersion = ref('')
 
 const otherVersions = computed(() => {
   if (!compareBom.value) return []
-  return tableData.value.filter((b) => b.material_code === compareBom.value!.material_code && b.id !== compareBom.value!.id)
+  return tableData.value.filter((item) => item.material_code === compareBom.value?.material_code && item.id !== compareBom.value?.id)
 })
 
 function openCompare(row: BOMRow) {
@@ -191,7 +175,6 @@ function doCompare() {
   router.push(`/bom/compare?ids=${compareBom.value.id},${compareVersion.value}`)
 }
 
-// EBOM → MBOM
 function convertToMBOM(row: BOMRow) {
   ElMessageBox.confirm(`将 ${row.material_name} 的 EBOM ${row.version} 转换为 MBOM？`, '转换确认')
     .then(async () => {

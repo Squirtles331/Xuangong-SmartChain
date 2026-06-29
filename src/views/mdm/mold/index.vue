@@ -185,10 +185,10 @@ async function submitDialog() {
     return
   }
   if (dialogMode.value === 'add') {
-    tableData.unshift({ ...formModel.value } as MoldRow)
+    tableData.value.unshift({ ...formModel.value } as MoldRow)
   } else {
-    const idx = tableData.findIndex((m) => m.id === formModel.value.id)
-    if (idx > -1) tableData[idx] = { ...formModel.value } as MoldRow
+    const idx = tableData.value.findIndex((m) => m.id === formModel.value.id)
+    if (idx > -1) tableData.value[idx] = { ...formModel.value } as MoldRow
   }
   dialogVisible.value = false
 }

@@ -159,7 +159,13 @@ const columns: TableColumnItem<WorkOrderRow>[] = [
   { label: '操作', minWidth: 140, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh } = useTable<WorkOrderRow>({
+const {
+  tableData,
+  pagination,
+  loading,
+  search,
+  refresh: refreshTable
+} = useTable<WorkOrderRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: any = {
@@ -187,7 +193,7 @@ function deleteOrder(id: string) {
   ElMessageBox.confirm('确定删除该工单？', '警告', { type: 'warning' })
     .then(() => {
       ElMessage.success('删除成功')
-      refresh()
+      refreshTable()
     })
     .catch(() => {})
 }
@@ -234,13 +240,13 @@ function isOverdue(row: WorkOrderRow) {
 async function submitApproval(row: WorkOrderRow) {
   const res = await approveWorkOrder(row.id, true)
   ElMessage.success(res.message || `工单 ${row.code} 已提交审批`)
-  refresh()
+  refreshTable()
 }
 
 async function releaseOrder(row: WorkOrderRow) {
   const res = await releaseWorkOrder(row.id)
   ElMessage.success(res.message || `工单 ${row.code} 已下发到车间`)
-  refresh()
+  refreshTable()
 }
 
 async function closeOrder(row: WorkOrderRow) {
@@ -248,7 +254,7 @@ async function closeOrder(row: WorkOrderRow) {
     .then(async () => {
       const res = await closeWorkOrder(row.id, { close_type: 'normal' })
       ElMessage.success(res.message || '工单已关闭')
-      refresh()
+      refreshTable()
     })
     .catch(() => {})
 }
@@ -267,7 +273,7 @@ function openEdit(row: WorkOrderRow) {
 
 async function submitDialog() {
   dialogVisible.value = false
-  await refresh()
+  await refreshTable()
 }
 </script>
 

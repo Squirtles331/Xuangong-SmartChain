@@ -6,9 +6,7 @@
           ref="searchFormRef"
           v-model="searchForm"
           :columns="visibleSearchColumns"
-          :grid-item-props="{
-            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-          }"
+          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
           search
           @search="handleSearch"
           @reset="handleReset"
@@ -24,10 +22,10 @@
     <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
       <template #aging="{ row }">
         <el-tag v-if="row.aging <= 0" type="success" size="small">未到期</el-tag>
-        <el-tag v-else-if="row.aging <= 30" type="success" size="small">逾期{{ row.aging }}天</el-tag>
-        <el-tag v-else-if="row.aging <= 60" type="warning" size="small">逾期{{ row.aging }}天</el-tag>
-        <el-tag v-else-if="row.aging <= 90" type="warning" size="small" color="#e6a23c" style="color: #fff">逾期{{ row.aging }}天</el-tag>
-        <el-tag v-else type="danger" size="small">逾期{{ row.aging }}天</el-tag>
+        <el-tag v-else-if="row.aging <= 30" type="success" size="small">逾期 {{ row.aging }} 天</el-tag>
+        <el-tag v-else-if="row.aging <= 60" type="warning" size="small">逾期 {{ row.aging }} 天</el-tag>
+        <el-tag v-else-if="row.aging <= 90" type="warning" size="small" color="#e6a23c" style="color: #fff">逾期 {{ row.aging }} 天</el-tag>
+        <el-tag v-else type="danger" size="small">逾期 {{ row.aging }} 天</el-tag>
       </template>
       <template #status="{ row }">
         <el-tag v-if="row.balance === 0" type="success" size="small">已结</el-tag>
@@ -39,64 +37,15 @@
       </template>
     </gi-table>
 
-    <!-- 回款登记弹窗 -->
-    <el-dialog v-model="receiptVisible" title="登记回款" width="500px" :lock-scroll="false">
-      <el-form :model="receiptForm" label-width="100px">
-        <el-form-item label="客户" required>
-          <el-select v-model="receiptForm.customer" style="width: 100%">
-            <el-option v-for="c in customerNames" :key="c" :label="c" :value="c" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="回款金额" required>
-          <el-input-number v-model="receiptForm.amount" :min="0" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="回款日期" required>
-          <el-date-picker v-model="receiptForm.date" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="回款方式" required>
-          <el-select v-model="receiptForm.method" style="width: 100%">
-            <el-option label="银行转账" value="bank" />
-            <el-option label="现金" value="cash" />
-            <el-option label="承兑汇票" value="draft" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="receiptVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitReceipt">确认</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 核销弹窗 -->
-    <el-dialog v-model="settleVisible" title="回款核销" width="650px" :lock-scroll="false">
-      <p>
-        当前回款余额: <strong>{{ receiptForm.amount.toLocaleString() }} 元</strong>
-      </p>
-      <el-table :data="settleList" border @selection-change="onSettleSelect">
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="code" label="应收单号" width="160" />
-        <el-table-column prop="amount" label="金额" width="120" align="right" />
-        <el-table-column prop="balance" label="余额" width="120" align="right" />
-        <el-table-column prop="aging" label="账龄" width="100" />
-        <el-table-column label="核销金额" minWidth="120" align="center">
-          <template #default="{ row }">
-            <el-input-number
-              v-model="settleAmountMap[row.id]"
-              :min="0"
-              :max="row.balance"
-              :precision="2"
-              size="small"
-              controls-position="right"
-              style="width: 100%"
-            />
-          </template>
-        </el-table-column>
-      </el-table>
-      <template #footer>
-        <el-button @click="settleVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitSettle">确认核销</el-button>
-      </template>
-    </el-dialog>
+    <ReceiptDialog v-model:visible="receiptVisible" v-model:form="receiptForm" :customer-names="customerNames" @submit="submitReceipt" />
+    <ReceivableSettleDialog
+      v-model:visible="settleVisible"
+      v-model:rows="settleList"
+      v-model:selected-rows="selectedSettle"
+      v-model:amount-map="settleAmountMap"
+      :receipt-amount="receiptForm.amount"
+      @submit="submitSettle"
+    />
   </gi-page-layout>
 </template>
 
@@ -107,6 +56,8 @@ import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component
 import SearchSetting from '@/components/SearchSetting.vue'
 import { createReceipt, getReceivableList, type Receivable, type ReceivableQuery } from '@/api/crm'
 import { useTable } from '@/hooks/useTable'
+import ReceiptDialog, { type ReceiptFormModel } from './ReceiptDialog.vue'
+import ReceivableSettleDialog from './ReceivableSettleDialog.vue'
 
 interface ARRow {
   id: string
@@ -135,10 +86,10 @@ const searchColumns: FormColumnItem[] = [
       options: [
         { label: '全部', value: '' },
         { label: '未到期', value: '0' },
-        { label: '逾期1-30天', value: '1' },
-        { label: '逾期31-60天', value: '2' },
-        { label: '逾期61-90天', value: '3' },
-        { label: '逾期>90天', value: '4' }
+        { label: '逾期 1-30 天', value: '1' },
+        { label: '逾期 31-60 天', value: '2' },
+        { label: '逾期 61-90 天', value: '3' },
+        { label: '逾期 >90 天', value: '4' }
       ]
     }
   } as any
@@ -168,8 +119,7 @@ const { tableData, pagination, loading, search, refresh } = useTable<ARRow>({
   listAPI: async ({ page, size }) => {
     let statusParam: 'overdue' | 'settled' | 'pending' | undefined
     if (searchForm.value.aging) {
-      if (searchForm.value.aging === '0') statusParam = 'pending'
-      else statusParam = 'overdue'
+      statusParam = searchForm.value.aging === '0' ? 'pending' : 'overdue'
     }
     const params: ReceivableQuery = {
       page,
@@ -208,9 +158,13 @@ function handleReset() {
 }
 
 const customerNames = ['XX重工集团', 'YY机械设备', 'ZZ泵业科技']
-
 const receiptVisible = ref(false)
-const receiptForm = reactive({ customer: 'XX重工集团', amount: 0, date: new Date().toISOString().slice(0, 10), method: 'bank' })
+const receiptForm = ref<ReceiptFormModel>({
+  customer: 'XX重工集团',
+  amount: 0,
+  date: new Date().toISOString().slice(0, 10),
+  method: 'bank'
+})
 
 function openReceipt() {
   receiptVisible.value = true
@@ -218,11 +172,11 @@ function openReceipt() {
 
 async function submitReceipt() {
   await createReceipt({
-    customer: receiptForm.customer,
-    amount: receiptForm.amount
+    customer: receiptForm.value.customer,
+    amount: receiptForm.value.amount
   })
   receiptVisible.value = false
-  ElMessage.success('回款已登记，请核销')
+  ElMessage.success('回款已登记，请继续核销')
   await refresh()
 }
 
@@ -232,32 +186,33 @@ const selectedSettle = ref<ARRow[]>([])
 const settleAmountMap = reactive<Record<string, number>>({})
 
 function openSettle(row: ARRow) {
-  settleList.value = (tableData.value as ARRow[]).filter((a) => a.customer === row.customer && a.balance > 0)
+  settleList.value = tableData.value.filter((item) => item.customer === row.customer && item.balance > 0)
   selectedSettle.value = []
-  settleList.value.forEach((a) => {
-    settleAmountMap[a.id] = 0
+  Object.keys(settleAmountMap).forEach((key) => {
+    delete settleAmountMap[key]
+  })
+  settleList.value.forEach((item) => {
+    settleAmountMap[item.id] = 0
   })
   settleVisible.value = true
 }
 
-function onSettleSelect(rows: ARRow[]) {
-  selectedSettle.value = rows
-}
-
 function submitSettle() {
   let totalSettled = 0
-  settleList.value.forEach((a) => {
-    const settleAmount = settleAmountMap[a.id] || 0
-    if (settleAmount > 0) {
-      a.settled += settleAmount
-      a.balance -= settleAmount
-      totalSettled += settleAmount
+  settleList.value.forEach((item) => {
+    const amount = settleAmountMap[item.id] || 0
+    if (amount > 0) {
+      item.settled += amount
+      item.balance -= amount
+      totalSettled += amount
     }
   })
+
   if (totalSettled === 0) {
     ElMessage.warning('请输入核销金额')
     return
   }
+
   settleVisible.value = false
   ElMessage.success(`已核销 ${totalSettled.toLocaleString()} 元`)
 }

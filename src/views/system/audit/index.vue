@@ -15,32 +15,18 @@
       </template>
     </gi-table>
 
-    <!-- 详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="操作日志详情" width="600px" :lock-scroll="false">
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="操作人">{{ detailLog?.user_name }}</el-descriptions-item>
-        <el-descriptions-item label="操作时间">{{ detailLog?.created_at }}</el-descriptions-item>
-        <el-descriptions-item label="模块">{{ detailLog?.module }}</el-descriptions-item>
-        <el-descriptions-item label="操作类型">
-          <StatusTag v-if="detailLog" :value="detailLog.action" :options="AUDIT_ACTION" />
-        </el-descriptions-item>
-        <el-descriptions-item label="操作对象">{{ detailLog?.target }}</el-descriptions-item>
-        <el-descriptions-item label="IP地址">{{ detailLog?.ip }}</el-descriptions-item>
-        <el-descriptions-item label="请求参数" :span="2">
-          <pre class="json-preview">{{ detailLog?.request_params || '-' }}</pre>
-        </el-descriptions-item>
-      </el-descriptions>
-    </el-dialog>
+    <AuditDetailDialog v-model:visible="detailVisible" :detail-log="detailLog" :action-options="AUDIT_ACTION" />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { getAuditLogs, type AuditLog } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
+import AuditDetailDialog from './AuditDetailDialog.vue'
 
 const AUDIT_ACTION = [
   { value: 'CREATE', label: '新增', type: 'success' as const },
@@ -102,19 +88,19 @@ const columns: TableColumnItem<AuditLog>[] = [
   { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh } = useTable<AuditLog>({
+const { tableData, pagination, loading, search } = useTable<AuditLog>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const sf = searchForm.value
+    const filters = searchForm.value
     const params: any = {
       page,
       page_size: size,
-      user_name: sf.user_name || undefined,
-      module: sf.module || undefined
+      user_name: filters.user_name || undefined,
+      module: filters.module || undefined
     }
-    if (sf.date_range?.length === 2) {
-      params.start_date = sf.date_range[0]
-      params.end_date = sf.date_range[1]
+    if (filters.date_range?.length === 2) {
+      params.start_date = filters.date_range[0]
+      params.end_date = filters.date_range[1]
     }
     const response = await getAuditLogs(params)
     return {
@@ -146,14 +132,3 @@ function showDetail(row: AuditLog) {
   detailVisible.value = true
 }
 </script>
-
-<style scoped>
-.json-preview {
-  max-height: 200px;
-  overflow: auto;
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-all;
-  margin: 0;
-}
-</style>

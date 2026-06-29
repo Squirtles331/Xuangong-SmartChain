@@ -18,13 +18,7 @@
       </template>
     </gi-table>
 
-    <el-dialog v-model="traceVisible" title="批次追溯" width="700px">
-      <div v-if="traceData.length">
-        <el-timeline>
-          <el-timeline-item v-for="(t, i) in traceData" :key="i" :timestamp="t.time" :type="t.type">{{ t.desc }}</el-timeline-item>
-        </el-timeline>
-      </div>
-    </el-dialog>
+    <InventoryTraceDialog v-model:visible="traceVisible" v-model:trace-data="traceData" />
   </gi-page-layout>
 </template>
 
@@ -34,6 +28,7 @@ import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import { getInventoryList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
+import InventoryTraceDialog, { type InventoryTraceItem } from './InventoryTraceDialog.vue'
 
 interface InvRow {
   id: string
@@ -91,7 +86,7 @@ const cols: TableColumnItem<InvRow>[] = [
   { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh } = useTable<InvRow>({
+const { tableData, pagination, loading, search } = useTable<InvRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getInventoryList({
@@ -135,13 +130,13 @@ function handleReset() {
 }
 
 const traceVisible = ref(false)
-const traceData = ref<any[]>([])
+const traceData = ref<InventoryTraceItem[]>([])
 
 function trace(row: InvRow) {
   traceData.value = [
     { time: '2025-01-15 14:00', type: 'primary', desc: `成品入库: ${row.name} 入库 ${row.qty}${row.unit}` },
-    { time: '2025-01-14 10:00', type: 'success', desc: `工序报工: 工单 WO202501150001 完工` },
-    { time: '2025-01-05 08:00', type: 'warning', desc: `来料入库: 批号 ${row.lot} 从 PO202501010005 收货` }
+    { time: '2025-01-14 10:00', type: 'success', desc: '工序报工: 工单 WO202501150001 完工' },
+    { time: '2025-01-05 08:00', type: 'warning', desc: `来料入库: 批号 ${row.lot} 来源 PO202501010005 收货` }
   ]
   traceVisible.value = true
 }

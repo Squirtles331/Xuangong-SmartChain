@@ -54,7 +54,7 @@ interface CustomerRow {
   contact_phone: string
   payment_terms: string
   credit_limit: number
-  status: string
+  status: 'active' | 'disabled'
 }
 
 const searchFormRef = ref<FormInstance | null>()
@@ -186,7 +186,7 @@ async function submitDialog() {
     contact_phone: formModel.value.contact_phone,
     payment_terms: formModel.value.payment_terms,
     credit_limit: formModel.value.credit_limit,
-    status: formModel.value.status
+    status: formModel.value.status as 'active' | 'disabled'
   }
 
   if (dialogMode.value === 'add') {

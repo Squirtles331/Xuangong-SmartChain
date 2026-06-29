@@ -6,9 +6,7 @@
           ref="sf"
           v-model="searchForm"
           :columns="visibleSearchColumns"
-          :grid-item-props="{
-            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-          }"
+          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
           search
           @search="handleSearch"
           @reset="handleReset"
@@ -18,7 +16,7 @@
 
     <template #tool>
       <gi-button type="add" @click="openAdd">手动创建</gi-button>
-      <el-button style="margin-left: 8px" type="primary" @click="$router.push('/mrp/result')">从MRP生成</el-button>
+      <el-button style="margin-left: 8px" type="primary" @click="$router.push('/mrp/result')">从 MRP 生成</el-button>
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
@@ -40,45 +38,24 @@
     </gi-table>
 
     <PurchaseRequestFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-
-    <!-- 转采购订单弹窗 (business-specific) -->
-    <el-dialog v-model="poVisible" title="生成采购订单" width="600px" :lock-scroll="false">
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="申请单号">{{ currentPR?.code }}</el-descriptions-item>
-        <el-descriptions-item label="申请部门">{{ currentPR?.dept }}</el-descriptions-item>
-      </el-descriptions>
-      <el-form label-width="100px" style="margin-top: 16px">
-        <el-form-item label="供应商" required>
-          <el-select v-model="poForm.supplier" style="width: 100%">
-            <el-option v-for="s in suppliers" :key="s" :label="s" :value="s" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="交货日期" required>
-          <el-date-picker v-model="poForm.delivery" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="付款条款">
-          <el-select v-model="poForm.terms" style="width: 100%">
-            <el-option label="月结30天" value="30" />
-            <el-option label="月结60天" value="60" />
-            <el-option label="款到发货" value="0" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="poVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmPO">确认生成</el-button>
-      </template>
-    </el-dialog>
+    <PurchaseRequestConvertDialog
+      v-model:visible="poVisible"
+      v-model:form="poForm"
+      :current-request="currentPR"
+      :suppliers="suppliers"
+      @submit="confirmPO"
+    />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { useTable } from '@/hooks/useTable'
+import PurchaseRequestConvertDialog, { type PurchaseRequestConvertFormModel } from './PurchaseRequestConvertDialog.vue'
 import PurchaseRequestFormDialog, { type PurchaseRequestFormModel, type PurchaseRequestLine } from './PurchaseRequestFormDialog.vue'
 
 const PR_STATUS = [
@@ -195,10 +172,10 @@ const { tableData, pagination, loading, search, refresh } = useTable<PRRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     let filtered = [...localData.value]
-    const s = searchForm.value
-    if (s.code) filtered = filtered.filter((r) => r.code.includes(s.code))
-    if (s.status) filtered = filtered.filter((r) => r.status === s.status)
-    if (s.source) filtered = filtered.filter((r) => r.source === s.source)
+    const filters = searchForm.value
+    if (filters.code) filtered = filtered.filter((row) => row.code.includes(filters.code))
+    if (filters.status) filtered = filtered.filter((row) => row.status === filters.status)
+    if (filters.source) filtered = filtered.filter((row) => row.source === filters.source)
     const total = filtered.length
     const start = (page - 1) * size
     return {
@@ -267,7 +244,7 @@ async function submitDialog(lines: PurchaseRequestLine[]) {
 }
 
 function remove(row: PRRow) {
-  localData.value = localData.value.filter((r) => r.id !== row.id)
+  localData.value = localData.value.filter((item) => item.id !== row.id)
   refresh()
 }
 
@@ -276,10 +253,13 @@ function submitApprove(row: PRRow) {
   ElMessage.success('已提交审批')
 }
 
-// PO conversion
 const poVisible = ref(false)
 const currentPR = ref<PRRow | null>(null)
-const poForm = reactive({ supplier: 'XX钢材有限公司', delivery: '', terms: '30' })
+const poForm = ref<PurchaseRequestConvertFormModel>({
+  supplier: 'XX钢材有限公司',
+  delivery: '',
+  terms: '30'
+})
 const suppliers = ['XX钢材有限公司', 'YY轴承制造厂', 'ZZ标准件有限公司', 'AA铸件有限公司']
 
 function convertToPO(row: PRRow) {
