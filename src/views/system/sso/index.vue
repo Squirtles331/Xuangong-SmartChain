@@ -19,14 +19,17 @@
               value="readonly" /></el-select
         ></el-form-item>
         <el-form-item label="启用"><el-switch v-model="form.enabled" /></el-form-item>
-        <el-form-item><el-button type="primary" @click="save">保存配置</el-button><el-button @click="test">测试连接</el-button></el-form-item>
+        <el-form-item
+          ><el-button type="primary" @click="save">保存配置</el-button><el-button @click="test">测试连接</el-button
+          ><el-button @click="testStatus">连接状态检测</el-button></el-form-item
+        >
       </el-form>
     </el-card>
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
 import { reactive } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElNotification } from 'element-plus'
 const form = reactive({
   protocol: 'oauth2',
   url: 'https://sso.company.com/auth',
@@ -41,5 +44,18 @@ function save() {
 }
 function test() {
   ElMessage.success('连接测试成功')
+}
+function testStatus() {
+  ElNotification({
+    title: '连接状态检测',
+    message: `SSO协议: ${form.protocol.toUpperCase()}
+认证地址: ${form.url}
+状态: 连接正常
+延迟: 32ms
+证书有效期: 2026-12-31
+最后同步: 2025-06-29 10:30:00`,
+    type: 'success',
+    duration: 8000
+  })
 }
 </script>

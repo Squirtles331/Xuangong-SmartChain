@@ -11,8 +11,15 @@
           row.status === 'pending' ? '待冲销' : '已冲销'
         }}</el-tag></template
       >
-      <template #actions="{ row }"
-        ><el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="backflush(row)">执行倒冲</el-button></template
+      <template #diff="{ row }"
+        ><span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '#909399' }"
+          >{{ row.diff > 0 ? '+' : '' }}{{ row.diff }}</span
+        ></template
+      >
+      <template #diff_rate="{ row }"
+        ><span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '#909399' }">
+          {{ row.bom_qty > 0 ? ((Math.abs(row.diff) / row.bom_qty) * 100).toFixed(2) : '0.00' }}%</span
+        ></template
       >
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增倒冲规则' : '编辑倒冲规则'" width="600px">
@@ -97,7 +104,8 @@ const cols: TableColumnItem<BF>[] = [
   { prop: 'wo_code', label: '工单号', minWidth: 170 },
   { prop: 'bom_qty', label: 'BOM用量', minWidth: 90, align: 'center' },
   { prop: 'actual_qty', label: '实际用量', minWidth: 90, align: 'center' },
-  { prop: 'diff', label: '差异', minWidth: 80, align: 'center' },
+  { prop: 'diff', label: '差异', minWidth: 80, align: 'center', slotName: 'diff' },
+  { label: '差异率', minWidth: 90, slotName: 'diff_rate', align: 'center' },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { prop: 'backflush_date', label: '冲销日期', minWidth: 110 },
   { label: '操作', minWidth: 100, fixed: 'right', slotName: 'actions', align: 'center' }

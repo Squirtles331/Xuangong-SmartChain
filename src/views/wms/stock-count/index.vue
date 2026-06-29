@@ -5,6 +5,15 @@
         <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
     ></template>
     <template #tool><gi-button type="add" @click="openCreate" /></template>
+    <!-- 差异率统计汇总 -->
+    <el-row :gutter="16" style="margin-bottom: 16px">
+      <el-col :span="6" v-for="d in diffSummary" :key="d.label">
+        <el-card shadow="hover" class="diff-card">
+          <div class="diff-label">{{ d.label }}</div>
+          <div class="diff-value" :style="{ color: d.color }">{{ d.value }}</div>
+        </el-card>
+      </el-col>
+    </el-row>
     <gi-table :columns="cols" :data="plans" border stripe>
       <template #type="{ row }"
         ><el-tag :type="row.type === 'full' ? 'danger' : 'warning'" size="small">{{
@@ -67,6 +76,21 @@ import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
+
+// 差异率统计汇总
+const diffSummary = computed(() => {
+  const totalItems = diffItems.value.length
+  const hasDiff = diffItems.value.filter((d) => d.diff !== 0).length
+  const totalBookQty = diffItems.value.reduce((sum, d) => sum + d.book_qty, 0)
+  const totalDiff = diffItems.value.reduce((sum, d) => sum + Math.abs(d.diff), 0)
+  const diffRate = totalBookQty > 0 ? ((totalDiff / totalBookQty) * 100).toFixed(2) : '0.00'
+  return [
+    { label: '盘点项数', value: String(totalItems), color: '#409eff' },
+    { label: '差异项数', value: String(hasDiff), color: '#e6a23c' },
+    { label: '差异率', value: diffRate + '%', color: '#f56c6c' },
+    { label: '总差异量', value: String(totalDiff), color: '#67c23a' }
+  ]
+})
 const s = ref({ keyword: '' })
 const sc: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword' } as any]
 
@@ -135,3 +159,18 @@ function confirmDiff() {
   ElMessage.success('差异已调整')
 }
 </script>
+<style scoped>
+.diff-card :deep(.el-card__body) {
+  padding: 16px;
+  text-align: center;
+}
+.diff-label {
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 8px;
+}
+.diff-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+</style>

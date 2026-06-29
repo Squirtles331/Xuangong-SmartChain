@@ -19,14 +19,33 @@
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="$router.push(`/bom/editor/${row.id}`)">编辑</el-button>
-        <el-button type="primary" link size="small" @click="$router.push(`/bom/compare?ids=${row.id},${row.id}`)">比较</el-button>
+        <el-button type="primary" link size="small" @click="openCompare(row)">比较</el-button>
         <el-button v-if="row.bom_type === 'EBOM'" type="warning" link size="small" @click="convertToMBOM(row)">转MBOM</el-button>
         <gi-button type="delete" size="small" @click="deleteBom(row.id)" />
       </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+    <!-- 版本比较选择弹窗 -->
+    <el-dialog v-model="compareVisible" title="选择比较版本" width="500px">
+      <el-form label-width="80px">
+        <el-form-item label="当前BOM">
+          <el-tag>{{ compareBom?.material_code }} {{ compareBom?.material_name }} {{ compareBom?.version }}</el-tag>
+        </el-form-item>
+        <el-form-item label="比较版本">
+          <el-select v-model="compareVersion" placeholder="选择要比较的版本" style="width: 100%">
+            <el-option
+              v-for="b in otherVersions"
+              :key="b.id"
+              :label="`${b.version} (${b.status === 'active' ? '生效中' : b.status === 'draft' ? '草稿' : '已归档'})`"
+              :value="b.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="compareVisible = false">取消</el-button>
+        <el-button type="primary" :disabled="!compareVersion" @click="doCompare">开始比较</el-button>
+      </template>
+    </el-dialog>
   </gi-page-layout>
 </template>
 
@@ -143,31 +162,34 @@ function del(id: string) {
 const vis = ref(false)
 const mode = ref<'add' | 'edit'>('add')
 const eid = ref('')
-const form = reactive({ name: '' })
-const formCols: FormColumnItem[] = [{ type: 'input', label: '名称', field: 'name', required: true }]
+
+// 版本比较
+const compareVisible = ref(false)
+const compareBom = ref<BOM | null>(null)
+const compareVersion = ref('')
+
+const otherVersions = computed(() => {
+  if (!compareBom.value) return []
+  return boms.value.filter((b) => b.material_code === compareBom.value!.material_code && b.id !== compareBom.value!.id)
+})
+
+function openCompare(row: BOM) {
+  compareBom.value = row
+  compareVersion.value = ''
+  compareVisible.value = true
+}
+
+function doCompare() {
+  if (!compareBom.value || !compareVersion.value) return
+  compareVisible.value = false
+  $router.push(`/bom/compare?ids=${compareBom.value.id},${compareVersion.value}`)
+}
+
 function openAdd() {
-  mode.value = 'add'
-  eid.value = ''
-  vis.value = true
+  $router.push('/bom/create')
 }
 function openEdit(r: any) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
-}
-async function submit() {
-  if (!form.name) {
-    ElMessage.warning('请填写必填项')
-    return false
-  }
-  if (mode.value === 'add') {
-    boms.value.unshift({ id: Date.now().toString(), ...form })
-  } else {
-    const i = boms.value.findIndex((e: any) => e.id === eid.value)
-    if (i > -1) Object.assign(boms.value[i], form)
-  }
-  return true
+  $router.push(`/bom/editor/${r.id}`)
 }
 function refresh() {
   handleReset()

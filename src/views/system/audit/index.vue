@@ -6,12 +6,29 @@
       </SearchSetting>
     </template>
 
-    <gi-table :columns="columns" :data="pagedLogs" :pagination="pagination" border style="height: 100%">
+    <gi-table :columns="columns" :data="pagedLogs" :pagination="pagination" border stripe style="height: 100%" @row-click="toggleExpand">
       <template #action_type="{ row }">
         <StatusTag :value="row.action" :options="AUDIT_ACTION" />
       </template>
       <template #actions="{ row }">
-        <el-button type="primary" link size="small" @click="showDetail(row)">详情</el-button>
+        <el-button type="primary" link size="small" @click.stop="showDetail(row)">详情</el-button>
+      </template>
+      <template #expand="{ row }">
+        <div class="log-detail">
+          <el-descriptions :column="2" size="small" border>
+            <el-descriptions-item label="操作人">{{ row.user_name }}</el-descriptions-item>
+            <el-descriptions-item label="操作时间">{{ row.created_at }}</el-descriptions-item>
+            <el-descriptions-item label="模块">{{ row.module }}</el-descriptions-item>
+            <el-descriptions-item label="操作类型">
+              <StatusTag :value="row.action" :options="AUDIT_ACTION" />
+            </el-descriptions-item>
+            <el-descriptions-item label="操作对象">{{ row.target }}</el-descriptions-item>
+            <el-descriptions-item label="IP地址">{{ row.ip }}</el-descriptions-item>
+            <el-descriptions-item label="请求参数" :span="2">
+              <pre class="json-preview">{{ row.request_params || '-' }}</pre>
+            </el-descriptions-item>
+          </el-descriptions>
+        </div>
       </template>
     </gi-table>
 
@@ -138,6 +155,16 @@ function handleReset() {
 
 const detailVisible = ref(false)
 const detailLog = ref<Log | null>(null)
+const expandedRows = ref<Set<string>>(new Set())
+
+function toggleExpand(row: Log) {
+  if (expandedRows.value.has(row.id)) {
+    expandedRows.value.delete(row.id)
+  } else {
+    expandedRows.value.add(row.id)
+  }
+}
+
 function showDetail(row: Log) {
   detailLog.value = row
   detailVisible.value = true

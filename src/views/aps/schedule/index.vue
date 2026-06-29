@@ -21,17 +21,19 @@
           </div>
           <div class="gantt-chart" ref="ganttRef">
             <div class="gantt-timeline">
-              <div v-for="d in days" :key="d" class="gantt-day" :class="{ weekend: d.isWeekend }">{{ d.label }}</div>
+              <div v-for="d in days" :key="d.label" class="gantt-day" :class="{ weekend: d.isWeekend }">{{ d.label }}</div>
             </div>
             <div v-for="wo in ganttData" :key="wo.id" class="gantt-row">
               <div
                 v-for="(seg, i) in wo.segments"
                 :key="i"
                 class="gantt-bar"
-                :style="{ left: seg.left + '%', width: seg.width + '%', backgroundColor: seg.color }"
-                :title="`${seg.name} (${seg.wc})`"
+                :class="{ 'gantt-bar-conflict': seg.conflict }"
+                :style="{ left: seg.left + '%', width: seg.width + '%', backgroundColor: seg.conflict ? '#f56c6c' : seg.color }"
+                :title="`${seg.name} (${seg.wc})${seg.conflict ? ' [约束冲突]' : ''}`"
               >
                 {{ seg.name }}
+                <span v-if="seg.conflict" class="conflict-badge">!</span>
               </div>
             </div>
           </div>
@@ -95,14 +97,14 @@ const ganttData = ref([
     code: 'WO001',
     material: '离心泵 XJP-100',
     segments: [
-      { name: '下料', wc: '下料组', left: 0, minWidth: 8, color: '#409eff' },
-      { name: '粗车', wc: '数控车组', left: 8, minWidth: 14, color: '#67c23a' },
-      { name: '精车', wc: '数控车组', left: 22, minWidth: 10, color: '#e6a23c' },
-      { name: '钻孔', wc: '钻床组', left: 32, minWidth: 8, color: '#909399' },
-      { name: '磨削', wc: '磨床组', left: 40, minWidth: 10, color: '#f56c6c' },
-      { name: '装配', wc: '装配组', left: 50, minWidth: 12, color: '#409eff' },
-      { name: '试压', wc: '测试组', left: 62, minWidth: 8, color: '#67c23a' },
-      { name: '油漆', wc: '涂装组', left: 70, minWidth: 10, color: '#e6a23c' }
+      { name: '下料', wc: '下料组', left: 0, width: 8, color: '#409eff', conflict: false },
+      { name: '粗车', wc: '数控车组', left: 8, width: 14, color: '#67c23a', conflict: false },
+      { name: '精车', wc: '数控车组', left: 22, width: 10, color: '#e6a23c', conflict: true },
+      { name: '钻孔', wc: '钻床组', left: 32, width: 8, color: '#909399', conflict: false },
+      { name: '磨削', wc: '磨床组', left: 40, width: 10, color: '#f56c6c', conflict: false },
+      { name: '装配', wc: '装配组', left: 50, width: 12, color: '#409eff', conflict: true },
+      { name: '试压', wc: '测试组', left: 62, width: 8, color: '#67c23a', conflict: false },
+      { name: '油漆', wc: '涂装组', left: 70, width: 10, color: '#e6a23c', conflict: false }
     ]
   },
   {
@@ -110,9 +112,9 @@ const ganttData = ref([
     code: 'WO002',
     material: '齿轮箱 GBX-200',
     segments: [
-      { name: '下料', wc: '下料组', left: 8, minWidth: 6, color: '#409eff' },
-      { name: '粗车', wc: '数控车组', left: 24, minWidth: 12, color: '#67c23a' },
-      { name: '精车', wc: '数控车组', left: 36, minWidth: 8, color: '#e6a23c' }
+      { name: '下料', wc: '下料组', left: 8, width: 6, color: '#409eff', conflict: false },
+      { name: '粗车', wc: '数控车组', left: 24, width: 12, color: '#67c23a', conflict: false },
+      { name: '精车', wc: '数控车组', left: 36, width: 8, color: '#e6a23c', conflict: false }
     ]
   },
   {
@@ -120,8 +122,8 @@ const ganttData = ref([
     code: 'WO003',
     material: '传动轴 DS-50',
     segments: [
-      { name: '车削', wc: '数控车组', left: 44, minWidth: 14, color: '#409eff' },
-      { name: '磨削', wc: '磨床组', left: 58, minWidth: 10, color: '#f56c6c' }
+      { name: '车削', wc: '数控车组', left: 44, width: 14, color: '#409eff', conflict: false },
+      { name: '磨削', wc: '磨床组', left: 58, width: 10, color: '#f56c6c', conflict: false }
     ]
   }
 ])
@@ -181,12 +183,26 @@ function runSchedule() {
     { op: '工序80:油漆', wc: '涂装组', qty: 100 }
   ]
   conflicts.value = []
+
+  // 收集所有冲突工序名
+  const conflictOps = new Set<string>()
   for (const op of allOps) {
     const reasons = constraintStore.checkConflicts(op.op, op.wc, op.qty)
     if (reasons.length > 0) {
       conflicts.value.push({ operation: op.op, reasons })
+      // 提取工序名(去掉"工序XX:"前缀)匹配甘特图segment
+      const opName = op.op.replace(/^工序\d+:/, '')
+      conflictOps.add(opName)
     }
   }
+
+  // 同步冲突状态到甘特图
+  for (const wo of ganttData.value) {
+    for (const seg of wo.segments) {
+      seg.conflict = conflictOps.has(seg.name)
+    }
+  }
+
   if (conflicts.value.length === 0) {
     ElMessage.success('排程完成，所有约束通过')
   } else {
@@ -277,6 +293,32 @@ function runSchedule() {
   text-overflow: ellipsis;
   padding: 0 4px;
   cursor: pointer;
+}
+.gantt-bar-conflict {
+  animation: conflict-pulse 1.5s ease-in-out infinite;
+}
+.conflict-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  color: #f56c6c;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+@keyframes conflict-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 .load-grid {
   display: grid;

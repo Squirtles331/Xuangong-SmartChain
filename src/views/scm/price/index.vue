@@ -1,7 +1,17 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #tool><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /></template>
-    <gi-table :columns="cols" :data="records" border stripe>
+    <el-row :gutter="16">
+      <el-col :span="12">
+        <el-card header="价格趋势" shadow="never"><div ref="priceChartRef" style="height: 300px"></div></el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card header="供应商比价" shadow="never">
+          <gi-table :columns="compareCols" :data="compareData" border stripe size="small" />
+        </el-card>
+      </el-col>
+    </el-row>
+    <gi-table :columns="cols" :data="records" border stripe style="margin-top: 16px">
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增价格记录' : '编辑价格记录'" width="600px">
@@ -10,8 +20,9 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import * as echarts from 'echarts'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface PR {
   id: string
@@ -133,4 +144,50 @@ function del(id: string) {
     .catch(() => {})
 }
 function refresh() {}
+
+// 价格趋势图
+const priceChartRef = ref<HTMLDivElement>()
+let priceChart: echarts.ECharts | null = null
+
+function handleResize() {
+  priceChart?.resize()
+}
+
+onMounted(() => {
+  if (priceChartRef.value) {
+    priceChart = echarts.init(priceChartRef.value)
+    priceChart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['45#圆钢 φ50', '轴承 6308', '螺栓 M16×60'] },
+      xAxis: { type: 'category', data: ['1月', '2月', '3月', '4月', '5月', '6月'] },
+      yAxis: { type: 'value', name: '单价(元)' },
+      series: [
+        { name: '45#圆钢 φ50', type: 'line', data: [5.8, 5.9, 6.0, 6.1, 6.0, 5.9], smooth: true, itemStyle: { color: '#409eff' } },
+        { name: '轴承 6308', type: 'line', data: [85, 86, 84, 83, 85, 84], smooth: true, itemStyle: { color: '#67c23a' } },
+        { name: '螺栓 M16×60', type: 'line', data: [2.5, 2.4, 2.6, 2.5, 2.5, 2.4], smooth: true, itemStyle: { color: '#e6a23c' } }
+      ]
+    })
+    window.addEventListener('resize', handleResize)
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  priceChart?.dispose()
+})
+
+// 供应商比价表
+const compareCols: TableColumnItem<any>[] = [
+  { prop: 'supplier', label: '供应商', minWidth: 150 },
+  { prop: 'price_45', label: '45#圆钢(元/kg)', minWidth: 130, align: 'center' },
+  { prop: 'price_bearing', label: '轴承6308(元/个)', minWidth: 130, align: 'center' },
+  { prop: 'price_bolt', label: '螺栓M16×60(元/个)', minWidth: 140, align: 'center' },
+  { prop: 'delivery_days', label: '交期(天)', minWidth: 80, align: 'center' }
+]
+const compareData = ref([
+  { supplier: 'XX钢材有限公司', price_45: '5.80', price_bearing: '-', price_bolt: '2.50', delivery_days: 7 },
+  { supplier: 'AA铸件有限公司', price_45: '6.20', price_bearing: '-', price_bolt: '2.60', delivery_days: 10 },
+  { supplier: 'YY轴承制造厂', price_45: '-', price_bearing: '85.00', price_bolt: '-', delivery_days: 5 },
+  { supplier: 'ZZ标准件有限公司', price_45: '-', price_bearing: '-', price_bolt: '2.40', delivery_days: 3 }
+])
 </script>

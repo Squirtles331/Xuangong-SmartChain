@@ -11,13 +11,10 @@
         ><el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag></template
       >
       <template #actions="{ row }"
-        ><gi-button type="edit" @click="openEdit(row)" /><el-button
-          :type="row.status === 'active' ? 'warning' : 'success'"
-          link
-          size="small"
-          @click="toggle(row)"
-          >{{ row.status === 'active' ? '停用' : '启用' }}</el-button
-        ></template
+        ><gi-button type="edit" @click="openEdit(row)" /><el-button type="primary" link size="small" @click="testSend(row)">发送测试</el-button
+        ><el-button :type="row.status === 'active' ? 'warning' : 'success'" link size="small" @click="toggle(row)">{{
+          row.status === 'active' ? '停用' : '启用'
+        }}</el-button></template
       >
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增通知规则' : '编辑通知规则'" width="600px">
@@ -112,6 +109,10 @@ async function submit() {
 function toggle(r: NR) {
   r.status = r.status === 'active' ? 'disabled' : 'active'
   ElMessage.success(r.status === 'active' ? '已启用' : '已停用')
+}
+function testSend(r: NR) {
+  const channelName = r.channel === 'wecom' ? '企业微信' : r.channel === 'dingtalk' ? '钉钉' : '站内信'
+  ElMessage.success(`测试消息已通过${channelName}发送至：${r.webhook_url}`)
 }
 function refresh() {}
 </script>

@@ -10,6 +10,7 @@
         ><el-col :span="4"><el-button type="primary" @click="query">查询</el-button></el-col></el-row
       ></template
     >
+    <template #tool><el-button type="primary" @click="exportCSV">导出 CSV</el-button></template>
     <el-row :gutter="16">
       <el-col :span="16"
         ><el-card header="实时趋势"><div ref="chartRef" style="height: 350px"></div></el-card
@@ -109,4 +110,19 @@ onBeforeUnmount(() => {
   chartInstance?.dispose()
 })
 function query() {}
+
+function exportCSV() {
+  const headers = ['时间', '转速(rpm)', '温度(°C)', '电流(A)', '振动(mm/s)']
+  const rows = logs.value.map((l) => [l.time, l.rpm, l.temp, l.current.toFixed(1), l.vibration.toFixed(2)])
+  const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+  const BOM = '\uFEFF'
+  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `设备历史数据_${device.value}_${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+  ElMessage.success('导出成功')
+}
 </script>

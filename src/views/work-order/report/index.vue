@@ -18,7 +18,10 @@
         <el-descriptions-item label="已用时长">{{ elapsedDisplay }}</el-descriptions-item>
         <el-descriptions-item label="计划数量">{{ report.planned_qty }} 台</el-descriptions-item>
         <el-descriptions-item label="已报工数量">{{ report.reported_qty }} 台</el-descriptions-item>
-        <el-descriptions-item label="剩余数量">{{ report.planned_qty - report.reported_qty }} 台</el-descriptions-item>
+        <el-descriptions-item label="剩余数量">{{ maxReportQty }} 台</el-descriptions-item>
+        <el-descriptions-item label="完成进度">
+          <el-progress :percentage="completionProgress" :stroke-width="8" :color="progressColor" style="width: 200px" />
+        </el-descriptions-item>
       </el-descriptions>
 
       <!-- 报工表单 -->
@@ -49,9 +52,9 @@
             <el-input v-model="form.remark" type="textarea" :rows="2" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" size="large" @click="submitReport" :disabled="form.qualified_qty + form.defective_qty === 0"
-              >提交报工</el-button
-            >
+            <el-button type="primary" size="large" @click="submitReport" :disabled="form.qualified_qty + form.defective_qty === 0">
+              提交报工
+            </el-button>
             <el-button size="large" @click="$router.back()">返回</el-button>
           </el-form-item>
         </el-form>
@@ -95,13 +98,15 @@ const report = reactive({
   reported_qty: 45
 })
 
-// 计时器
+// ==================== 计时器 ====================
 const elapsed = ref(65) // 分钟，模拟已过时间
 let timer: ReturnType<typeof setInterval>
+
 onMounted(() => {
   timer = setInterval(() => elapsed.value++, 60000)
   nextTick(() => initParetoChart())
 })
+
 onBeforeUnmount(() => {
   clearInterval(timer)
   window.removeEventListener('resize', handleParetoResize)
@@ -116,12 +121,30 @@ const elapsedDisplay = computed(() => {
 
 const maxReportQty = computed(() => report.planned_qty - report.reported_qty)
 
+const completionProgress = computed(() => {
+  if (report.planned_qty === 0) return 0
+  return Math.round((report.reported_qty / report.planned_qty) * 100)
+})
+
+const progressColor = computed(() => {
+  const p = completionProgress.value
+  if (p >= 100) return '#67c23a'
+  if (p >= 60) return '#409eff'
+  return '#e6a23c'
+})
+
+// ==================== 报工表单 ====================
 const form = reactive({
   qualified_qty: 55,
   defective_qty: 0,
   defect_reasons: [] as string[],
   actual_hours: elapsed.value,
   remark: ''
+})
+
+// watch elapsed 实时更新 actual_hours
+watch(elapsed, (val) => {
+  form.actual_hours = val
 })
 
 const reportHistory = ref(mockHistory)
@@ -148,6 +171,7 @@ const historyColumns: TableColumnItem<any>[] = [
   { prop: 'worker', label: '操作人', width: 100 }
 ]
 
+// ==================== 提交报工 ====================
 function submitReport() {
   if (form.qualified_qty + form.defective_qty === 0) {
     ElMessage.warning('请填写报工数量')
@@ -172,14 +196,18 @@ function submitReport() {
         actual_hours: form.actual_hours,
         worker: '赵六'
       })
-      report.reported_qty += form.qualified_qty + form.defective_qty
+
+      // 报工后自动更新工单进度
+      const totalReported = form.qualified_qty + form.defective_qty
+      report.reported_qty += totalReported
 
       if (report.reported_qty >= report.planned_qty) {
         ElMessage.success('全部完工！')
         setTimeout(() => router.push('/work-order/list'), 1500)
       } else {
-        ElMessage.success('报工成功')
-        form.qualified_qty = report.planned_qty - report.reported_qty
+        ElMessage.success(`报工成功！当前进度 ${completionProgress.value}% (${report.reported_qty}/${report.planned_qty})`)
+        // 重置表单，预填剩余数量
+        form.qualified_qty = maxReportQty.value
         form.defective_qty = 0
         form.defect_reasons = []
       }
@@ -187,11 +215,11 @@ function submitReport() {
     .catch(() => {})
 }
 
+// ==================== Pareto 图 ====================
 function handleParetoResize() {
   paretoChart?.resize()
 }
 
-// Pareto 图
 const paretoChartRef = ref<HTMLDivElement>()
 let paretoChart: echarts.ECharts | null = null
 
@@ -200,7 +228,6 @@ function initParetoChart() {
   if (paretoChart) paretoChart.dispose()
   paretoChart = echarts.init(paretoChartRef.value)
 
-  // 统计不良原因频次
   const reasonMap: Record<string, number> = {}
   reportHistory.value.forEach((r: any) => {
     const reasons = (r.defect_reasons || '')
@@ -219,7 +246,7 @@ function initParetoChart() {
   let cum = 0
   const cumPct = values.map((v) => {
     cum += v
-    return Math.round((cum / total) * 100)
+    return total > 0 ? Math.round((cum / total) * 100) : 0
   })
 
   window.addEventListener('resize', handleParetoResize)

@@ -3,7 +3,7 @@
     <div class="kanban-header">
       <h2>车间看板 — {{ currentWorkshop }}</h2>
       <div class="kanban-actions">
-        <el-select v-model="currentWorkshop" style="width: 180px">
+        <el-select v-model="currentWorkshop" style="width: 180px" @change="onWorkshopChange">
           <el-option v-for="w in workshops" :key="w" :label="w" :value="w" />
         </el-select>
         <el-button type="primary" style="margin-left: 12px" @click="refreshData">刷新</el-button>
@@ -12,13 +12,13 @@
 
     <div class="kanban-columns">
       <!-- 待派工 -->
-      <div class="kanban-column">
+      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(e) => onDrop(e, 'pending')">
         <div class="column-header" style="background: #909399">
           <span>待派工</span>
-          <el-tag type="info" size="small">{{ pendingOps.length }}</el-tag>
+          <el-tag type="info" size="small">{{ pendingOps.length }} 单</el-tag>
         </div>
         <div class="column-body">
-          <div v-for="op in pendingOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="onDragStart($event, op)">
+          <div v-for="op in pendingOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(e) => onDragStart(e, op)">
             <div class="card-header">
               <span class="card-wo-code">{{ op.wo_code }}</span>
               <el-tag :type="op.wo_priority === 'urgent' ? 'danger' : 'info'" size="small">{{
@@ -35,72 +35,76 @@
               <el-button type="primary" size="small" @click="openAssign(op)">派工</el-button>
             </div>
           </div>
+          <div v-if="pendingOps.length === 0" class="empty-hint">暂无待派工工序</div>
         </div>
       </div>
 
       <!-- 已派工 -->
-      <div class="kanban-column">
+      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(e) => onDrop(e, 'assigned')">
         <div class="column-header" style="background: #409eff">
           <span>已派工</span>
-          <el-tag type="primary" size="small">{{ assignedOps.length }}</el-tag>
+          <el-tag type="primary" size="small">{{ assignedOps.length }} 单</el-tag>
         </div>
         <div class="column-body">
-          <div v-for="op in assignedOps" :key="op.id" class="kanban-card">
+          <div v-for="op in assignedOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(e) => onDragStart(e, op)">
             <div class="card-header">
               <span class="card-wo-code">{{ op.wo_code }}</span>
               <el-tag type="warning" size="small">待开工</el-tag>
             </div>
             <div class="card-body">
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
-              <div class="card-info">👤 {{ op.worker || '未指定' }}</div>
-              <div class="card-info">🔧 {{ op.work_center }}</div>
-              <div class="card-info">⏱ 计划: {{ op.planned_start?.slice(5) }}</div>
+              <div class="card-info">操作工: {{ op.worker || '未指定' }}</div>
+              <div class="card-info">工作中心: {{ op.work_center }}</div>
+              <div class="card-info">计划: {{ op.planned_start?.slice(5) }}</div>
             </div>
           </div>
+          <div v-if="assignedOps.length === 0" class="empty-hint">暂无已派工工序</div>
         </div>
       </div>
 
       <!-- 生产中 -->
-      <div class="kanban-column">
+      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(e) => onDrop(e, 'running')">
         <div class="column-header" style="background: #e6a23c">
           <span>生产中</span>
-          <el-tag type="warning" size="small">{{ runningOps.length }}</el-tag>
+          <el-tag type="warning" size="small">{{ runningOps.length }} 单</el-tag>
         </div>
         <div class="column-body">
-          <div v-for="op in runningOps" :key="op.id" class="kanban-card">
+          <div v-for="op in runningOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(e) => onDragStart(e, op)">
             <div class="card-header">
               <span class="card-wo-code">{{ op.wo_code }}</span>
               <el-tag type="danger" size="small">进行中</el-tag>
             </div>
             <div class="card-body">
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
-              <div class="card-info">👤 {{ op.worker }}</div>
+              <div class="card-info">操作工: {{ op.worker }}</div>
               <div class="card-info">
                 <el-progress :percentage="op.progress || 50" :stroke-width="6" style="margin-top: 8px" />
               </div>
             </div>
           </div>
+          <div v-if="runningOps.length === 0" class="empty-hint">暂无生产中工序</div>
         </div>
       </div>
 
       <!-- 已完工 -->
-      <div class="kanban-column">
+      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(e) => onDrop(e, 'completed')">
         <div class="column-header" style="background: #67c23a">
           <span>已完工</span>
-          <el-tag type="success" size="small">{{ completedOps.length }}</el-tag>
+          <el-tag type="success" size="small">{{ completedOps.length }} 单</el-tag>
         </div>
         <div class="column-body">
-          <div v-for="op in completedOps" :key="op.id" class="kanban-card">
+          <div v-for="op in completedOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(e) => onDragStart(e, op)">
             <div class="card-header">
               <span class="card-wo-code">{{ op.wo_code }}</span>
               <el-tag type="success" size="small">已完工</el-tag>
             </div>
             <div class="card-body">
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
-              <div class="card-info">👤 {{ op.worker }}</div>
-              <div class="card-info">✅ 合格: {{ op.qualified_qty }} | ❌ 不良: {{ op.defective_qty }}</div>
+              <div class="card-info">操作工: {{ op.worker }}</div>
+              <div class="card-info">合格: {{ op.qualified_qty }} | 不良: {{ op.defective_qty }}</div>
             </div>
           </div>
+          <div v-if="completedOps.length === 0" class="empty-hint">暂无已完工工序</div>
         </div>
       </div>
     </div>
@@ -135,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { kanbanOps as mockKanbanOps } from '@/mock'
 
@@ -159,18 +163,217 @@ interface KanbanOp {
 const currentWorkshop = ref('机加工一车间')
 const workshops = ['机加工一车间', '机加工二车间', '装配车间']
 
-const ops = ref<KanbanOp[]>(mockKanbanOps as any)
+// 按车间分组的数据
+const workshopDataMap: Record<string, KanbanOp[]> = {
+  '机加工一车间': mockKanbanOps as any,
+  '机加工二车间': [
+    {
+      id: 'a1',
+      wo_code: 'WO202501200001',
+      wo_priority: 'high',
+      material_name: '齿轮箱 GBX-200',
+      operation_no: 10,
+      name: '下料',
+      work_center: '下料组',
+      total_hours: 6,
+      status: 'pending'
+    },
+    {
+      id: 'a2',
+      wo_code: 'WO202501200001',
+      wo_priority: 'high',
+      material_name: '齿轮箱 GBX-200',
+      operation_no: 20,
+      name: '粗车',
+      work_center: '数控车组',
+      total_hours: 12,
+      status: 'assigned',
+      worker: '张三',
+      planned_start: '2025-01-18 08:00'
+    },
+    {
+      id: 'a3',
+      wo_code: 'WO202501200002',
+      wo_priority: 'normal',
+      material_name: '传动轴 DS-50',
+      operation_no: 30,
+      name: '精车',
+      work_center: '数控车组',
+      total_hours: 16,
+      status: 'running',
+      worker: '李四',
+      progress: 70
+    },
+    {
+      id: 'a4',
+      wo_code: 'WO202501200002',
+      wo_priority: 'normal',
+      material_name: '传动轴 DS-50',
+      operation_no: 20,
+      name: '车削',
+      work_center: '数控车组',
+      total_hours: 10,
+      status: 'completed',
+      worker: '李四',
+      qualified_qty: 30,
+      defective_qty: 1
+    }
+  ],
+  '装配车间': [
+    {
+      id: 'b1',
+      wo_code: 'WO202501210001',
+      wo_priority: 'urgent',
+      material_name: '离心泵 XJP-200',
+      operation_no: 60,
+      name: '装配',
+      work_center: '装配组',
+      total_hours: 40,
+      status: 'pending'
+    },
+    {
+      id: 'b2',
+      wo_code: 'WO202501210002',
+      wo_priority: 'normal',
+      material_name: '齿轮箱 GBX-200',
+      operation_no: 70,
+      name: '试压',
+      work_center: '测试组',
+      total_hours: 12,
+      status: 'assigned',
+      worker: '赵六',
+      planned_start: '2025-01-20 08:00'
+    },
+    {
+      id: 'b3',
+      wo_code: 'WO202501210003',
+      wo_priority: 'normal',
+      material_name: '离心泵 XJP-100',
+      operation_no: 80,
+      name: '油漆',
+      work_center: '涂装组',
+      total_hours: 18,
+      status: 'running',
+      worker: '王五',
+      progress: 45
+    },
+    {
+      id: 'b4',
+      wo_code: 'WO202501210002',
+      wo_priority: 'normal',
+      material_name: '齿轮箱 GBX-200',
+      operation_no: 60,
+      name: '装配',
+      work_center: '装配组',
+      total_hours: 24,
+      status: 'completed',
+      worker: '赵六',
+      qualified_qty: 50,
+      defective_qty: 0
+    }
+  ]
+}
+
+const ops = ref<KanbanOp[]>([])
+
+function loadWorkshopData() {
+  ops.value = JSON.parse(JSON.stringify(workshopDataMap[currentWorkshop.value] || []))
+}
+
+// 初始化
+loadWorkshopData()
+
+function onWorkshopChange() {
+  loadWorkshopData()
+  ElMessage.success(`已切换到 ${currentWorkshop.value}`)
+}
+
+function refreshData() {
+  loadWorkshopData()
+  ElMessage.success('数据已刷新')
+}
 
 const pendingOps = computed(() => ops.value.filter((o) => o.status === 'pending'))
 const assignedOps = computed(() => ops.value.filter((o) => o.status === 'assigned'))
 const runningOps = computed(() => ops.value.filter((o) => o.status === 'running'))
 const completedOps = computed(() => ops.value.filter((o) => o.status === 'completed'))
 
-function refreshData() {
-  ElMessage.success('数据已刷新')
+// ==================== 拖拽处理 ====================
+const draggedOpId = ref<string | null>(null)
+
+function onDragStart(e: DragEvent, op: KanbanOp) {
+  draggedOpId.value = op.id
+  e.dataTransfer!.setData('text/plain', op.id)
+  if (e.dataTransfer!.effectAllowed !== undefined) {
+    e.dataTransfer!.effectAllowed = 'move'
+  }
+  // 拖拽样式
+  const el = e.target as HTMLElement
+  setTimeout(() => {
+    el.style.opacity = '0.5'
+  }, 0)
 }
 
-// 派工
+function onDragOver(e: DragEvent) {
+  e.preventDefault()
+  if (e.dataTransfer) {
+    e.dataTransfer.dropEffect = 'move'
+  }
+}
+
+function onDrop(e: DragEvent, targetStatus: string) {
+  e.preventDefault()
+  const opId = e.dataTransfer!.getData('text/plain') || draggedOpId.value
+  if (!opId) return
+
+  const op = ops.value.find((o) => o.id === opId)
+  if (!op) return
+
+  // 校验状态流转合法性
+  const allowedTransitions: Record<string, string[]> = {
+    'pending': ['assigned'],
+    'assigned': ['running', 'pending'],
+    'running': ['completed', 'assigned'],
+    'completed': ['running']
+  }
+
+  const allowed = allowedTransitions[op.status]
+  if (!allowed || !allowed.includes(targetStatus)) {
+    ElMessage.warning(`不允许从「${statusLabel(op.status)}」拖拽到「${statusLabel(targetStatus)}」`)
+    return
+  }
+
+  // 更新状态
+  op.status = targetStatus
+
+  // 目标状态附加字段处理
+  if (targetStatus === 'running' && !op.progress) {
+    op.progress = 0
+  }
+  if (targetStatus === 'completed') {
+    op.progress = 100
+  }
+
+  ElMessage.success(`${op.wo_code} 工序${op.operation_no} 已移至「${statusLabel(targetStatus)}」`)
+
+  // 恢复拖拽样式
+  const cards = document.querySelectorAll('.kanban-card')
+  cards.forEach((c) => ((c as HTMLElement).style.opacity = '1'))
+
+  draggedOpId.value = null
+}
+
+function statusLabel(status: string): string {
+  const map: Record<string, string> = {
+    'pending': '待派工',
+    'assigned': '已派工',
+    'running': '生产中',
+    'completed': '已完工'
+  }
+  return map[status] || status
+}
+
+// ==================== 派工 ====================
 const assignVisible = ref(false)
 const currentAssignOp = ref<KanbanOp | null>(null)
 const assignForm = ref({ team: '甲班', worker: '', equipment: '' })
@@ -182,6 +385,7 @@ function openAssign(op: KanbanOp) {
   currentAssignOp.value = op
   assignVisible.value = true
 }
+
 function confirmAssign() {
   if (currentAssignOp.value) {
     currentAssignOp.value.status = 'assigned'
@@ -189,10 +393,6 @@ function confirmAssign() {
   }
   assignVisible.value = false
   ElMessage.success('派工成功')
-}
-
-function onDragStart(e: DragEvent, op: KanbanOp) {
-  e.dataTransfer!.setData('text/plain', op.id)
 }
 </script>
 
@@ -247,8 +447,13 @@ function onDragStart(e: DragEvent, op: KanbanOp) {
   padding: 12px;
   margin-bottom: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-  transition: box-shadow 0.2s;
+  cursor: grab;
+  transition:
+    box-shadow 0.2s,
+    opacity 0.2s;
+}
+.kanban-card:active {
+  cursor: grabbing;
 }
 .kanban-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -277,5 +482,11 @@ function onDragStart(e: DragEvent, op: KanbanOp) {
 .card-footer {
   margin-top: 8px;
   text-align: right;
+}
+.empty-hint {
+  text-align: center;
+  color: #c0c4cc;
+  font-size: 13px;
+  padding: 24px 0;
 }
 </style>

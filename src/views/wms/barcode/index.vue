@@ -6,6 +6,35 @@
         <template #tool><el-button type="primary" @click="printBarcode">批量打印</el-button></template>
         <gi-table :columns="printCols" :data="materials" border stripe size="small" @selection-change="onSelect" />
       </el-tab-pane>
+      <el-tab-pane label="条码生成" name="generate">
+        <el-row :gutter="16">
+          <el-col :span="8">
+            <el-card header="条码参数" shadow="never">
+              <el-form label-width="80px" size="small">
+                <el-form-item label="物料编码"><el-input v-model="genForm.code" placeholder="如: 01.01.001" /></el-form-item>
+                <el-form-item label="物料名称"><el-input v-model="genForm.name" placeholder="如: 45#圆钢" /></el-form-item>
+                <el-form-item label="批号"><el-input v-model="genForm.lot" placeholder="如: L20250101" /></el-form-item>
+                <el-form-item label="数量"><el-input-number v-model="genForm.qty" :min="1" style="width: 100%" /></el-form-item>
+                <el-form-item><el-button type="primary" @click="generateBarcode">生成条码</el-button></el-form-item>
+              </el-form>
+            </el-card>
+          </el-col>
+          <el-col :span="16">
+            <el-card header="条码预览" shadow="never">
+              <div v-if="!previewBarcode" style="color: #c0c4cc; text-align: center; padding: 60px 0">请输入参数并点击"生成条码"预览</div>
+              <div v-else class="barcode-preview">
+                <div class="barcode-img">{{ previewBarcode }}</div>
+                <el-descriptions :column="2" border size="small" style="margin-top: 12px">
+                  <el-descriptions-item label="条码号">{{ previewBarcode }}</el-descriptions-item>
+                  <el-descriptions-item label="物料编码">{{ genForm.code }}</el-descriptions-item>
+                  <el-descriptions-item label="物料名称">{{ genForm.name }}</el-descriptions-item>
+                  <el-descriptions-item label="批号">{{ genForm.lot }}</el-descriptions-item>
+                </el-descriptions>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
+      </el-tab-pane>
       <el-tab-pane label="扫码入库" name="scanIn">
         <el-card shadow="never"
           ><el-form :inline="true"
@@ -40,9 +69,24 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
+
+// 条码生成
+const genForm = reactive({ code: '', name: '', lot: '', qty: 1 })
+const previewBarcode = ref('')
+
+function generateBarcode() {
+  if (!genForm.code) {
+    ElMessage.warning('请输入物料编码')
+    return
+  }
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+  const seq = String(Math.floor(Math.random() * 9000) + 1000)
+  previewBarcode.value = `BC${date}${seq}`
+  ElMessage.success('条码已生成')
+}
 const tab = ref('print')
 const materials = ref([
   { id: '1', code: '01.01.001-00001', name: '45#圆钢 φ50', barcode: 'BC20250115001', lot: 'L20250101', qty: 350 },
@@ -90,3 +134,19 @@ function handleScanOut() {
   }
 }
 </script>
+<style scoped>
+.barcode-preview {
+  text-align: center;
+}
+.barcode-img {
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #303133;
+  background: #f5f7fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px dashed #dcdfe6;
+}
+</style>

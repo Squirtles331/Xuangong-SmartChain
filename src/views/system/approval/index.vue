@@ -9,10 +9,14 @@
         <el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag>
       </template>
       <template #nodes="{ row }">
-        <el-tag v-for="(node, i) in row.nodes" :key="i" size="small" style="margin-right: 4px">{{ node }}</el-tag>
-        <template v-if="row.nodes.length > 1">
-          <el-icon v-for="i in row.nodes.length - 1" :key="'arrow' + i" style="margin: 0 2px"><ArrowRight /></el-icon>
-        </template>
+        <el-steps :active="row.nodes.length" align-center style="max-width: 600px">
+          <el-step
+            v-for="(node, i) in row.nodes"
+            :key="i"
+            :title="node"
+            :description="i === 0 ? '发起' : i === row.nodes.length - 1 ? '终审' : `第${i + 1}级`"
+          />
+        </el-steps>
       </template>
       <template #actions="{ row }">
         <gi-button type="edit" @click="openEdit(row)" />
@@ -39,7 +43,6 @@
 import { ref, reactive } from 'vue'
 import { approvalFlows as mockFlows } from '@/mock'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowRight } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface ApprovalFlow {

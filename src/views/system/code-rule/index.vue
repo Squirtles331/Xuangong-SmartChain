@@ -20,12 +20,17 @@
       width="550px"
     >
       <gi-form v-model="form" :columns="formColumns" :label-width="120" />
+      <!-- 实时预览 -->
+      <div class="preview-box" style="margin-top: 16px; padding: 12px; background: #f5f7fa; border-radius: 6px">
+        <span style="font-size: 13px; color: #606266">编码预览：</span>
+        <span style="font-size: 16px; font-weight: bold; color: #409eff; margin-left: 8px">{{ previewCode }}</span>
+      </div>
     </gi-dialog>
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { codeRules as mockCodeRules } from '@/mock'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
@@ -57,6 +62,31 @@ const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const editingId = ref('')
 const form = reactive({ code: '', name: '', prefix: '', date_format: 'YYYYMMDD', serial_length: 4 })
+
+const previewCode = computed(() => {
+  const prefix = form.prefix || '???'
+  const now = new Date()
+  const y = now.getFullYear().toString()
+  const m = (now.getMonth() + 1).toString().padStart(2, '0')
+  const d = now.getDate().toString().padStart(2, '0')
+  let dateStr = ''
+  switch (form.date_format) {
+    case 'YYYYMMDD':
+      dateStr = y + m + d
+      break
+    case 'YYMMDD':
+      dateStr = y.slice(2) + m + d
+      break
+    case 'YYYYMM':
+      dateStr = y + m
+      break
+    default:
+      dateStr = y + m + d
+  }
+  const serial = '1'.padStart(form.serial_length || 4, '0')
+  return `${prefix}${dateStr}${serial}`
+})
+
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '规则编码', field: 'code', required: true },
   { type: 'input', label: '规则名称', field: 'name', required: true },

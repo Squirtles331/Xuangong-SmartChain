@@ -22,38 +22,85 @@
       <el-descriptions :column="2" border style="margin-bottom: 16px">
         <el-descriptions-item label="产品">{{ step1Form.material_name || '-' }}</el-descriptions-item>
         <el-descriptions-item label="计划数量">{{ step1Form.planned_qty }}</el-descriptions-item>
-        <el-descriptions-item label="BOM版本">
-          <el-select v-model="step2Form.bom_version" placeholder="选择BOM版本" style="width: 100%">
-            <el-option v-for="b in bomVersions" :key="b" :label="b" :value="b" />
+        <el-descriptions-item label="生产产线">
+          <el-select v-model="step1Form.line" filterable placeholder="选择产线" style="width: 100%" @change="onLineChange">
+            <el-option v-for="l in lines" :key="l.value" :label="l.label" :value="l.value" />
           </el-select>
         </el-descriptions-item>
-        <el-descriptions-item label="工艺路线版本">
-          <el-select v-model="step2Form.routing_version" placeholder="选择工艺路线版本" style="width: 100%">
-            <el-option v-for="r in routingVersions" :key="r" :label="r" :value="r" />
+        <el-descriptions-item label="BOM版本">
+          <el-select v-model="step2Form.bom_version" filterable placeholder="选择BOM版本" style="width: 100%" @change="onBomChange">
+            <el-option v-for="b in bomVersionOptions" :key="b.value" :label="b.label" :value="b.value" />
           </el-select>
+        </el-descriptions-item>
+        <el-descriptions-item label="工艺路线版本" :span="1">
+          <el-select v-model="step2Form.routing_version" filterable placeholder="选择工艺路线版本" style="width: 100%" @change="onRoutingChange">
+            <el-option v-for="r in routingVersionOptions" :key="r.value" :label="r.label" :value="r.value" />
+          </el-select>
+        </el-descriptions-item>
+        <!-- 产能校验 -->
+        <el-descriptions-item label="产线负荷" :span="1">
+          <span :style="{ color: lineCapacityStatus.color, fontWeight: 'bold' }">
+            {{ lineCapacityStatus.text }}
+          </span>
         </el-descriptions-item>
       </el-descriptions>
 
+      <!-- 产能超负荷警告 -->
+      <el-alert
+        v-if="lineCapacityStatus.overloaded"
+        :title="`产线「${step1Form.line || '-'}」当前负荷已达 ${lineCapacityStatus.rate}%，建议调整计划或选择其他产线`"
+        type="warning"
+        show-icon
+        :closable="false"
+        style="margin-bottom: 16px"
+      />
+
       <!-- BOM预览 -->
       <el-card v-if="step2Form.bom_version" header="BOM 物料清单预览" shadow="never" style="margin-bottom: 16px">
-        <el-table :data="bomPreview" border size="small">
+        <el-table :data="bomPreviewData" border size="small">
           <el-table-column prop="level" label="层级" width="60" />
-          <el-table-column prop="material" label="物料" />
-          <el-table-column prop="qty" label="单位用量" width="100" />
-          <el-table-column prop="total" label="总需求" width="100" />
+          <el-table-column prop="material" label="物料" minWidth="140">
+            <template #default="{ row }">
+              <span :style="{ paddingLeft: row.level * 16 + 'px' }">{{ row.material }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="qty" label="单位用量" width="100" align="center" />
+          <el-table-column prop="total" label="总需求" width="100" align="center" />
+          <el-table-column prop="available" label="可用库存" width="100" align="center">
+            <template #default="{ row }">
+              <span :style="{ color: row.available < row.total ? '#e6a23c' : '#67c23a' }">
+                {{ row.available }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="库存状态" width="100" align="center">
+            <template #default="{ row }">
+              <el-tag v-if="row.available >= row.total" type="success" size="small">充足</el-tag>
+              <el-tag v-else-if="row.available > 0" type="warning" size="small">不足</el-tag>
+              <el-tag v-else type="danger" size="small">缺料</el-tag>
+            </template>
+          </el-table-column>
         </el-table>
       </el-card>
 
       <!-- 工艺预览 -->
       <el-card v-if="step2Form.routing_version" header="工艺路线预览" shadow="never">
-        <el-table :data="routingPreview" border size="small">
-          <el-table-column prop="op_no" label="工序号" width="80" />
+        <el-table :data="routingPreviewData" border size="small">
+          <el-table-column prop="op_no" label="工序号" width="80" align="center" />
           <el-table-column prop="name" label="工序名称" width="120" />
           <el-table-column prop="work_center" label="工作中心" width="120" />
-          <el-table-column prop="setup" label="准备工时" width="100" />
-          <el-table-column prop="run" label="单件工时" width="100" />
-          <el-table-column prop="qc" label="质检关口" width="80">
-            <template #default="{ row }"><el-tag v-if="row.qc" type="warning" size="small">是</el-tag><span v-else>-</span></template>
+          <el-table-column prop="setup" label="准备工时(min)" width="110" align="center" />
+          <el-table-column prop="run" label="单件工时(min)" width="110" align="center" />
+          <el-table-column label="总工时(h)" width="100" align="center">
+            <template #default="{ row }">
+              {{ ((row.setup_val + row.run_val * step1Form.planned_qty) / 60).toFixed(1) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="qc" label="质检关口" width="80" align="center">
+            <template #default="{ row }">
+              <el-tag v-if="row.qc" type="warning" size="small">是</el-tag>
+              <span v-else>-</span>
+            </template>
           </el-table-column>
         </el-table>
       </el-card>
@@ -76,6 +123,7 @@
           step1Form.priority === 'urgent' ? '紧急' : step1Form.priority === 'high' ? '高' : step1Form.priority === 'normal' ? '普通' : '低'
         }}</el-descriptions-item>
         <el-descriptions-item label="生产车间">{{ step1Form.workshop }}</el-descriptions-item>
+        <el-descriptions-item label="生产产线">{{ step1Form.line || '-' }}</el-descriptions-item>
         <el-descriptions-item label="计划开工">{{ step1Form.planned_start }}</el-descriptions-item>
         <el-descriptions-item label="计划完工">{{ step1Form.planned_end }}</el-descriptions-item>
         <el-descriptions-item label="BOM版本">{{ step2Form.bom_version }}</el-descriptions-item>
@@ -93,10 +141,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import type { FormColumnItem } from 'gi-component'
+import { bomList, routingOperations, bomPreview as mockBomPreview } from '@/mock'
 
 const router = useRouter()
 const activeStep = ref(0)
@@ -173,33 +222,111 @@ const step1Columns: FormColumnItem[] = [
   { type: 'input', label: '备注', field: 'remark', props: { type: 'textarea', rows: 2 } as any }
 ]
 
+// ==================== BOM 版本选项（从 mock 动态获取） ====================
+const bomVersionOptions = computed(() => {
+  // 根据选择的物料编码过滤 BOM
+  const filtered = (bomList as any[]).filter((b: any) => {
+    if (!step1Form.material_code) return true
+    return b.material_code === step1Form.material_code
+  })
+  if (filtered.length === 0) {
+    return (bomList as any[]).map((b: any) => ({
+      label: `${b.bom_type} ${b.version} (${b.status === 'active' ? '生效中' : b.status === 'draft' ? '草稿' : '已归档'})`,
+      value: `${b.bom_type} ${b.version}`
+    }))
+  }
+  return filtered.map((b: any) => ({
+    label: `${b.bom_type} ${b.version} (${b.status === 'active' ? '生效中' : b.status === 'draft' ? '草稿' : '已归档'})`,
+    value: `${b.bom_type} ${b.version}`
+  }))
+})
+
+// ==================== 工艺版本选项（从 mock 动态获取） ====================
+const routingVersionOptions = computed(() => {
+  // 工艺路线版本
+  return [
+    { label: '标准工艺 V1.1 (生效中)', value: '标准工艺 V1.1' },
+    { label: '标准工艺 V1.0 (已归档)', value: '标准工艺 V1.0' }
+  ]
+})
+
+// ==================== 产线 + 产能校验 ====================
+const lines = [
+  { label: '产线A (日产能 20台)', value: '产线A' },
+  { label: '产线B (日产能 15台)', value: '产线B' },
+  { label: '产线C (日产能 10台)', value: '产线C' }
+]
+
+// 模拟产线负荷数据
+const lineLoadMap: Record<string, number> = {
+  '产线A': 75,
+  '产线B': 40,
+  '产线C': 95
+}
+
+const lineCapacityStatus = computed(() => {
+  if (!step1Form.line) {
+    return { rate: 0, text: '请先选择产线', color: '#909399', overloaded: false }
+  }
+  const rate = lineLoadMap[step1Form.line] || 0
+  if (rate >= 90) {
+    return { rate, text: `超负荷 (${rate}%)`, color: '#f56c6c', overloaded: true }
+  } else if (rate >= 70) {
+    return { rate, text: `偏高 (${rate}%)`, color: '#e6a23c', overloaded: false }
+  }
+  return { rate, text: `正常 (${rate}%)`, color: '#67c23a', overloaded: false }
+})
+
+function onLineChange() {
+  // 产能校验在 computed 中自动联动
+}
+
+// ==================== BOM 预览联动 ====================
 const step2Form = reactive({ bom_version: '', routing_version: '' })
-const bomVersions = ref(['MBOM V1.2 (生效中)', 'MBOM V1.1 (已归档)', 'MBOM V1.0 (已归档)'])
-const routingVersions = ref(['标准工艺 V1.1 (生效中)', '标准工艺 V1.0 (已归档)'])
 
-const bomPreview = [
-  { level: 0, material: '离心泵 XJP-100', qty: '1', total: '100台' },
-  { level: 1, material: '泵体组件', qty: '1', total: '100' },
-  { level: 2, material: '泵体铸件', qty: '1', total: '100' },
-  { level: 2, material: '耐磨环', qty: '2', total: '200' },
-  { level: 2, material: '螺栓 M16×60', qty: '8', total: '800' },
-  { level: 1, material: '叶轮组件', qty: '1', total: '100' },
-  { level: 1, material: '轴承架组件', qty: '1', total: '100' }
-]
+const bomPreviewData = ref<any[]>([])
 
-const routingPreview = [
-  { op_no: 10, name: '下料', work_center: '下料组', setup: '15min', run: '5min', qc: false },
-  { op_no: 20, name: '粗车', work_center: '数控车组', setup: '30min', run: '25min', qc: false },
-  { op_no: 30, name: '精车', work_center: '数控车组', setup: '20min', run: '18min', qc: true },
-  { op_no: 40, name: '钻孔', work_center: '钻床组', setup: '10min', run: '8min', qc: false },
-  { op_no: 50, name: '磨削', work_center: '磨床组', setup: '20min', run: '15min', qc: true },
-  { op_no: 60, name: '装配', work_center: '装配组', setup: '30min', run: '45min', qc: false },
-  { op_no: 70, name: '试压', work_center: '测试组', setup: '15min', run: '20min', qc: true },
-  { op_no: 80, name: '油漆', work_center: '涂装组', setup: '20min', run: '30min', qc: false }
-]
+function onBomChange(version: string) {
+  if (!version) {
+    bomPreviewData.value = []
+    return
+  }
+  // 从 mock 中查找对应版本的 BOM 数据
+  const bomEntry = (bomList as any[]).find((b: any) => `${b.bom_type} ${b.version}` === version)
+  if (bomEntry) {
+    // 根据计划数量计算总需求
+    const qty = step1Form.planned_qty || 100
+    bomPreviewData.value = (mockBomPreview as any[]).map((item: any, idx: number) => ({
+      ...item,
+      available: Math.floor(Math.random() * 200) + idx * 30
+    }))
+  } else {
+    bomPreviewData.value = []
+  }
+}
 
+// ==================== 工艺预览联动 ====================
+const routingPreviewData = ref<any[]>([])
+
+function onRoutingChange(version: string) {
+  if (!version) {
+    routingPreviewData.value = []
+    return
+  }
+  routingPreviewData.value = (routingOperations as any[]).map((op: any) => ({
+    op_no: op.operation_no,
+    name: op.name,
+    work_center: op.work_center,
+    setup: `${op.setup_hours}min`,
+    setup_val: op.setup_hours,
+    run: `${op.run_hours}min`,
+    run_val: op.run_hours,
+    qc: op.is_qc_gate
+  }))
+}
+
+// ==================== Step 流程 ====================
 function nextStep() {
-  // 增强校验
   if (!step1Form.material_code) {
     ElMessage.warning('请选择产品物料')
     return
@@ -215,12 +342,25 @@ function nextStep() {
   } else if (!step1Form.material_name) {
     step1Form.material_name = step1Form.material_code
   }
-  step2Form.bom_version = step2Form.bom_version || bomVersions.value[0]
-  step2Form.routing_version = step2Form.routing_version || routingVersions.value[0]
+
+  // 默认选择第一个 BOM/工艺版本
+  if (!step2Form.bom_version && bomVersionOptions.value.length > 0) {
+    step2Form.bom_version = bomVersionOptions.value[0].value
+    onBomChange(step2Form.bom_version)
+  }
+  if (!step2Form.routing_version && routingVersionOptions.value.length > 0) {
+    step2Form.routing_version = routingVersionOptions.value[0].value
+    onRoutingChange(step2Form.routing_version)
+  }
+
   activeStep.value = 1
 }
 
 function submitOrder() {
+  if (lineCapacityStatus.value.overloaded) {
+    ElMessage.warning('所选产线已超负荷，请调整计划')
+    return
+  }
   ElMessage.success('工单创建成功')
   router.push('/work-order/list')
 }

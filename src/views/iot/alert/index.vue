@@ -1,30 +1,55 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #tool><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /></template>
-    <gi-table :columns="cols" :data="rules" border stripe>
-      <template #metric="{ row }"
-        ><el-tag size="small">{{
-          row.metric === 'temp' ? '温度' : row.metric === 'rpm' ? '转速' : row.metric === 'vibration' ? '振动' : '电流'
-        }}</el-tag></template
-      >
-      <template #level="{ row }"
-        ><el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">{{
-          row.level === 'critical' ? '严重' : row.level === 'warning' ? '警告' : '提示'
-        }}</el-tag></template
-      >
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag></template
-      >
-      <template #actions="{ row }"
-        ><gi-button type="edit" @click="openEdit(row)" /><el-button
-          :type="row.status === 'active' ? 'warning' : 'success'"
-          link
-          size="small"
-          @click="toggle(row)"
-          >{{ row.status === 'active' ? '停用' : '启用' }}</el-button
-        ><gi-button type="delete" @click="del(row.id)"
-      /></template>
-    </gi-table>
+    <el-tabs v-model="tab">
+      <el-tab-pane label="告警规则" name="rules">
+        <gi-table :columns="cols" :data="rules" border stripe>
+          <template #metric="{ row }"
+            ><el-tag size="small">{{
+              row.metric === 'temp' ? '温度' : row.metric === 'rpm' ? '转速' : row.metric === 'vibration' ? '振动' : '电流'
+            }}</el-tag></template
+          >
+          <template #level="{ row }"
+            ><el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">{{
+              row.level === 'critical' ? '严重' : row.level === 'warning' ? '警告' : '提示'
+            }}</el-tag></template
+          >
+          <template #status="{ row }"
+            ><el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">{{
+              row.status === 'active' ? '启用' : '停用'
+            }}</el-tag></template
+          >
+          <template #actions="{ row }"
+            ><gi-button type="edit" @click="openEdit(row)" /><el-button
+              :type="row.status === 'active' ? 'warning' : 'success'"
+              link
+              size="small"
+              @click="toggle(row)"
+              >{{ row.status === 'active' ? '停用' : '启用' }}</el-button
+            ><gi-button type="delete" @click="del(row.id)"
+          /></template>
+        </gi-table>
+      </el-tab-pane>
+      <el-tab-pane label="触发记录" name="history">
+        <gi-table :columns="historyCols" :data="alertHistory" border stripe size="small">
+          <template #metric="{ row }"
+            ><el-tag size="small">{{
+              row.metric === 'temp' ? '温度' : row.metric === 'rpm' ? '转速' : row.metric === 'vibration' ? '振动' : '电流'
+            }}</el-tag></template
+          >
+          <template #level="{ row }"
+            ><el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">{{
+              row.level === 'critical' ? '严重' : row.level === 'warning' ? '警告' : '提示'
+            }}</el-tag></template
+          >
+          <template #status="{ row }"
+            ><el-tag :type="row.status === 'triggered' ? 'danger' : 'success'" size="small">{{
+              row.status === 'triggered' ? '已触发' : '已恢复'
+            }}</el-tag></template
+          >
+        </gi-table>
+      </el-tab-pane>
+    </el-tabs>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增告警规则' : '编辑告警规则'" width="600px">
       <gi-form v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
@@ -49,6 +74,55 @@ const rules = ref<Rule[]>([
   { id: '3', device: '加工中心 VMC850', metric: 'temp', operator: '>', threshold: 65, level: 'warning', status: 'active' },
   { id: '4', device: '钻床 Z3050', metric: 'current', operator: '>', threshold: 20, level: 'warning', status: 'disabled' }
 ])
+
+const tab = ref('rules')
+
+// 告警触发记录
+const alertHistory = ref([
+  {
+    id: '1',
+    device: '数控车床 CK6150',
+    metric: 'temp',
+    actual_value: 63.5,
+    threshold: 60,
+    level: 'warning',
+    status: 'triggered',
+    triggered_at: '2025-01-15 14:30:00',
+    recovered_at: ''
+  },
+  {
+    id: '2',
+    device: '数控车床 CK6150',
+    metric: 'vibration',
+    actual_value: 4.5,
+    threshold: 4.0,
+    level: 'critical',
+    status: 'recovered',
+    triggered_at: '2025-01-15 10:15:00',
+    recovered_at: '2025-01-15 11:00:00'
+  },
+  {
+    id: '3',
+    device: '加工中心 VMC850',
+    metric: 'temp',
+    actual_value: 68.2,
+    threshold: 65,
+    level: 'warning',
+    status: 'recovered',
+    triggered_at: '2025-01-14 16:00:00',
+    recovered_at: '2025-01-14 16:45:00'
+  }
+])
+const historyCols: TableColumnItem<any>[] = [
+  { prop: 'device', label: '设备', minWidth: 160 },
+  { label: '指标', minWidth: 60, slotName: 'metric', align: 'center' },
+  { prop: 'actual_value', label: '实际值', minWidth: 80, align: 'center' },
+  { prop: 'threshold', label: '阈值', minWidth: 70, align: 'center' },
+  { label: '级别', minWidth: 70, slotName: 'level', align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { prop: 'triggered_at', label: '触发时间', minWidth: 170 },
+  { prop: 'recovered_at', label: '恢复时间', minWidth: 170 }
+]
 const cols: TableColumnItem<Rule>[] = [
   { prop: 'device', label: '设备', minWidth: 180 },
   { label: '指标', minWidth: 70, slotName: 'metric', align: 'center' },

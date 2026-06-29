@@ -2,6 +2,17 @@
   <gi-page-layout :bordered="true">
     <template #header><h3>IoT 自动报工规则</h3></template>
     <template #tool><gi-button type="add" @click="openAdd" /></template>
+    <!-- 报工成功率统计 -->
+    <el-row :gutter="16" style="margin-bottom: 16px">
+      <el-col :span="6" v-for="c in reportStats" :key="c.label">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-label">{{ c.label }}</div>
+          <div class="stat-value" :style="{ color: c.color }">
+            {{ c.value }}<span class="stat-unit">{{ c.unit }}</span>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
     <gi-table :columns="cols" :data="rules" border stripe>
       <template #trigger="{ row }"
         ><el-tag size="small">{{
@@ -33,9 +44,20 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
+
+// 报工成功率统计
+const reportStats = computed(() => {
+  const activeRules = rules.value.filter((r) => r.status === 'active')
+  return [
+    { label: '启用规则数', value: String(activeRules.length), unit: '条', color: '#409eff' },
+    { label: '今日报工次数', value: '156', unit: '次', color: '#67c23a' },
+    { label: '报工成功率', value: '98.7', unit: '%', color: '#67c23a' },
+    { label: '异常次数', value: '2', unit: '次', color: '#f56c6c' }
+  ]
+})
 interface AR {
   id: string
   equipment: string
@@ -149,3 +171,23 @@ function toggle(r: AR) {
   ElMessage.success(r.status === 'active' ? '已启用' : '已停用')
 }
 </script>
+<style scoped>
+.stat-card :deep(.el-card__body) {
+  padding: 16px;
+  text-align: center;
+}
+.stat-label {
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+.stat-unit {
+  font-size: 14px;
+  color: #909399;
+  margin-left: 4px;
+}
+</style>

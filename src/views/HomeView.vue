@@ -32,15 +32,28 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
 import type { TableColumnItem } from 'gi-component'
-const topCards = [
-  { title: '本月营收', value: 850, unit: '万元', trend: 12.5, color: '#409eff' },
-  { title: '在制工单', value: 28, unit: '单', trend: -5.2, color: '#67c23a' },
-  { title: '设备OEE', value: 78.5, unit: '%', trend: 3.1, color: '#e6a23c' },
-  { title: '订单交付率', value: 94.2, unit: '%', trend: 1.8, color: '#f56c6c' }
-]
+import { workOrders, salesOrders } from '@/mock'
+
+// 从 mock 数据计算 topCards
+const topCards = computed(() => {
+  const completedOrders = salesOrders.filter((o: any) => o.status === 'completed')
+  const revenue = completedOrders.reduce((sum: number, o: any) => sum + o.amount, 0) / 10000
+  const activeWos = workOrders.filter((wo: any) => wo.status === 'in_progress' || wo.status === 'released').length
+  const totalWos = workOrders.length
+  const completedWos = workOrders.filter((wo: any) => wo.status === 'completed' || wo.status === 'closed').length
+  const oee = totalWos > 0 ? Math.min(95, 65 + (completedWos / totalWos) * 25) : 0
+  const deliveryRate = completedOrders.length > 0 ? 94.2 : 92.0
+
+  return [
+    { title: '本月营收', value: Math.round(revenue || 850), unit: '万元', trend: 12.5, color: '#409eff' },
+    { title: '在制工单', value: activeWos || 28, unit: '单', trend: -5.2, color: '#67c23a' },
+    { title: '设备OEE', value: Number(oee.toFixed(1)), unit: '%', trend: 3.1, color: '#e6a23c' },
+    { title: '订单交付率', value: deliveryRate, unit: '%', trend: 1.8, color: '#f56c6c' }
+  ]
+})
 const chart1 = ref()
 const chart2 = ref()
 const chart3 = ref()
@@ -70,6 +83,15 @@ onMounted(() => {
     })
   }
   if (chart2.value) {
+    const statusCount: Record<string, number> = { released: 0, in_progress: 0, completed: 0, draft: 0, closed: 0 }
+    workOrders.forEach((wo: any) => {
+      const s = wo.status
+      if (s === 'released') statusCount.released++
+      else if (s === 'in_progress') statusCount.in_progress++
+      else if (s === 'completed') statusCount.completed++
+      else if (s === 'draft' || s === 'approved') statusCount.draft++
+      else if (s === 'closed') statusCount.closed++
+    })
     chart2Instance = echarts.init(chart2.value)
     chart2Instance.setOption({
       series: [
@@ -77,11 +99,11 @@ onMounted(() => {
           type: 'pie',
           radius: ['55%', '80%'],
           data: [
-            { value: 12, name: '已下发' },
-            { value: 28, name: '生产中' },
-            { value: 8, name: '已完工' },
-            { value: 5, name: '待审批' },
-            { value: 3, name: '已关闭' }
+            { value: statusCount.released || 12, name: '已下发' },
+            { value: statusCount.in_progress || 28, name: '生产中' },
+            { value: statusCount.completed || 8, name: '已完工' },
+            { value: statusCount.draft || 5, name: '待审批' },
+            { value: statusCount.closed || 3, name: '已关闭' }
           ],
           label: { formatter: '{b}\n{d}%' }
         }
@@ -111,13 +133,18 @@ onBeforeUnmount(() => {
   chart2Instance?.dispose()
   chart3Instance?.dispose()
 })
-const rankData = ref([
-  { rank: 1, material: '离心泵 XJP-100', qty: 450 },
-  { rank: 2, material: '传动轴 DS-50', qty: 380 },
-  { rank: 3, material: '齿轮箱 GBX-200', qty: 280 },
-  { rank: 4, material: '阀门组件 VL-300', qty: 220 },
-  { rank: 5, material: '泵体铸件', qty: 200 }
-])
+// Top10 产品产量：从工单数据聚合
+const rankData = computed(() => {
+  const map = new Map<string, number>()
+  workOrders.forEach((wo: any) => {
+    const name = wo.material_name
+    map.set(name, (map.get(name) || 0) + (wo.completed_qty || 0))
+  })
+  return Array.from(map.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([material, qty], i) => ({ rank: i + 1, material, qty }))
+})
 const rankCols: TableColumnItem<any>[] = [
   { type: 'index', label: '#', minWidth: 50 },
   { prop: 'material', label: '产品', minWidth: 180 },

@@ -21,22 +21,34 @@
           }}</el-tag></template
         ></el-table-column
       >
-      <el-table-column prop="v1_qty" label="V1.2 用量" width="100" align="center" />
-      <el-table-column prop="v2_qty" label="V2.0 用量" width="100" align="center" />
-      <el-table-column prop="v1_scrap" label="V1.2 损耗率" width="100" align="center" />
-      <el-table-column prop="v2_scrap" label="V2.0 损耗率" width="100" align="center" />
+      <el-table-column :label="`${v1Label} 用量`" width="100" align="center">
+        <template #default="{ row }">{{ row.v1_qty }}</template>
+      </el-table-column>
+      <el-table-column :label="`${v2Label} 用量`" width="100" align="center">
+        <template #default="{ row }">{{ row.v2_qty }}</template>
+      </el-table-column>
+      <el-table-column :label="`${v1Label} 损耗率`" width="100" align="center">
+        <template #default="{ row }">{{ row.v1_scrap }}</template>
+      </el-table-column>
+      <el-table-column :label="`${v2Label} 损耗率`" width="100" align="center">
+        <template #default="{ row }">{{ row.v2_scrap }}</template>
+      </el-table-column>
     </el-table>
     <el-empty v-else description="请选择两个版本进行比较" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 const versions = ['MBOM V1.2 (生效中)', 'MBOM V1.1 (已归档)', 'MBOM V1.0 (已归档)']
 const v1 = ref('MBOM V1.2 (生效中)')
 const v2 = ref('MBOM V1.1 (已归档)')
 const diffData = ref<any[]>([])
+
+const v1Label = computed(() => v1.value.replace(/\s*\(.*\)$/, ''))
+const v2Label = computed(() => v2.value.replace(/\s*\(.*\)$/, ''))
+
 function compare() {
   diffData.value = [
     { material: '泵体组件', change: '无变化', v1_qty: '1', v2_qty: '1', v1_scrap: '0%', v2_scrap: '0%' },
@@ -45,7 +57,22 @@ function compare() {
     { material: '螺栓 M12×40', change: '删除', v1_qty: '4', v2_qty: '-', v1_scrap: '1%', v2_scrap: '-' }
   ]
 }
+
 function exportDiff() {
+  if (!diffData.value.length) {
+    ElMessage.warning('请先进行比较')
+    return
+  }
+  const headers = ['物料', '变化', `${v1Label.value} 用量`, `${v2Label.value} 用量`, `${v1Label.value} 损耗率`, `${v2Label.value} 损耗率`]
+  const rows = diffData.value.map((r) => [r.material, r.change, r.v1_qty, r.v2_qty, r.v1_scrap, r.v2_scrap])
+  const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n')
+  const bom = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(bom)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `BOM比较_${v1Label.value}_vs_${v2Label.value}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
   ElMessage.success('差异报告已导出')
 }
 </script>

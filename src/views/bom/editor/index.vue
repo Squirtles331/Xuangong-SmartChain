@@ -20,15 +20,17 @@
         <div class="tree-toolbar">
           <el-button type="primary" size="small" @click="addChild(null)">+ 添加根节点</el-button>
         </div>
+        <el-input v-model="treeFilter" placeholder="搜索节点..." clearable style="margin-top: 8px" />
         <el-tree
           ref="treeRef"
           :data="treeData"
           :props="{ children: 'children', label: 'label' }"
+          :filter-node-method="filterNode"
           node-key="id"
           default-expand-all
           highlight-current
           @node-click="handleNodeClick"
-          style="margin-top: 12px"
+          style="margin-top: 8px"
         >
           <template #default="{ data }">
             <span class="tree-node">
@@ -95,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { bomTree as mockBomTree } from '@/mock'
 
@@ -114,6 +116,17 @@ interface TreeNode {
 }
 
 const treeData = ref<TreeNode[]>(JSON.parse(JSON.stringify(mockBomTree)))
+const treeRef = ref()
+const treeFilter = ref('')
+
+function filterNode(value: string, data: TreeNode): boolean {
+  if (!value) return true
+  return data.label.toLowerCase().includes(value.toLowerCase()) || data.material_code.toLowerCase().includes(value.toLowerCase())
+}
+
+watch(treeFilter, (val) => {
+  treeRef.value?.filter(val)
+})
 
 const currentNode = ref<TreeNode | null>(null)
 const nodeForm = reactive({
@@ -140,7 +153,8 @@ function handleNodeClick(data: TreeNode) {
 }
 
 function addChild(parentId: string | null) {
-  currentNode.value = {
+  const parentLabel = parentId ? '子节点' : '根节点'
+  const newNode: TreeNode = {
     id: '',
     label: '',
     material_code: '',
@@ -152,6 +166,9 @@ function addChild(parentId: string | null) {
     is_critical: false,
     substitute_allowed: false
   }
+  // 存储目标父节点 ID，在 saveNode 中使用
+  ;(newNode as any)._parentId = parentId
+  currentNode.value = newNode
   nodeForm.material_code = ''
   nodeForm.material_name = ''
   nodeForm.qty = 1
@@ -186,11 +203,17 @@ function saveNode() {
       ...nodeForm,
       children: []
     }
-    if (!currentNode.value!.id) {
-      treeData.value.push(newNode)
+    const parentId = (currentNode.value! as any)._parentId
+    if (parentId) {
+      // 在指定父节点下添加子节点
+      const parentNode = findNode(treeData.value, parentId)
+      if (parentNode) {
+        if (!parentNode.children) parentNode.children = []
+        parentNode.children.push(newNode)
+      }
     } else {
-      if (!currentNode.value!.children) currentNode.value!.children = []
-      currentNode.value!.children.push(newNode)
+      // 添加为根节点
+      treeData.value.push(newNode)
     }
     ElMessage.success('添加成功')
   }
@@ -216,6 +239,17 @@ function removeNode(nodes: TreeNode[], id: string): boolean {
     if (nodes[i].children && removeNode(nodes[i].children!, id)) return true
   }
   return false
+}
+
+function findNode(nodes: TreeNode[], id: string): TreeNode | null {
+  for (const n of nodes) {
+    if (n.id === id) return n
+    if (n.children) {
+      const found = findNode(n.children, id)
+      if (found) return found
+    }
+  }
+  return null
 }
 
 function importExcel() {

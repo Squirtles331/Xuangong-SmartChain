@@ -19,6 +19,31 @@
           <template #actions="{ row }"><el-button type="primary" link size="small" @click="confirmDel(row)">确认发货</el-button></template>
         </gi-table>
       </el-tab-pane>
+      <el-tab-pane label="订单状态时间线" name="timeline">
+        <el-card header="订单 PO202501150001 状态跟踪" shadow="never">
+          <el-timeline>
+            <el-timeline-item
+              v-for="(item, i) in timelineItems"
+              :key="i"
+              :timestamp="item.timestamp"
+              :color="item.color"
+              :type="item.type"
+              :hollow="item.hollow"
+            >
+              {{ item.content }}
+            </el-timeline-item>
+          </el-timeline>
+        </el-card>
+      </el-tab-pane>
+      <el-tab-pane label="对账明细" name="reconciliation">
+        <gi-table :columns="recCols" :data="recData" border stripe size="small">
+          <template #rec_status="{ row }"
+            ><el-tag :type="row.rec_status === 'confirmed' ? 'success' : 'warning'" size="small">{{
+              row.rec_status === 'confirmed' ? '已对账' : '待对账'
+            }}</el-tag></template
+          >
+        </gi-table>
+      </el-tab-pane>
     </el-tabs>
   </gi-page-layout>
 </template>
@@ -59,4 +84,47 @@ function reject(r: any) {
 function confirmDel(_r: any) {
   ElMessage.success('发货确认成功')
 }
+
+// 订单状态时间线
+const timelineItems = ref([
+  { timestamp: '2025-01-15 09:30', content: '订单 PO202501150001 已创建', color: '#0bbd87', type: 'primary' as const, hollow: false },
+  { timestamp: '2025-01-15 10:15', content: '供应商已确认订单，预计1月20日发货', color: '#0bbd87', type: 'success' as const, hollow: false },
+  { timestamp: '2025-01-18 14:00', content: '货物已备齐，等待物流取件', color: '#0bbd87', type: 'primary' as const, hollow: false },
+  { timestamp: '2025-01-19 08:30', content: '顺丰速运已取件，运单号 SF1234567890', color: '#0bbd87', type: 'warning' as const, hollow: false },
+  { timestamp: '2025-01-20 (预计)', content: '货物送达，待验收', color: '#909399', type: 'info' as const, hollow: true }
+])
+
+// 对账明细
+const recCols: TableColumnItem<any>[] = [
+  { prop: 'period', label: '对账周期', minWidth: 160 },
+  { prop: 'order_code', label: '订单号', minWidth: 170 },
+  { prop: 'material', label: '物料', minWidth: 150 },
+  { prop: 'order_qty', label: '订单数量', minWidth: 80, align: 'center' },
+  { prop: 'delivered_qty', label: '已发货', minWidth: 80, align: 'center' },
+  { prop: 'accepted_qty', label: '已验收', minWidth: 80, align: 'center' },
+  { prop: 'amount', label: '金额(元)', minWidth: 100, align: 'right' },
+  { label: '状态', minWidth: 80, slotName: 'rec_status', align: 'center' }
+]
+const recData = ref([
+  {
+    period: '2025-01',
+    order_code: 'PO202501150001',
+    material: '45#圆钢 φ50',
+    order_qty: 500,
+    delivered_qty: 500,
+    accepted_qty: 480,
+    amount: 2784.0,
+    rec_status: 'pending'
+  },
+  {
+    period: '2025-01',
+    order_code: 'PO202501100002',
+    material: '轴承 6308',
+    order_qty: 200,
+    delivered_qty: 200,
+    accepted_qty: 200,
+    amount: 17000.0,
+    rec_status: 'confirmed'
+  }
+])
 </script>
