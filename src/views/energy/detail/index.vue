@@ -40,18 +40,7 @@ const sf = ref<FormInstance | null>()
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
-const data = ref([
-  { id: '1', date: '2025-06-01', type: '电', workshop: '机加工一车间', qty: 5800, unit: 'kWh' },
-  { id: '2', date: '2025-06-02', type: '水', workshop: '全厂', qty: 120, unit: '吨' },
-  { id: '3', date: '2025-06-03', type: '气', workshop: '热处理车间', qty: 350, unit: 'm³' },
-  { id: '4', date: '2025-06-04', type: '电', workshop: '装配车间', qty: 3200, unit: 'kWh' },
-  { id: '5', date: '2025-06-05', type: '水', workshop: '机加工二车间', qty: 85, unit: '吨' },
-  { id: '6', date: '2025-06-06', type: '电', workshop: '全厂', qty: 7200, unit: 'kWh' },
-  { id: '7', date: '2025-06-07', type: '气', workshop: '焊接车间', qty: 420, unit: 'm³' },
-  { id: '8', date: '2025-06-08', type: '水', workshop: '表面处理车间', qty: 65, unit: '吨' },
-  { id: '9', date: '2025-06-09', type: '电', workshop: '热处理车间', qty: 4500, unit: 'kWh' },
-  { id: '10', date: '2025-06-10', type: '气', workshop: '机加工一车间', qty: 280, unit: 'm³' }
-])
+const data = ref(energyDetails as any)
 const cols: TableColumnItem<any>[] = [
   { prop: 'date', label: '日期', minWidth: 110 },
   { label: '类型', minWidth: 60, slotName: 'type', align: 'center' },

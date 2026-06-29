@@ -37,3 +37,15 @@ export {
 
 // MRP
 export { mrpPurchaseList, mrpProductionList, mrpExceptions } from './mrp'
+
+// 能源
+export { energyDetails } from './energy'
+
+// 财务
+export { costDetails, debitData, creditData, ledgerData, recData } from './finance'
+
+// 人资
+export { hrEmployees, skillMatrix } from './hr'
+
+// 仓储/IoT
+export { wmsMaterials, stockCountExec, stockCountDiff, iotDevices, iotAlertHistory } from './wms'

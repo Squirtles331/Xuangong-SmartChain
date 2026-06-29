@@ -51,10 +51,7 @@ import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const wo = ref({ code: 'WO202501150001', material: '离心泵 XJP-100', qty: 100, status: '草稿' })
-const splits = ref([
-  { line: '产线A', qty: 50 },
-  { line: '产线B', qty: 50 }
-])
+const splits = ref([] as any[])
 const remaining = computed(() => wo.value.qty - splits.value.reduce((s, i) => s + i.qty, 0))
 function confirmSplit() {
   ElMessage.success('拆分成功，已生成2个子工单')

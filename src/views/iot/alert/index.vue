@@ -78,41 +78,7 @@ const rules = ref<Rule[]>([
 const tab = ref('rules')
 
 // 告警触发记录
-const alertHistory = ref([
-  {
-    id: '1',
-    device: '数控车床 CK6150',
-    metric: 'temp',
-    actual_value: 63.5,
-    threshold: 60,
-    level: 'warning',
-    status: 'triggered',
-    triggered_at: '2025-01-15 14:30:00',
-    recovered_at: ''
-  },
-  {
-    id: '2',
-    device: '数控车床 CK6150',
-    metric: 'vibration',
-    actual_value: 4.5,
-    threshold: 4.0,
-    level: 'critical',
-    status: 'recovered',
-    triggered_at: '2025-01-15 10:15:00',
-    recovered_at: '2025-01-15 11:00:00'
-  },
-  {
-    id: '3',
-    device: '加工中心 VMC850',
-    metric: 'temp',
-    actual_value: 68.2,
-    threshold: 65,
-    level: 'warning',
-    status: 'recovered',
-    triggered_at: '2025-01-14 16:00:00',
-    recovered_at: '2025-01-14 16:45:00'
-  }
-])
+const alertHistory = ref(iotAlertHistory as any)
 const historyCols: TableColumnItem<any>[] = [
   { prop: 'device', label: '设备', minWidth: 160 },
   { label: '指标', minWidth: 60, slotName: 'metric', align: 'center' },

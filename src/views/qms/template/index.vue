@@ -77,11 +77,7 @@ const formCols: FormColumnItem[] = [
     } as any
   }
 ]
-const items = ref([
-  { name: '外径', type: 'measure', standard: 'φ50 ±0.02', required: true },
-  { name: '硬度', type: 'measure', standard: 'HRC 45-50', required: true },
-  { name: '外观', type: 'sensory', standard: '无裂纹、无锈蚀', required: true }
-])
+const items = ref(qcTemplates as any)
 function addItem() {
   items.value.push({ name: '', type: 'measure', standard: '', required: true })
 }

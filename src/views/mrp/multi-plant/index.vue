@@ -60,11 +60,7 @@ function initChart() {
 onMounted(() => {
   nextTick(() => initChart())
 })
-const results = ref([
-  { id: '1', material: '泵体铸件', from_plant: '一工厂', to_plant: '二工厂', qty: 200, type: 'transfer', suggestion: '从一工厂调拨200件到二工厂' },
-  { id: '2', material: '轴承 6308', from_plant: '二工厂', to_plant: '一工厂', qty: 50, type: 'transfer', suggestion: '从二工厂调拨50件到一工厂' },
-  { id: '3', material: '45#圆钢 φ50', from_plant: '-', to_plant: '一工厂', qty: 300, type: 'purchase', suggestion: '一工厂采购300kg' }
-])
+const results = ref(mrpPurchaseList as any)
 const cols: TableColumnItem<any>[] = [
   { prop: 'material', label: '物料', minWidth: 150 },
   { prop: 'from_plant', label: '来源工厂', minWidth: 100 },
