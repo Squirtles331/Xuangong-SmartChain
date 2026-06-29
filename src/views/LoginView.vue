@@ -134,7 +134,7 @@ const loginRules = {
   company: [{ required: true, message: '请选择租户/组织', trigger: 'change' }],
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  captcha: [{ required: false, message: '请输入验证码', trigger: 'blur' }]
+  captcha: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
 }
 
 const refreshCaptcha = () => {
@@ -166,11 +166,19 @@ const handleLogin = async () => {
   }
 }
 
-// Mock 登录：模拟 0.5 秒延迟后直接成功
+// Mock 登录：验证码校验 + 模拟 0.5 秒延迟
 function mockLogin(): Promise<boolean> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      // 简单校验：admin/123456 或任意非空账号
+      // 验证码校验（去除空格后比较）
+      const inputCaptcha = loginForm.captcha.replace(/\s/g, '')
+      const expectedCaptcha = captchaText.value.replace(/\s/g, '')
+      if (inputCaptcha !== expectedCaptcha) {
+        ElMessage.error('验证码错误')
+        resolve(false)
+        return
+      }
+      // 账号密码校验
       if (loginForm.username && loginForm.password) {
         // 设置用户信息到 localStorage，模拟登录态
         localStorage.setItem('access_token', 'mock_token_' + Date.now())
