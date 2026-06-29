@@ -12,7 +12,7 @@
       <Header :breadcrumbs="breadcrumbs" @toggle-sub="subCollapsed = !subCollapsed" />
       <main class="app-main">
         <AffixTabs :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
-        <MainContent />
+        <router-view />
       </main>
     </div>
     <div v-if="sidebarShow && isMobile" class="sidebar-mask" @click="$emit('toggle-sidebar')"></div>
@@ -25,7 +25,6 @@ import { useRouter } from 'vue-router'
 import Header from './Header.vue'
 import MainSidebar from './MainSidebar.vue'
 import SecondarySidebar from './SecondarySidebar.vue'
-import MainContent from './MainContent.vue'
 import AffixTabs from '@/layout/common/AffixTabs.vue'
 
 interface Tab {

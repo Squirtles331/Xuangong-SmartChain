@@ -3,14 +3,13 @@
     <Header :breadcrumbs="breadcrumbs" />
     <main class="app-main">
       <AffixTabs :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
-      <MainContent />
+      <router-view />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
 import Header from './Header.vue'
-import MainContent from './MainContent.vue'
 import AffixTabs from '@/layout/common/AffixTabs.vue'
 
 interface Tab {

@@ -9,13 +9,12 @@
     />
     <div class="right-pane">
       <AffixTabs :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
-      <MainContent />
+      <router-view />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import MainContent from './MainContent.vue'
 import Sidebar from './Sidebar.vue'
 import AffixTabs from '@/layout/common/AffixTabs.vue'
 
