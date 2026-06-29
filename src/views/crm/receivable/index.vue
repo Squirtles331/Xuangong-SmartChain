@@ -14,7 +14,7 @@
         <el-tag v-if="row.aging <= 0" type="success" size="small">未到期</el-tag>
         <el-tag v-else-if="row.aging <= 30" type="success" size="small">逾期{{ row.aging }}天</el-tag>
         <el-tag v-else-if="row.aging <= 60" type="warning" size="small">逾期{{ row.aging }}天</el-tag>
-        <el-tag v-else-if="row.aging <= 90" type="" size="small" color="#e6a23c" style="color: #fff">逾期{{ row.aging }}天</el-tag>
+        <el-tag v-else-if="row.aging <= 90" type="warning" size="small" color="#e6a23c" style="color: #fff">逾期{{ row.aging }}天</el-tag>
         <el-tag v-else type="danger" size="small">逾期{{ row.aging }}天</el-tag>
       </template>
       <template #status="{ row }">

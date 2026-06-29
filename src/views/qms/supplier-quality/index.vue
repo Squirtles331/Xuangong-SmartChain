@@ -93,8 +93,8 @@ function del(id: string) {
 const vis = ref(false)
 const mode = ref<'add' | 'edit'>('add')
 const eid = ref('')
-const form = reactive({ name: '' })
-const formCols: FormColumnItem[] = [{ type: 'input', label: '名称', field: 'name', required: true }]
+const form = reactive({ supplier: '' })
+const formCols: FormColumnItem[] = [{ type: 'input', label: '名称', field: 'supplier', required: true }]
 function openAdd() {
   mode.value = 'add'
   eid.value = ''
@@ -103,19 +103,27 @@ function openAdd() {
 function openEdit(r: any) {
   mode.value = 'edit'
   eid.value = r.id
-  Object.assign(form, r)
+  form.supplier = r.supplier
   vis.value = true
 }
 async function submit() {
-  if (!form.name) {
+  if (!form.supplier) {
     ElMessage.warning('请填写必填项')
     return false
   }
   if (mode.value === 'add') {
-    data.value.unshift({ id: Date.now().toString(), ...form })
+    data.value.unshift({
+      id: Date.now().toString(),
+      supplier: form.supplier,
+      total_batches: 0,
+      pass_batches: 0,
+      pass_rate: 0,
+      repeat_issues: 0,
+      last_inspection: new Date().toISOString().slice(0, 10)
+    })
   } else {
     const i = data.value.findIndex((e: any) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
+    if (i > -1) data.value[i].supplier = form.supplier
   }
   return true
 }

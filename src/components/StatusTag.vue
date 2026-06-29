@@ -10,7 +10,7 @@ import { computed } from 'vue'
 export interface StatusOption {
   value: string
   label: string
-  type?: 'success' | 'warning' | 'danger' | 'info' | 'primary' | ''
+  type?: 'success' | 'warning' | 'danger' | 'info' | 'primary'
 }
 
 const props = withDefaults(
@@ -34,6 +34,6 @@ const label = computed(() => {
 
 const tagType = computed(() => {
   const opt = props.options.find((o) => o.value === props.value)
-  return (opt?.type || 'info') as 'success' | 'warning' | 'danger' | 'info' | 'primary' | ''
+  return (opt?.type || 'info') as 'success' | 'warning' | 'danger' | 'info' | 'primary'
 })
 </script>

@@ -22,7 +22,7 @@
     "axios": "1.18.1",
     "echarts": "5.5.1",
     "element-plus": "2.14.2",
-    "gi-component": "^0.0.55",
+    "gi-component": "^0.0.57",
     "mockjs": "^1.1.0",
     "pinia": "3.0.4",
     "vue": "3.5.38",

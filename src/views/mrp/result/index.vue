@@ -57,10 +57,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 import type { TableColumnItem } from 'gi-component'
 import { mrpPurchaseList, mrpProductionList, mrpExceptions } from '@/mock'
 
 const tab = ref('purchase')
+const router = useRouter()
 
 const purchaseList = ref(mrpPurchaseList as any[])
 const purCols: TableColumnItem<any>[] = [
@@ -97,13 +99,16 @@ const excCols: TableColumnItem<any>[] = [
   { label: '建议动作', minWidth: 200, slotName: 'action' }
 ]
 
+type ExceptionLevel = 'severe' | 'warning' | 'info'
+type TagType = 'primary' | 'success' | 'warning' | 'info' | 'danger'
+
 // 颜色分级
-function levelTagType(level: string): string {
+function levelTagType(level: string): TagType {
   if (level === 'severe') return 'danger'
   if (level === 'warning') return 'warning'
   return 'info'
 }
-function levelColor(level: string): string {
+function levelColor(level: ExceptionLevel | string): string {
   if (level === 'severe') return '#f56c6c'
   if (level === 'warning') return '#e6a23c'
   return '#909399'

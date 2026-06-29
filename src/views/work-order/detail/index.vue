@@ -161,7 +161,7 @@ const route = useRoute()
 
 const OPERATION_STATUS = [
   { value: 'pending', label: '待开工', type: 'info' as const },
-  { value: 'assigned', label: '已派工', type: '' as const },
+  { value: 'assigned', label: '已派工', type: 'info' as const },
   { value: 'running', label: '生产中', type: 'warning' as const },
   { value: 'completed', label: '已完工', type: 'success' as const },
   { value: 'inspected', label: '已质检', type: 'primary' as const }

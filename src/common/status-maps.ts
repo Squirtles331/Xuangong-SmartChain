@@ -3,7 +3,7 @@ import type { StatusOption } from '@/components/StatusTag.vue'
 /** 工单状态 */
 export const WORK_ORDER_STATUS: StatusOption[] = [
   { value: 'draft', label: '草稿', type: 'info' },
-  { value: 'approved', label: '已审批', type: '' },
+  { value: 'approved', label: '已审批', type: 'info' },
   { value: 'released', label: '已下发', type: 'warning' },
   { value: 'in_progress', label: '生产中', type: 'primary' },
   { value: 'completed', label: '已完工', type: 'success' },
@@ -15,7 +15,7 @@ export const WORK_ORDER_PRIORITY: StatusOption[] = [
   { value: 'urgent', label: '紧急', type: 'danger' },
   { value: 'high', label: '高', type: 'warning' },
   { value: 'normal', label: '普通', type: 'info' },
-  { value: 'low', label: '低', type: '' }
+  { value: 'low', label: '低', type: 'info' }
 ]
 
 /** 通用启用/禁用 */
@@ -35,7 +35,7 @@ export const CUSTOMER_STATUS: StatusOption[] = [
 /** 设备状态 */
 export const EQUIPMENT_STATUS: StatusOption[] = [
   { value: 'running', label: '运行中', type: 'success' },
-  { value: 'idle', label: '空闲', type: '' },
+  { value: 'idle', label: '空闲', type: 'info' },
   { value: 'maintenance', label: '保养中', type: 'warning' },
   { value: 'repair', label: '维修中', type: 'danger' },
   { value: 'scrapped', label: '已报废', type: 'info' }
@@ -53,7 +53,7 @@ export const INSPECTION_RESULT: StatusOption[] = [
 /** 销售订单状态 */
 export const ORDER_STATUS: StatusOption[] = [
   { value: 'draft', label: '草稿', type: 'info' },
-  { value: 'approved', label: '已审批', type: '' },
+  { value: 'approved', label: '已审批', type: 'info' },
   { value: 'in_production', label: '生产中', type: 'primary' },
   { value: 'delivered', label: '已发货', type: 'warning' },
   { value: 'completed', label: '已完成', type: 'success' },
@@ -63,7 +63,7 @@ export const ORDER_STATUS: StatusOption[] = [
 /** 采购订单状态 */
 export const PURCHASE_STATUS: StatusOption[] = [
   { value: 'draft', label: '草稿', type: 'info' },
-  { value: 'ordered', label: '已下单', type: '' },
+  { value: 'ordered', label: '已下单', type: 'info' },
   { value: 'received', label: '已收货', type: 'success' },
   { value: 'returned', label: '已退货', type: 'danger' }
 ]
@@ -71,7 +71,7 @@ export const PURCHASE_STATUS: StatusOption[] = [
 /** 商机阶段 */
 export const OPPORTUNITY_STAGE: StatusOption[] = [
   { value: 'initial', label: '初步接触', type: 'info' },
-  { value: 'proposal', label: '方案制定', type: '' },
+  { value: 'proposal', label: '方案制定', type: 'info' },
   { value: 'quotation', label: '报价', type: 'warning' },
   { value: 'negotiation', label: '谈判', type: 'primary' },
   { value: 'won', label: '成交', type: 'success' },
@@ -82,7 +82,7 @@ export const OPPORTUNITY_STAGE: StatusOption[] = [
 export const RISK_LEVEL: StatusOption[] = [
   { value: 'I', label: 'I级风险', type: 'danger' },
   { value: 'II', label: 'II级风险', type: 'warning' },
-  { value: 'III', label: 'III级风险', type: '' }
+  { value: 'III', label: 'III级风险', type: 'info' }
 ]
 
 /** 合同状态 */

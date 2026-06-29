@@ -52,6 +52,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
 import { bomList as mockBoms } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
@@ -82,6 +83,7 @@ interface BOM {
 }
 
 const boms = ref<BOM[]>(mockBoms as any)
+const router = useRouter()
 
 const searchForm = reactive({ keyword: '', bom_type: '' })
 const searchColumns: FormColumnItem[] = [
@@ -182,14 +184,14 @@ function openCompare(row: BOM) {
 function doCompare() {
   if (!compareBom.value || !compareVersion.value) return
   compareVisible.value = false
-  $router.push(`/bom/compare?ids=${compareBom.value.id},${compareVersion.value}`)
+  router.push(`/bom/compare?ids=${compareBom.value.id},${compareVersion.value}`)
 }
 
 function openAdd() {
-  $router.push('/bom/create')
+  router.push('/bom/create')
 }
 function openEdit(r: any) {
-  $router.push(`/bom/editor/${r.id}`)
+  router.push(`/bom/editor/${r.id}`)
 }
 function refresh() {
   handleReset()

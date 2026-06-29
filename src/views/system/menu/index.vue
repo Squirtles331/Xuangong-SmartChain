@@ -87,12 +87,15 @@ interface MenuNode {
   children?: MenuNode[]
 }
 
+type MenuNodeType = MenuNode['type']
+type MenuForm = Omit<MenuNode, 'id' | 'parent_id' | 'children'>
+
 const menuTree = ref<MenuNode[]>(JSON.parse(JSON.stringify(mockMenuTree)))
 const currentNode = ref<MenuNode | null>(null)
 
-const nodeForm = reactive({
+const nodeForm = reactive<MenuForm>({
   name: '',
-  type: 'menu' as string,
+  type: 'menu',
   path: '',
   component: '',
   permission_code: '',
@@ -242,7 +245,7 @@ function onNodeClick(data: MenuNode) {
   nodeForm.visible = data.visible
 }
 
-function addNode(type: 'directory' | 'menu' | 'button') {
+function addNode(type: MenuNodeType) {
   const parent = currentNode.value
   const newNode: MenuNode = {
     id: '',
@@ -276,7 +279,18 @@ function saveNode() {
     Object.assign(currentNode.value, nodeForm)
     ElMessage.success('保存成功')
   } else {
-    const newNode: MenuNode = { id: Date.now().toString(), parent_id: currentNode.value!.parent_id, ...nodeForm }
+    const newNode: MenuNode = {
+      id: Date.now().toString(),
+      parent_id: currentNode.value!.parent_id,
+      name: nodeForm.name,
+      type: nodeForm.type,
+      path: nodeForm.path,
+      component: nodeForm.component,
+      permission_code: nodeForm.permission_code,
+      icon: nodeForm.icon,
+      sort_order: nodeForm.sort_order,
+      visible: nodeForm.visible
+    }
     const parent = currentNode.value!.parent_id
     if (parent) {
       const parentNode = findNode(menuTree.value, parent)

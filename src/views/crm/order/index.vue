@@ -6,7 +6,7 @@
       </SearchSetting>
     </template>
     <template #tool>
-      <gi-button type="add" @click="$router.push('/crm/order/create')">新建订单</gi-button>
+      <gi-button type="add" @click="router.push('/crm/order/create')">新建订单</gi-button>
     </template>
     <gi-table :columns="columns" :data="pagedOrders" :pagination="pagination" border stripe style="height: 100%">
       <template #status="{ row }">
@@ -23,9 +23,6 @@
         <el-button v-if="row.status === 'pending_delivery'" type="success" link size="small" @click="createDelivery(row)">发货</el-button>
       </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
   </gi-page-layout>
 </template>
 
