@@ -22,7 +22,7 @@ export const useUserStore = defineStore('user', () => {
   async function doLogin(params: LoginParams): Promise<boolean> {
     try {
       const res = await loginApi(params)
-      const data = res.data.data
+      const data = res.data
       setAuthData(data)
       return true
     } catch {

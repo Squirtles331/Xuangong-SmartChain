@@ -40,5 +40,22 @@ export default defineConfigWithVueTs(
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-unused-expressions': 'off'
     }
+  },
+  {
+    name: 'app/no-direct-mock-imports',
+    files: ['src/views/**/*.{ts,tsx,vue}', 'src/components/**/*.{ts,tsx,vue}', 'src/stores/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/mock', '@/mock/*'],
+              message: '页面、组件、store 禁止直接引用 mock，请统一通过 src/api 调用。'
+            }
+          ]
+        }
+      ]
+    }
   }
 )

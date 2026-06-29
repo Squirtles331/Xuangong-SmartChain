@@ -6,7 +6,7 @@ import { simulateDelay } from '../shared/delay'
 import { paginate, searchItems } from '../shared/paginate'
 import { wrapListResponse, wrapDetailResponse, wrapSuccessResponse } from '../shared/response'
 import { generateId } from '../shared/id'
-import { customers, salesOrders, receivables } from '../modules/business'
+import { customers, salesOrders, receivables } from '../modules/crm'
 
 // ==================== 客户管理 ====================
 export async function getCustomerList(params: { page: number; page_size: number; name?: string; status?: string }) {

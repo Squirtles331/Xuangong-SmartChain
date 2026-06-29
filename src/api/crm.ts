@@ -1,6 +1,7 @@
 import http from '@/utils/http'
 import type { ApiResponse } from '@/utils/http'
 import { isMockMode } from './_config'
+import { unwrapApiResponse } from './_factory'
 import * as mockService from '@/mock/services/crm'
 
 // ==================== 客户 ====================
@@ -24,22 +25,22 @@ export interface CustomerQuery {
 
 export function getCustomerList(params: CustomerQuery) {
   if (isMockMode) return mockService.getCustomerList(params)
-  return http.get<ApiResponse<{ total: number; items: Customer[] }>>('/crm/customers', { params })
+  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: Customer[] }>>('/crm/customers', { params }))
 }
 
 export function createCustomer(data: Partial<Customer>) {
   if (isMockMode) return mockService.createCustomer(data)
-  return http.post('/crm/customers', data)
+  return unwrapApiResponse(http.post<ApiResponse<null>>('/crm/customers', data))
 }
 
 export function updateCustomer(id: string, data: Partial<Customer>) {
   if (isMockMode) return mockService.updateCustomer(id, data)
-  return http.put(`/crm/customers/${id}`, data)
+  return unwrapApiResponse(http.put<ApiResponse<null>>(`/crm/customers/${id}`, data))
 }
 
 export function deleteCustomer(id: string) {
   if (isMockMode) return mockService.deleteCustomer(id)
-  return http.delete(`/crm/customers/${id}`)
+  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/crm/customers/${id}`))
 }
 
 // ==================== 销售订单 ====================
@@ -64,22 +65,22 @@ export interface SalesOrderQuery {
 
 export function getSalesOrderList(params: SalesOrderQuery) {
   if (isMockMode) return mockService.getSalesOrderList(params)
-  return http.get<ApiResponse<{ total: number; items: SalesOrder[] }>>('/crm/sales-orders', { params })
+  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: SalesOrder[] }>>('/crm/sales-orders', { params }))
 }
 
 export function createSalesOrder(data: Partial<SalesOrder>) {
   if (isMockMode) return mockService.createSalesOrder(data)
-  return http.post('/crm/sales-orders', data)
+  return unwrapApiResponse(http.post<ApiResponse<null>>('/crm/sales-orders', data))
 }
 
 export function updateSalesOrder(id: string, data: Partial<SalesOrder>) {
   if (isMockMode) return mockService.updateSalesOrder(id, data)
-  return http.put(`/crm/sales-orders/${id}`, data)
+  return unwrapApiResponse(http.put<ApiResponse<null>>(`/crm/sales-orders/${id}`, data))
 }
 
 export function deleteSalesOrder(id: string) {
   if (isMockMode) return mockService.deleteSalesOrder(id)
-  return http.delete(`/crm/sales-orders/${id}`)
+  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/crm/sales-orders/${id}`))
 }
 
 // ==================== 应收台账 ====================
@@ -103,10 +104,10 @@ export interface ReceivableQuery {
 
 export function getReceivableList(params: ReceivableQuery) {
   if (isMockMode) return mockService.getReceivableList(params)
-  return http.get<ApiResponse<{ total: number; items: Receivable[] }>>('/crm/receivables', { params })
+  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: Receivable[] }>>('/crm/receivables', { params }))
 }
 
 export function createReceipt(data: Partial<Receivable>) {
   if (isMockMode) return mockService.createReceipt(data)
-  return http.post('/crm/receivables', data)
+  return unwrapApiResponse(http.post<ApiResponse<null>>('/crm/receivables', data))
 }

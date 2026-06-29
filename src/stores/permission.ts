@@ -25,7 +25,7 @@ export const usePermissionStore = defineStore('permission', () => {
     if (loaded.value) return
     try {
       const res = await getMenuTree()
-      menuTree.value = res.data.data || []
+      menuTree.value = (res.data || []) as SysMenu[]
       loaded.value = true
     } catch {
       // 菜单加载失败不影响页面使用

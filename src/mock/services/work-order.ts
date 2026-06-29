@@ -101,7 +101,7 @@ export async function startOperation(operationId: string) {
   const op = workOrderOperations.find((o: any) => String(o.id) === operationId)
   if (op) {
     op.status = 'running'
-    op.actual_start_time = new Date().toISOString().slice(0, 19)
+    ;(op as any).actual_start_time = new Date().toISOString().slice(0, 19)
   }
   return wrapSuccessResponse('工序已开工')
 }
@@ -117,7 +117,7 @@ export async function reportOperation(
     op.qualified_qty = data.qualified_qty
     op.defective_qty = data.defective_qty
     op.actual_hours = data.actual_hours
-    op.actual_end_time = new Date().toISOString().slice(0, 19)
+    ;(op as any).actual_end_time = new Date().toISOString().slice(0, 19)
     ;(op as any).defect_reasons = data.defect_reasons
   }
   // 追加报工记录

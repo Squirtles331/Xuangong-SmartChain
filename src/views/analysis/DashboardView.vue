@@ -1,15 +1,17 @@
 <template>
   <div class="dashboard-v2">
     <el-row :gutter="16" class="top-row">
-      <el-col :span="6" v-for="c in topCards" :key="c.title">
+      <el-col :span="6" v-for="card in topCards" :key="card.title">
         <el-card shadow="hover" class="top-card">
-          <div class="top-title">{{ c.title }}</div>
-          <div class="top-value" :style="{ color: c.color }">
-            {{ c.value }}<span class="top-unit">{{ c.unit }}</span>
+          <div class="top-title">{{ card.title }}</div>
+          <div class="top-value" :style="{ color: card.color }">
+            {{ card.value }}<span class="top-unit">{{ card.unit }}</span>
           </div>
           <div class="top-trend">
-            <span :style="{ color: c.trend > 0 ? '#f56c6c' : '#67c23a' }"> {{ c.trend > 0 ? '↑' : '↓' }}{{ Math.abs(c.trend) }}% </span>
-            较上月
+            <span :style="{ color: card.trend > 0 ? '#f56c6c' : '#67c23a' }">
+              {{ card.trend > 0 ? '↑' : '↓' }}{{ Math.abs(card.trend) }}%
+            </span>
+            较上期
           </div>
         </el-card>
       </el-col>
@@ -30,85 +32,90 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import * as echarts from 'echarts'
+import { getDashboardStats, getHomeCharts } from '@/api/dashboard'
 
-const topCards = [
-  { title: '本月营收', value: 850, unit: '万元', trend: 12.5, color: '#409eff' },
-  { title: '在制工单', value: 28, unit: '单', trend: -5.2, color: '#67c23a' },
-  { title: '设备OEE', value: 78.5, unit: '%', trend: 3.1, color: '#e6a23c' },
-  { title: '订单交付率', value: 94.2, unit: '%', trend: 1.8, color: '#f56c6c' }
-]
+const topCards = ref([
+  { title: '本月营收', value: 0, unit: '万元', trend: 0, color: '#409eff' },
+  { title: '在制工单', value: 0, unit: '单', trend: 0, color: '#67c23a' },
+  { title: '设备OEE', value: 0, unit: '%', trend: 0, color: '#e6a23c' },
+  { title: '订单交付率', value: 0, unit: '%', trend: 0, color: '#f56c6c' }
+])
 
-const revenueChart = ref()
-const orderStatusChart = ref()
+const revenueChart = ref<HTMLDivElement>()
+const orderStatusChart = ref<HTMLDivElement>()
 
 let revenueInstance: echarts.ECharts | null = null
 let orderStatusInstance: echarts.ECharts | null = null
 
-function initRevenueChart() {
-  if (!revenueChart.value) return
-  revenueInstance = echarts.init(revenueChart.value)
-  revenueInstance.setOption({
-    tooltip: { trigger: 'axis' },
-    legend: { data: ['营收', '成本', '利润'] },
-    xAxis: {
-      type: 'category',
-      data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-    },
-    yAxis: { type: 'value' },
-    series: [
-      {
-        name: '营收',
-        type: 'line',
-        data: [620, 650, 700, 720, 750, 780, 800, 820, 830, 850, 860, 880],
-        smooth: true,
-        itemStyle: { color: '#409eff' }
-      },
-      {
-        name: '成本',
-        type: 'line',
-        data: [480, 500, 530, 540, 560, 580, 590, 600, 610, 620, 630, 640],
-        smooth: true,
-        itemStyle: { color: '#e6a23c' }
-      },
-      {
-        name: '利润',
-        type: 'line',
-        data: [140, 150, 170, 180, 190, 200, 210, 220, 220, 230, 230, 240],
-        smooth: true,
-        itemStyle: { color: '#67c23a' }
-      }
-    ],
-    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true }
-  })
+const chartData = ref({
+  trend: {
+    months: ['7月', '8月', '9月', '10月', '11月', '12月', '1月'],
+    revenue: [680, 720, 780, 750, 820, 800, 850],
+    cost: [520, 550, 580, 570, 600, 590, 620],
+    profit: [160, 170, 200, 180, 220, 210, 230]
+  },
+  order_status: [
+    { value: 12, name: '已下发' },
+    { value: 28, name: '生产中' },
+    { value: 8, name: '已完工' },
+    { value: 5, name: '待审批' },
+    { value: 3, name: '已关闭' }
+  ]
+})
+
+function renderCharts() {
+  if (revenueChart.value) {
+    revenueInstance ??= echarts.init(revenueChart.value)
+    revenueInstance.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['营收', '成本', '利润'] },
+      xAxis: { type: 'category', data: chartData.value.trend.months },
+      yAxis: { type: 'value' },
+      series: [
+        { name: '营收', type: 'line', data: chartData.value.trend.revenue, smooth: true, itemStyle: { color: '#409eff' } },
+        { name: '成本', type: 'line', data: chartData.value.trend.cost, smooth: true, itemStyle: { color: '#e6a23c' } },
+        { name: '利润', type: 'line', data: chartData.value.trend.profit, smooth: true, itemStyle: { color: '#67c23a' } }
+      ],
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true }
+    })
+  }
+
+  if (orderStatusChart.value) {
+    orderStatusInstance ??= echarts.init(orderStatusChart.value)
+    orderStatusInstance.setOption({
+      tooltip: { trigger: 'item' },
+      legend: { orient: 'vertical', left: 'left', top: 'center' },
+      series: [
+        {
+          type: 'pie',
+          radius: ['45%', '75%'],
+          center: ['55%', '50%'],
+          data: chartData.value.order_status,
+          label: { formatter: '{b}\n{d}%' }
+        }
+      ]
+    })
+  }
 }
 
-function initOrderStatusChart() {
-  if (!orderStatusChart.value) return
-  orderStatusInstance = echarts.init(orderStatusChart.value)
-  orderStatusInstance.setOption({
-    tooltip: { trigger: 'item' },
-    legend: { orient: 'vertical', left: 'left', top: 'center' },
-    series: [
-      {
-        type: 'pie',
-        radius: ['45%', '75%'],
-        center: ['55%', '50%'],
-        data: [
-          { value: 12, name: '待审批' },
-          { value: 28, name: '生产中' },
-          { value: 15, name: '已完工' },
-          { value: 8, name: '已下发' },
-          { value: 5, name: '已关闭' }
-        ],
-        label: { formatter: '{b}\n{d}%' },
-        emphasis: {
-          itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' }
-        }
-      }
-    ]
-  })
+async function loadDashboard() {
+  const [statsRes, chartsRes] = await Promise.all([getDashboardStats(), getHomeCharts()])
+
+  topCards.value = [
+    { title: '本月营收', value: statsRes.data.revenue ?? 850, unit: '万元', trend: statsRes.data.revenue_trend ?? 12.5, color: '#409eff' },
+    { title: '在制工单', value: statsRes.data.active_orders ?? 28, unit: '单', trend: statsRes.data.orders_trend ?? -5.2, color: '#67c23a' },
+    { title: '设备OEE', value: statsRes.data.oee ?? 78.5, unit: '%', trend: statsRes.data.oee_trend ?? 3.1, color: '#e6a23c' },
+    { title: '订单交付率', value: statsRes.data.delivery_rate ?? 94.2, unit: '%', trend: statsRes.data.delivery_trend ?? 1.8, color: '#f56c6c' }
+  ]
+
+  chartData.value = {
+    trend: chartsRes.data.trend || chartData.value.trend,
+    order_status: chartsRes.data.order_status || chartData.value.order_status
+  }
+
+  renderCharts()
 }
 
 function handleResize() {
@@ -116,9 +123,8 @@ function handleResize() {
   orderStatusInstance?.resize()
 }
 
-onMounted(() => {
-  initRevenueChart()
-  initOrderStatusChart()
+onMounted(async () => {
+  await loadDashboard()
   window.addEventListener('resize', handleResize)
 })
 

@@ -1,6 +1,7 @@
 import http from '@/utils/http'
 import type { ApiResponse } from '@/utils/http'
 import { isMockMode } from './_config'
+import { unwrapApiResponse } from './_factory'
 import * as mockService from '@/mock/services/ecn'
 
 // ==================== ECN 变更单 ====================
@@ -26,20 +27,20 @@ export interface ECNListQuery {
 
 export function getECNList(params: ECNListQuery) {
   if (isMockMode) return mockService.getECNList(params)
-  return http.get<ApiResponse<{ total: number; items: ECNOrder[] }>>('/ecn/list', { params })
+  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: ECNOrder[] }>>('/ecn/list', { params }))
 }
 
 export function createECN(data: Partial<ECNOrder>) {
   if (isMockMode) return mockService.createECN(data)
-  return http.post('/ecn', data)
+  return unwrapApiResponse(http.post<ApiResponse<null>>('/ecn', data))
 }
 
 export function updateECN(id: string, data: Partial<ECNOrder>) {
   if (isMockMode) return mockService.updateECN(id, data)
-  return http.put(`/ecn/${id}`, data)
+  return unwrapApiResponse(http.put<ApiResponse<null>>(`/ecn/${id}`, data))
 }
 
 export function deleteECN(id: string) {
   if (isMockMode) return mockService.deleteECN(id)
-  return http.delete(`/ecn/${id}`)
+  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/ecn/${id}`))
 }

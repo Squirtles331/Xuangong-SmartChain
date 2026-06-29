@@ -1,6 +1,7 @@
 import http from '@/utils/http'
 import type { ApiResponse } from '@/utils/http'
 import { isMockMode } from './_config'
+import { unwrapApiResponse } from './_factory'
 import * as mockService from '@/mock/services/work-order'
 
 // ==================== 工单管理 ====================
@@ -34,32 +35,32 @@ export interface WorkOrderQuery {
 
 export function getWorkOrderList(params: WorkOrderQuery) {
   if (isMockMode) return mockService.getWorkOrderList(params)
-  return http.get<ApiResponse<{ total: number; items: WorkOrder[] }>>('/work-orders', { params })
+  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: WorkOrder[] }>>('/work-orders', { params }))
 }
 
 export function getWorkOrderDetail(id: string) {
   if (isMockMode) return mockService.getWorkOrderDetail(id)
-  return http.get<ApiResponse<WorkOrder>>(`/work-orders/${id}`)
+  return unwrapApiResponse(http.get<ApiResponse<WorkOrder>>(`/work-orders/${id}`))
 }
 
 export function createWorkOrder(data: any) {
   if (isMockMode) return mockService.createWorkOrder(data)
-  return http.post('/work-orders', data)
+  return unwrapApiResponse(http.post<ApiResponse<null>>('/work-orders', data))
 }
 
 export function approveWorkOrder(id: string, approved: boolean, comment?: string) {
   if (isMockMode) return mockService.approveWorkOrder(id, approved, comment)
-  return http.put(`/work-orders/${id}/approve`, { approved, comment })
+  return unwrapApiResponse(http.put<ApiResponse<null>>(`/work-orders/${id}/approve`, { approved, comment }))
 }
 
 export function releaseWorkOrder(id: string) {
   if (isMockMode) return mockService.releaseWorkOrder(id)
-  return http.put(`/work-orders/${id}/release`)
+  return unwrapApiResponse(http.put<ApiResponse<null>>(`/work-orders/${id}/release`))
 }
 
 export function closeWorkOrder(id: string, data: { close_type: string; reason?: string; wip_disposition?: string }) {
   if (isMockMode) return mockService.closeWorkOrder(id, data)
-  return http.put(`/work-orders/${id}/close`, data)
+  return unwrapApiResponse(http.put<ApiResponse<null>>(`/work-orders/${id}/close`, data))
 }
 
 // 工序相关
@@ -81,17 +82,17 @@ export interface WoOperation {
 
 export function getWorkOrderOperations(workOrderId: string) {
   if (isMockMode) return mockService.getWorkOrderOperations(workOrderId)
-  return http.get<ApiResponse<WoOperation[]>>(`/work-orders/${workOrderId}/operations`)
+  return unwrapApiResponse(http.get<ApiResponse<WoOperation[]>>(`/work-orders/${workOrderId}/operations`))
 }
 
 export function assignOperation(operationId: string, data: { team_id: string; worker_id?: string; equipment_id?: string }) {
   if (isMockMode) return mockService.assignOperation(operationId, data)
-  return http.put(`/operations/${operationId}/assign`, data)
+  return unwrapApiResponse(http.put<ApiResponse<null>>(`/operations/${operationId}/assign`, data))
 }
 
 export function startOperation(operationId: string) {
   if (isMockMode) return mockService.startOperation(operationId)
-  return http.put(`/operations/${operationId}/start`)
+  return unwrapApiResponse(http.put<ApiResponse<null>>(`/operations/${operationId}/start`))
 }
 
 export function reportOperation(
@@ -99,7 +100,7 @@ export function reportOperation(
   data: { qualified_qty: number; defective_qty: number; defect_reasons?: string[]; actual_hours: number }
 ) {
   if (isMockMode) return mockService.reportOperation(operationId, data)
-  return http.put(`/operations/${operationId}/report`, data)
+  return unwrapApiResponse(http.put<ApiResponse<null>>(`/operations/${operationId}/report`, data))
 }
 
 // ==================== Kanban 看板 ====================
@@ -122,7 +123,7 @@ export interface KanbanOp {
 
 export function getKanbanData() {
   if (isMockMode) return mockService.getKanbanData()
-  return http.get<ApiResponse<KanbanOp[]>>('/work-orders/kanban')
+  return unwrapApiResponse(http.get<ApiResponse<KanbanOp[]>>('/work-orders/kanban'))
 }
 
 // ==================== 我的任务 ====================
@@ -152,7 +153,7 @@ export interface MyTasksData {
 
 export function getMyTasks() {
   if (isMockMode) return mockService.getMyTasks()
-  return http.get<ApiResponse<MyTasksData>>('/work-orders/my-tasks')
+  return unwrapApiResponse(http.get<ApiResponse<MyTasksData>>('/work-orders/my-tasks'))
 }
 
 // ==================== 报工记录 ====================
@@ -167,5 +168,5 @@ export interface ReportRecord {
 
 export function getReportHistory() {
   if (isMockMode) return mockService.getReportHistory()
-  return http.get<ApiResponse<ReportRecord[]>>('/work-orders/report-history')
+  return unwrapApiResponse(http.get<ApiResponse<ReportRecord[]>>('/work-orders/report-history'))
 }

@@ -1,112 +1,93 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="stock-count-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool><gi-button type="add" @click="openCreate" /></template>
-    <!-- 差异率统计汇总 -->
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" storage-key="stock-count-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
+      </SearchSetting>
+    </template>
+    <template #tool>
+      <gi-button type="add" @click="openCreate" />
+    </template>
+
     <el-row :gutter="16" style="margin-bottom: 16px">
-      <el-col :span="6" v-for="d in diffSummary" :key="d.label">
+      <el-col :span="6" v-for="item in diffSummary" :key="item.label">
         <el-card shadow="hover" class="diff-card">
-          <div class="diff-label">{{ d.label }}</div>
-          <div class="diff-value" :style="{ color: d.color }">{{ d.value }}</div>
+          <div class="diff-label">{{ item.label }}</div>
+          <div class="diff-value" :style="{ color: item.color }">{{ item.value }}</div>
         </el-card>
       </el-col>
     </el-row>
-    <gi-table :columns="cols" :data="plans" border stripe>
-      <template #type="{ row }"
-        ><el-tag :type="row.type === 'full' ? 'danger' : 'warning'" size="small">{{
-          row.type === 'full' ? '全面盘点' : '循环盘点'
-        }}</el-tag></template
-      >
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'running' ? 'primary' : 'success'" size="small">{{
-          row.status === 'pending' ? '待执行' : row.status === 'running' ? '执行中' : '已完成'
-        }}</el-tag></template
-      >
+
+    <gi-table :columns="planColumns" :data="plans" border stripe>
+      <template #type="{ row }">
+        <el-tag :type="row.type === 'full' ? 'danger' : 'warning'" size="small">
+          {{ row.type }}
+        </el-tag>
+      </template>
+      <template #status="{ row }">
+        <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'running' ? 'primary' : 'success'" size="small">
+          {{ row.status }}
+        </el-tag>
+      </template>
       <template #actions="{ row }">
-        <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="startCount(row)">开始盘点</el-button>
-        <el-button v-if="row.status === 'running'" type="success" link size="small" @click="viewDiff(row)">查看差异</el-button>
+        <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="startCount(row)">Start</el-button>
+        <el-button v-if="row.status !== 'pending'" type="success" link size="small" @click="viewDiff(row)">View Diff</el-button>
       </template>
     </gi-table>
-    <el-dialog v-model="execVis" title="盘点执行" width="700px">
+
+    <el-dialog v-model="execVisible" title="Count Execution" width="700px">
       <el-table :data="execItems" border size="small">
-        <el-table-column prop="location" label="库位" width="100" />
-        <el-table-column prop="material" label="物料" minWidth="140" />
-        <el-table-column prop="book_qty" label="账面数" width="80" align="center" />
-        <el-table-column label="实盘数" width="120"
-          ><template #default="{ row }"><el-input-number v-model="row.actual" :min="0" size="small" /></template
-        ></el-table-column>
+        <el-table-column prop="location" label="Location" width="120" />
+        <el-table-column prop="material" label="Material" min-width="180" />
+        <el-table-column prop="book_qty" label="Book Qty" width="90" align="center" />
+        <el-table-column label="Actual Qty" width="130">
+          <template #default="{ row }">
+            <el-input-number v-model="row.actual" :min="0" size="small" />
+          </template>
+        </el-table-column>
       </el-table>
-      <template #footer
-        ><el-button @click="execVis = false">保存草稿</el-button><el-button type="primary" @click="submitCount">提交盘点结果</el-button></template
-      >
+      <template #footer>
+        <el-button @click="execVisible = false">Save Draft</el-button>
+        <el-button type="primary" @click="submitCount">Submit</el-button>
+      </template>
     </el-dialog>
-    <el-dialog v-model="diffVis" title="盘点差异" width="700px">
+
+    <el-dialog v-model="diffVisible" title="Count Diff" width="700px">
       <el-table :data="diffItems" border size="small">
-        <el-table-column prop="location" label="库位" width="100" />
-        <el-table-column prop="material" label="物料" minWidth="140" />
-        <el-table-column prop="book_qty" label="账面数" width="80" align="center" />
-        <el-table-column prop="actual" label="实盘数" width="80" align="center" />
-        <el-table-column label="差异" width="80" align="center"
-          ><template #default="{ row }"
-            ><span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '' }"
-              >{{ row.diff > 0 ? '+' : '' }}{{ row.diff }}</span
-            ></template
-          ></el-table-column
-        >
-        <el-table-column label="处理方式" width="120"
-          ><template #default="{ row }"
-            ><el-select v-model="row.disposition" size="small"
-              ><el-option label="盘盈入库" value="profit" /><el-option label="盘亏出库" value="loss" /><el-option
-                label="不处理"
-                value="ignore" /></el-select></template
-        ></el-table-column>
+        <el-table-column prop="material" label="Material" min-width="180" />
+        <el-table-column prop="book_qty" label="Book Qty" width="90" align="center" />
+        <el-table-column prop="actual_qty" label="Actual Qty" width="90" align="center" />
+        <el-table-column label="Diff" width="90" align="center">
+          <template #default="{ row }">
+            <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '' }"> {{ row.diff > 0 ? '+' : '' }}{{ row.diff }} </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Disposition" width="140">
+          <template #default="{ row }">
+            <el-select v-model="row.disposition" size="small">
+              <el-option label="profit" value="profit" />
+              <el-option label="loss" value="loss" />
+              <el-option label="ignore" value="ignore" />
+            </el-select>
+          </template>
+        </el-table-column>
       </el-table>
-      <template #footer
-        ><el-button @click="diffVis = false">取消</el-button><el-button type="primary" @click="confirmDiff">确认调整</el-button></template
-      >
+      <template #footer>
+        <el-button @click="diffVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="confirmDiff">Confirm</el-button>
+      </template>
     </el-dialog>
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
+import { getStockCountDiff, getStockCountList } from '@/api/wms'
 
-// 差异率统计汇总
-const diffSummary = computed(() => {
-  const totalItems = diffItems.value.length
-  const hasDiff = diffItems.value.filter((d) => d.diff !== 0).length
-  const totalBookQty = diffItems.value.reduce((sum, d) => sum + d.book_qty, 0)
-  const totalDiff = diffItems.value.reduce((sum, d) => sum + Math.abs(d.diff), 0)
-  const diffRate = totalBookQty > 0 ? ((totalDiff / totalBookQty) * 100).toFixed(2) : '0.00'
-  return [
-    { label: '盘点项数', value: String(totalItems), color: '#409eff' },
-    { label: '差异项数', value: String(hasDiff), color: '#e6a23c' },
-    { label: '差异率', value: diffRate + '%', color: '#f56c6c' },
-    { label: '总差异量', value: String(totalDiff), color: '#67c23a' }
-  ]
-})
-const s = ref({ keyword: '' })
-const sc: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword' } as any]
-
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
-const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-function hs() {}
-function hr() {
-  s.value.keyword = ''
-}
-interface Plan {
+interface PlanItem {
   id: string
   code: string
   warehouse: string
@@ -115,52 +96,147 @@ interface Plan {
   executor: string
   status: string
 }
-const plans = ref<Plan[]>([
-  { id: '1', code: 'PD20250115001', warehouse: '原材料仓', type: 'full', plan_date: '2025-01-15', executor: '李四', status: 'pending' },
-  { id: '2', code: 'PD20250110002', warehouse: '成品仓', type: 'cycle', plan_date: '2025-01-10', executor: '王五', status: 'completed' }
-])
-const cols: TableColumnItem<Plan>[] = [
-  { prop: 'code', label: '计划编号', width: 160 },
-  { prop: 'warehouse', label: '盘点仓库', width: 120 },
-  { label: '类型', minWidth: 80, slotName: 'type', align: 'center' },
-  { prop: 'plan_date', label: '计划日期', width: 110 },
-  { prop: 'executor', label: '执行人', width: 80 },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
+
+const searchForm = ref({ keyword: '' })
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: 'Keyword', field: 'keyword' } as any]
+const allSearchColumns = computed(() => searchColumns)
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchFormRef = ref<FormInstance | null>()
+
+const rawExecLines = ref<any[]>([])
+const rawDiffLines = ref<any[]>([])
+const plans = ref<PlanItem[]>([])
+const execItems = ref<any[]>([])
+const diffItems = ref<any[]>([])
+const execVisible = ref(false)
+const diffVisible = ref(false)
+const currentPlanCode = ref('')
+
+const planColumns: TableColumnItem<PlanItem>[] = [
+  { prop: 'code', label: 'Plan Code', width: 160 },
+  { prop: 'warehouse', label: 'Warehouse', width: 140 },
+  { label: 'Type', minWidth: 80, slotName: 'type', align: 'center' },
+  { prop: 'plan_date', label: 'Plan Date', width: 110 },
+  { prop: 'executor', label: 'Executor', width: 100 },
+  { label: 'Status', minWidth: 90, slotName: 'status', align: 'center' },
+  { label: 'Actions', minWidth: 160, slotName: 'actions', align: 'center' }
 ]
-function openCreate() {}
-const execVis = ref(false)
-const execItems = ref(stockCountExec as any)
-function startCount(r: Plan) {
-  r.status = 'running'
-  execVis.value = true
+
+const diffSummary = computed(() => {
+  const totalItems = rawDiffLines.value.length
+  const changedItems = rawDiffLines.value.filter((item) => item.diff !== 0).length
+  const totalBookQty = rawDiffLines.value.reduce((sum, item) => sum + Number(item.book_qty || 0), 0)
+  const totalDiff = rawDiffLines.value.reduce((sum, item) => sum + Math.abs(Number(item.diff || 0)), 0)
+  const diffRate = totalBookQty > 0 ? `${((totalDiff / totalBookQty) * 100).toFixed(2)}%` : '0.00%'
+
+  return [
+    { label: 'Count Items', value: String(totalItems), color: '#409eff' },
+    { label: 'Diff Items', value: String(changedItems), color: '#e6a23c' },
+    { label: 'Diff Rate', value: diffRate, color: '#f56c6c' },
+    { label: 'Total Diff', value: String(totalDiff), color: '#67c23a' }
+  ]
+})
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
+
+function buildPlans(lines: any[]) {
+  const map = new Map<string, PlanItem>()
+
+  lines.forEach((line, index) => {
+    const code = String(line.plan_code)
+    if (!map.has(code)) {
+      const hasDone = lines.some((item) => item.plan_code === code && Number(item.diff || 0) !== 0)
+      map.set(code, {
+        id: code,
+        code,
+        warehouse: line.warehouse,
+        type: index % 2 === 0 ? 'full' : 'cycle',
+        plan_date: `2025-01-${String(10 + index).padStart(2, '0')}`,
+        executor: `User ${index + 1}`,
+        status: hasDone ? 'completed' : 'pending'
+      })
+    }
+  })
+
+  const keyword = searchForm.value.keyword.trim().toLowerCase()
+  const result = Array.from(map.values())
+  return keyword ? result.filter((item) => item.code.toLowerCase().includes(keyword) || item.warehouse.toLowerCase().includes(keyword)) : result
+}
+
+async function loadData() {
+  const [execRes, diffRes] = await Promise.all([getStockCountList({ page: 1, page_size: 100 }), getStockCountDiff({ page: 1, page_size: 100 })])
+
+  rawExecLines.value = (execRes.data.items || []).map((item: any) => ({
+    ...item,
+    id: String(item.id),
+    actual: Number(item.actual_qty ?? item.book_qty ?? 0)
+  }))
+  rawDiffLines.value = (diffRes.data.items || []).map((item: any) => ({
+    ...item,
+    id: String(item.id),
+    disposition: 'ignore'
+  }))
+  plans.value = buildPlans(rawExecLines.value)
+}
+
+function handleSearch() {
+  plans.value = buildPlans(rawExecLines.value)
+}
+
+function handleReset() {
+  searchForm.value.keyword = ''
+  plans.value = buildPlans(rawExecLines.value)
+}
+
+function openCreate() {
+  ElMessage.info('Create flow is not implemented in mock mode yet')
+}
+
+function startCount(plan: PlanItem) {
+  currentPlanCode.value = plan.code
+  plan.status = 'running'
+  execItems.value = rawExecLines.value
+    .filter((item) => item.plan_code === plan.code)
+    .map((item) => ({ ...item, actual: Number(item.actual_qty ?? item.book_qty ?? 0) }))
+  execVisible.value = true
+}
+
 function submitCount() {
-  const p = plans.value.find((p) => p.status === 'running')
-  if (p) p.status = 'completed'
-  execVis.value = false
-  ElMessage.success('盘点提交成功')
+  const plan = plans.value.find((item) => item.code === currentPlanCode.value)
+  if (plan) plan.status = 'completed'
+  execVisible.value = false
+  ElMessage.success('Count submitted')
 }
-const diffVis = ref(false)
-const diffItems = ref(stockCountDiff as any)
-function viewDiff(_r: Plan) {
-  diffVis.value = true
+
+function viewDiff(plan: PlanItem) {
+  diffItems.value = rawDiffLines.value.filter((item) => item.plan_code === plan.code).map((item) => ({ ...item }))
+  diffVisible.value = true
 }
+
 function confirmDiff() {
-  diffVis.value = false
-  ElMessage.success('差异已调整')
+  diffVisible.value = false
+  ElMessage.success('Diff confirmed')
 }
+
+onMounted(() => {
+  loadData()
+})
 </script>
+
 <style scoped>
 .diff-card :deep(.el-card__body) {
   padding: 16px;
   text-align: center;
 }
+
 .diff-label {
   font-size: 13px;
   color: #909399;
   margin-bottom: 8px;
 }
+
 .diff-value {
   font-size: 28px;
   font-weight: 700;

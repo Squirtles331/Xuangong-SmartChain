@@ -10,114 +10,166 @@
         @node-click="onNodeClick"
       />
     </template>
+
     <template #header>
-      <h3 style="margin: 0">{{ currentEmp?.name || '请选择员工' }} 技能矩阵</h3>
+      <h3 style="margin: 0">{{ currentEmployee?.name || 'Select Employee' }} Skill Matrix</h3>
     </template>
-    <template #tool><gi-button type="add" @click="openAdd" /></template>
-    <gi-table :columns="cols" :data="skills" border stripe size="small">
+
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+    </template>
+
+    <gi-table :columns="columns" :data="skills" border stripe size="small">
       <template #level="{ row }">
         <el-rate v-model="row.level" :max="5" disabled size="small" />
       </template>
       <template #actions="{ row }">
         <gi-button type="edit" size="small" @click="openEdit(row)" />
-        <gi-button type="delete" size="small" @click="del(row.id)" />
+        <gi-button type="delete" size="small" @click="removeSkill(row.id)" />
       </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增技能' : '编辑技能'" width="500px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
+
+    <gi-dialog v-model="dialogVisible" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? 'Add Skill' : 'Edit Skill'" width="500px">
+      <gi-form v-model="form" :columns="formColumns" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-interface Skill {
+import { getSkillMatrixData } from '@/api/hr'
+
+interface SkillItem {
   id: string
   skill_name: string
   level: number
   cert_number: string
   expire_date: string
 }
-const employees = ref(skillMatrix as any)
-const currentEmp = ref<any>(null)
-const skills = ref<Skill[]>([])
-const allSkills: Record<string, Skill[]> = {
-  '1': [
-    { id: 's1', skill_name: '数控车床操作', level: 4, cert_number: 'NC20230001', expire_date: '2026-12-31' },
-    { id: 's2', skill_name: '锯床操作', level: 3, cert_number: '', expire_date: '' },
-    { id: 's3', skill_name: '钳工', level: 2, cert_number: '', expire_date: '' }
-  ],
-  '2': [
-    { id: 's4', skill_name: '钻床操作', level: 4, cert_number: 'DR20230001', expire_date: '2025-06-30' },
-    { id: 's5', skill_name: '磨床操作', level: 2, cert_number: '', expire_date: '' }
-  ],
-  '3': [
-    { id: 's6', skill_name: '装配钳工', level: 5, cert_number: 'AS20220001', expire_date: '2027-03-15' },
-    { id: 's7', skill_name: '测试操作', level: 3, cert_number: '', expire_date: '' }
-  ],
-  '4': [
-    { id: 's8', skill_name: '加工中心操作', level: 4, cert_number: 'MC20240001', expire_date: '2027-01-10' },
-    { id: 's9', skill_name: '数控车床操作', level: 3, cert_number: '', expire_date: '' }
-  ]
-}
-const cols: TableColumnItem<Skill>[] = [
-  { prop: 'skill_name', label: '技能名称', minWidth: 160 },
-  { label: '等级', minWidth: 180, slotName: 'level' },
-  { prop: 'cert_number', label: '证书编号', minWidth: 150 },
-  { prop: 'expire_date', label: '有效期至', minWidth: 120 },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
-]
-function onNodeClick(d: any) {
-  currentEmp.value = d
-  skills.value = allSkills[d.id] || []
-}
-const vis = ref(false)
+
+const employees = ref<any[]>([])
+const currentEmployee = ref<any>(null)
+const skills = ref<SkillItem[]>([])
+const skillsByEmployee = ref<Record<string, SkillItem[]>>({})
+const dialogVisible = ref(false)
 const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ skill_name: '', level: 1, cert_number: '', expire_date: '' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '技能名称', field: 'skill_name', required: true },
+const editingId = ref('')
+
+const form = reactive<SkillItem>({
+  id: '',
+  skill_name: '',
+  level: 1,
+  cert_number: '',
+  expire_date: ''
+})
+
+const columns: TableColumnItem<SkillItem>[] = [
+  { prop: 'skill_name', label: 'Skill', minWidth: 180 },
+  { label: 'Level', minWidth: 180, slotName: 'level' },
+  { prop: 'cert_number', label: 'Certificate', minWidth: 150 },
+  { prop: 'expire_date', label: 'Expire Date', minWidth: 120 },
+  { label: 'Actions', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const formColumns: FormColumnItem[] = [
+  { type: 'input', label: 'Skill', field: 'skill_name', required: true },
   {
     type: 'input-number',
-    label: '等级(1-5)',
+    label: 'Level',
     field: 'level',
     required: true,
     props: { min: 1, max: 5 } as any
   },
-  { type: 'input', label: '证书编号', field: 'cert_number' },
-  { type: 'date-picker', label: '有效期至', field: 'expire_date' }
+  { type: 'input', label: 'Certificate', field: 'cert_number' },
+  { type: 'date-picker', label: 'Expire Date', field: 'expire_date' }
 ]
+
+function flattenFirstEmployee(nodes: any[]): any | null {
+  for (const node of nodes) {
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      const child = flattenFirstEmployee(node.children)
+      if (child) return child
+    } else if (node.id) {
+      return node
+    }
+  }
+  return null
+}
+
+async function loadData() {
+  const res = await getSkillMatrixData()
+  employees.value = res.data.employees || []
+  skillsByEmployee.value = res.data.skillsByEmployee || {}
+
+  const firstEmployee = flattenFirstEmployee(employees.value)
+  if (firstEmployee) onNodeClick(firstEmployee)
+}
+
+function onNodeClick(node: any) {
+  if (Array.isArray(node.children) && node.children.length > 0) return
+  currentEmployee.value = node
+  skills.value = [...(skillsByEmployee.value[node.id] || [])]
+}
+
 function openAdd() {
+  if (!currentEmployee.value) {
+    ElMessage.warning('Select an employee first')
+    return
+  }
+
   mode.value = 'add'
-  Object.assign(form, { skill_name: '', level: 1, cert_number: '', expire_date: '' })
-  vis.value = true
+  editingId.value = ''
+  Object.assign(form, { id: '', skill_name: '', level: 1, cert_number: '', expire_date: '' })
+  dialogVisible.value = true
 }
-function openEdit(r: Skill) {
+
+function openEdit(skill: SkillItem) {
   mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
+  editingId.value = skill.id
+  Object.assign(form, skill)
+  dialogVisible.value = true
 }
+
 async function submit() {
   if (!form.skill_name) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('Skill is required')
     return false
   }
+
+  const employeeId = currentEmployee.value?.id
+  if (!employeeId) return false
+
+  const target = skillsByEmployee.value[employeeId] || []
   if (mode.value === 'add') {
-    skills.value.unshift({ id: Date.now().toString(), ...form } as Skill)
+    const item = { ...form, id: Date.now().toString() }
+    target.unshift(item)
   } else {
-    const i = skills.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(skills.value[i], form)
+    const index = target.findIndex((item) => item.id === editingId.value)
+    if (index > -1) Object.assign(target[index], form)
   }
+
+  skillsByEmployee.value[employeeId] = target
+  skills.value = [...target]
   return true
 }
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+
+function removeSkill(id: string) {
+  const employeeId = currentEmployee.value?.id
+  if (!employeeId) return
+
+  ElMessageBox.confirm('Delete this skill?', 'Warning', { type: 'warning' })
     .then(() => {
-      skills.value = skills.value.filter((e) => e.id !== id)
-      ElMessage.success('删除成功')
+      const target = skillsByEmployee.value[employeeId] || []
+      skillsByEmployee.value[employeeId] = target.filter((item) => item.id !== id)
+      skills.value = [...skillsByEmployee.value[employeeId]]
+      ElMessage.success('Deleted')
     })
     .catch(() => {})
 }
+
+onMounted(() => {
+  loadData()
+})
 </script>

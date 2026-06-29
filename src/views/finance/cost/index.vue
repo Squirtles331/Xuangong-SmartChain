@@ -1,21 +1,31 @@
 <template>
   <gi-page-layout>
-    <gi-table :columns="cols" :data="costDetails" border stripe size="small" />
+    <gi-table :columns="columns" :data="costDetails" border stripe size="small" />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import type { TableColumnItem } from 'gi-component'
+import { getCostDetails } from '@/api/finance'
 
-const costDetails = ref(mockCostDetails as any)
+const costDetails = ref<any[]>([])
 
-const cols: TableColumnItem<any>[] = [
-  { prop: 'category', label: '费用类别', minWidth: 110 },
-  { prop: 'item', label: '费用项目', minWidth: 140 },
-  { prop: 'quantity', label: '数量', minWidth: 80, align: 'right' },
-  { prop: 'unit', label: '单位', minWidth: 60, align: 'center' },
-  { prop: 'unit_price', label: '单价(元)', minWidth: 100, align: 'right' },
-  { prop: 'amount', label: '金额(元)', minWidth: 120, align: 'right' },
-  { prop: 'month', label: '月份', minWidth: 100, align: 'center' }
+const columns: TableColumnItem<any>[] = [
+  { prop: 'product', label: 'Product', minWidth: 180 },
+  { prop: 'material_cost', label: 'Material Cost', minWidth: 120, align: 'right' },
+  { prop: 'labor_cost', label: 'Labor Cost', minWidth: 120, align: 'right' },
+  { prop: 'overhead', label: 'Overhead', minWidth: 100, align: 'right' },
+  { prop: 'total', label: 'Total Cost', minWidth: 120, align: 'right' },
+  { prop: 'period', label: 'Period', minWidth: 100, align: 'center' }
 ]
+
+async function loadData() {
+  const res = await getCostDetails()
+  costDetails.value = res.data || []
+}
+
+onMounted(() => {
+  loadData()
+})
 </script>

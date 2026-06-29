@@ -1,64 +1,67 @@
 <template>
   <gi-page-layout>
-    <template #tool><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /></template>
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="loadHistory" />
+    </template>
+
     <el-tabs v-model="tab">
-      <el-tab-pane label="告警规则" name="rules">
-        <gi-table :columns="cols" :data="rules" border stripe>
-          <template #metric="{ row }"
-            ><el-tag size="small">{{
-              row.metric === 'temp' ? '温度' : row.metric === 'rpm' ? '转速' : row.metric === 'vibration' ? '振动' : '电流'
-            }}</el-tag></template
-          >
-          <template #level="{ row }"
-            ><el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">{{
-              row.level === 'critical' ? '严重' : row.level === 'warning' ? '警告' : '提示'
-            }}</el-tag></template
-          >
-          <template #status="{ row }"
-            ><el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">{{
-              row.status === 'active' ? '启用' : '停用'
-            }}</el-tag></template
-          >
-          <template #actions="{ row }"
-            ><gi-button type="edit" @click="openEdit(row)" /><el-button
-              :type="row.status === 'active' ? 'warning' : 'success'"
-              link
-              size="small"
-              @click="toggle(row)"
-              >{{ row.status === 'active' ? '停用' : '启用' }}</el-button
-            ><gi-button type="delete" @click="del(row.id)"
-          /></template>
+      <el-tab-pane label="Alert Rules" name="rules">
+        <gi-table :columns="ruleColumns" :data="rules" border stripe>
+          <template #metric="{ row }">
+            <el-tag size="small">{{ metricLabel[row.metric] || row.metric }}</el-tag>
+          </template>
+          <template #level="{ row }">
+            <el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">
+              {{ row.level }}
+            </el-tag>
+          </template>
+          <template #status="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
+              {{ row.status }}
+            </el-tag>
+          </template>
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <el-button :type="row.status === 'active' ? 'warning' : 'success'" link size="small" @click="toggle(row)">
+              {{ row.status === 'active' ? 'Disable' : 'Enable' }}
+            </el-button>
+            <gi-button type="delete" @click="removeRule(row.id)" />
+          </template>
         </gi-table>
       </el-tab-pane>
-      <el-tab-pane label="触发记录" name="history">
-        <gi-table :columns="historyCols" :data="alertHistory" border stripe size="small">
-          <template #metric="{ row }"
-            ><el-tag size="small">{{
-              row.metric === 'temp' ? '温度' : row.metric === 'rpm' ? '转速' : row.metric === 'vibration' ? '振动' : '电流'
-            }}</el-tag></template
-          >
-          <template #level="{ row }"
-            ><el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">{{
-              row.level === 'critical' ? '严重' : row.level === 'warning' ? '警告' : '提示'
-            }}</el-tag></template
-          >
-          <template #status="{ row }"
-            ><el-tag :type="row.status === 'triggered' ? 'danger' : 'success'" size="small">{{
-              row.status === 'triggered' ? '已触发' : '已恢复'
-            }}</el-tag></template
-          >
+
+      <el-tab-pane label="History" name="history">
+        <gi-table :columns="historyColumns" :data="alertHistory" border stripe size="small">
+          <template #metric="{ row }">
+            <el-tag size="small">{{ metricLabel[row.metric] || row.metric }}</el-tag>
+          </template>
+          <template #level="{ row }">
+            <el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">
+              {{ row.level }}
+            </el-tag>
+          </template>
+          <template #status="{ row }">
+            <el-tag :type="row.status === 'triggered' ? 'danger' : 'success'" size="small">
+              {{ row.status }}
+            </el-tag>
+          </template>
         </gi-table>
       </el-tab-pane>
     </el-tabs>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增告警规则' : '编辑告警规则'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
+
+    <gi-dialog v-model="dialogVisible" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? 'Add Rule' : 'Edit Rule'" width="600px">
+      <gi-form v-model="form" :columns="formColumns" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import { getIoTAlertHistory, getIoTAlertRules } from '@/api/wms'
+
 interface Rule {
   id: string
   device: string
@@ -68,71 +71,82 @@ interface Rule {
   level: string
   status: string
 }
-const rules = ref<Rule[]>([
-  { id: '1', device: '数控车床 CK6150', metric: 'temp', operator: '>', threshold: 60, level: 'warning', status: 'active' },
-  { id: '2', device: '数控车床 CK6150', metric: 'vibration', operator: '>', threshold: 4.0, level: 'critical', status: 'active' },
-  { id: '3', device: '加工中心 VMC850', metric: 'temp', operator: '>', threshold: 65, level: 'warning', status: 'active' },
-  { id: '4', device: '钻床 Z3050', metric: 'current', operator: '>', threshold: 20, level: 'warning', status: 'disabled' }
-])
+
+const metricLabel: Record<string, string> = {
+  temp: 'Temperature',
+  rpm: 'RPM',
+  vibration: 'Vibration',
+  current: 'Current'
+}
 
 const tab = ref('rules')
-
-// 告警触发记录
-const alertHistory = ref(iotAlertHistory as any)
-const historyCols: TableColumnItem<any>[] = [
-  { prop: 'device', label: '设备', minWidth: 160 },
-  { label: '指标', minWidth: 60, slotName: 'metric', align: 'center' },
-  { prop: 'actual_value', label: '实际值', minWidth: 80, align: 'center' },
-  { prop: 'threshold', label: '阈值', minWidth: 70, align: 'center' },
-  { label: '级别', minWidth: 70, slotName: 'level', align: 'center' },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { prop: 'triggered_at', label: '触发时间', minWidth: 170 },
-  { prop: 'recovered_at', label: '恢复时间', minWidth: 170 }
-]
-const cols: TableColumnItem<Rule>[] = [
-  { prop: 'device', label: '设备', minWidth: 180 },
-  { label: '指标', minWidth: 70, slotName: 'metric', align: 'center' },
-  { prop: 'operator', label: '条件', minWidth: 50, align: 'center' },
-  { prop: 'threshold', label: '阈值', minWidth: 80, align: 'center' },
-  { label: '级别', minWidth: 70, slotName: 'level', align: 'center' },
-  { label: '状态', minWidth: 60, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
-]
-const vis = ref(false)
+const rules = ref<Rule[]>([])
+const alertHistory = ref<any[]>([])
+const dialogVisible = ref(false)
 const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ device: '数控车床 CK6150', metric: 'temp', operator: '>', threshold: 60, level: 'warning', status: 'active' })
-const formCols: FormColumnItem[] = [
+const editingId = ref('')
+
+const form = reactive({
+  device: 'CNC Lathe CK6150',
+  metric: 'temp',
+  operator: '>',
+  threshold: 60,
+  level: 'warning',
+  status: 'active'
+})
+
+const historyColumns: TableColumnItem<any>[] = [
+  { prop: 'device', label: 'Device', minWidth: 160 },
+  { label: 'Metric', minWidth: 90, slotName: 'metric', align: 'center' },
+  { prop: 'actual_value', label: 'Actual', minWidth: 80, align: 'center' },
+  { prop: 'threshold', label: 'Threshold', minWidth: 80, align: 'center' },
+  { label: 'Level', minWidth: 80, slotName: 'level', align: 'center' },
+  { label: 'Status', minWidth: 90, slotName: 'status', align: 'center' },
+  { prop: 'triggered_at', label: 'Triggered At', minWidth: 170 },
+  { prop: 'recovered_at', label: 'Recovered At', minWidth: 170 }
+]
+
+const ruleColumns: TableColumnItem<Rule>[] = [
+  { prop: 'device', label: 'Device', minWidth: 180 },
+  { label: 'Metric', minWidth: 90, slotName: 'metric', align: 'center' },
+  { prop: 'operator', label: 'Operator', minWidth: 80, align: 'center' },
+  { prop: 'threshold', label: 'Threshold', minWidth: 90, align: 'center' },
+  { label: 'Level', minWidth: 80, slotName: 'level', align: 'center' },
+  { label: 'Status', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: 'Actions', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const formColumns: FormColumnItem[] = [
   {
     type: 'select-v2',
-    label: '设备',
+    label: 'Device',
     field: 'device',
     required: true,
     props: {
       options: [
-        { label: '数控车床 CK6150', value: '数控车床 CK6150' },
-        { label: '钻床 Z3050', value: '钻床 Z3050' },
-        { label: '加工中心 VMC850', value: '加工中心 VMC850' }
+        { label: 'CNC Lathe CK6150', value: 'CNC Lathe CK6150' },
+        { label: 'Drill Z3050', value: 'Drill Z3050' },
+        { label: 'VMC850', value: 'VMC850' }
       ]
     } as any
   },
   {
     type: 'select-v2',
-    label: '指标',
+    label: 'Metric',
     field: 'metric',
     required: true,
     props: {
       options: [
-        { label: '温度', value: 'temp' },
-        { label: '转速', value: 'rpm' },
-        { label: '振动', value: 'vibration' },
-        { label: '电流', value: 'current' }
+        { label: 'Temperature', value: 'temp' },
+        { label: 'RPM', value: 'rpm' },
+        { label: 'Vibration', value: 'vibration' },
+        { label: 'Current', value: 'current' }
       ]
     } as any
   },
   {
     type: 'select-v2',
-    label: '条件',
+    label: 'Operator',
     field: 'operator',
     required: true,
     props: {
@@ -144,56 +158,87 @@ const formCols: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'input-number', label: '阈值', field: 'threshold', required: true },
+  { type: 'input-number', label: 'Threshold', field: 'threshold', required: true },
   {
     type: 'select-v2',
-    label: '级别',
+    label: 'Level',
     field: 'level',
     required: true,
     props: {
       options: [
-        { label: '严重', value: 'critical' },
-        { label: '警告', value: 'warning' },
-        { label: '提示', value: 'info' }
+        { label: 'critical', value: 'critical' },
+        { label: 'warning', value: 'warning' },
+        { label: 'info', value: 'info' }
       ]
     } as any
   }
 ]
+
+async function loadRules() {
+  const res = await getIoTAlertRules()
+  rules.value = (res.data || []).map((item: any) => ({ ...item, id: String(item.id) }))
+}
+
+async function loadHistory() {
+  const res = await getIoTAlertHistory({ page: 1, page_size: 100 })
+  alertHistory.value = (res.data.items || []).map((item: any) => ({
+    id: String(item.id),
+    device: item.device,
+    metric: String(item.metric || 'current'),
+    actual_value: item.actual_value ?? item.value,
+    threshold: item.threshold,
+    level: item.level === 'danger' ? 'critical' : item.level,
+    status: item.recover_time ? 'recovered' : 'triggered',
+    triggered_at: item.triggered_at ?? item.trigger_time,
+    recovered_at: item.recovered_at ?? item.recover_time
+  }))
+}
+
 function openAdd() {
   mode.value = 'add'
-  Object.assign(form, { device: '数控车床 CK6150', metric: 'temp', operator: '>', threshold: 60, level: 'warning', status: 'active' })
-  vis.value = true
+  editingId.value = ''
+  Object.assign(form, { device: 'CNC Lathe CK6150', metric: 'temp', operator: '>', threshold: 60, level: 'warning', status: 'active' })
+  dialogVisible.value = true
 }
-function openEdit(r: Rule) {
+
+function openEdit(rule: Rule) {
   mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
+  editingId.value = rule.id
+  Object.assign(form, rule)
+  dialogVisible.value = true
 }
+
 async function submit() {
   if (!form.device) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('Device is required')
     return false
   }
+
   if (mode.value === 'add') {
-    rules.value.unshift({ id: Date.now().toString(), ...form } as Rule)
+    rules.value.unshift({ id: Date.now().toString(), ...form })
   } else {
-    const i = rules.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(rules.value[i], form)
+    const index = rules.value.findIndex((item) => item.id === editingId.value)
+    if (index > -1) Object.assign(rules.value[index], form)
   }
+
   return true
 }
-function toggle(r: Rule) {
-  r.status = r.status === 'active' ? 'disabled' : 'active'
-  ElMessage.success(r.status === 'active' ? '已启用' : '已停用')
+
+function toggle(rule: Rule) {
+  rule.status = rule.status === 'active' ? 'disabled' : 'active'
+  ElMessage.success('Rule updated')
 }
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+
+function removeRule(id: string) {
+  ElMessageBox.confirm('Delete this rule?', 'Warning', { type: 'warning' })
     .then(() => {
-      rules.value = rules.value.filter((e) => e.id !== id)
-      ElMessage.success('删除成功')
+      rules.value = rules.value.filter((item) => item.id !== id)
+      ElMessage.success('Deleted')
     })
     .catch(() => {})
 }
-function refresh() {}
+
+onMounted(async () => {
+  await Promise.all([loadRules(), loadHistory()])
+})
 </script>

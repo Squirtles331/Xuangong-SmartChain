@@ -1,135 +1,199 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" storage-key="detail-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" />
+      <SearchSetting :columns="allSearchColumns" storage-key="energy-detail-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
       <gi-button type="add" @click="openAdd" />
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
-      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+      <el-button style="margin-left: 8px" @click="handleExport">Export</el-button>
     </template>
-    <gi-table :columns="cols" :data="pagedData" :pagination="pagination" border stripe size="small">
+
+    <gi-table :columns="columns" :data="pagedData" :pagination="pagination" border stripe size="small">
       <template #type="{ row }">
-        <el-tag :type="row.type === '电' ? 'warning' : row.type === '水' ? 'primary' : 'info'" size="small">{{ row.type }}</el-tag>
+        <el-tag :type="row.type === 'electricity' ? 'warning' : row.type === 'water' ? 'primary' : 'info'" size="small">
+          {{ row.type }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <gi-button type="edit" size="small" @click="openEdit(row)" />
-        <gi-button type="delete" size="small" @click="del(row.id)" />
+        <gi-button type="delete" size="small" @click="removeRow(row.id)" />
       </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
+
+    <gi-dialog v-model="dialogVisible" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? 'Add Record' : 'Edit Record'" width="600px">
+      <gi-form v-model="form" :columns="formColumns" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-const s = reactive({ keyword: '' })
-const sc: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword' } as any]
+import { getEnergyDetailList } from '@/api/energy'
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
-const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
+interface EnergyRow {
+  id: string
+  date: string
+  type: string
+  workshop: string
+  qty: number
+  unit: string
 }
-const data = ref(energyDetails as any)
-const cols: TableColumnItem<any>[] = [
-  { prop: 'date', label: '日期', minWidth: 110 },
-  { label: '类型', minWidth: 60, slotName: 'type', align: 'center' },
-  { prop: 'workshop', label: '车间', minWidth: 140 },
-  { prop: 'qty', label: '用量', minWidth: 100, align: 'center' },
-  { prop: 'unit', label: '单位', minWidth: 60, align: 'center' },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+
+const searchForm = reactive({ keyword: '' })
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: 'Keyword', field: 'keyword' } as any]
+const allSearchColumns = computed(() => searchColumns)
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchFormRef = ref<FormInstance | null>()
+const rows = ref<EnergyRow[]>([])
+
+const columns: TableColumnItem<any>[] = [
+  { prop: 'date', label: 'Period', minWidth: 110 },
+  { label: 'Type', minWidth: 100, slotName: 'type', align: 'center' },
+  { prop: 'workshop', label: 'Workshop', minWidth: 160 },
+  { prop: 'qty', label: 'Usage', minWidth: 100, align: 'center' },
+  { prop: 'unit', label: 'Unit', minWidth: 80, align: 'center' },
+  { label: 'Actions', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const filteredData = computed(() => {
-  return data.value.filter((r) => !s.keyword || r.workshop.includes(s.keyword) || r.type.includes(s.keyword))
-})
+const filteredData = computed(() =>
+  rows.value.filter((item) => {
+    const keyword = searchForm.keyword.trim().toLowerCase()
+    if (!keyword) return true
+    return item.workshop.toLowerCase().includes(keyword) || item.type.toLowerCase().includes(keyword)
+  })
+)
+
 const pagination = reactive({ currentPage: 1, pageSize: 5, total: 0 })
 const pagedData = computed(() => {
   const start = (pagination.currentPage - 1) * pagination.pageSize
   return filteredData.value.slice(start, start + pagination.pageSize)
 })
+
 watch(
   filteredData,
-  (v) => {
-    pagination.total = v.length
+  (value) => {
+    pagination.total = value.length
   },
   { immediate: true }
 )
-function hs() {
-  pagination.currentPage = 1
-}
-function hr() {
-  s.keyword = ''
-  pagination.currentPage = 1
-}
-function refresh() {
-  hr()
-}
-function handleExport() {
-  ElMessage.success('导出成功')
-}
-const vis = ref(false)
+
+const dialogVisible = ref(false)
 const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ date: '', type: '电', workshop: '', qty: 0, unit: 'kWh' })
-const formCols: FormColumnItem[] = [
-  { type: 'date-picker', label: '日期', field: 'date', required: true },
+const editingId = ref('')
+const form = reactive<EnergyRow>({
+  id: '',
+  date: '',
+  type: 'electricity',
+  workshop: '',
+  qty: 0,
+  unit: 'kWh'
+})
+
+const formColumns: FormColumnItem[] = [
+  { type: 'input', label: 'Period', field: 'date', required: true },
   {
     type: 'select-v2',
-    label: '类型',
+    label: 'Type',
     field: 'type',
     required: true,
     props: {
       options: [
-        { label: '电', value: '电' },
-        { label: '水', value: '水' },
-        { label: '气', value: '气' }
+        { label: 'electricity', value: 'electricity' },
+        { label: 'water', value: 'water' },
+        { label: 'gas', value: 'gas' }
       ]
     } as any
   },
-  { type: 'input', label: '车间', field: 'workshop' },
-  { type: 'input-number', label: '用量', field: 'qty', required: true, props: { min: 0 } as any },
-  { type: 'input', label: '单位', field: 'unit' }
+  { type: 'input', label: 'Workshop', field: 'workshop' },
+  { type: 'input-number', label: 'Usage', field: 'qty', required: true, props: { min: 0 } as any },
+  { type: 'input', label: 'Unit', field: 'unit' }
 ]
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+
+async function loadRows() {
+  const res = await getEnergyDetailList()
+  rows.value = (res.data || []).map((item: any) => ({
+    id: String(item.id),
+    date: item.period,
+    type: mapEnergyType(item.type),
+    workshop: item.workshop,
+    qty: Number(item.usage ?? item.qty ?? 0),
+    unit: item.unit
+  }))
+}
+
+function mapEnergyType(type: string) {
+  const text = String(type || '')
+  if (text.includes('鐢')) return 'electricity'
+  if (text.includes('姘') && text.includes('m')) return 'gas'
+  if (text.includes('姘')) return 'water'
+  return text || 'electricity'
+}
+
+function handleSearch() {
+  pagination.currentPage = 1
+}
+
+function handleReset() {
+  searchForm.keyword = ''
+  pagination.currentPage = 1
+}
+
+function refresh() {
+  handleReset()
+}
+
+function handleExport() {
+  ElMessage.success('Export completed')
+}
+
 function openAdd() {
   mode.value = 'add'
-  eid.value = ''
-  Object.assign(form, { date: '', type: '电', workshop: '', qty: 0, unit: 'kWh' })
-  vis.value = true
+  editingId.value = ''
+  Object.assign(form, { id: '', date: '', type: 'electricity', workshop: '', qty: 0, unit: 'kWh' })
+  dialogVisible.value = true
 }
-function openEdit(r: any) {
+
+function openEdit(row: EnergyRow) {
   mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
+  editingId.value = row.id
+  Object.assign(form, row)
+  dialogVisible.value = true
 }
+
 async function submit() {
   if (!form.date) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('Period is required')
     return false
   }
+
   if (mode.value === 'add') {
-    data.value.unshift({ id: Date.now().toString(), ...form })
+    rows.value.unshift({ ...form, id: Date.now().toString() })
   } else {
-    const i = data.value.findIndex((e: any) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
+    const index = rows.value.findIndex((item) => item.id === editingId.value)
+    if (index > -1) Object.assign(rows.value[index], form)
   }
+
   return true
 }
-function del(id: string) {
-  data.value = data.value.filter((e: any) => e.id !== id)
+
+function removeRow(id: string) {
+  rows.value = rows.value.filter((item) => item.id !== id)
   if ((pagination.currentPage - 1) * pagination.pageSize >= filteredData.value.length) {
     pagination.currentPage = Math.max(1, pagination.currentPage - 1)
   }
 }
+
+onMounted(() => {
+  loadRows()
+})
 </script>

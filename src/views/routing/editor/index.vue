@@ -174,8 +174,9 @@ async function fetchRouting() {
     try {
       const res = await getRoutingDetail(id)
       if (res.data) {
-        routingTitle.value = res.data.material_name || '标准工艺'
-        operations.value = res.data.operations || [res.data]
+        const detail = res.data as any
+        routingTitle.value = detail.material_name || '标准工艺'
+        operations.value = detail.operations || [detail]
       }
     } catch {
       ElMessage.error('获取工艺路线失败')

@@ -6,7 +6,7 @@ import { simulateDelay } from '../shared/delay'
 import { paginate, searchItems } from '../shared/paginate'
 import { wrapListResponse, wrapDetailResponse, wrapSuccessResponse } from '../shared/response'
 import { generateId } from '../shared/id'
-import { orgTree, materialTree, materialList, equipments, workCenters, molds } from '../modules/business'
+import { orgTree, materialTree, materialList, equipments, workCenters, molds } from '../modules/mdm'
 
 // ==================== 组织架构 ====================
 export async function getOrgTree() {

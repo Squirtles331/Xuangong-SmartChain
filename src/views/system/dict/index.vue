@@ -74,7 +74,7 @@ const dictItemsMap = ref<Record<string, DictItem[]>>({})
 
 onMounted(async () => {
   const res = await getDictTypeList({ page: 1, page_size: 1000 })
-  dictTypes.value = res.data.items
+  dictTypes.value = (res.data.items || []) as DictType[]
 })
 
 // ==================== 搜索 ====================
@@ -170,7 +170,7 @@ async function submitTypeDialog() {
     await createDictType({ ...typeForm, status: 'active' })
     // Reload list
     const res = await getDictTypeList({ page: 1, page_size: 1000 })
-    dictTypes.value = res.data.items
+    dictTypes.value = (res.data.items || []) as DictType[]
     ElMessage.success('新增成功')
   } else {
     // For edit, update locally since updateDictType isn't available; refresh from API
@@ -272,7 +272,7 @@ async function submitItemDialog() {
     return false
   }
   if (itemDialogMode.value === 'add') {
-    await createDictItem({ dict_type_code: currentType.value!.code, ...itemForm, status: 'active' })
+    await createDictItem({ dict_type_id: currentType.value!.id, ...itemForm, status: 'active' })
     // Reload items
     const res = await getDictItems(currentType.value!.code)
     currentItems.value = res.data || []

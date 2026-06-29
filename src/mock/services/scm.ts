@@ -1,72 +1,95 @@
-/**
- * SCM (Supply Chain Management) Mock Service
- * 供应商管理、采购订单
- */
+import { purchaseOrders, suppliers } from '../modules/scm'
+import { portalDeliveries, portalOrders, portalReconciliation, portalTimeline } from '../modules/scm'
 import { simulateDelay } from '../shared/delay'
-import { paginate, searchItems } from '../shared/paginate'
-import { wrapListResponse, wrapDetailResponse, wrapSuccessResponse } from '../shared/response'
 import { generateId } from '../shared/id'
-import { suppliers, purchaseOrders } from '../modules/business'
+import { paginate, searchItems } from '../shared/paginate'
+import { wrapDetailResponse, wrapListResponse, wrapSuccessResponse } from '../shared/response'
 
-// ==================== 供应商管理 ====================
 export async function getSupplierList(params: { page: number; page_size: number; name?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...suppliers]
   if (params.name) filtered = searchItems(filtered, params.name, ['name'])
-  if (params.status) filtered = filtered.filter((s) => (s as any).status === params.status)
+  if (params.status) filtered = filtered.filter((item) => (item as any).status === params.status)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }
 
 export async function createSupplier(data: any) {
   await simulateDelay()
-  const newSupplier = { id: generateId(), ...data }
-  ;(suppliers as any[]).unshift(newSupplier)
+  ;(suppliers as any[]).unshift({ id: generateId(), ...data })
   return wrapSuccessResponse('供应商创建成功')
 }
 
 export async function updateSupplier(id: string, data: any) {
   await simulateDelay()
-  const idx = (suppliers as any[]).findIndex((s: any) => String(s.id) === id)
-  if (idx > -1) Object.assign((suppliers as any[])[idx], data)
+  const index = (suppliers as any[]).findIndex((item: any) => String(item.id) === id)
+  if (index > -1) Object.assign((suppliers as any[])[index], data)
   return wrapSuccessResponse('供应商更新成功')
 }
 
 export async function deleteSupplier(id: string) {
   await simulateDelay()
-  const idx = (suppliers as any[]).findIndex((s: any) => String(s.id) === id)
-  if (idx > -1) (suppliers as any[]).splice(idx, 1)
+  const index = (suppliers as any[]).findIndex((item: any) => String(item.id) === id)
+  if (index > -1) (suppliers as any[]).splice(index, 1)
   return wrapSuccessResponse('供应商删除成功')
 }
 
-// ==================== 采购订单 ====================
 export async function getPurchaseOrderList(params: { page: number; page_size: number; code?: string; supplier?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...purchaseOrders]
   if (params.code) filtered = searchItems(filtered, params.code, ['code'])
   if (params.supplier) filtered = searchItems(filtered, params.supplier, ['supplier'])
-  if (params.status) filtered = filtered.filter((o) => (o as any).status === params.status)
+  if (params.status) filtered = filtered.filter((item) => (item as any).status === params.status)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }
 
 export async function createPurchaseOrder(data: any) {
   await simulateDelay()
-  const newOrder = { id: generateId(), ...data }
-  ;(purchaseOrders as any[]).unshift(newOrder)
+  ;(purchaseOrders as any[]).unshift({ id: generateId(), ...data })
   return wrapSuccessResponse('采购订单创建成功')
 }
 
 export async function updatePurchaseOrder(id: string, data: any) {
   await simulateDelay()
-  const idx = (purchaseOrders as any[]).findIndex((o: any) => String(o.id) === id)
-  if (idx > -1) Object.assign((purchaseOrders as any[])[idx], data)
+  const index = (purchaseOrders as any[]).findIndex((item: any) => String(item.id) === id)
+  if (index > -1) Object.assign((purchaseOrders as any[])[index], data)
   return wrapSuccessResponse('采购订单更新成功')
 }
 
 export async function deletePurchaseOrder(id: string) {
   await simulateDelay()
-  const idx = (purchaseOrders as any[]).findIndex((o: any) => String(o.id) === id)
-  if (idx > -1) (purchaseOrders as any[]).splice(idx, 1)
+  const index = (purchaseOrders as any[]).findIndex((item: any) => String(item.id) === id)
+  if (index > -1) (purchaseOrders as any[]).splice(index, 1)
   return wrapSuccessResponse('采购订单删除成功')
+}
+
+export async function getSupplierPortalData() {
+  await simulateDelay()
+  return wrapDetailResponse({
+    orders: portalOrders,
+    deliveries: portalDeliveries,
+    timelineItems: portalTimeline,
+    recData: portalReconciliation
+  })
+}
+
+export async function confirmPortalOrder(id: string) {
+  await simulateDelay()
+  const order = portalOrders.find((item) => item.id === id)
+  if (order) order.status = 'confirmed'
+  return wrapSuccessResponse('已确认订单')
+}
+
+export async function rejectPortalOrder(id: string) {
+  await simulateDelay()
+  const order = portalOrders.find((item) => item.id === id)
+  if (order) order.status = 'rejected'
+  return wrapSuccessResponse('已拒绝订单')
+}
+
+export async function confirmPortalDelivery(id: string) {
+  await simulateDelay()
+  const delivery = portalDeliveries.find((item) => item.id === id)
+  return wrapSuccessResponse(delivery ? `已确认发货：${delivery.code}` : '发货确认成功')
 }

@@ -327,15 +327,18 @@ async function onRoutingChange(version: string) {
     const res = await getRoutingList({ page: 1, page_size: 100, material_code: step1Form.material_code })
     const ops = res.data?.items || res.data || []
     routingPreviewData.value = (ops as any[]).map((op: any) => ({
-    op_no: op.operation_no,
-    name: op.name,
-    work_center: op.work_center,
-    setup: `${op.setup_hours}min`,
-    setup_val: op.setup_hours,
-    run: `${op.run_hours}min`,
-    run_val: op.run_hours,
-    qc: op.is_qc_gate
-  }))
+      op_no: op.operation_no,
+      name: op.name,
+      work_center: op.work_center,
+      setup: `${op.setup_hours}min`,
+      setup_val: op.setup_hours,
+      run: `${op.run_hours}min`,
+      run_val: op.run_hours,
+      qc: op.is_qc_gate
+    }))
+  } catch {
+    routingPreviewData.value = []
+  }
 }
 
 // ==================== Step 流程 ====================

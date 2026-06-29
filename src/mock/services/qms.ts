@@ -1,14 +1,12 @@
 /**
- * QMS (Quality Management System) Mock Service
- * 质检任务管理、质检模板、供应商质量
+ * QMS mock service
  */
+import { inspectionTasks, qcTemplates } from '../modules/qms'
 import { simulateDelay } from '../shared/delay'
-import { paginate, searchItems } from '../shared/paginate'
-import { wrapListResponse, wrapDetailResponse, wrapSuccessResponse } from '../shared/response'
 import { generateId } from '../shared/id'
-import { inspectionTasks, qcTemplates } from '../modules/business'
+import { paginate, searchItems } from '../shared/paginate'
+import { wrapDetailResponse, wrapListResponse, wrapSuccessResponse } from '../shared/response'
 
-// ==================== 质检任务列表 ====================
 export async function getInspectionTaskList(params: {
   page: number
   page_size: number
@@ -20,14 +18,13 @@ export async function getInspectionTaskList(params: {
   await simulateDelay()
   let filtered = [...inspectionTasks]
   if (params.code) filtered = searchItems(filtered, params.code, ['code'])
-  if (params.type) filtered = filtered.filter((t) => (t as any).type === params.type)
+  if (params.type) filtered = filtered.filter((item) => (item as any).type === params.type)
   if (params.material) filtered = searchItems(filtered, params.material, ['material'])
-  if (params.status) filtered = filtered.filter((t) => (t as any).status === params.status)
+  if (params.status) filtered = filtered.filter((item) => (item as any).status === params.status)
   const result = paginate(filtered, params.page, params.page_size)
   return wrapListResponse(result.items, result.total, result.page, result.page_size)
 }
 
-// ==================== 创建质检任务 ====================
 export async function createInspectionTask(data: any) {
   await simulateDelay()
   const newTask = {
@@ -38,32 +35,28 @@ export async function createInspectionTask(data: any) {
     ...data
   }
   ;(inspectionTasks as any[]).unshift(newTask)
-  return wrapSuccessResponse('质检任务创建成功')
+  return wrapSuccessResponse('Inspection task created')
 }
 
-// ==================== 更新质检任务 ====================
 export async function updateInspectionTask(id: string, data: any) {
   await simulateDelay()
-  const idx = (inspectionTasks as any[]).findIndex((t: any) => String(t.id) === id)
-  if (idx > -1) Object.assign((inspectionTasks as any[])[idx], data)
-  return wrapSuccessResponse('质检任务更新成功')
+  const index = (inspectionTasks as any[]).findIndex((item: any) => String(item.id) === id)
+  if (index > -1) Object.assign((inspectionTasks as any[])[index], data)
+  return wrapSuccessResponse('Inspection task updated')
 }
 
-// ==================== 删除质检任务 ====================
 export async function deleteInspectionTask(id: string) {
   await simulateDelay()
-  const idx = (inspectionTasks as any[]).findIndex((t: any) => String(t.id) === id)
-  if (idx > -1) (inspectionTasks as any[]).splice(idx, 1)
-  return wrapSuccessResponse('质检任务删除成功')
+  const index = (inspectionTasks as any[]).findIndex((item: any) => String(item.id) === id)
+  if (index > -1) (inspectionTasks as any[]).splice(index, 1)
+  return wrapSuccessResponse('Inspection task deleted')
 }
 
-// ==================== 质检模板 ====================
 export async function getQCTemplates() {
   await simulateDelay()
   return wrapDetailResponse(qcTemplates)
 }
 
-// ==================== 供应商质量列表（骨架） ====================
 export async function getSupplierQualityList(params: { page: number; page_size: number }) {
   await simulateDelay()
   return wrapListResponse([], 0, params.page, params.page_size)

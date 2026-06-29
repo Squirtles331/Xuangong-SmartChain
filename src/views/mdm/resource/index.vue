@@ -183,9 +183,9 @@ async function submit() {
     return false
   }
   if (mode.value === 'add') {
-    await createEquipment({ ...form.value })
+    await createEquipment({ ...(form.value as any) })
   } else {
-    await updateEquipment(form.value.id, { ...form.value })
+    await updateEquipment(form.value.id, { ...(form.value as any) })
   }
   await fetchData()
   return true

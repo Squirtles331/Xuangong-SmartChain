@@ -1,139 +1,177 @@
 <template>
   <gi-page-layout>
-    <template #header><h3>条码/RFID 仓储管理</h3></template>
+    <template #header>
+      <h3>Barcode / RFID</h3>
+    </template>
+
     <el-tabs v-model="tab">
-      <el-tab-pane label="条码打印" name="print">
-        <template #tool><el-button type="primary" @click="printBarcode">批量打印</el-button></template>
-        <gi-table :columns="printCols" :data="materials" border stripe size="small" @selection-change="onSelect" />
+      <el-tab-pane label="Print" name="print">
+        <div style="margin-bottom: 12px">
+          <el-button type="primary" @click="printBarcode">Batch Print</el-button>
+        </div>
+        <gi-table :columns="printColumns" :data="materials" border stripe size="small" @selection-change="onSelect" />
       </el-tab-pane>
-      <el-tab-pane label="条码生成" name="generate">
+
+      <el-tab-pane label="Generate" name="generate">
         <el-row :gutter="16">
           <el-col :span="8">
-            <el-card header="条码参数" shadow="never">
-              <el-form label-width="80px" size="small">
-                <el-form-item label="物料编码"><el-input v-model="genForm.code" placeholder="如: 01.01.001" /></el-form-item>
-                <el-form-item label="物料名称"><el-input v-model="genForm.name" placeholder="如: 45#圆钢" /></el-form-item>
-                <el-form-item label="批号"><el-input v-model="genForm.lot" placeholder="如: L20250101" /></el-form-item>
-                <el-form-item label="数量"><el-input-number v-model="genForm.qty" :min="1" style="width: 100%" /></el-form-item>
-                <el-form-item><el-button type="primary" @click="generateBarcode">生成条码</el-button></el-form-item>
+            <el-card header="Barcode Params" shadow="never">
+              <el-form label-width="90px" size="small">
+                <el-form-item label="Material Code"><el-input v-model="genForm.code" /></el-form-item>
+                <el-form-item label="Material Name"><el-input v-model="genForm.name" /></el-form-item>
+                <el-form-item label="Lot"><el-input v-model="genForm.lot" /></el-form-item>
+                <el-form-item label="Qty"><el-input-number v-model="genForm.qty" :min="1" style="width: 100%" /></el-form-item>
+                <el-form-item><el-button type="primary" @click="generateBarcode">Generate</el-button></el-form-item>
               </el-form>
             </el-card>
           </el-col>
           <el-col :span="16">
-            <el-card header="条码预览" shadow="never">
-              <div v-if="!previewBarcode" style="color: #c0c4cc; text-align: center; padding: 60px 0">请输入参数并点击"生成条码"预览</div>
+            <el-card header="Preview" shadow="never">
+              <div v-if="!previewBarcode" style="color: #c0c4cc; text-align: center; padding: 60px 0">Generate a barcode to preview.</div>
               <div v-else class="barcode-preview">
                 <div class="barcode-img">{{ previewBarcode }}</div>
                 <el-descriptions :column="2" border size="small" style="margin-top: 12px">
-                  <el-descriptions-item label="条码号">{{ previewBarcode }}</el-descriptions-item>
-                  <el-descriptions-item label="物料编码">{{ genForm.code }}</el-descriptions-item>
-                  <el-descriptions-item label="物料名称">{{ genForm.name }}</el-descriptions-item>
-                  <el-descriptions-item label="批号">{{ genForm.lot }}</el-descriptions-item>
+                  <el-descriptions-item label="Barcode">{{ previewBarcode }}</el-descriptions-item>
+                  <el-descriptions-item label="Code">{{ genForm.code }}</el-descriptions-item>
+                  <el-descriptions-item label="Name">{{ genForm.name }}</el-descriptions-item>
+                  <el-descriptions-item label="Lot">{{ genForm.lot }}</el-descriptions-item>
                 </el-descriptions>
               </div>
             </el-card>
           </el-col>
         </el-row>
       </el-tab-pane>
-      <el-tab-pane label="扫码入库" name="scanIn">
-        <el-card shadow="never"
-          ><el-form :inline="true"
-            ><el-form-item label="扫描条码"
-              ><el-input v-model="scanCode" placeholder="扫描或输入条码" style="width: 300px" @keyup.enter="handleScanIn" /><el-button
-                type="primary"
-                style="margin-left: 8px"
-                @click="handleScanIn"
-                >确认入库</el-button
-              ></el-form-item
-            ></el-form
-          ></el-card
-        >
-        <gi-table :columns="scanInCols" :data="scanRecords" border stripe size="small" style="margin-top: 16px" />
+
+      <el-tab-pane label="Scan In" name="scanIn">
+        <el-card shadow="never">
+          <el-form :inline="true">
+            <el-form-item label="Barcode">
+              <el-input v-model="scanInCode" style="width: 300px" @keyup.enter="handleScanIn" />
+              <el-button type="primary" style="margin-left: 8px" @click="handleScanIn">Confirm Inbound</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+        <gi-table :columns="scanInColumns" :data="scanInRecords" border stripe size="small" style="margin-top: 16px" />
       </el-tab-pane>
-      <el-tab-pane label="扫码出库" name="scanOut">
-        <el-card shadow="never"
-          ><el-form :inline="true"
-            ><el-form-item label="扫描条码"
-              ><el-input v-model="scanOutCode" placeholder="扫描或输入条码" style="width: 300px" @keyup.enter="handleScanOut" /><el-button
-                type="primary"
-                style="margin-left: 8px"
-                @click="handleScanOut"
-                >确认出库</el-button
-              ></el-form-item
-            ></el-form
-          ></el-card
-        >
-        <gi-table :columns="scanOutCols" :data="scanOutRecords" border stripe size="small" style="margin-top: 16px" />
+
+      <el-tab-pane label="Scan Out" name="scanOut">
+        <el-card shadow="never">
+          <el-form :inline="true">
+            <el-form-item label="Barcode">
+              <el-input v-model="scanOutCode" style="width: 300px" @keyup.enter="handleScanOut" />
+              <el-button type="primary" style="margin-left: 8px" @click="handleScanOut">Confirm Outbound</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+        <gi-table :columns="scanOutColumns" :data="scanOutRecords" border stripe size="small" style="margin-top: 16px" />
       </el-tab-pane>
     </el-tabs>
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
+import { getMaterialListForBarcode } from '@/api/wms'
 
-// 条码生成
-const genForm = reactive({ code: '', name: '', lot: '', qty: 1 })
+const tab = ref('print')
+const materials = ref<any[]>([])
+const selectedRows = ref<any[]>([])
 const previewBarcode = ref('')
+const scanInCode = ref('')
+const scanOutCode = ref('')
+const scanInRecords = ref<any[]>([])
+const scanOutRecords = ref<any[]>([])
+
+const genForm = reactive({
+  code: '',
+  name: '',
+  lot: '',
+  qty: 1
+})
+
+const printColumns: TableColumnItem<any>[] = [
+  { type: 'selection', minWidth: 50 },
+  { prop: 'barcode', label: 'Barcode', minWidth: 180 },
+  { prop: 'code', label: 'Material Code', minWidth: 170 },
+  { prop: 'name', label: 'Material Name', minWidth: 180 },
+  { prop: 'lot', label: 'Lot', minWidth: 120 },
+  { prop: 'qty', label: 'Stock', minWidth: 80, align: 'center' }
+]
+
+const scanInColumns: TableColumnItem<any>[] = [
+  { prop: 'barcode', label: 'Barcode', minWidth: 180 },
+  { prop: 'material', label: 'Material', minWidth: 180 },
+  { prop: 'time', label: 'Inbound Time', minWidth: 170 }
+]
+
+const scanOutColumns: TableColumnItem<any>[] = [
+  { prop: 'barcode', label: 'Barcode', minWidth: 180 },
+  { prop: 'material', label: 'Material', minWidth: 180 },
+  { prop: 'time', label: 'Outbound Time', minWidth: 170 }
+]
+
+async function loadMaterials() {
+  const res = await getMaterialListForBarcode({ page: 1, page_size: 100 })
+  materials.value = (res.data.items || []).map((item: any, index: number) => ({
+    id: String(item.id),
+    barcode: `BC${String(index + 1).padStart(5, '0')}${String(item.code).replace(/\W/g, '').slice(-6)}`,
+    code: item.code,
+    name: item.name,
+    lot: `LOT-${String(index + 1).padStart(4, '0')}`,
+    qty: item.stock ?? item.qty ?? 0
+  }))
+}
 
 function generateBarcode() {
   if (!genForm.code) {
-    ElMessage.warning('请输入物料编码')
+    ElMessage.warning('Material code is required')
     return
   }
+
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
   const seq = String(Math.floor(Math.random() * 9000) + 1000)
   previewBarcode.value = `BC${date}${seq}`
-  ElMessage.success('条码已生成')
+  ElMessage.success('Barcode generated')
 }
-const tab = ref('print')
-const materials = ref(wmsMaterials as any)
-const printCols: TableColumnItem<any>[] = [
-  { type: 'selection', minWidth: 50 },
-  { prop: 'barcode', label: '条码', minWidth: 180 },
-  { prop: 'code', label: '物料编码', minWidth: 170 },
-  { prop: 'name', label: '物料名称', minWidth: 160 },
-  { prop: 'lot', label: '批号', minWidth: 160 },
-  { prop: 'qty', label: '库存', minWidth: 80, align: 'center' }
-]
-function onSelect(_rows: any) {}
+
+function onSelect(rows: any[]) {
+  selectedRows.value = rows
+}
+
 function printBarcode() {
-  ElMessage.success('条码打印任务已发送')
+  ElMessage.success(`Print job submitted: ${selectedRows.value.length} item(s)`)
 }
-const scanCode = ref('')
-const scanRecords = ref<any[]>([])
-const scanInCols: TableColumnItem<any>[] = [
-  { prop: 'barcode', label: '条码', minWidth: 180 },
-  { prop: 'material', label: '物料', minWidth: 180 },
-  { prop: 'time', label: '入库时间', minWidth: 170 }
-]
+
+function resolveMaterial(barcode: string) {
+  return materials.value.find((item) => item.barcode === barcode)?.name || 'Unknown Material'
+}
+
 function handleScanIn() {
-  if (scanCode.value) {
-    scanRecords.value.unshift({ barcode: scanCode.value, material: '45#圆钢 φ50', time: new Date().toLocaleString() })
-    scanCode.value = ''
-    ElMessage.success('入库成功')
-  }
+  if (!scanInCode.value) return
+  scanInRecords.value.unshift({ barcode: scanInCode.value, material: resolveMaterial(scanInCode.value), time: new Date().toLocaleString() })
+  scanInCode.value = ''
+  ElMessage.success('Inbound confirmed')
 }
-const scanOutCode = ref('')
-const scanOutRecords = ref<any[]>([])
-const scanOutCols: TableColumnItem<any>[] = [
-  { prop: 'barcode', label: '条码', minWidth: 180 },
-  { prop: 'material', label: '物料', minWidth: 180 },
-  { prop: 'time', label: '出库时间', minWidth: 170 }
-]
+
 function handleScanOut() {
-  if (scanOutCode.value) {
-    scanOutRecords.value.unshift({ barcode: scanOutCode.value, material: '轴承 6308', time: new Date().toLocaleString() })
-    scanOutCode.value = ''
-    ElMessage.success('出库成功')
-  }
+  if (!scanOutCode.value) return
+  scanOutRecords.value.unshift({ barcode: scanOutCode.value, material: resolveMaterial(scanOutCode.value), time: new Date().toLocaleString() })
+  scanOutCode.value = ''
+  ElMessage.success('Outbound confirmed')
 }
+
+onMounted(() => {
+  loadMaterials()
+})
 </script>
+
 <style scoped>
 .barcode-preview {
   text-align: center;
 }
+
 .barcode-img {
   font-family: 'Courier New', monospace;
   font-size: 22px;

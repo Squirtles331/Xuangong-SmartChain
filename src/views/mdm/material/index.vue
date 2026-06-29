@@ -174,9 +174,9 @@ async function submitDialog() {
     return false
   }
   if (dialogMode.value === 'add') {
-    await createMaterial({ ...formModel })
+    await createMaterial({ ...(formModel as any) })
   } else {
-    await updateMaterial(editingId.value, { ...formModel })
+    await updateMaterial(editingId.value, { ...(formModel as any) })
   }
   await fetchData()
   return true

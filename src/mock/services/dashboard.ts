@@ -1,55 +1,54 @@
-/**
- * Dashboard Mock Service
- * 首页仪表盘统计与图表数据
- */
+import { mrpExceptions } from '../modules/mrp'
+import { inspectionTasks } from '../modules/qms'
+import { iotAlertHistory, iotDevices } from '../modules/wms'
+import { inventory } from '../modules/wms'
+import { workOrders } from '../modules/work-order'
 import { simulateDelay } from '../shared/delay'
 import { wrapDetailResponse } from '../shared/response'
-import { workOrders } from '../modules/work-order'
-import { inspectionTasks } from '../modules/business'
-import { inventory } from '../modules/business'
-import { mrpExceptions } from '../modules/mrp'
-import { iotDevices, iotAlertHistory } from '../modules/wms'
 
-// ==================== 仪表盘统计 ====================
 export async function getDashboardStats() {
   await simulateDelay(300, 600)
 
-  // 统计工单状态
   const totalWorkOrders = workOrders.length
   const activeWorkOrders = (workOrders as any[]).filter((wo: any) => ['approved', 'released', 'in_progress'].includes(wo.status)).length
   const completedWorkOrders = (workOrders as any[]).filter((wo: any) => wo.status === 'completed').length
   const urgentWorkOrders = (workOrders as any[]).filter((wo: any) => wo.priority === 'urgent').length
 
-  // 统计质检任务
   const totalInspections = inspectionTasks.length
-  const pendingInspections = (inspectionTasks as any[]).filter((t: any) => t.status === 'pending').length
-  const doneInspections = (inspectionTasks as any[]).filter((t: any) => t.status === 'done').length
+  const pendingInspections = (inspectionTasks as any[]).filter((task: any) => task.status === 'pending').length
+  const doneInspections = (inspectionTasks as any[]).filter((task: any) => task.status === 'done').length
 
-  // 统计库存
   const totalStockItems = inventory.length
-  const lowStockItems = (inventory as any[]).filter((i: any) => i.available < i.safety).length
-  const totalStockQty = (inventory as any[]).reduce((sum: number, i: any) => sum + (i.qty || 0), 0)
+  const lowStockItems = (inventory as any[]).filter((item: any) => item.available < item.safety).length
+  const totalStockQty = (inventory as any[]).reduce((sum: number, item: any) => sum + (item.qty || 0), 0)
 
-  // 统计 MRP 例外
-  const severeExceptions = mrpExceptions.filter((e: any) => e.level === 'severe').length
-  const warningExceptions = mrpExceptions.filter((e: any) => e.level === 'warning').length
+  const severeExceptions = mrpExceptions.filter((item: any) => item.level === 'severe').length
+  const warningExceptions = mrpExceptions.filter((item: any) => item.level === 'warning').length
 
-  // 统计 IoT 设备
   const totalDevices = iotDevices.length
-  const runningDevices = iotDevices.filter((d: any) => d.status === 'running').length
-  const idleDevices = iotDevices.filter((d: any) => d.status === 'idle').length
-  const maintenanceDevices = iotDevices.filter((d: any) => d.status === 'maintenance').length
+  const runningDevices = iotDevices.filter((item: any) => item.status === 'running').length
+  const idleDevices = iotDevices.filter((item: any) => item.status === 'idle').length
+  const maintenanceDevices = iotDevices.filter((item: any) => item.status === 'maintenance').length
 
-  // 今日产出（模拟）
   const todayOutput = 125
-
-  // 计划完成率
   const planCompletionRate = totalWorkOrders > 0 ? Math.round((completedWorkOrders / totalWorkOrders) * 100) : 0
-
-  // 质检合格率
   const inspectionPassRate = totalInspections > 0 ? Math.round((doneInspections / totalInspections) * 100) : 0
 
   return wrapDetailResponse({
+    revenue: 850,
+    revenue_trend: 12.5,
+    active_orders: activeWorkOrders,
+    orders_trend: -5.2,
+    oee: 78.5,
+    oee_trend: 3.1,
+    delivery_rate: 94.2,
+    delivery_trend: 1.8,
+    top_products: [
+      { material: '离心泵 XJP-100', qty: 182 },
+      { material: '齿轮箱 GBX-200', qty: 156 },
+      { material: '传动轴 DS-50', qty: 121 },
+      { material: '阀门组件 VL-300', qty: 96 }
+    ],
     totalWorkOrders,
     activeWorkOrders,
     completedWorkOrders,
@@ -72,87 +71,86 @@ export async function getDashboardStats() {
   })
 }
 
-// ==================== 首页图表数据 ====================
 export async function getHomeCharts() {
   await simulateDelay(400, 700)
 
-  // 工单状态分布
-  const woStatusDistribution = [
-    { name: '草稿', value: (workOrders as any[]).filter((w: any) => w.status === 'draft').length },
-    { name: '已审批', value: (workOrders as any[]).filter((w: any) => w.status === 'approved').length },
-    { name: '已下达', value: (workOrders as any[]).filter((w: any) => w.status === 'released').length },
-    { name: '生产中', value: (workOrders as any[]).filter((w: any) => w.status === 'in_progress').length },
-    { name: '已完成', value: (workOrders as any[]).filter((w: any) => w.status === 'completed').length },
-    { name: '已关闭', value: (workOrders as any[]).filter((w: any) => w.status === 'closed').length }
-  ]
-
-  // 近7天产出趋势
   const outputTrend = []
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const current = new Date()
+    current.setDate(current.getDate() - offset)
     outputTrend.push({
-      date: d.toISOString().slice(0, 10),
+      date: current.toISOString().slice(0, 10),
       planned: Math.floor(Math.random() * 30) + 80,
       actual: Math.floor(Math.random() * 30) + 75
     })
   }
 
-  // 库存预警 Top5
   const stockAlertTop5 = (inventory as any[])
-    .filter((i: any) => i.available < i.safety)
+    .filter((item: any) => item.available < item.safety)
     .slice(0, 5)
-    .map((i: any) => ({
-      code: i.code,
-      name: i.name,
-      available: i.available,
-      safety: i.safety,
-      gap: i.safety - i.available
+    .map((item: any) => ({
+      code: item.code,
+      name: item.name,
+      available: item.available,
+      safety: item.safety,
+      gap: item.safety - item.available
     }))
 
-  // 车间产能利用率
-  const workshopUtilization = [
-    { workshop: '机加工一车间', utilization: 78, trend: 'up' },
-    { workshop: '机加工二车间', utilization: 65, trend: 'stable' },
-    { workshop: '装配车间', utilization: 92, trend: 'up' }
-  ]
-
-  // 质检趋势（近7天）
-  const qualityTrend = []
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    qualityTrend.push({
-      date: d.toISOString().slice(0, 10),
-      inspected: Math.floor(Math.random() * 20) + 10,
-      passed: Math.floor(Math.random() * 20) + 8,
-      failed: Math.floor(Math.random() * 3) + 0
-    })
-  }
-
-  // IoT 告警统计
-  const iotAlertStats = [
-    { level: 'danger', count: iotAlertHistory.filter((a: any) => a.level === 'danger').length },
-    { level: 'warning', count: iotAlertHistory.filter((a: any) => a.level === 'warning').length },
-    { level: 'info', count: iotAlertHistory.filter((a: any) => a.level === 'info').length }
-  ]
-
-  // 近期 MRP 例外摘要
-  const mrpExceptionSummary = mrpExceptions.map((e: any) => ({
-    type: e.type,
-    level: e.level,
-    material: e.material,
-    detail: e.detail,
-    action: e.action
-  }))
-
   return wrapDetailResponse({
-    woStatusDistribution,
+    trend: {
+      months: ['7月', '8月', '9月', '10月', '11月', '12月', '1月'],
+      revenue: [680, 720, 780, 750, 820, 800, 850],
+      cost: [520, 550, 580, 570, 600, 590, 620],
+      profit: [160, 170, 200, 180, 220, 210, 230]
+    },
+    order_status: [
+      { value: 12, name: '已下发' },
+      { value: 28, name: '生产中' },
+      { value: 8, name: '已完工' },
+      { value: 5, name: '待审批' },
+      { value: 3, name: '已关闭' }
+    ],
+    capacity: {
+      legend: ['一车间', '二车间', '装配车间'],
+      days: ['周一', '周二', '周三', '周四', '周五', '周六'],
+      series: [
+        { name: '一车间', data: [85, 88, 82, 90, 86, 45], color: '#409eff' },
+        { name: '二车间', data: [78, 80, 75, 82, 79, 40], color: '#67c23a' },
+        { name: '装配车间', data: [92, 90, 88, 95, 91, 50], color: '#e6a23c' }
+      ]
+    },
+    woStatusDistribution: [
+      { name: '草稿', value: (workOrders as any[]).filter((item: any) => item.status === 'draft').length },
+      { name: '已审批', value: (workOrders as any[]).filter((item: any) => item.status === 'approved').length },
+      { name: '已下达', value: (workOrders as any[]).filter((item: any) => item.status === 'released').length },
+      { name: '生产中', value: (workOrders as any[]).filter((item: any) => item.status === 'in_progress').length },
+      { name: '已完成', value: (workOrders as any[]).filter((item: any) => item.status === 'completed').length },
+      { name: '已关闭', value: (workOrders as any[]).filter((item: any) => item.status === 'closed').length }
+    ],
     outputTrend,
     stockAlertTop5,
-    workshopUtilization,
-    qualityTrend,
-    iotAlertStats,
-    mrpExceptionSummary
+    workshopUtilization: [
+      { workshop: '机加工一车间', utilization: 78, trend: 'up' },
+      { workshop: '机加工二车间', utilization: 65, trend: 'stable' },
+      { workshop: '装配车间', utilization: 92, trend: 'up' }
+    ],
+    qualityTrend: outputTrend.map((item) => ({
+      date: item.date,
+      inspected: Math.floor(Math.random() * 20) + 10,
+      passed: Math.floor(Math.random() * 20) + 8,
+      failed: Math.floor(Math.random() * 3)
+    })),
+    iotAlertStats: [
+      { level: 'danger', count: iotAlertHistory.filter((item: any) => item.level === 'danger').length },
+      { level: 'warning', count: iotAlertHistory.filter((item: any) => item.level === 'warning').length },
+      { level: 'info', count: iotAlertHistory.filter((item: any) => item.level === 'info').length }
+    ],
+    mrpExceptionSummary: mrpExceptions.map((item: any) => ({
+      type: item.type,
+      level: item.level,
+      material: item.material,
+      detail: item.detail,
+      action: item.action
+    }))
   })
 }

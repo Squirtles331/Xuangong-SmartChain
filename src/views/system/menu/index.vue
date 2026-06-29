@@ -94,7 +94,7 @@ const menuTree = ref<MenuNode[]>([])
 
 onMounted(async () => {
   const res = await getMenuTree()
-  menuTree.value = res.data
+  menuTree.value = (res.data || []) as MenuNode[]
 })
 const currentNode = ref<MenuNode | null>(null)
 
@@ -300,7 +300,7 @@ async function saveNode() {
     await createMenu(newNode)
     // Reload tree to get server-assigned id
     const res = await getMenuTree()
-    menuTree.value = res.data
+    menuTree.value = (res.data || []) as MenuNode[]
     ElMessage.success('新增成功')
   }
   currentNode.value = null

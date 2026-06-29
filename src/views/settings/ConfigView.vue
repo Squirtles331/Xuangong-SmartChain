@@ -467,11 +467,11 @@ function handleReset() {
 async function loadParams() {
   try {
     const res = await getSystemParams({ page: 1, page_size: 999 })
-    const data = res.data?.data
+    const data = res.data
     if (data && Array.isArray(data.items)) {
-      allParams.value = data.items
+      allParams.value = data.items as SystemParam[]
     } else if (Array.isArray(data)) {
-      allParams.value = data
+      allParams.value = data as SystemParam[]
     } else {
       allParams.value = []
     }
