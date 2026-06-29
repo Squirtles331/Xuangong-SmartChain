@@ -4,7 +4,14 @@
       <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @reset="handleReset" @search="handleSearch" />
     </template>
 
-    <gi-table :columns="columns" :data="reports" :pagination="pagination" border style="height: 100%">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      style="height: 100%"
+    >
       <template #index="{ $index }">
         {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
       </template>
@@ -14,17 +21,18 @@
       <template #actions="{ row }">
         <gi-button type="view" @click="handlePreview(row)" />
         <gi-button style="margin-left: 8px" type="edit" @click="handleDownload(row)" />
-        <gi-button style="margin-left: 8px" type="delete" @click="handleDelete(row)" />
+        <gi-button style="margin-left: 8px" type="delete" @click="remove(row)" />
       </template>
     </gi-table>
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { deleteReport, downloadReport, getReportList, previewReport } from '@/api/analysis'
+import { useTable } from '@/hooks/useTable'
 
 interface Report {
   id: number
@@ -34,9 +42,7 @@ interface Report {
   status: string
 }
 
-const reports = ref<Report[]>([])
-const searchForm = reactive({ name: '' })
-const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
+const searchForm = ref({ name: '' })
 
 const searchColumns: FormColumnItem[] = [{ type: 'input', label: '报表名称', field: 'name', props: { placeholder: '请输入报表名称' } }]
 
@@ -49,6 +55,22 @@ const columns: TableColumnItem<Report>[] = [
   { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<Report>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getReportList({
+      page,
+      page_size: size,
+      name: searchForm.value.name || undefined
+    })
+    return {
+      list: (res.data.items || []) as Report[],
+      total: res.data.total || 0
+    }
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteReport(Number(id))))
+})
+
 function statusType(status: string): 'success' | 'warning' | 'danger' | 'info' {
   const map: Record<string, 'success' | 'warning' | 'danger' | 'info'> = {
     已生成: 'success',
@@ -58,26 +80,13 @@ function statusType(status: string): 'success' | 'warning' | 'danger' | 'info' {
   return map[status] || 'info'
 }
 
-async function loadReports() {
-  const res = await getReportList({
-    page: pagination.currentPage,
-    page_size: pagination.pageSize,
-    name: searchForm.name || undefined
-  })
-
-  reports.value = res.data.items || []
-  pagination.total = res.data.total || 0
-}
-
 function handleSearch() {
-  pagination.currentPage = 1
-  loadReports()
+  search()
 }
 
 function handleReset() {
-  searchForm.name = ''
-  pagination.currentPage = 1
-  loadReports()
+  searchForm.value = { name: '' }
+  search()
 }
 
 async function handlePreview(row: Report) {
@@ -90,40 +99,9 @@ async function handleDownload(row: Report) {
   ElMessage.success(res.message || `下载报表：${row.name}`)
 }
 
-async function handleDelete(row: Report) {
-  try {
-    await ElMessageBox.confirm(`确认删除报表「${row.name}」？`, '删除确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-    await deleteReport(row.id)
-    if ((pagination.currentPage - 1) * pagination.pageSize >= pagination.total - 1) {
-      pagination.currentPage = Math.max(1, pagination.currentPage - 1)
-    }
-    await loadReports()
-    ElMessage.success('删除成功')
-  } catch {
-    // ignore cancel
-  }
+function remove(row: Report) {
+  onDelete(row)
 }
-
-watch(
-  () => pagination.currentPage,
-  () => loadReports()
-)
-
-watch(
-  () => pagination.pageSize,
-  () => {
-    pagination.currentPage = 1
-    loadReports()
-  }
-)
-
-onMounted(() => {
-  loadReports()
-})
 </script>
 
 <style scoped></style>

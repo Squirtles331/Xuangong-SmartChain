@@ -50,9 +50,13 @@
       </el-tab-pane>
     </el-tabs>
 
-    <gi-dialog v-model="dialogVisible" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? 'Add Rule' : 'Edit Rule'" width="600px">
-      <gi-form v-model="form" :columns="formColumns" :label-width="100" />
-    </gi-dialog>
+    <AlertFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      :device-options="deviceOptions"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
@@ -61,6 +65,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { getIoTAlertHistory, getIoTAlertRules } from '@/api/wms'
+import AlertFormDialog, { type AlertRuleFormModel } from './AlertFormDialog.vue'
 
 interface Rule {
   id: string
@@ -79,14 +84,21 @@ const metricLabel: Record<string, string> = {
   current: 'Current'
 }
 
+const deviceOptions = [
+  { label: 'CNC Lathe CK6150', value: 'CNC Lathe CK6150' },
+  { label: 'Drill Z3050', value: 'Drill Z3050' },
+  { label: 'VMC850', value: 'VMC850' }
+]
+
 const tab = ref('rules')
 const rules = ref<Rule[]>([])
 const alertHistory = ref<any[]>([])
 const dialogVisible = ref(false)
-const mode = ref<'add' | 'edit'>('add')
+const dialogMode = ref<'add' | 'edit'>('add')
 const editingId = ref('')
 
-const form = reactive({
+const formModel = ref<AlertRuleFormModel>({
+  id: '',
   device: 'CNC Lathe CK6150',
   metric: 'temp',
   operator: '>',
@@ -116,64 +128,6 @@ const ruleColumns: TableColumnItem<Rule>[] = [
   { label: 'Actions', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const formColumns: FormColumnItem[] = [
-  {
-    type: 'select-v2',
-    label: 'Device',
-    field: 'device',
-    required: true,
-    props: {
-      options: [
-        { label: 'CNC Lathe CK6150', value: 'CNC Lathe CK6150' },
-        { label: 'Drill Z3050', value: 'Drill Z3050' },
-        { label: 'VMC850', value: 'VMC850' }
-      ]
-    } as any
-  },
-  {
-    type: 'select-v2',
-    label: 'Metric',
-    field: 'metric',
-    required: true,
-    props: {
-      options: [
-        { label: 'Temperature', value: 'temp' },
-        { label: 'RPM', value: 'rpm' },
-        { label: 'Vibration', value: 'vibration' },
-        { label: 'Current', value: 'current' }
-      ]
-    } as any
-  },
-  {
-    type: 'select-v2',
-    label: 'Operator',
-    field: 'operator',
-    required: true,
-    props: {
-      options: [
-        { label: '>', value: '>' },
-        { label: '<', value: '<' },
-        { label: '>=', value: '>=' },
-        { label: '<=', value: '<=' }
-      ]
-    } as any
-  },
-  { type: 'input-number', label: 'Threshold', field: 'threshold', required: true },
-  {
-    type: 'select-v2',
-    label: 'Level',
-    field: 'level',
-    required: true,
-    props: {
-      options: [
-        { label: 'critical', value: 'critical' },
-        { label: 'warning', value: 'warning' },
-        { label: 'info', value: 'info' }
-      ]
-    } as any
-  }
-]
-
 async function loadRules() {
   const res = await getIoTAlertRules()
   rules.value = (res.data || []).map((item: any) => ({ ...item, id: String(item.id) }))
@@ -195,33 +149,33 @@ async function loadHistory() {
 }
 
 function openAdd() {
-  mode.value = 'add'
+  dialogMode.value = 'add'
   editingId.value = ''
-  Object.assign(form, { device: 'CNC Lathe CK6150', metric: 'temp', operator: '>', threshold: 60, level: 'warning', status: 'active' })
+  formModel.value = { id: '', device: 'CNC Lathe CK6150', metric: 'temp', operator: '>', threshold: 60, level: 'warning', status: 'active' }
   dialogVisible.value = true
 }
 
 function openEdit(rule: Rule) {
-  mode.value = 'edit'
+  dialogMode.value = 'edit'
   editingId.value = rule.id
-  Object.assign(form, rule)
+  formModel.value = { ...rule }
   dialogVisible.value = true
 }
 
-async function submit() {
-  if (!form.device) {
+async function submitDialog() {
+  if (!formModel.value.device) {
     ElMessage.warning('Device is required')
-    return false
+    return
   }
 
-  if (mode.value === 'add') {
-    rules.value.unshift({ id: Date.now().toString(), ...form })
+  if (dialogMode.value === 'add') {
+    rules.value.unshift({ id: Date.now().toString(), ...formModel.value })
   } else {
     const index = rules.value.findIndex((item) => item.id === editingId.value)
-    if (index > -1) Object.assign(rules.value[index], form)
+    if (index > -1) Object.assign(rules.value[index], formModel.value)
   }
 
-  return true
+  dialogVisible.value = false
 }
 
 function toggle(rule: Rule) {

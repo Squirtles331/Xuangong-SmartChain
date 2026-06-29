@@ -1,16 +1,25 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" storage-key="emergency-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form ref="sf" v-model="s" :columns="visibleSearchColumns" search @search="hs" @reset="hr" />
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
+
     <template #tool>
       <gi-button type="add" @click="openAdd" />
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
       <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
     </template>
-    <gi-table :columns="cols" :data="pagedPlans" :pagination="pagination" border stripe>
+
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #level="{ row }">
         <el-tag :type="row.level === 'I' ? 'danger' : row.level === 'II' ? 'warning' : 'info'" size="small">{{ row.level }}级响应</el-tag>
       </template>
@@ -19,18 +28,26 @@
         <el-button type="primary" link size="small" @click="drill(row)">演练</el-button>
       </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增预案' : '编辑预案'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <EmergencyFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
+import { getEhsEmergencyList } from '@/api/ehs'
+import { useTable } from '@/hooks/useTable'
+import EmergencyFormDialog, { type EmergencyFormModel } from './EmergencyFormDialog.vue'
 
-interface EP {
+interface EmergencyRow {
   id: string
   name: string
   type: string
@@ -39,8 +56,14 @@ interface EP {
   last_drill: string
 }
 
-const s = ref({ name: '', type: '' })
-const sc: FormColumnItem[] = [
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({ name: '', type: '' })
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<EmergencyFormModel>(createDefaultFormModel())
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '预案名称', field: 'name' } as any,
   {
     type: 'select-v2',
@@ -48,59 +71,21 @@ const sc: FormColumnItem[] = [
     field: 'type',
     props: {
       options: [
+        { label: '全部', value: '' },
         { label: '火灾', value: '火灾' },
         { label: '危化品', value: '危化品' },
         { label: '机械', value: '机械' },
         { label: '电力', value: '电力' },
         { label: '其他', value: '其他' }
       ]
-    } as any
-  }
+    }
+  } as any
 ]
 
-const allSearchColumns = computed(() => sc)
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
 
-const plans = ref<EP[]>([
-  { id: '1', name: '火灾爆炸应急预案', type: '火灾', level: 'I', responsible: '安全主管-陈工', last_drill: '2024-12-15' },
-  { id: '2', name: '化学品泄漏应急预案', type: '危化品', level: 'II', responsible: '车间主任-李四', last_drill: '2024-11-20' },
-  { id: '3', name: '机械伤害应急预案', type: '机械', level: 'II', responsible: '设备主管-王工', last_drill: '2024-10-10' },
-  { id: '4', name: '停电应急处置方案', type: '电力', level: 'III', responsible: '电工-张工', last_drill: '2024-09-05' }
-])
-
-const filteredPlans = computed(() => {
-  return plans.value.filter((p) => {
-    const matchName = !s.value.name || p.name.includes(s.value.name)
-    const matchType = !s.value.type || p.type === s.value.type
-    return matchName && matchType
-  })
-})
-
-const pagination = ref({
-  currentPage: 1,
-  pageSize: 10,
-  total: computed(() => filteredPlans.value.length)
-}) as any
-
-const pagedPlans = computed(() => {
-  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
-  const end = start + pagination.value.pageSize
-  return filteredPlans.value.slice(start, end)
-})
-
-function hs() {
-  pagination.value.currentPage = 1
-}
-function hr() {
-  s.value = { name: '', type: '' }
-  pagination.value.currentPage = 1
-}
-
-const cols: TableColumnItem<EP>[] = [
+const columns: TableColumnItem<EmergencyRow>[] = [
   { prop: 'name', label: '预案名称', minWidth: 200 },
   { prop: 'type', label: '事故类型', minWidth: 100 },
   { label: '响应等级', minWidth: 90, slotName: 'level', align: 'center' },
@@ -109,75 +94,71 @@ const cols: TableColumnItem<EP>[] = [
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ name: '', type: '火灾', level: 'II', responsible: '', last_drill: '' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '预案名称', field: 'name', required: true },
-  {
-    type: 'select-v2',
-    label: '事故类型',
-    field: 'type',
-    required: true,
-    props: {
-      options: [
-        { label: '火灾', value: '火灾' },
-        { label: '危化品', value: '危化品' },
-        { label: '机械', value: '机械' },
-        { label: '电力', value: '电力' },
-        { label: '其他', value: '其他' }
-      ]
-    } as any
-  },
-  {
-    type: 'select-v2',
-    label: '响应等级',
-    field: 'level',
-    required: true,
-    props: {
-      options: [
-        { label: 'I级', value: 'I' },
-        { label: 'II级', value: 'II' },
-        { label: 'III级', value: 'III' }
-      ]
-    } as any
-  },
-  { type: 'input', label: '负责人', field: 'responsible' },
-  { type: 'date-picker', label: '最近演练', field: 'last_drill' }
-]
-function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { name: '', type: '火灾', level: 'II', responsible: '', last_drill: '' })
-  vis.value = true
-}
-function openEdit(r: EP) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
-}
-async function submit() {
-  if (!form.name) {
-    ElMessage.warning('请填写必填项')
-    return false
+const { tableData, pagination, loading, search, refresh } = useTable<EmergencyRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getEhsEmergencyList({
+      page,
+      page_size: size,
+      name: searchForm.value.name || undefined,
+      type: searchForm.value.type || undefined
+    })
+    return { list: res.data.items, total: res.data.total }
   }
-  if (mode.value === 'add') {
-    plans.value.unshift({ id: Date.now().toString(), ...form } as EP)
-  } else {
-    const i = plans.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(plans.value[i], form)
-  }
-  return true
+})
+
+function createDefaultFormModel(): EmergencyFormModel {
+  return { id: '', name: '', type: '火灾', level: 'II', responsible: '', last_drill: '' }
 }
-function drill(r: EP) {
-  r.last_drill = new Date().toISOString().slice(0, 10)
-  ElMessage.success(`演练完成: ${r.name}`)
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
-function refresh() {
-  pagination.value.currentPage = 1
+
+function handleSearch() {
+  search()
 }
+
+function handleReset() {
+  searchForm.value = { name: '', type: '' }
+  search()
+}
+
 function handleExport() {
   ElMessage.success('导出成功')
+}
+
+function openAdd() {
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
+}
+
+function openEdit(row: EmergencyRow) {
+  dialogMode.value = 'edit'
+  formModel.value = { ...row }
+  dialogVisible.value = true
+}
+
+async function submitDialog() {
+  if (!formModel.value.name) {
+    ElMessage.warning('请填写必填项')
+    return
+  }
+
+  if (dialogMode.value === 'add') {
+    tableData.value.unshift({ ...formModel.value, id: Date.now().toString() } as EmergencyRow)
+  } else {
+    const i = tableData.value.findIndex((e) => e.id === formModel.value.id)
+    if (i > -1) Object.assign(tableData.value[i], formModel.value)
+  }
+
+  dialogVisible.value = false
+  await refresh()
+}
+
+function drill(row: EmergencyRow) {
+  row.last_drill = new Date().toISOString().slice(0, 10)
+  ElMessage.success(`演练完成: ${row.name}`)
 }
 </script>

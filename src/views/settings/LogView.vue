@@ -4,7 +4,14 @@
       <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
     </template>
 
-    <gi-table :columns="columns" :data="pagedLogs" :pagination="pagination" border style="height: 100%">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      style="height: 100%"
+    >
       <template #action_type="{ row }">
         <StatusTag :value="row.action" :options="AUDIT_ACTION" />
       </template>
@@ -13,30 +20,21 @@
       </template>
     </gi-table>
 
-    <!-- 详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="操作日志详情" width="600px">
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="操作人">{{ detailLog?.user_name }}</el-descriptions-item>
-        <el-descriptions-item label="操作时间">{{ detailLog?.created_at }}</el-descriptions-item>
-        <el-descriptions-item label="模块">{{ detailLog?.module }}</el-descriptions-item>
-        <el-descriptions-item label="操作类型">
-          <StatusTag v-if="detailLog" :value="detailLog.action" :options="AUDIT_ACTION" />
-        </el-descriptions-item>
-        <el-descriptions-item label="操作对象">{{ detailLog?.target }}</el-descriptions-item>
-        <el-descriptions-item label="IP地址">{{ detailLog?.ip }}</el-descriptions-item>
-        <el-descriptions-item label="请求参数" :span="2">
-          <pre class="json-preview">{{ detailLog?.request_params || '-' }}</pre>
-        </el-descriptions-item>
-      </el-descriptions>
-    </el-dialog>
+    <LogFormDialog
+      v-model:visible="detailVisible"
+      v-model:detail-log="detailLog"
+      @close="detailVisible = false"
+    />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import StatusTag from '@/components/StatusTag.vue'
-import { getAuditLogs } from '@/api/system'
+import { getAuditLogs, type AuditLog } from '@/api/system'
+import { useTable } from '@/hooks/useTable'
+import LogFormDialog from './LogFormDialog.vue'
 
 const AUDIT_ACTION = [
   { value: 'CREATE', label: '新增', type: 'success' as const },
@@ -45,20 +43,7 @@ const AUDIT_ACTION = [
   { value: 'APPROVE', label: '审批', type: 'primary' as const }
 ]
 
-interface Log {
-  id: string
-  user_name: string
-  module: string
-  action: string
-  target: string
-  ip: string
-  request_params?: string
-  created_at: string
-}
-
-const logs = ref<Log[]>([])
-
-const searchForm = reactive({ user_name: '', module: '', action: '', date_range: [] as string[] })
+const searchForm = ref({ user_name: '', module: '', action: '', date_range: [] as string[] })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '操作人', field: 'user_name' },
   { type: 'input', label: '模块', field: 'module' },
@@ -85,7 +70,7 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const columns: TableColumnItem<Log>[] = [
+const columns: TableColumnItem<AuditLog>[] = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'user_name', label: '操作人', width: 100 },
   { prop: 'module', label: '模块', width: 120 },
@@ -96,79 +81,50 @@ const columns: TableColumnItem<Log>[] = [
   { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
+const allLogs = ref<AuditLog[]>([])
 
-const filteredLogs = computed(() => {
-  return logs.value.filter((l) => {
-    if (searchForm.user_name && !l.user_name.includes(searchForm.user_name)) return false
-    if (searchForm.module && !l.module.includes(searchForm.module)) return false
-    if (searchForm.action && l.action !== searchForm.action) return false
-    return true
-  })
-})
-
-const pagedLogs = computed(() => {
-  const s = (pagination.currentPage - 1) * pagination.pageSize
-  return filteredLogs.value.slice(s, s + pagination.pageSize)
-})
-
-async function fetchList() {
-  try {
+const { tableData, pagination, loading, search } = useTable<AuditLog>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
     const res = await getAuditLogs({
-      page: pagination.currentPage,
-      page_size: pagination.pageSize,
-      user_name: searchForm.user_name || undefined,
-      module: searchForm.module || undefined,
-      start_date: searchForm.date_range?.[0] || undefined,
-      end_date: searchForm.date_range?.[1] || undefined
+      page: 1,
+      page_size: 9999,
+      user_name: searchForm.value.user_name || undefined,
+      module: searchForm.value.module || undefined,
+      start_date: searchForm.value.date_range?.[0] || undefined,
+      end_date: searchForm.value.date_range?.[1] || undefined
     })
-    logs.value = (res.data.items || []) as Log[]
-    pagination.total = res.data.total || 0
-  } catch {
-    // Silently fail for audit logs
+    allLogs.value = (res.data.items || []) as AuditLog[]
+
+    // client-side filter for action (not supported by API)
+    let filtered = allLogs.value
+    if (searchForm.value.action) {
+      filtered = filtered.filter((l) => l.action === searchForm.value.action)
+    }
+
+    const start = (page - 1) * size
+    return {
+      list: filtered.slice(start, start + size),
+      total: filtered.length
+    }
   }
-}
+})
 
 function handleSearch() {
-  pagination.currentPage = 1
-  fetchList()
+  search()
 }
+
 function handleReset() {
-  searchForm.user_name = ''
-  searchForm.module = ''
-  searchForm.action = ''
-  searchForm.date_range = []
-  pagination.currentPage = 1
-  fetchList()
+  searchForm.value = { user_name: '', module: '', action: '', date_range: [] }
+  search()
 }
 
 const detailVisible = ref(false)
-const detailLog = ref<Log | null>(null)
-function showDetail(row: Log) {
+const detailLog = ref<AuditLog | null>(null)
+function showDetail(row: AuditLog) {
   detailLog.value = row
   detailVisible.value = true
 }
-
-watch(
-  filteredLogs,
-  (val) => {
-    pagination.total = val.length
-  },
-  { immediate: true }
-)
-
-onMounted(() => {
-  fetchList()
-})
 </script>
 
-<style scoped>
-.json-preview {
-  max-height: 200px;
-  overflow: auto;
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-all;
-  margin: 0;
-}
-</style>
+<style scoped></style>

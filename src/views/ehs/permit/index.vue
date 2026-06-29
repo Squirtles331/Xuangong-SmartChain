@@ -1,45 +1,65 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="permit-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool
-      ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
-        style="margin-left: 8px"
-        @click="handleExport"
-        >导出</el-button
-      ></template
-    >
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #type="{ row }"
-        ><el-tag size="small">{{
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    </template>
+
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
+      <template #type="{ row }">
+        <el-tag size="small">{{
           row.type === 'hot' ? '动火' : row.type === 'height' ? '高处' : row.type === 'confined' ? '受限空间' : '临时用电'
-        }}</el-tag></template
-      >
+        }}</el-tag>
+      </template>
       <template #status="{ row }">
         <StatusTag :value="row.status" :options="PERMIT_STATUS" />
       </template>
-      <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <gi-button type="delete" @click="remove(row)" />
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增作业票' : '编辑作业票'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <PermitFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import { getEhsPermitList } from '@/api/ehs'
+import { useTable } from '@/hooks/useTable'
+import PermitFormDialog, { type PermitFormModel } from './PermitFormDialog.vue'
 
 const PERMIT_STATUS = [
   { value: 'pending', label: '待审批', type: 'warning' as const },
   { value: 'approved', label: '已批准', type: 'success' as const },
   { value: 'closed', label: '已关闭', type: 'info' as const }
 ]
-interface Pm {
+
+interface PermitRow {
   id: string
   code: string
   type: string
@@ -48,12 +68,15 @@ interface Pm {
   apply_date: string
   status: string
 }
-const data = ref<Pm[]>([
-  { id: '1', code: 'ZYP20250115001', type: 'hot', location: '机加工一车间', applicant: '李四', apply_date: '2025-01-15', status: 'approved' },
-  { id: '2', code: 'ZYP20250116001', type: 'height', location: '装配车间', applicant: '王五', apply_date: '2025-01-16', status: 'pending' }
-])
-const s = reactive({ keyword: '', type: '', status: '' })
-const sc: FormColumnItem[] = [
+
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({ keyword: '', type: '', status: '' })
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<PermitFormModel>(createDefaultFormModel())
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword' } as any,
   {
     type: 'select-v2',
@@ -84,15 +107,10 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-const cols: TableColumnItem<Pm>[] = [
+
+const columns: TableColumnItem<PermitRow>[] = [
   { prop: 'code', label: '编号', width: 160 },
   { label: '类型', minWidth: 80, slotName: 'type', align: 'center' },
   { prop: 'location', label: '作业位置', width: 140 },
@@ -101,103 +119,76 @@ const cols: TableColumnItem<Pm>[] = [
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() =>
-  data.value.filter((e) => (!s.keyword || e.location.includes(s.keyword)) && (!s.type || e.type === s.type) && (!s.status || e.status === s.status))
-)
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<PermitRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getEhsPermitList({
+      page,
+      page_size: size,
+      keyword: searchForm.value.keyword || undefined,
+      type: searchForm.value.type || undefined,
+      status: searchForm.value.status || undefined
+    })
+    return { list: res.data.items, total: res.data.total }
   },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+  deleteAPI: (ids) => Promise.all(ids.map((id) => {
+    tableData.value = tableData.value.filter((item) => item.id !== id)
+  }))
+})
+
+function createDefaultFormModel(): PermitFormModel {
+  return { id: '', code: '', type: 'hot', location: '', applicant: '', apply_date: '', status: 'pending' }
 }
-function hr() {
-  s.keyword = ''
-  s.type = ''
-  s.status = ''
-  p.currentPage = 1
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
-function refresh() {
-  hr()
+
+function handleSearch() {
+  search()
 }
+
+function handleReset() {
+  searchForm.value = { keyword: '', type: '', status: '' }
+  search()
+}
+
 function handleExport() {
   ElMessage.success('导出成功')
 }
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ code: '', type: 'hot', location: '', applicant: '', apply_date: '', status: 'pending' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '编号', field: 'code', required: true },
-  {
-    type: 'select-v2',
-    label: '类型',
-    field: 'type',
-    required: true,
-    props: {
-      options: [
-        { label: '动火', value: 'hot' },
-        { label: '高处', value: 'height' },
-        { label: '受限空间', value: 'confined' },
-        { label: '临时用电', value: 'electric' }
-      ]
-    } as any
-  },
-  { type: 'input', label: '作业位置', field: 'location', required: true },
-  { type: 'input', label: '申请人', field: 'applicant' },
-  { type: 'date-picker', label: '日期', field: 'apply_date' },
-  {
-    type: 'select-v2',
-    label: '状态',
-    field: 'status',
-    props: {
-      options: [
-        { label: '待审批', value: 'pending' },
-        { label: '已批准', value: 'approved' },
-        { label: '已关闭', value: 'closed' }
-      ]
-    } as any
-  }
-]
+
 function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { code: '', type: 'hot', location: '', applicant: '', apply_date: '', status: 'pending' })
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
 }
-function openEdit(r: Pm) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
+
+function openEdit(row: PermitRow) {
+  dialogMode.value = 'edit'
+  formModel.value = { ...row }
+  dialogVisible.value = true
 }
-async function submit() {
-  if (!form.location) {
+
+async function submitDialog() {
+  if (!formModel.value.location) {
     ElMessage.warning('请填写必填项')
-    return false
+    return
   }
-  if (mode.value === 'add') {
-    data.value.unshift({
-      id: Date.now().toString(),
-      code: 'ZYP' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(data.value.length + 1).padStart(4, '0'),
-      ...form
-    } as Pm)
+
+  if (dialogMode.value === 'add') {
+    const code = 'ZYP' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(tableData.value.length + 1).padStart(4, '0')
+    tableData.value.unshift({ ...formModel.value, id: Date.now().toString(), code } as PermitRow)
   } else {
-    const i = data.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
+    const i = tableData.value.findIndex((e) => e.id === formModel.value.id)
+    if (i > -1) Object.assign(tableData.value[i], formModel.value)
   }
-  return true
+
+  dialogVisible.value = false
+  await refresh()
 }
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      data.value = data.value.filter((e) => e.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+
+function remove(row: PermitRow) {
+  onDelete(row)
 }
 </script>

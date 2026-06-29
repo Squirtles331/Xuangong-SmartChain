@@ -1,35 +1,54 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="index-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool
-      ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
-        style="margin-left: 8px"
-        @click="handleExport"
-        >导出</el-button
-      ></template
-    >
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'open' ? 'warning' : row.status === 'paid' ? 'success' : 'info'" size="small">{{
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    </template>
+
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
+      <template #status="{ row }">
+        <el-tag :type="row.status === 'open' ? 'warning' : row.status === 'paid' ? 'success' : 'info'" size="small">{{
           row.status === 'open' ? '未付' : row.status === 'paid' ? '已付' : '部分付'
-        }}</el-tag></template
-      >
-      <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
+        }}</el-tag>
+      </template>
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <gi-button type="delete" @click="remove(row)" />
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增应付' : '编辑应付'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <FinanceIndexFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-interface AP {
+import { useTable } from '@/hooks/useTable'
+import FinanceIndexFormDialog, { type FinancePayableFormModel } from './FinanceIndexFormDialog.vue'
+
+interface PayableRow {
   id: string
   code: string
   supplier: string
@@ -39,21 +58,15 @@ interface AP {
   due_date: string
   status: string
 }
-const data = ref<AP[]>([
-  {
-    id: '1',
-    code: 'AP20250115001',
-    supplier: 'XX钢材有限公司',
-    amount: 85000,
-    paid: 50000,
-    balance: 35000,
-    due_date: '2025-02-15',
-    status: 'partial'
-  },
-  { id: '2', code: 'AP20250110002', supplier: 'YY轴承制造厂', amount: 120000, paid: 0, balance: 120000, due_date: '2025-03-10', status: 'open' }
-])
-const s = reactive({ code: '', supplier: '', status: '' })
-const sc: FormColumnItem[] = [
+
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({ code: '', supplier: '', status: '' })
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<FinancePayableFormModel>(createDefaultFormModel())
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '应付单号', field: 'code' } as any,
   { type: 'input', label: '供应商', field: 'supplier' } as any,
   {
@@ -71,15 +84,10 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-const cols: TableColumnItem<AP>[] = [
+
+const columns: TableColumnItem<PayableRow>[] = [
   { prop: 'code', label: '应付单号', width: 160 },
   { prop: 'supplier', label: '供应商', minWidth: 150 },
   { prop: 'amount', label: '金额', minWidth: 100, align: 'right' },
@@ -89,96 +97,83 @@ const cols: TableColumnItem<AP>[] = [
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() =>
-  data.value.filter(
-    (r) => (!s.code || r.code.includes(s.code)) && (!s.supplier || r.supplier.includes(s.supplier)) && (!s.status || r.status === s.status)
-  )
-)
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
+
+const mockData = ref<PayableRow[]>([
+  { id: '1', code: 'AP20250115001', supplier: 'XX钢材有限公司', amount: 85000, paid: 50000, balance: 35000, due_date: '2025-02-15', status: 'partial' },
+  { id: '2', code: 'AP20250110002', supplier: 'YY轴承制造厂', amount: 120000, paid: 0, balance: 120000, due_date: '2025-03-10', status: 'open' }
+])
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<PayableRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    let filtered = mockData.value
+    if (searchForm.value.code) filtered = filtered.filter((r) => r.code.includes(searchForm.value.code))
+    if (searchForm.value.supplier) filtered = filtered.filter((r) => r.supplier.includes(searchForm.value.supplier))
+    if (searchForm.value.status) filtered = filtered.filter((r) => r.status === searchForm.value.status)
+    const start = (page - 1) * size
+    return { list: filtered.slice(start, start + size), total: filtered.length }
   },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+  deleteAPI: (ids) => Promise.all(ids.map((id) => {
+    mockData.value = mockData.value.filter((e) => e.id !== id)
+  }))
+})
+
+function createDefaultFormModel(): FinancePayableFormModel {
+  return { id: '', code: '', supplier: '', amount: 0, paid: 0, balance: 0, due_date: '', status: 'open' }
 }
-function hr() {
-  s.code = ''
-  s.supplier = ''
-  s.status = ''
-  p.currentPage = 1
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
-function refresh() {
-  hr()
+
+function handleSearch() {
+  search()
 }
+
+function handleReset() {
+  searchForm.value = { code: '', supplier: '', status: '' }
+  search()
+}
+
 function handleExport() {
   ElMessage.success('导出成功')
 }
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ code: '', supplier: '', amount: 0, paid: 0, balance: 0, due_date: '', status: 'open' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '应付单号', field: 'code', required: true },
-  { type: 'input', label: '供应商', field: 'supplier', required: true },
-  { type: 'input-number', label: '金额', field: 'amount', required: true, props: { min: 0 } as any },
-  { type: 'input-number', label: '已付', field: 'paid', props: { min: 0 } as any },
-  { type: 'date-picker', label: '到期日', field: 'due_date' },
-  {
-    type: 'select-v2',
-    label: '状态',
-    field: 'status',
-    props: {
-      options: [
-        { label: '未付', value: 'open' },
-        { label: '已付', value: 'paid' },
-        { label: '部分付', value: 'partial' }
-      ]
-    } as any
-  }
-]
+
 function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { code: '', supplier: '', amount: 0, paid: 0, balance: 0, due_date: '', status: 'open' })
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
 }
-function openEdit(r: AP) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
+
+function openEdit(row: PayableRow) {
+  dialogMode.value = 'edit'
+  formModel.value = { ...row }
+  dialogVisible.value = true
 }
-async function submit() {
-  if (!form.supplier) {
+
+async function submitDialog() {
+  if (!formModel.value.supplier) {
     ElMessage.warning('请填写必填项')
-    return false
+    return
   }
-  form.balance = form.amount - form.paid
-  if (mode.value === 'add') {
-    data.value.unshift({
-      id: Date.now().toString(),
-      code: 'AP' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(data.value.length + 1).padStart(4, '0'),
-      ...form
-    } as AP)
+  formModel.value.balance = formModel.value.amount - formModel.value.paid
+
+  if (dialogMode.value === 'add') {
+    const code = 'AP' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(mockData.value.length + 1).padStart(4, '0')
+    mockData.value.unshift({ ...formModel.value, id: Date.now().toString(), code } as PayableRow)
   } else {
-    const i = data.value.findIndex((e) => e.id === eid.value)
+    const i = mockData.value.findIndex((e) => e.id === formModel.value.id)
     if (i > -1) {
-      Object.assign(data.value[i], form)
-      data.value[i].balance = data.value[i].amount - data.value[i].paid
+      Object.assign(mockData.value[i], formModel.value)
+      mockData.value[i].balance = mockData.value[i].amount - mockData.value[i].paid
     }
   }
-  return true
+
+  dialogVisible.value = false
+  await refresh()
 }
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      data.value = data.value.filter((e) => e.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+
+function remove(row: PayableRow) {
+  onDelete(row)
 }
 </script>

@@ -7,16 +7,24 @@
     <template #tool>
       <div class="toolbar-left">
         <el-button type="primary" :icon="Plus" @click="handleAdd">新增参数</el-button>
-        <el-button :icon="Refresh" @click="loadParams">刷新</el-button>
+        <el-button :icon="Refresh" @click="refresh">刷新</el-button>
       </div>
       <div class="toolbar-right">
         <el-button type="success" :icon="Select" plain @click="batchEnable">批量启用</el-button>
         <el-button type="warning" :icon="CloseBold" plain @click="batchDisable">批量禁用</el-button>
-        <el-button type="danger" :icon="Delete" plain :disabled="selectedIds.length === 0" @click="batchDelete">批量删除</el-button>
+        <el-button type="danger" :icon="Delete" plain :disabled="selectedKeys.length === 0" @click="onBatchDelete">批量删除</el-button>
       </div>
     </template>
 
-    <gi-table :columns="columns" :data="pagedData" :pagination="pagination" border stripe @selection-change="handleSelectionChange">
+    <gi-table
+      :columns="columns"
+      :data="tableData"
+      :pagination="pagination"
+      :loading="loading"
+      border
+      stripe
+      @selection-change="onSelectionChange"
+    >
       <template #category="{ row }">
         <el-tag :type="categoryTagType(row.category)" size="small">{{ categoryLabel(row.category) }}</el-tag>
       </template>
@@ -61,24 +69,34 @@
         <template v-else>
           <el-button type="primary" link size="small" @click="startEdit(row)">编辑</el-button>
           <el-button type="warning" link size="small" @click="resetToDefault(row)">恢复默认</el-button>
-          <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
+          <el-button type="danger" link size="small" @click="remove(row)">删除</el-button>
         </template>
       </template>
     </gi-table>
 
-    <!-- 新增/编辑弹窗 -->
-    <gi-dialog v-model="dialogVisible" :title="dialogTitle" width="560px" @confirm="submitForm" @cancel="dialogVisible = false">
-      <gi-form ref="formRef" v-model="formData" :columns="formColumns" label-width="100px" />
-    </gi-dialog>
+    <ConfigFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { Plus, Refresh, Select, CloseBold, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getSystemParams, updateSystemParam, batchUpdateSystemParams, resetSystemParam, type SystemParam } from '@/api/system'
+import {
+  getSystemParams,
+  updateSystemParam,
+  batchUpdateSystemParams,
+  resetSystemParam,
+  type SystemParam
+} from '@/api/system'
+import { useTable } from '@/hooks/useTable'
+import ConfigFormDialog, { type ConfigFormModel } from './ConfigFormDialog.vue'
 
 // ==================== 分类配置 ====================
 const CATEGORIES: Record<string, string> = {
@@ -140,41 +158,6 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-// ==================== 数据 ====================
-const allParams = ref<SystemParam[]>([])
-
-const filteredData = computed(() => {
-  return allParams.value.filter((item) => {
-    if (searchForm.keyword) {
-      const kw = searchForm.keyword.toLowerCase()
-      if (!item.name.toLowerCase().includes(kw) && !item.code.toLowerCase().includes(kw)) {
-        return false
-      }
-    }
-    if (searchForm.category && item.category !== searchForm.category) return false
-    if (searchForm.status && item.status !== searchForm.status) return false
-    return true
-  })
-})
-
-const pagination = reactive({ currentPage: 1, pageSize: 15, total: 0 })
-
-const pagedData = computed(() => {
-  const start = (pagination.currentPage - 1) * pagination.pageSize
-  return filteredData.value.slice(start, start + pagination.pageSize)
-})
-
-watch(
-  filteredData,
-  (val) => {
-    pagination.total = val.length
-    if (pagination.currentPage > 1 && pagedData.value.length === 0) {
-      pagination.currentPage = 1
-    }
-  },
-  { immediate: true }
-)
-
 // ==================== 表格列 ====================
 const columns: TableColumnItem<SystemParam>[] = [
   { type: 'selection', width: 50 },
@@ -189,6 +172,32 @@ const columns: TableColumnItem<SystemParam>[] = [
   { prop: 'updated_by', label: '更新人', width: 100 },
   { label: '操作', width: 220, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
+
+// ==================== useTable ====================
+const allParams = ref<SystemParam[]>([])
+
+const { tableData, pagination, loading, search, refresh, onDelete, onBatchDelete, onSelectionChange, selectedKeys } = useTable<SystemParam>({
+  rowKey: 'id',
+  immediate: false,
+  listAPI: async ({ page, size }) => {
+    let filtered = allParams.value
+    if (searchForm.keyword) {
+      const kw = searchForm.keyword.toLowerCase()
+      filtered = filtered.filter((item) => item.name.toLowerCase().includes(kw) || item.code.toLowerCase().includes(kw))
+    }
+    if (searchForm.category) {
+      filtered = filtered.filter((item) => item.category === searchForm.category)
+    }
+    if (searchForm.status) {
+      filtered = filtered.filter((item) => item.status === searchForm.status)
+    }
+    const start = (page - 1) * size
+    return {
+      list: filtered.slice(start, start + size),
+      total: filtered.length
+    }
+  }
+})
 
 // ==================== 编辑状态 ====================
 const editingId = ref<string | null>(null)
@@ -212,15 +221,7 @@ function cancelEdit() {
 
 async function saveEdit(row: SystemParam) {
   try {
-    let saveValue: string
-    if (row.value_type === 'boolean') {
-      saveValue = String(editingValue.value)
-    } else if (row.value_type === 'number') {
-      saveValue = String(editingValue.value)
-    } else {
-      saveValue = String(editingValue.value)
-    }
-
+    const saveValue = String(editingValue.value)
     await updateSystemParam(row.id, saveValue)
     row.value = saveValue
     row.updated_at = new Date().toLocaleString('zh-CN')
@@ -255,26 +256,20 @@ function formatDisplayValue(row: SystemParam): string {
 }
 
 // ==================== 批量操作 ====================
-const selectedIds = ref<string[]>([])
-
-function handleSelectionChange(rows: SystemParam[]) {
-  selectedIds.value = rows.map((r) => r.id)
-}
-
 function batchEnable() {
-  const ids = selectedIds.value.length > 0 ? selectedIds.value : allParams.value.map((p) => p.id)
-  if (selectedIds.value.length === 0) {
+  const ids = selectedKeys.value.length > 0 ? selectedKeys.value : allParams.value.map((p) => p.id)
+  if (selectedKeys.value.length === 0) {
     ElMessage.info('将启用所有参数')
   }
   batchUpdateStatus(ids, 'active')
 }
 
 function batchDisable() {
-  if (selectedIds.value.length === 0) {
+  if (selectedKeys.value.length === 0) {
     ElMessage.warning('请先选择要禁用的参数')
     return
   }
-  batchUpdateStatus(selectedIds.value, 'disabled')
+  batchUpdateStatus(selectedKeys.value, 'disabled')
 }
 
 async function batchUpdateStatus(ids: string[], status: string) {
@@ -286,38 +281,9 @@ async function batchUpdateStatus(ids: string[], status: string) {
       if (p) p.status = status as SystemParam['status']
     })
     ElMessage.success(`已${status === 'active' ? '启用' : '禁用'} ${ids.length} 个参数`)
+    refresh()
   } catch {
     // 拦截器已处理
-  }
-}
-
-function batchDelete() {
-  ElMessageBox.confirm(`确认删除选中的 ${selectedIds.value.length} 个参数？此操作不可恢复！`, '危险操作', {
-    confirmButtonText: '确定删除',
-    cancelButtonText: '取消',
-    type: 'error'
-  })
-    .then(() => {
-      allParams.value = allParams.value.filter((p) => !selectedIds.value.includes(p.id))
-      selectedIds.value = []
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {
-      // 取消
-    })
-}
-
-async function handleDelete(row: SystemParam) {
-  try {
-    await ElMessageBox.confirm(`确认删除参数「${row.name}」？`, '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-    allParams.value = allParams.value.filter((p) => p.id !== row.id)
-    ElMessage.success('删除成功')
-  } catch {
-    // 取消
   }
 }
 
@@ -333,87 +299,29 @@ async function toggleStatus(row: SystemParam, val: boolean) {
   }
 }
 
-// ==================== 新增/编辑弹窗 ====================
+// ==================== 删除 ====================
+function remove(row: SystemParam) {
+  ElMessageBox.confirm(`确认删除参数「${row.name}」？`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    allParams.value = allParams.value.filter((p) => p.id !== row.id)
+    refresh()
+    ElMessage.success('删除成功')
+  }).catch(() => {
+    // 取消
+  })
+}
+
+// ==================== 对话框 ====================
 const dialogVisible = ref(false)
-const dialogTitle = ref('新增参数')
-const isEdit = ref(false)
-const formRef = ref()
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<ConfigFormModel>(createDefaultFormModel())
 
-const formData = reactive({
-  code: '',
-  name: '',
-  value: '',
-  default_value: '',
-  category: '',
-  value_type: 'string' as SystemParam['value_type'],
-  description: '',
-  status: 'active' as SystemParam['status']
-})
-
-const formColumns: FormColumnItem[] = [
-  {
-    type: 'input',
-    label: '参数编码',
-    field: 'code',
-    props: { placeholder: '唯一标识，如: login_lock_count' },
-    rules: [{ required: true, message: '请输入参数编码', trigger: 'blur' }]
-  },
-  {
-    type: 'input',
-    label: '参数名称',
-    field: 'name',
-    props: { placeholder: '如: 登录失败锁定次数' },
-    rules: [{ required: true, message: '请输入参数名称', trigger: 'blur' }]
-  },
-  {
-    type: 'select-v2',
-    label: '所属分类',
-    field: 'category',
-    props: {
-      options: Object.entries(CATEGORIES).map(([k, v]) => ({ label: v, value: k })),
-      placeholder: '请选择分类'
-    },
-    rules: [{ required: true, message: '请选择分类', trigger: 'change' }]
-  },
-  {
-    type: 'select-v2',
-    label: '值类型',
-    field: 'value_type',
-    props: {
-      options: [
-        { label: '字符串', value: 'string' },
-        { label: '数字', value: 'number' },
-        { label: '布尔值', value: 'boolean' },
-        { label: 'JSON', value: 'json' }
-      ]
-    },
-    rules: [{ required: true, message: '请选择值类型', trigger: 'change' }]
-  },
-  {
-    type: 'input',
-    label: '参数值',
-    field: 'value',
-    props: { placeholder: '当前值' },
-    rules: [{ required: true, message: '请输入参数值', trigger: 'blur' }]
-  },
-  {
-    type: 'input',
-    label: '默认值',
-    field: 'default_value',
-    props: { placeholder: '系统默认值' }
-  },
-  {
-    type: 'input',
-    label: '描述',
-    field: 'description',
-    props: { type: 'textarea', rows: 2, placeholder: '参数用途说明' }
-  }
-]
-
-function handleAdd() {
-  isEdit.value = false
-  dialogTitle.value = '新增参数'
-  Object.assign(formData, {
+function createDefaultFormModel(): ConfigFormModel {
+  return {
+    id: '',
     code: '',
     name: '',
     value: '',
@@ -422,45 +330,46 @@ function handleAdd() {
     value_type: 'string',
     description: '',
     status: 'active'
-  })
+  }
+}
+
+function handleAdd() {
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
   dialogVisible.value = true
 }
 
-function submitForm() {
-  if (!formRef.value) return
-  formRef.value.validate().then((valid: boolean) => {
-    if (!valid) return
+function submitDialog() {
+  const now = new Date().toLocaleString('zh-CN')
+  const newParam: SystemParam = {
+    id: String(Date.now()),
+    code: formModel.value.code,
+    name: formModel.value.name,
+    value: formModel.value.value,
+    default_value: formModel.value.default_value || formModel.value.value,
+    description: formModel.value.description,
+    category: formModel.value.category,
+    value_type: formModel.value.value_type,
+    status: formModel.value.status,
+    updated_at: now,
+    updated_by: '当前用户'
+  }
 
-    const now = new Date().toLocaleString('zh-CN')
-    const newParam: SystemParam = {
-      id: String(Date.now()),
-      code: formData.code,
-      name: formData.name,
-      value: formData.value,
-      default_value: formData.default_value || formData.value,
-      description: formData.description,
-      category: formData.category,
-      value_type: formData.value_type,
-      status: formData.status,
-      updated_at: now,
-      updated_by: '当前用户'
-    }
-
-    allParams.value.unshift(newParam)
-    dialogVisible.value = false
-    ElMessage.success('新增成功')
-  })
+  allParams.value.unshift(newParam)
+  dialogVisible.value = false
+  refresh()
+  ElMessage.success('新增成功')
 }
 
 // ==================== 搜索处理 ====================
 function handleSearch() {
-  pagination.currentPage = 1
+  search()
 }
 function handleReset() {
   searchForm.keyword = ''
   searchForm.category = ''
   searchForm.status = ''
-  pagination.currentPage = 1
+  search()
 }
 
 // ==================== 数据加载 ====================
@@ -480,9 +389,7 @@ async function loadParams() {
   }
 }
 
-onMounted(() => {
-  loadParams()
-})
+loadParams().then(() => refresh())
 </script>
 
 <style scoped>

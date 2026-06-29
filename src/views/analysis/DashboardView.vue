@@ -34,7 +34,25 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import * as echarts from 'echarts'
 import { getDashboardStats, getHomeCharts } from '@/api/dashboard'
 
-const topCards = ref([
+interface TopCard {
+  title: string
+  value: number
+  unit: string
+  trend: number
+  color: string
+}
+
+interface ChartData {
+  trend: {
+    months: string[]
+    revenue: number[]
+    cost: number[]
+    profit: number[]
+  }
+  order_status: { value: number; name: string }[]
+}
+
+const topCards = ref<TopCard[]>([
   { title: '本月营收', value: 0, unit: '万元', trend: 0, color: '#409eff' },
   { title: '在制工单', value: 0, unit: '单', trend: 0, color: '#67c23a' },
   { title: '设备OEE', value: 0, unit: '%', trend: 0, color: '#e6a23c' },
@@ -47,24 +65,13 @@ const orderStatusChart = ref<HTMLDivElement>()
 let revenueInstance: echarts.ECharts | null = null
 let orderStatusInstance: echarts.ECharts | null = null
 
-const chartData = ref({
-  trend: {
-    months: ['7月', '8月', '9月', '10月', '11月', '12月', '1月'],
-    revenue: [680, 720, 780, 750, 820, 800, 850],
-    cost: [520, 550, 580, 570, 600, 590, 620],
-    profit: [160, 170, 200, 180, 220, 210, 230]
-  },
-  order_status: [
-    { value: 12, name: '已下发' },
-    { value: 28, name: '生产中' },
-    { value: 8, name: '已完工' },
-    { value: 5, name: '待审批' },
-    { value: 3, name: '已关闭' }
-  ]
+const chartData = ref<ChartData>({
+  trend: { months: [], revenue: [], cost: [], profit: [] },
+  order_status: []
 })
 
 function renderCharts() {
-  if (revenueChart.value) {
+  if (revenueChart.value && chartData.value.trend.months.length) {
     revenueInstance ??= echarts.init(revenueChart.value)
     revenueInstance.setOption({
       tooltip: { trigger: 'axis' },
@@ -80,7 +87,7 @@ function renderCharts() {
     })
   }
 
-  if (orderStatusChart.value) {
+  if (orderStatusChart.value && chartData.value.order_status.length) {
     orderStatusInstance ??= echarts.init(orderStatusChart.value)
     orderStatusInstance.setOption({
       tooltip: { trigger: 'item' },
@@ -102,15 +109,15 @@ async function loadDashboard() {
   const [statsRes, chartsRes] = await Promise.all([getDashboardStats(), getHomeCharts()])
 
   topCards.value = [
-    { title: '本月营收', value: statsRes.data.revenue ?? 850, unit: '万元', trend: statsRes.data.revenue_trend ?? 12.5, color: '#409eff' },
-    { title: '在制工单', value: statsRes.data.active_orders ?? 28, unit: '单', trend: statsRes.data.orders_trend ?? -5.2, color: '#67c23a' },
-    { title: '设备OEE', value: statsRes.data.oee ?? 78.5, unit: '%', trend: statsRes.data.oee_trend ?? 3.1, color: '#e6a23c' },
-    { title: '订单交付率', value: statsRes.data.delivery_rate ?? 94.2, unit: '%', trend: statsRes.data.delivery_trend ?? 1.8, color: '#f56c6c' }
+    { title: '本月营收', value: statsRes.data.revenue ?? 0, unit: '万元', trend: statsRes.data.revenue_trend ?? 0, color: '#409eff' },
+    { title: '在制工单', value: statsRes.data.active_orders ?? 0, unit: '单', trend: statsRes.data.orders_trend ?? 0, color: '#67c23a' },
+    { title: '设备OEE', value: statsRes.data.oee ?? 0, unit: '%', trend: statsRes.data.oee_trend ?? 0, color: '#e6a23c' },
+    { title: '订单交付率', value: statsRes.data.delivery_rate ?? 0, unit: '%', trend: statsRes.data.delivery_trend ?? 0, color: '#f56c6c' }
   ]
 
   chartData.value = {
-    trend: chartsRes.data.trend || chartData.value.trend,
-    order_status: chartsRes.data.order_status || chartData.value.order_status
+    trend: chartsRes.data.trend || { months: [], revenue: [], cost: [], profit: [] },
+    order_status: chartsRes.data.order_status || []
   }
 
   renderCharts()

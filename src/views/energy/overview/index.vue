@@ -16,31 +16,34 @@
         </el-form-item>
       </el-form>
     </template>
+
     <el-row :gutter="16">
-      <el-col :span="6" v-for="c in filteredCards" :key="c.title"
-        ><el-card shadow="hover"
-          ><div class="card-title">{{ c.title }}</div>
+      <el-col :span="6" v-for="c in cards" :key="c.title">
+        <el-card shadow="hover">
+          <div class="card-title">{{ c.title }}</div>
           <div class="card-value">
             {{ c.value }}<span class="card-unit">{{ c.unit }}</span>
           </div>
           <div class="card-trend" :style="{ color: c.trend > 0 ? '#f56c6c' : '#67c23a' }">
             {{ c.trend > 0 ? '↑' : '↓' }}{{ Math.abs(c.trend) }}% 较上月
-          </div></el-card
-        ></el-col
-      >
+          </div>
+        </el-card>
+      </el-col>
     </el-row>
+
     <el-row :gutter="16" style="margin-top: 16px">
-      <el-col :span="16"
-        ><el-card header="能耗趋势"><div ref="chartRef" style="height: 300px"></div></el-card
-      ></el-col>
-      <el-col :span="8"
-        ><el-card header="能耗占比"><div ref="pieRef" style="height: 300px"></div></el-card
-      ></el-col>
+      <el-col :span="16">
+        <el-card header="能耗趋势"><div ref="chartRef" style="height: 300px"></div></el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card header="能耗占比"><div ref="pieRef" style="height: 300px"></div></el-card>
+      </el-col>
     </el-row>
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
 import type { EChartsType } from 'echarts'
 
@@ -48,17 +51,12 @@ const dateRange = ref<string[]>(['2025-01', '2025-12'])
 let chartInstance: EChartsType | null = null
 let pieInstance: EChartsType | null = null
 
-const allCards = [
-  { title: '本月用电', value: 125800, unit: 'kWh', trend: 5.2, month: '2025-06' },
-  { title: '本月用水', value: 3200, unit: '吨', trend: -3.1, month: '2025-06' },
-  { title: '本月用气', value: 8500, unit: 'm³', trend: 8.7, month: '2025-06' },
-  { title: '碳排放', value: 98.5, unit: '吨CO₂', trend: 5.2, month: '2025-06' }
+const cards = [
+  { title: '本月用电', value: 125800, unit: 'kWh', trend: 5.2 },
+  { title: '本月用水', value: 3200, unit: '吨', trend: -3.1 },
+  { title: '本月用气', value: 8500, unit: 'm³', trend: 8.7 },
+  { title: '碳排放', value: 98.5, unit: '吨CO₂', trend: 5.2 }
 ]
-
-const filteredCards = computed(() => {
-  if (!dateRange.value || dateRange.value.length < 2) return allCards
-  return allCards
-})
 
 function handleDateChange() {
   if (chartInstance) {
@@ -135,6 +133,7 @@ onBeforeUnmount(() => {
   pieInstance?.dispose()
 })
 </script>
+
 <style scoped>
 .card-title {
   font-size: 13px;

@@ -1,37 +1,55 @@
 <template>
   <gi-page-layout>
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="index-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool
-      ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
-        style="margin-left: 8px"
-        @click="handleExport"
-        >导出</el-button
-      ></template
-    >
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    </template>
+
+    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
       <template #level="{ row }">
         <StatusTag :value="row.level" :options="EHS_RISK_LEVEL" />
       </template>
       <template #status="{ row }">
         <StatusTag :value="row.status" :options="EHS_STATUS" />
       </template>
-      <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <gi-button type="delete" @click="remove(row)" />
+      </template>
     </gi-table>
-    <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增隐患' : '编辑隐患'" width="600px">
-      <gi-form v-model="form" :columns="formCols" :label-width="100" />
-    </gi-dialog>
+
+    <EhsIndexFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { RISK_LEVEL } from '@/common/status-maps'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import { getEhsHazardList } from '@/api/ehs'
+import { useTable } from '@/hooks/useTable'
+import EhsIndexFormDialog, { type EhsHazardFormModel } from './EhsIndexFormDialog.vue'
 
 const EHS_RISK_LEVEL = [
   { value: 'major', label: '重大', type: 'danger' as const },
@@ -44,7 +62,8 @@ const EHS_STATUS = [
   { value: 'processing', label: '整改中', type: 'warning' as const },
   { value: 'closed', label: '已关闭', type: 'success' as const }
 ]
-interface Hz {
+
+interface HazardRow {
   id: string
   code: string
   location: string
@@ -54,40 +73,15 @@ interface Hz {
   finder: string
   found_at: string
 }
-const data = ref<Hz[]>([
-  {
-    id: '1',
-    code: 'YH20250115001',
-    location: '机加工一车间',
-    desc: '冷却液泄漏',
-    level: 'moderate',
-    status: 'open',
-    finder: '李四',
-    found_at: '2025-01-15'
-  },
-  {
-    id: '2',
-    code: 'YH20250110002',
-    location: '装配车间',
-    desc: '安全护栏损坏',
-    level: 'major',
-    status: 'processing',
-    finder: '王五',
-    found_at: '2025-01-10'
-  },
-  {
-    id: '3',
-    code: 'YH20250105003',
-    location: '热处理车间',
-    desc: '通风不畅',
-    level: 'minor',
-    status: 'closed',
-    finder: '赵六',
-    found_at: '2025-01-05'
-  }
-])
-const s = reactive({ keyword: '', level: '', status: '' })
-const sc: FormColumnItem[] = [
+
+const searchFormRef = ref<FormInstance | null>()
+const searchForm = ref({ keyword: '', level: '', status: '' })
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<EhsHazardFormModel>(createDefaultFormModel())
+
+const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword' } as any,
   {
     type: 'select-v2',
@@ -117,15 +111,10 @@ const sc: FormColumnItem[] = [
   } as any
 ]
 
-// SearchSetting: 所有可用字段
-const allSearchColumns = computed(() => sc)
-// SearchSetting: 当前可见字段
+const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
-const sf = ref<FormInstance | null>()
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-const cols: TableColumnItem<Hz>[] = [
+
+const columns: TableColumnItem<HazardRow>[] = [
   { prop: 'code', label: '编号', width: 160 },
   { prop: 'location', label: '位置', width: 140 },
   { prop: 'desc', label: '描述', minWidth: 180 },
@@ -135,103 +124,77 @@ const cols: TableColumnItem<Hz>[] = [
   { prop: 'found_at', label: '发现时间', width: 110 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
-const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() =>
-  data.value.filter((e) => (!s.keyword || e.desc.includes(s.keyword)) && (!s.level || e.level === s.level) && (!s.status || e.status === s.status))
-)
-const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
-watch(
-  fd,
-  (v) => {
-    p.total = v.length
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<HazardRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const res = await getEhsHazardList({
+      page,
+      page_size: size,
+      keyword: searchForm.value.keyword || undefined,
+      level: searchForm.value.level || undefined,
+      status: searchForm.value.status || undefined
+    })
+    return { list: res.data.items, total: res.data.total }
   },
-  { immediate: true }
-)
-function hs() {
-  p.currentPage = 1
+  deleteAPI: (ids) => Promise.all(ids.map((id) => {
+    // mock delete: filter out
+    tableData.value = tableData.value.filter((item) => item.id !== id)
+  }))
+})
+
+function createDefaultFormModel(): EhsHazardFormModel {
+  return { id: '', code: '', location: '', desc: '', level: 'moderate', status: 'open', finder: '', found_at: '' }
 }
-function hr() {
-  s.keyword = ''
-  s.level = ''
-  s.status = ''
-  p.currentPage = 1
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
-function refresh() {
-  hr()
+
+function handleSearch() {
+  search()
 }
+
+function handleReset() {
+  searchForm.value = { keyword: '', level: '', status: '' }
+  search()
+}
+
 function handleExport() {
   ElMessage.success('导出成功')
 }
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
-const form = reactive({ code: '', location: '', desc: '', level: 'moderate', status: 'open', finder: '', found_at: '' })
-const formCols: FormColumnItem[] = [
-  { type: 'input', label: '编号', field: 'code', required: true },
-  { type: 'input', label: '位置', field: 'location', required: true },
-  { type: 'input', label: '描述', field: 'desc', required: true },
-  {
-    type: 'select-v2',
-    label: '风险等级',
-    field: 'level',
-    required: true,
-    props: {
-      options: [
-        { label: '重大', value: 'major' },
-        { label: '一般', value: 'moderate' },
-        { label: '低风险', value: 'minor' }
-      ]
-    } as any
-  },
-  {
-    type: 'select-v2',
-    label: '状态',
-    field: 'status',
-    props: {
-      options: [
-        { label: '待整改', value: 'open' },
-        { label: '整改中', value: 'processing' },
-        { label: '已关闭', value: 'closed' }
-      ]
-    } as any
-  },
-  { type: 'input', label: '发现人', field: 'finder' },
-  { type: 'date-picker', label: '发现时间', field: 'found_at' }
-]
+
 function openAdd() {
-  mode.value = 'add'
-  Object.assign(form, { code: '', location: '', desc: '', level: 'moderate', status: 'open', finder: '', found_at: '' })
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
 }
-function openEdit(r: Hz) {
-  mode.value = 'edit'
-  eid.value = r.id
-  Object.assign(form, r)
-  vis.value = true
+
+function openEdit(row: HazardRow) {
+  dialogMode.value = 'edit'
+  formModel.value = { ...row }
+  dialogVisible.value = true
 }
-async function submit() {
-  if (!form.location || !form.desc) {
+
+async function submitDialog() {
+  if (!formModel.value.location || !formModel.value.desc) {
     ElMessage.warning('请填写必填项')
-    return false
+    return
   }
-  if (mode.value === 'add') {
-    data.value.unshift({
-      id: Date.now().toString(),
-      code: 'YH' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(data.value.length + 1).padStart(4, '0'),
-      ...form
-    } as Hz)
+
+  if (dialogMode.value === 'add') {
+    const code = 'YH' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(tableData.value.length + 1).padStart(4, '0')
+    tableData.value.unshift({ ...formModel.value, id: Date.now().toString(), code } as HazardRow)
   } else {
-    const i = data.value.findIndex((e) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
+    const i = tableData.value.findIndex((e) => e.id === formModel.value.id)
+    if (i > -1) Object.assign(tableData.value[i], formModel.value)
   }
-  return true
+
+  dialogVisible.value = false
+  await refresh()
 }
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      data.value = data.value.filter((e) => e.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+
+function remove(row: HazardRow) {
+  onDelete(row)
 }
 </script>
