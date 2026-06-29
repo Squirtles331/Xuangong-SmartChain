@@ -1,7 +1,7 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #header>
-      <SearchConfig :columns="allSearchColumns" :required-fields="['username']" storage-key="user-search" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="allSearchColumns" :required-fields="['username']" storage-key="user-search" @update:visible-fields="onSearchFieldsChange">
         <gi-form
           ref="searchFormRef"
           v-model="searchForm"
@@ -13,7 +13,7 @@
           @reset="handleReset"
           @search="handleSearch"
         />
-      </SearchConfig>
+      </SearchSetting>
     </template>
 
     <template #tool>
@@ -53,7 +53,7 @@
 import { computed, ref } from 'vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import BaseTableSetting from '@/components/TableSetting.vue'
-import SearchConfig from '@/components/SearchConfig.vue'
+import SearchSetting from '@/components/SearchSetting.vue'
 type UserStatus = '启用' | '禁用'
 interface User {
   id: number
@@ -131,9 +131,9 @@ const searchColumns = computed(() => {
   ] as FormColumnItem[]
 })
 
-// SearchConfig: 所有可用字段
+// SearchSetting: 所有可用字段
 const allSearchColumns = computed(() => searchColumns.value)
-// SearchConfig: 当前可见字段
+// SearchSetting: 当前可见字段
 const visibleSearchColumns = ref<FormColumnItem[]>([])
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields

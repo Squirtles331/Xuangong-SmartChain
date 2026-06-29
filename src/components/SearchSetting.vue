@@ -1,9 +1,9 @@
 <template>
-  <div class="search-config">
-    <div class="search-config__body">
+  <div class="search-setting">
+    <div class="search-setting__body">
       <slot :visible-fields="visibleColumns" :scheme-name="currentScheme" />
     </div>
-    <div class="search-config__actions">
+    <div class="search-setting__actions">
       <el-space wrap :size="8">
         <!-- 字段显隐配置 -->
         <el-popover placement="bottom-end" :width="200" trigger="click" transition="el-zoom-in-top">
@@ -14,10 +14,10 @@
               </el-button>
             </el-tooltip>
           </template>
-          <div class="search-config__popover">
+          <div class="search-setting__popover">
             <el-scrollbar max-height="200px">
-              <div v-for="item in fieldList" :key="item.field" class="search-config__field-item">
-                <el-checkbox v-model="item.show" :disabled="item.required" class="search-config__checkbox">
+              <div v-for="item in fieldList" :key="item.field" class="search-setting__field-item">
+                <el-checkbox v-model="item.show" :disabled="item.required" class="search-setting__checkbox">
                   {{ item.label }}
                 </el-checkbox>
                 <el-tag v-if="item.required" size="small" type="danger" style="margin-left: 4px">必选</el-tag>
@@ -37,18 +37,18 @@
               </el-button>
             </el-tooltip>
           </template>
-          <div class="search-config__popover">
-            <div class="search-config__scheme-title">保存方案</div>
+          <div class="search-setting__popover">
+            <div class="search-setting__scheme-title">保存方案</div>
             <el-input v-model="newSchemeName" size="small" placeholder="输入方案名称" style="margin-bottom: 8px">
               <template #append>
                 <el-button size="small" @click="saveScheme">保存</el-button>
               </template>
             </el-input>
             <el-divider style="margin: 8px 0" />
-            <div class="search-config__scheme-title">已保存方案</div>
+            <div class="search-setting__scheme-title">已保存方案</div>
             <div v-if="schemes.length === 0" style="color: #C0C4CC; font-size: 12px; padding: 8px 0">暂无保存方案</div>
-            <div v-for="s in schemes" :key="s.name" class="search-config__scheme-item">
-              <span class="search-config__scheme-name" @click="loadScheme(s)">{{ s.name }}</span>
+            <div v-for="s in schemes" :key="s.name" class="search-setting__scheme-item">
+              <span class="search-setting__scheme-name" @click="loadScheme(s)">{{ s.name }}</span>
               <el-button type="danger" link size="small" @click="deleteScheme(s.name)">
                 <el-icon :size="12"><Delete /></el-icon>
               </el-button>
@@ -84,7 +84,7 @@ interface SearchScheme {
   fields: string[]
 }
 
-interface SearchConfigProps {
+interface SearchSettingProps {
   /** gi-form 的 columns 配置 */
   columns?: FormColumnItem[]
   /** 必选字段（始终显示，不可隐藏） */
@@ -93,10 +93,10 @@ interface SearchConfigProps {
   storageKey?: string
 }
 
-const props = withDefaults(defineProps<SearchConfigProps>(), {
+const props = withDefaults(defineProps<SearchSettingProps>(), {
   columns: () => [],
   requiredFields: () => [],
-  storageKey: 'search-config'
+  storageKey: 'search-setting'
 })
 
 const emit = defineEmits<{
@@ -188,7 +188,7 @@ function toggleAdvanced() {
 </script>
 
 <style lang="scss" scoped>
-.search-config {
+.search-setting {
   position: relative;
 
   &__body {
