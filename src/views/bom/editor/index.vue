@@ -3,7 +3,7 @@
     <template #header>
       <div class="editor-header">
         <div class="header-left">
-          <h2>BOM 编辑器 — 离心泵 XJP-100 (MBOM V1.2)</h2>
+          <h2>BOM 编辑器 — {{ bomTitle }}</h2>
         </div>
         <div class="header-right">
           <el-button @click="importExcel">📥 导入Excel</el-button>
@@ -97,9 +97,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { bomTree as mockBomTree } from '@/mock'
+import { useRoute } from 'vue-router'
+import { getBOMTree, saveBOM as saveBOMApi } from '@/api/bom'
 
 interface TreeNode {
   id: string
@@ -115,7 +116,9 @@ interface TreeNode {
   children?: TreeNode[]
 }
 
-const treeData = ref<TreeNode[]>(JSON.parse(JSON.stringify(mockBomTree)))
+const route = useRoute()
+const bomTitle = ref('')
+const treeData = ref<TreeNode[]>([])
 const treeRef = ref()
 const treeFilter = ref('')
 
@@ -153,7 +156,6 @@ function handleNodeClick(data: TreeNode) {
 }
 
 function addChild(parentId: string | null) {
-  const parentLabel = parentId ? '子节点' : '根节点'
   const newNode: TreeNode = {
     id: '',
     label: '',
@@ -258,9 +260,36 @@ function importExcel() {
 function exportExcel() {
   ElMessage.success('导出成功')
 }
-function saveBom() {
-  ElMessage.success('BOM 已保存')
+
+async function saveBom() {
+  try {
+    await saveBOMApi({ id: bomId.value, tree: treeData.value } as any)
+    ElMessage.success('BOM 已保存')
+  } catch {
+    ElMessage.error('保存失败')
+  }
 }
+
+const bomId = ref('')
+
+async function fetchBOMTree() {
+  const id = route.params.id as string
+  if (!id) return
+  bomId.value = id
+  try {
+    const res = await getBOMTree(id)
+    if (res.data) {
+      treeData.value = res.data.tree || res.data
+      bomTitle.value = res.data.material_name ? `${res.data.material_name} (${res.data.version || ''})` : ''
+    }
+  } catch {
+    ElMessage.error('获取BOM树失败')
+  }
+}
+
+onMounted(() => {
+  fetchBOMTree()
+})
 </script>
 
 <style scoped>

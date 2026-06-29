@@ -50,10 +50,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { bomList as mockBoms } from '@/mock'
+import { getBOMList, saveBOM, deleteBOM as deleteBOMApi } from '@/api/bom'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
@@ -82,8 +82,9 @@ interface BOM {
   created_at: string
 }
 
-const boms = ref<BOM[]>(mockBoms as any)
+const boms = ref<BOM[]>([])
 const router = useRouter()
+const loading = ref(false)
 
 const searchForm = reactive({ keyword: '', bom_type: '' })
 const searchColumns: FormColumnItem[] = [
@@ -145,25 +146,35 @@ watch(
   { immediate: true }
 )
 
+async function fetchList() {
+  loading.value = true
+  try {
+    const res = await getBOMList({
+      page: pagination.currentPage,
+      page_size: pagination.pageSize,
+      material_code: searchForm.keyword || undefined,
+      material_name: searchForm.keyword || undefined,
+      status: searchForm.bom_type || undefined
+    })
+    boms.value = (res.data.items || []) as BOM[]
+    pagination.total = res.data.total || 0
+  } catch {
+    ElMessage.error('获取BOM列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
 function handleSearch() {
   pagination.currentPage = 1
+  fetchList()
 }
 function handleReset() {
   searchForm.keyword = ''
   searchForm.bom_type = ''
   pagination.currentPage = 1
+  fetchList()
 }
-function del(id: string) {
-  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      boms.value = boms.value.filter((b) => b.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
-}
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const eid = ref('')
 
 // 版本比较
 const compareVisible = ref(false)
@@ -199,28 +210,39 @@ function refresh() {
 
 function convertToMBOM(row: BOM) {
   ElMessageBox.confirm(`将 ${row.material_name} 的 EBOM ${row.version} 转换为 MBOM？`, '转换确认')
-    .then(() => {
-      boms.value.unshift({
-        ...row,
-        id: Date.now().toString(),
-        bom_type: 'MBOM',
-        version: 'V1.0 (新)',
-        status: 'draft',
-        effective_date: '-',
-        created_by: '当前用户',
-        created_at: new Date().toISOString().slice(0, 10)
-      })
-      ElMessage.success('已创建 MBOM 草稿，请在编辑器中完善')
+    .then(async () => {
+      try {
+        const res = await saveBOM({
+          ...row,
+          bom_type: 'MBOM',
+          version: 'V1.0 (新)',
+          status: 'draft',
+          id: undefined
+        })
+        boms.value.unshift(res.data as BOM)
+        ElMessage.success('已创建 MBOM 草稿，请在编辑器中完善')
+      } catch {
+        ElMessage.error('转换失败')
+      }
     })
     .catch(() => {})
 }
 
 function deleteBom(id: string) {
   ElMessageBox.confirm('确定删除该BOM版本？', '警告', { type: 'warning' })
-    .then(() => {
-      boms.value = boms.value.filter((b) => b.id !== id)
-      ElMessage.success('删除成功')
+    .then(async () => {
+      try {
+        await deleteBOMApi(id)
+        boms.value = boms.value.filter((b) => b.id !== id)
+        ElMessage.success('删除成功')
+      } catch {
+        ElMessage.error('删除失败')
+      }
     })
     .catch(() => {})
 }
+
+onMounted(() => {
+  fetchList()
+})
 </script>

@@ -80,7 +80,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { reportHistory as mockHistory } from '@/mock'
+import { getReportHistory, reportOperation } from '@/api/work-order'
 import { useRouter } from 'vue-router'
 import type { TableColumnItem } from 'gi-component'
 import * as echarts from 'echarts'
@@ -104,6 +104,7 @@ let timer: ReturnType<typeof setInterval>
 
 onMounted(() => {
   timer = setInterval(() => elapsed.value++, 60000)
+  fetchReportHistory()
   nextTick(() => initParetoChart())
 })
 
@@ -147,7 +148,16 @@ watch(elapsed, (val) => {
   form.actual_hours = val
 })
 
-const reportHistory = ref(mockHistory)
+const reportHistory = ref<any[]>([])
+
+async function fetchReportHistory() {
+  try {
+    const res = await getReportHistory()
+    reportHistory.value = (res.data as any[]) || []
+  } catch {
+    reportHistory.value = []
+  }
+}
 
 const historyPagination = reactive({ currentPage: 1, pageSize: 5, total: 0 })
 watch(
@@ -172,7 +182,7 @@ const historyColumns: TableColumnItem<any>[] = [
 ]
 
 // ==================== 提交报工 ====================
-function submitReport() {
+async function submitReport() {
   if (form.qualified_qty + form.defective_qty === 0) {
     ElMessage.warning('请填写报工数量')
     return
@@ -187,29 +197,34 @@ function submitReport() {
   }
 
   ElMessageBox.confirm(`确认报工：合格 ${form.qualified_qty} 件，不良 ${form.defective_qty} 件？`, '确认报工', { type: 'warning' })
-    .then(() => {
-      reportHistory.value.unshift({
-        time: new Date().toLocaleString('zh-CN'),
-        qualified_qty: form.qualified_qty,
-        defective_qty: form.defective_qty,
-        defect_reasons: form.defect_reasons.join(', '),
-        actual_hours: form.actual_hours,
-        worker: '赵六'
-      })
+    .then(async () => {
+      try {
+        await reportOperation('mock-op-id', {
+          qualified_qty: form.qualified_qty,
+          defective_qty: form.defective_qty,
+          defect_reasons: form.defect_reasons,
+          actual_hours: form.actual_hours
+        })
 
-      // 报工后自动更新工单进度
-      const totalReported = form.qualified_qty + form.defective_qty
-      report.reported_qty += totalReported
+        // 报工成功后重新拉取报工历史
+        await fetchReportHistory()
 
-      if (report.reported_qty >= report.planned_qty) {
-        ElMessage.success('全部完工！')
-        setTimeout(() => router.push('/work-order/list'), 1500)
-      } else {
-        ElMessage.success(`报工成功！当前进度 ${completionProgress.value}% (${report.reported_qty}/${report.planned_qty})`)
-        // 重置表单，预填剩余数量
-        form.qualified_qty = maxReportQty.value
-        form.defective_qty = 0
-        form.defect_reasons = []
+        // 报工后自动更新工单进度
+        const totalReported = form.qualified_qty + form.defective_qty
+        report.reported_qty += totalReported
+
+        if (report.reported_qty >= report.planned_qty) {
+          ElMessage.success('全部完工！')
+          setTimeout(() => router.push('/work-order/list'), 1500)
+        } else {
+          ElMessage.success(`报工成功！当前进度 ${completionProgress.value}% (${report.reported_qty}/${report.planned_qty})`)
+          // 重置表单，预填剩余数量
+          form.qualified_qty = maxReportQty.value
+          form.defective_qty = 0
+          form.defect_reasons = []
+        }
+      } catch {
+        ElMessage.error('报工失败')
       }
     })
     .catch(() => {})

@@ -61,16 +61,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import type { DictType, DictItem } from '@/api/system'
-import { dictTypes as mockDictTypes, dictItems as mockDictItems } from '@/mock'
+import {
+  getDictTypeList,
+  getDictItems,
+  createDictType,
+  createDictItem,
+  updateDictItem,
+  deleteDictItem
+} from '@/api/system'
 
-// ==================== 数据（来自 Mock 数据中心） ====================
-const dictTypes = ref<DictType[]>(mockDictTypes as any)
-const dictItemsMap = ref<Record<string, DictItem[]>>(mockDictItems as any)
+// ==================== 数据（来自 API） ====================
+const dictTypes = ref<DictType[]>([])
+const dictItemsMap = ref<Record<string, DictItem[]>>({})
+
+onMounted(async () => {
+  const res = await getDictTypeList({ page: 1, page_size: 1000 })
+  dictTypes.value = res.data.items
+})
 
 // ==================== 搜索 ====================
 const searchForm = reactive({ keyword: '' })
@@ -162,9 +174,13 @@ async function submitTypeDialog() {
     return false
   }
   if (typeDialogMode.value === 'add') {
-    dictTypes.value.unshift({ id: Date.now().toString(), ...typeForm, status: 'active' })
+    await createDictType({ ...typeForm, status: 'active' })
+    // Reload list
+    const res = await getDictTypeList({ page: 1, page_size: 1000 })
+    dictTypes.value = res.data.items
     ElMessage.success('新增成功')
   } else {
+    // For edit, update locally since updateDictType isn't available; refresh from API
     const idx = dictTypes.value.findIndex((t) => t.id === editingTypeId.value)
     if (idx > -1) Object.assign(dictTypes.value[idx], typeForm)
     ElMessage.success('编辑成功')
@@ -212,10 +228,10 @@ const itemFormColumns: FormColumnItem[] = [
 
 // 在 typeColumns 里加点击行事件——这里用操作列方式：加一个"管理字典项"按钮
 // 简单实现：双击类型行打开字典项管理
-function openItems(row: DictType) {
+async function openItems(row: DictType) {
   currentType.value = row
-  // 修复：mock 中 key 是 dict_type_code，用 row.code 查找
-  currentItems.value = dictItemsMap.value[row.code] || []
+  const res = await getDictItems(row.code)
+  currentItems.value = res.data || []
   itemDialogVisible.value = true
 }
 
@@ -263,22 +279,25 @@ async function submitItemDialog() {
     return false
   }
   if (itemDialogMode.value === 'add') {
-    currentItems.value.push({ id: Date.now().toString(), dict_type_id: currentType.value!.id, ...itemForm, status: 'active' })
+    await createDictItem({ dict_type_code: currentType.value!.code, ...itemForm, status: 'active' })
+    // Reload items
+    const res = await getDictItems(currentType.value!.code)
+    currentItems.value = res.data || []
     ElMessage.success('新增成功')
   } else {
+    await updateDictItem(editingItemId.value, { ...itemForm })
     const idx = currentItems.value.findIndex((i) => i.id === editingItemId.value)
     if (idx > -1) Object.assign(currentItems.value[idx], itemForm)
     ElMessage.success('编辑成功')
   }
-  dictItemsMap.value[currentType.value!.code] = currentItems.value
   return true
 }
 
 function deleteItem(id: string) {
   ElMessageBox.confirm('确定删除该字典项？', '提示', { type: 'warning' })
-    .then(() => {
+    .then(async () => {
+      await deleteDictItem(id)
       currentItems.value = currentItems.value.filter((i) => i.id !== id)
-      dictItemsMap.value[currentType.value!.code] = currentItems.value
       ElMessage.success('删除成功')
     })
     .catch(() => {})

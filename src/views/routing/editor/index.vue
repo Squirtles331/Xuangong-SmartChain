@@ -2,7 +2,7 @@
   <gi-page-layout>
     <template #header>
       <div class="editor-header">
-        <h2>工艺路线 — 离心泵 XJP-100 (标准工艺 V1.1)</h2>
+        <h2>工艺路线 — {{ routingTitle }}</h2>
         <div>
           <el-button type="primary" @click="saveRouting">💾 保存</el-button>
           <el-button @click="$router.back()">返回</el-button>
@@ -70,9 +70,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { routingOperations as mockOps } from '@/mock'
+import { useRoute } from 'vue-router'
+import { getRoutingList, saveRouting as saveRoutingApi, deleteRouting as deleteRoutingApi, getRoutingDetail } from '@/api/routing'
 
 interface Operation {
   id: string
@@ -90,7 +91,9 @@ interface Operation {
   instruction: string
 }
 
-const operations = ref<Operation[]>(JSON.parse(JSON.stringify(mockOps)))
+const route = useRoute()
+const routingTitle = ref('标准工艺 V1.1')
+const operations = ref<Operation[]>([])
 
 const workCenters = ['下料组', '数控车组', '钻床组', '热处理组', '磨床组', '装配组', '测试组', '涂装组']
 const skills = ['锯床操作', '数控车床操作', '钻床操作', '热处理操作', '磨床操作', '装配钳工', '测试操作', '涂装操作']
@@ -138,6 +141,10 @@ function moveDown(idx: number) {
   }
 }
 function removeOp(idx: number) {
+  const op = operations.value[idx]
+  if (op.id) {
+    deleteRoutingApi(op.id).catch(() => {})
+  }
   operations.value.splice(idx, 1)
   currentOp.value = null
   renumberOps()
@@ -150,9 +157,42 @@ function renumberOps() {
   })
 }
 
-function saveRouting() {
-  ElMessage.success('工艺路线已保存')
+async function saveRouting() {
+  try {
+    for (const op of operations.value) {
+      await saveRoutingApi(op)
+    }
+    ElMessage.success('工艺路线已保存')
+  } catch {
+    ElMessage.error('保存失败')
+  }
 }
+
+async function fetchRouting() {
+  const id = route.params.id as string
+  if (id) {
+    try {
+      const res = await getRoutingDetail(id)
+      if (res.data) {
+        routingTitle.value = res.data.material_name || '标准工艺'
+        operations.value = res.data.operations || [res.data]
+      }
+    } catch {
+      ElMessage.error('获取工艺路线失败')
+    }
+  } else {
+    try {
+      const res = await getRoutingList({ page: 1, page_size: 100 })
+      operations.value = (res.data.items || []) as Operation[]
+    } catch {
+      ElMessage.error('获取工艺路线列表失败')
+    }
+  }
+}
+
+onMounted(() => {
+  fetchRouting()
+})
 </script>
 
 <style scoped>

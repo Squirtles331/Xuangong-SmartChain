@@ -155,7 +155,8 @@ import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import StatusTag from '@/components/StatusTag.vue'
 import { WORK_ORDER_STATUS, WORK_ORDER_PRIORITY } from '@/common/status-maps'
-import { workOrders, workOrderOperations, bomList } from '@/mock'
+import { getWorkOrderDetail, getWorkOrderOperations, approveWorkOrder, releaseWorkOrder, closeWorkOrder } from '@/api/work-order'
+import { getBOMList } from '@/api/bom'
 
 const route = useRoute()
 
@@ -195,23 +196,36 @@ const activeTab = ref('info')
 const order = reactive<any>({})
 const operations = ref<any[]>([])
 
-function loadOrder() {
+async function loadOrder() {
   const id = route.params.id as string
-  const found = (workOrders as any[]).find((wo: any) => String(wo.id) === String(id))
-  if (found) {
-    Object.assign(order, found)
-    // 关联工序数据
-    operations.value = (workOrderOperations as any[]).map((op: any) => ({
-      ...op,
-      actual_hours: typeof op.actual_hours === 'number' ? op.actual_hours : 0
-    }))
-  } else {
-    // fallback: 使用第一条 mock 数据
-    Object.assign(order, (workOrders as any[])[0] || {})
-    operations.value = (workOrderOperations as any[]).map((op: any) => ({
-      ...op,
-      actual_hours: typeof op.actual_hours === 'number' ? op.actual_hours : 0
-    }))
+  try {
+    const res = await getWorkOrderDetail(id)
+    if (res.data) {
+      Object.assign(order, res.data)
+    }
+  } catch {
+    // fallback handled below
+  }
+
+  try {
+    const opsRes = await getWorkOrderOperations(id)
+    if (opsRes.data) {
+      operations.value = (opsRes.data as any[]).map((op: any) => ({
+        ...op,
+        actual_hours: typeof op.actual_hours === 'number' ? op.actual_hours : 0
+      }))
+    }
+  } catch {
+    operations.value = []
+  }
+
+  // 加载物料领用数据
+  try {
+    const bomRes = await getBOMList({ page: 1, page_size: 100, status: 'active' })
+    const items = bomRes.data?.items || bomRes.data || []
+    materialUsage.value = items.filter((b: any) => b.bom_type === 'EBOM')
+  } catch {
+    materialUsage.value = []
   }
 }
 
@@ -241,7 +255,7 @@ function getOperationsSummary(param: { columns: any[]; data: any[] }) {
 }
 
 // ==================== 物料领用 ====================
-const materialUsage = ref(bomList.filter((b) => b.bom_type === 'EBOM') as any)
+const materialUsage = ref<any[]>([])
 
 function handleMaterialIssue(row: any) {
   ElMessageBox.confirm(`确认领用物料 "${row.material_name}" ？`, '物料领用', { type: 'warning' })
@@ -308,20 +322,36 @@ function confirmApproval() {
   approvalVisible.value = false
 }
 
-function doTransition(targetStatus: string, opinion: string) {
-  order.status = targetStatus
-  if (opinion) {
-    order.approval_opinion = opinion
+async function doTransition(targetStatus: string, opinion: string) {
+  try {
+    if (targetStatus === 'approved') {
+      await approveWorkOrder(order.id, true, opinion)
+    } else if (targetStatus === 'released') {
+      await releaseWorkOrder(order.id)
+    } else if (targetStatus === 'closed') {
+      await closeWorkOrder(order.id, { close_type: 'normal', reason: opinion })
+    } else {
+      // For statuses not directly mapped to API (e.g., in_progress, completed, draft-revert),
+      // update locally and log
+      order.status = targetStatus
+    }
+
+    if (opinion) {
+      order.approval_opinion = opinion
+    }
+
+    const toInfo = getStatusInfo(targetStatus)
+    logs.value.unshift({
+      id: String(Date.now()),
+      time: new Date().toLocaleString('zh-CN'),
+      type: targetStatus === 'closed' ? 'info' : 'primary',
+      content: `工单状态变更为「${toInfo.label}」${opinion ? `，审批意见: ${opinion}` : ''}`,
+      user: '当前用户'
+    })
+    ElMessage.success(`状态已变更为「${toInfo.label}」`)
+  } catch {
+    ElMessage.error('状态流转失败')
   }
-  const toInfo = getStatusInfo(targetStatus)
-  logs.value.unshift({
-    id: String(Date.now()),
-    time: new Date().toLocaleString('zh-CN'),
-    type: targetStatus === 'closed' ? 'info' : 'primary',
-    content: `工单状态变更为「${toInfo.label}」${opinion ? `，审批意见: ${opinion}` : ''}`,
-    user: '当前用户'
-  })
-  ElMessage.success(`状态已变更为「${toInfo.label}」`)
 }
 
 // ==================== 操作日志 ====================

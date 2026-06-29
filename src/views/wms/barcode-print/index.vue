@@ -34,9 +34,9 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { materialList as mockMaterialList } from '@/mock'
+import { getMaterialListForBarcode } from '@/api/wms'
 
 interface Material {
   id: string
@@ -47,7 +47,7 @@ interface Material {
   unit: string
 }
 
-const materialList = ref<Material[]>(mockMaterialList as any)
+const materialList = ref<Material[]>([])
 const selectedMaterial = ref('')
 const printQty = ref(1)
 const previewList = ref<{ barcode: string; name: string }[]>([])
@@ -80,6 +80,19 @@ function printBarcode() {
   window.print()
   ElMessage.success('条码打印任务已发送')
 }
+
+async function fetchMaterials() {
+  try {
+    const res = await getMaterialListForBarcode({ page: 1, page_size: 200 })
+    materialList.value = (res.data.items || res.data || []) as Material[]
+  } catch {
+    ElMessage.error('获取物料列表失败')
+  }
+}
+
+onMounted(() => {
+  fetchMaterials()
+})
 </script>
 <style scoped>
 .barcode-grid {

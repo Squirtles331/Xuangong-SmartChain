@@ -1,7 +1,9 @@
 import http from '@/utils/http'
 import type { ApiResponse } from '@/utils/http'
+import { isMockMode } from './_config'
+import * as mockService from '@/mock/services/system'
 
-// ==================== 登录 ====================
+// ==================== 登录（始终走真实接口） ====================
 export interface LoginParams {
   tenant_id: string
   username: string
@@ -56,18 +58,22 @@ export interface UserQuery {
 }
 
 export function getUserList(params: UserQuery) {
+  if (isMockMode) return mockService.getUserList(params)
   return http.get<ApiResponse<{ total: number; items: SysUser[] }>>('/system/users', { params })
 }
 
 export function createUser(data: Partial<SysUser>) {
+  if (isMockMode) return mockService.createUser(data)
   return http.post('/system/users', data)
 }
 
 export function updateUser(id: string, data: Partial<SysUser>) {
+  if (isMockMode) return mockService.updateUser(id, data)
   return http.put(`/system/users/${id}`, data)
 }
 
 export function deleteUser(id: string) {
+  if (isMockMode) return mockService.deleteUser(id)
   return http.delete(`/system/users/${id}`)
 }
 
@@ -87,6 +93,7 @@ export interface SysRole {
 }
 
 export function getRoleList(params: { page: number; page_size: number; name?: string }) {
+  if (isMockMode) return mockService.getRoleList(params)
   return http.get<ApiResponse<{ total: number; items: SysRole[] }>>('/system/roles', { params })
 }
 
@@ -118,18 +125,22 @@ export interface SysMenu {
 }
 
 export function getMenuTree() {
+  if (isMockMode) return mockService.getMenuTree()
   return http.get<ApiResponse<SysMenu[]>>('/system/menus/tree')
 }
 
 export function createMenu(data: Partial<SysMenu>) {
+  if (isMockMode) return mockService.createMenu(data)
   return http.post('/system/menus', data)
 }
 
 export function updateMenu(id: string, data: Partial<SysMenu>) {
+  if (isMockMode) return mockService.updateMenu(id, data)
   return http.put(`/system/menus/${id}`, data)
 }
 
 export function deleteMenu(id: string) {
+  if (isMockMode) return mockService.deleteMenu(id)
   return http.delete(`/system/menus/${id}`)
 }
 
@@ -153,26 +164,32 @@ export interface DictItem {
 }
 
 export function getDictTypeList(params: { page: number; page_size: number }) {
+  if (isMockMode) return mockService.getDictTypeList(params)
   return http.get<ApiResponse<{ total: number; items: DictType[] }>>('/system/dict-types', { params })
 }
 
 export function getDictItems(dictTypeCode: string) {
+  if (isMockMode) return mockService.getDictItems(dictTypeCode)
   return http.get<ApiResponse<DictItem[]>>(`/system/dict-items/${dictTypeCode}`)
 }
 
 export function createDictType(data: Partial<DictType>) {
+  if (isMockMode) return mockService.createDictType(data)
   return http.post('/system/dict-types', data)
 }
 
 export function createDictItem(data: Partial<DictItem>) {
+  if (isMockMode) return mockService.createDictItem(data)
   return http.post('/system/dict-items', data)
 }
 
 export function updateDictItem(id: string, data: Partial<DictItem>) {
+  if (isMockMode) return mockService.updateDictItem(id, data)
   return http.put(`/system/dict-items/${id}`, data)
 }
 
 export function deleteDictItem(id: string) {
+  if (isMockMode) return mockService.deleteDictItem(id)
   return http.delete(`/system/dict-items/${id}`)
 }
 
@@ -196,6 +213,7 @@ export function getAuditLogs(params: {
   start_date?: string
   end_date?: string
 }) {
+  if (isMockMode) return mockService.getAuditLogs(params)
   return http.get<ApiResponse<{ total: number; items: AuditLog[] }>>('/system/audit-logs', { params })
 }
 
@@ -223,17 +241,63 @@ export interface SystemParamQuery {
 }
 
 export function getSystemParams(params?: Partial<SystemParamQuery>) {
+  if (isMockMode) return mockService.getSystemParams(params)
   return http.get<ApiResponse<{ total: number; items: SystemParam[] }>>('/system/params', { params })
 }
 
 export function updateSystemParam(id: string, value: string) {
+  if (isMockMode) return mockService.updateSystemParam(id, value)
   return http.put<ApiResponse<SystemParam>>(`/system/params/${id}`, { value })
 }
 
 export function batchUpdateSystemParams(updates: { id: string; value: string }[]) {
+  if (isMockMode) return mockService.batchUpdateSystemParams(updates)
   return http.put<ApiResponse<null>>('/system/params/batch', { updates })
 }
 
 export function resetSystemParam(id: string) {
+  if (isMockMode) return mockService.resetSystemParam(id)
   return http.put<ApiResponse<SystemParam>>(`/system/params/${id}/reset`)
+}
+
+// ==================== 编码规则 ====================
+export function getCodeRules() {
+  if (isMockMode) return mockService.getCodeRules()
+  return http.get<ApiResponse<any>>('/system/code-rules')
+}
+
+export function createCodeRule(data: any) {
+  if (isMockMode) return mockService.createCodeRule(data)
+  return http.post('/system/code-rules', data)
+}
+
+export function updateCodeRule(id: string, data: any) {
+  if (isMockMode) return mockService.updateCodeRule(id, data)
+  return http.put(`/system/code-rules/${id}`, data)
+}
+
+export function deleteCodeRule(id: string) {
+  if (isMockMode) return mockService.deleteCodeRule(id)
+  return http.delete(`/system/code-rules/${id}`)
+}
+
+// ==================== 审批流 ====================
+export function getApprovalFlows() {
+  if (isMockMode) return mockService.getApprovalFlows()
+  return http.get<ApiResponse<any>>('/system/approval-flows')
+}
+
+export function createApprovalFlow(data: any) {
+  if (isMockMode) return mockService.createApprovalFlow(data)
+  return http.post('/system/approval-flows', data)
+}
+
+export function updateApprovalFlow(id: string, data: any) {
+  if (isMockMode) return mockService.updateApprovalFlow(id, data)
+  return http.put(`/system/approval-flows/${id}`, data)
+}
+
+export function deleteApprovalFlow(id: string) {
+  if (isMockMode) return mockService.deleteApprovalFlow(id)
+  return http.delete(`/system/approval-flows/${id}`)
 }

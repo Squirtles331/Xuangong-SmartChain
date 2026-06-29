@@ -139,9 +139,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { kanbanOps as mockKanbanOps } from '@/mock'
+import { getKanbanData, assignOperation } from '@/api/work-order'
 
 interface KanbanOp {
   id: string
@@ -163,125 +163,21 @@ interface KanbanOp {
 const currentWorkshop = ref('机加工一车间')
 const workshops = ['机加工一车间', '机加工二车间', '装配车间']
 
-// 按车间分组的数据
-const workshopDataMap: Record<string, KanbanOp[]> = {
-  '机加工一车间': mockKanbanOps as any,
-  '机加工二车间': [
-    {
-      id: 'a1',
-      wo_code: 'WO202501200001',
-      wo_priority: 'high',
-      material_name: '齿轮箱 GBX-200',
-      operation_no: 10,
-      name: '下料',
-      work_center: '下料组',
-      total_hours: 6,
-      status: 'pending'
-    },
-    {
-      id: 'a2',
-      wo_code: 'WO202501200001',
-      wo_priority: 'high',
-      material_name: '齿轮箱 GBX-200',
-      operation_no: 20,
-      name: '粗车',
-      work_center: '数控车组',
-      total_hours: 12,
-      status: 'assigned',
-      worker: '张三',
-      planned_start: '2025-01-18 08:00'
-    },
-    {
-      id: 'a3',
-      wo_code: 'WO202501200002',
-      wo_priority: 'normal',
-      material_name: '传动轴 DS-50',
-      operation_no: 30,
-      name: '精车',
-      work_center: '数控车组',
-      total_hours: 16,
-      status: 'running',
-      worker: '李四',
-      progress: 70
-    },
-    {
-      id: 'a4',
-      wo_code: 'WO202501200002',
-      wo_priority: 'normal',
-      material_name: '传动轴 DS-50',
-      operation_no: 20,
-      name: '车削',
-      work_center: '数控车组',
-      total_hours: 10,
-      status: 'completed',
-      worker: '李四',
-      qualified_qty: 30,
-      defective_qty: 1
-    }
-  ],
-  '装配车间': [
-    {
-      id: 'b1',
-      wo_code: 'WO202501210001',
-      wo_priority: 'urgent',
-      material_name: '离心泵 XJP-200',
-      operation_no: 60,
-      name: '装配',
-      work_center: '装配组',
-      total_hours: 40,
-      status: 'pending'
-    },
-    {
-      id: 'b2',
-      wo_code: 'WO202501210002',
-      wo_priority: 'normal',
-      material_name: '齿轮箱 GBX-200',
-      operation_no: 70,
-      name: '试压',
-      work_center: '测试组',
-      total_hours: 12,
-      status: 'assigned',
-      worker: '赵六',
-      planned_start: '2025-01-20 08:00'
-    },
-    {
-      id: 'b3',
-      wo_code: 'WO202501210003',
-      wo_priority: 'normal',
-      material_name: '离心泵 XJP-100',
-      operation_no: 80,
-      name: '油漆',
-      work_center: '涂装组',
-      total_hours: 18,
-      status: 'running',
-      worker: '王五',
-      progress: 45
-    },
-    {
-      id: 'b4',
-      wo_code: 'WO202501210002',
-      wo_priority: 'normal',
-      material_name: '齿轮箱 GBX-200',
-      operation_no: 60,
-      name: '装配',
-      work_center: '装配组',
-      total_hours: 24,
-      status: 'completed',
-      worker: '赵六',
-      qualified_qty: 50,
-      defective_qty: 0
-    }
-  ]
-}
-
 const ops = ref<KanbanOp[]>([])
 
-function loadWorkshopData() {
-  ops.value = JSON.parse(JSON.stringify(workshopDataMap[currentWorkshop.value] || []))
+async function loadWorkshopData() {
+  try {
+    const res = await getKanbanData()
+    ops.value = (res.data as KanbanOp[]) || []
+  } catch {
+    ops.value = []
+  }
 }
 
 // 初始化
-loadWorkshopData()
+onMounted(() => {
+  loadWorkshopData()
+})
 
 function onWorkshopChange() {
   loadWorkshopData()
@@ -386,13 +282,22 @@ function openAssign(op: KanbanOp) {
   assignVisible.value = true
 }
 
-function confirmAssign() {
+async function confirmAssign() {
   if (currentAssignOp.value) {
-    currentAssignOp.value.status = 'assigned'
-    currentAssignOp.value.worker = assignForm.value.worker || '未指定'
+    try {
+      await assignOperation(currentAssignOp.value.id, {
+        team_id: assignForm.value.team,
+        worker_id: assignForm.value.worker || undefined,
+        equipment_id: assignForm.value.equipment || undefined
+      })
+      currentAssignOp.value.status = 'assigned'
+      currentAssignOp.value.worker = assignForm.value.worker || '未指定'
+      ElMessage.success('派工成功')
+    } catch {
+      ElMessage.error('派工失败')
+    }
   }
   assignVisible.value = false
-  ElMessage.success('派工成功')
 }
 </script>
 

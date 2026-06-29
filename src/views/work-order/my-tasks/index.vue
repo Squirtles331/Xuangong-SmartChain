@@ -148,9 +148,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { myTasks as mockMyTasks } from '@/mock'
+import { getMyTasks } from '@/api/work-order'
 import type { TableColumnItem } from 'gi-component'
 
 interface Task {
@@ -173,9 +173,27 @@ interface Task {
 
 const activeTab = ref('assigned')
 
-const assignedTasks = ref<Task[]>(mockMyTasks.assigned as any)
-const runningTasks = ref<Task[]>(mockMyTasks.running as any)
-const completedTasks = ref<Task[]>(mockMyTasks.completed as any)
+const assignedTasks = ref<Task[]>([])
+const runningTasks = ref<Task[]>([])
+const completedTasks = ref<Task[]>([])
+
+async function fetchMyTasks() {
+  try {
+    const res = await getMyTasks()
+    const data = res.data as any
+    assignedTasks.value = (data?.assigned || []) as Task[]
+    runningTasks.value = (data?.running || []) as Task[]
+    completedTasks.value = (data?.completed || []) as Task[]
+  } catch {
+    assignedTasks.value = []
+    runningTasks.value = []
+    completedTasks.value = []
+  }
+}
+
+onMounted(() => {
+  fetchMyTasks()
+})
 
 // 搜索+筛选
 const assignedSearch = reactive({ keyword: '', priority: '' })

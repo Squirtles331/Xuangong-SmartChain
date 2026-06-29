@@ -41,9 +41,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ecnOrders as mockEcns } from '@/mock'
+import { getECNList, updateECN } from '@/api/ecn'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
@@ -74,7 +74,7 @@ interface ECN {
   created_at: string
 }
 
-const ecns = ref<ECN[]>(mockEcns as any)
+const ecns = ref<ECN[]>([])
 
 const searchForm = reactive({ keyword: '', status: '' })
 const searchColumns: FormColumnItem[] = [
@@ -136,13 +136,31 @@ watch(
   { immediate: true }
 )
 
+async function fetchList() {
+  try {
+    const res = await getECNList({
+      page: pagination.currentPage,
+      page_size: pagination.pageSize,
+      code: searchForm.keyword || undefined,
+      material: searchForm.keyword || undefined,
+      status: searchForm.status || undefined
+    })
+    ecns.value = (res.data.items || []) as ECN[]
+    pagination.total = res.data.total || 0
+  } catch {
+    ElMessage.error('获取ECN列表失败')
+  }
+}
+
 function handleSearch() {
   pagination.currentPage = 1
+  fetchList()
 }
 function handleReset() {
   searchForm.keyword = ''
   searchForm.status = ''
   pagination.currentPage = 1
+  fetchList()
 }
 
 const impactVisible = ref(false)
@@ -162,12 +180,26 @@ function viewImpact(row: ECN) {
   impactVisible.value = true
 }
 
-function submitEcn(row: ECN) {
-  row.status = 'approved'
-  ElMessage.success('已提交审批')
+async function submitEcn(row: ECN) {
+  try {
+    await updateECN(row.id, { status: 'approved' })
+    row.status = 'approved'
+    ElMessage.success('已提交审批')
+  } catch {
+    ElMessage.error('提交审批失败')
+  }
 }
-function executeEcn(row: ECN) {
-  row.status = 'executed'
-  ElMessage.success('变更已执行')
+async function executeEcn(row: ECN) {
+  try {
+    await updateECN(row.id, { status: 'executed' })
+    row.status = 'executed'
+    ElMessage.success('变更已执行')
+  } catch {
+    ElMessage.error('执行失败')
+  }
 }
+
+onMounted(() => {
+  fetchList()
+})
 </script>

@@ -52,11 +52,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-import { auditLogs as mockLogs } from '@/mock'
+import { getAuditLogs } from '@/api/system'
 
 const AUDIT_ACTION = [
   { value: 'CREATE', label: '新增', type: 'success' as const },
@@ -77,7 +77,21 @@ interface Log {
   created_at: string
 }
 
-const logs = ref<Log[]>(mockLogs as any)
+const logs = ref<Log[]>([])
+
+async function loadLogs() {
+  const res = await getAuditLogs({
+    page: 1,
+    page_size: 1000,
+    user_name: searchForm.user_name || undefined,
+    module: searchForm.module || undefined
+  })
+  logs.value = res.data.items
+}
+
+onMounted(() => {
+  loadLogs()
+})
 
 const searchForm = reactive({ user_name: '', module: '', action: '', date_range: [] as string[] })
 const searchColumns: FormColumnItem[] = [
@@ -129,12 +143,7 @@ const columns: TableColumnItem<Log>[] = [
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 
 const filteredLogs = computed(() => {
-  return logs.value.filter((l) => {
-    if (searchForm.user_name && !l.user_name.includes(searchForm.user_name)) return false
-    if (searchForm.module && !l.module.includes(searchForm.module)) return false
-    if (searchForm.action && l.action !== searchForm.action) return false
-    return true
-  })
+  return logs.value
 })
 
 const pagedLogs = computed(() => {
@@ -144,6 +153,7 @@ const pagedLogs = computed(() => {
 
 function handleSearch() {
   pagination.currentPage = 1
+  loadLogs()
 }
 function handleReset() {
   searchForm.user_name = ''
@@ -151,6 +161,7 @@ function handleReset() {
   searchForm.action = ''
   searchForm.date_range = []
   pagination.currentPage = 1
+  loadLogs()
 }
 
 const detailVisible = ref(false)

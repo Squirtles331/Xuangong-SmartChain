@@ -40,8 +40,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { approvalFlows as mockFlows } from '@/mock'
+import { ref, reactive, onMounted } from 'vue'
+import { getApprovalFlows, createApprovalFlow, updateApprovalFlow, deleteApprovalFlow } from '@/api/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
@@ -53,7 +53,12 @@ interface ApprovalFlow {
   status: string
 }
 
-const flows = ref<ApprovalFlow[]>(mockFlows as any)
+const flows = ref<ApprovalFlow[]>([])
+
+onMounted(async () => {
+  const res = await getApprovalFlows()
+  flows.value = res.data
+})
 
 const columns: TableColumnItem<ApprovalFlow>[] = [
   { type: 'index', label: '#', width: 60 },
@@ -115,9 +120,13 @@ async function submitDialog() {
     .map((s) => s.trim())
     .filter(Boolean)
   if (dialogMode.value === 'add') {
-    flows.value.unshift({ id: Date.now().toString(), ...form, nodes, status: 'active' })
+    await createApprovalFlow({ name: form.name, business_type: form.business_type, nodes, status: 'active' })
+    // Reload list
+    const res = await getApprovalFlows()
+    flows.value = res.data
     ElMessage.success('新增成功')
   } else {
+    await updateApprovalFlow(editingId.value, { name: form.name, business_type: form.business_type, nodes })
     const f = flows.value.find((f) => f.id === editingId.value)
     if (f) {
       f.name = form.name
@@ -136,7 +145,8 @@ function toggleStatus(row: ApprovalFlow) {
 
 function deleteFlow(id: string) {
   ElMessageBox.confirm('确定删除该审批流？', '提示', { type: 'warning' })
-    .then(() => {
+    .then(async () => {
+      await deleteApprovalFlow(id)
       flows.value = flows.value.filter((f) => f.id !== id)
       ElMessage.success('删除成功')
     })

@@ -32,9 +32,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { customers as mockCustomers } from '@/mock'
+import { getCustomerList, createCustomer, updateCustomer, deleteCustomer } from '@/api/crm'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 interface Customer {
@@ -48,7 +48,7 @@ interface Customer {
   status: string
 }
 
-const customers = ref<Customer[]>(mockCustomers as any)
+const customers = ref<Customer[]>([])
 
 const searchForm = ref({ code: '', name: '', status: '' })
 const searchColumns: FormColumnItem[] = [
@@ -67,26 +67,13 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const filteredCustomers = computed(() => {
-  return customers.value.filter(
-    (c) =>
-      (!searchForm.value.code || c.code.includes(searchForm.value.code)) &&
-      (!searchForm.value.name || c.name.includes(searchForm.value.name)) &&
-      (!searchForm.value.status || c.status === searchForm.value.status)
-  )
-})
-
 const pagination = ref({
   currentPage: 1,
   pageSize: 10,
-  total: computed(() => filteredCustomers.value.length)
+  total: 0
 }) as any
 
-const pagedCustomers = computed(() => {
-  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
-  const end = start + pagination.value.pageSize
-  return filteredCustomers.value.slice(start, end)
-})
+const pagedCustomers = ref<Customer[]>([])
 
 function formatNumber(n: number) {
   return n.toLocaleString('en-US')
@@ -116,17 +103,37 @@ const formColumns: FormColumnItem[] = [
   { type: 'input-number', label: '信用额度', field: 'credit_limit', props: { min: 0, step: 10000 } as any }
 ]
 
+onMounted(() => {
+  fetchData()
+})
+
+async function fetchData() {
+  const params = {
+    page: pagination.value.currentPage,
+    page_size: pagination.value.pageSize,
+    name: searchForm.value.name || undefined,
+    status: searchForm.value.status || undefined
+  }
+  const res = await getCustomerList(params)
+  customers.value = res.data.items
+  pagination.value.total = res.data.total
+  pagedCustomers.value = res.data.items
+}
+
 function handleSearch() {
   pagination.value.currentPage = 1
+  fetchData()
 }
 
 function handleReset() {
   searchForm.value = { code: '', name: '', status: '' }
   pagination.value.currentPage = 1
+  fetchData()
 }
 
 function refresh() {
   pagination.value.currentPage = 1
+  fetchData()
 }
 
 function openAdd() {
@@ -146,24 +153,22 @@ async function submitDialog() {
     return false
   }
   if (dialogMode.value === 'add') {
-    customers.value.unshift({
-      id: Date.now().toString(),
-      ...form
-    } as Customer)
+    await createCustomer({ ...form })
   } else {
-    const idx = customers.value.findIndex((c) => c.id === editingId.value)
-    if (idx > -1) Object.assign(customers.value[idx], form)
+    await updateCustomer(editingId.value, { ...form })
   }
   ElMessage.success(dialogMode.value === 'add' ? '新增成功' : '保存成功')
+  await fetchData()
   return true
 }
-function deleteCust(id: string) {
+async function deleteCust(id: string) {
   ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      customers.value = customers.value.filter((c) => c.id !== id)
-      if ((pagination.value.currentPage - 1) * pagination.value.pageSize >= filteredCustomers.value.length) {
+    .then(async () => {
+      await deleteCustomer(id)
+      if ((pagination.value.currentPage - 1) * pagination.value.pageSize >= pagination.value.total - 1) {
         pagination.value.currentPage = Math.max(1, pagination.value.currentPage - 1)
       }
+      await fetchData()
       ElMessage.success('删除成功')
     })
     .catch(() => {})

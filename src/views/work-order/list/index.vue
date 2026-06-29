@@ -58,10 +58,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
-import { workOrders as mockWOs } from '@/mock'
+import { getWorkOrderList, approveWorkOrder, releaseWorkOrder, closeWorkOrder } from '@/api/work-order'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { WORK_ORDER_STATUS, WORK_ORDER_PRIORITY } from '@/common/status-maps'
@@ -85,8 +85,39 @@ interface WorkOrder {
   planned_end_date: string
 }
 
-// ==================== Mock 数据 ====================
-const orders = ref<WorkOrder[]>(mockWOs as any)
+// ==================== 数据加载 ====================
+const orders = ref<WorkOrder[]>([])
+const total = ref(0)
+const loading = ref(false)
+
+async function fetchOrders() {
+  loading.value = true
+  try {
+    const params: any = {
+      page: pagination.currentPage,
+      page_size: pagination.pageSize
+    }
+    if (searchForm.code) params.code = searchForm.code
+    if (searchForm.status) params.status = searchForm.status
+    if (searchForm.priority) params.priority = searchForm.priority
+    if (searchForm.date_range && searchForm.date_range.length === 2) {
+      const start = searchForm.date_range[0]
+      const end = searchForm.date_range[1]
+      if (start) params.start_date = start
+      if (end) params.end_date = end
+    }
+
+    const res = await getWorkOrderList(params)
+    orders.value = res.data.items as WorkOrder[]
+    total.value = res.data.total
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchOrders()
+})
 
 // ==================== 搜索 ====================
 const searchForm = reactive({ code: '', status: '', priority: '', workshop: '', date_range: [] as string[] })
@@ -154,43 +185,35 @@ const columns: TableColumnItem<WorkOrder>[] = [
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
 
-const filteredOrders = computed(() => {
-  return orders.value.filter((o) => {
-    if (searchForm.code && !o.code.includes(searchForm.code)) return false
-    if (searchForm.status && o.status !== searchForm.status) return false
-    if (searchForm.priority && o.priority !== searchForm.priority) return false
-    if (searchForm.date_range && searchForm.date_range.length === 2) {
-      const start = searchForm.date_range[0]
-      const end = searchForm.date_range[1]
-      if (start && end) {
-        if (o.planned_end_date < start || o.planned_end_date > end) return false
-      }
-    }
-    return true
-  })
+// 分页使用 API 服务端分页，数据直接绑定
+const pagedOrders = computed(() => orders.value)
+
+// 同步 pagination.total
+watch(total, (val) => {
+  pagination.total = val
 })
 
-const pagedOrders = computed(() => {
-  const s = (pagination.currentPage - 1) * pagination.pageSize
-  return filteredOrders.value.slice(s, s + pagination.pageSize)
-})
-
-// 副作用分离：更新 total
-// 自动更新分页total
+// 监听分页变化重新请求
 watch(
-  filteredOrders,
-  (val) => {
-    pagination.total = val.length
-  },
-  { immediate: true }
+  () => pagination.currentPage,
+  () => fetchOrders()
+)
+watch(
+  () => pagination.pageSize,
+  () => {
+    pagination.currentPage = 1
+    fetchOrders()
+  }
 )
 
 function handleSearch() {
   pagination.currentPage = 1
+  fetchOrders()
 }
 function handleReset() {
   Object.assign(searchForm, { code: '', status: '', priority: '', date_range: [] })
   pagination.currentPage = 1
+  fetchOrders()
 }
 function del(id: string) {
   ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
@@ -238,21 +261,24 @@ function isOverdue(row: WorkOrder) {
   return new Date(row.planned_end_date) < new Date()
 }
 
-function submitApproval(row: WorkOrder) {
-  row.status = 'approved'
-  ElMessage.success(`工单 ${row.code} 已提交审批`)
+async function submitApproval(row: WorkOrder) {
+  const res = await approveWorkOrder(row.id, true)
+  ElMessage.success(res.message || `工单 ${row.code} 已提交审批`)
+  fetchOrders()
 }
 
-function releaseOrder(row: WorkOrder) {
-  row.status = 'released'
-  ElMessage.success(`工单 ${row.code} 已下发到车间`)
+async function releaseOrder(row: WorkOrder) {
+  const res = await releaseWorkOrder(row.id)
+  ElMessage.success(res.message || `工单 ${row.code} 已下发到车间`)
+  fetchOrders()
 }
 
-function closeOrder(row: WorkOrder) {
+async function closeOrder(row: WorkOrder) {
   ElMessageBox.confirm('确认关闭该工单？', '确认', { type: 'warning' })
-    .then(() => {
-      row.status = 'closed'
-      ElMessage.success('工单已关闭')
+    .then(async () => {
+      const res = await closeWorkOrder(row.id, { close_type: 'normal' })
+      ElMessage.success(res.message || '工单已关闭')
+      fetchOrders()
     })
     .catch(() => {})
 }

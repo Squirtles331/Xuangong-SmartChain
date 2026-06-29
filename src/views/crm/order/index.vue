@@ -27,10 +27,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { salesOrders as mockOrders } from '@/mock'
+import { getSalesOrderList, updateSalesOrder } from '@/api/crm'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
@@ -45,7 +45,7 @@ interface Order {
   status: string
 }
 
-const orders = ref<Order[]>(mockOrders as any)
+const orders = ref<Order[]>([])
 
 const router = useRouter()
 
@@ -91,25 +91,25 @@ const columns: TableColumnItem<Order>[] = [
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const filtered = computed(() =>
-  orders.value.filter((o) => {
-    if (searchForm.code && !o.code.includes(searchForm.code)) return false
-    if (searchForm.customer_name && !o.customer_name.includes(searchForm.customer_name)) return false
-    if (searchForm.status && o.status !== searchForm.status) return false
-    return true
-  })
-)
-const pagedOrders = computed(() => {
-  return filtered.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
+const pagedOrders = ref<Order[]>([])
+
+onMounted(() => {
+  fetchData()
 })
 
-watch(
-  filtered,
-  (val) => {
-    pagination.total = val.length
-  },
-  { immediate: true }
-)
+async function fetchData() {
+  const params = {
+    page: pagination.currentPage,
+    page_size: pagination.pageSize,
+    code: searchForm.code || undefined,
+    customer_name: searchForm.customer_name || undefined,
+    status: searchForm.status || undefined
+  }
+  const res = await getSalesOrderList(params)
+  orders.value = res.data.items
+  pagination.total = res.data.total
+  pagedOrders.value = res.data.items
+}
 
 function statusStep(s: string) {
   const map: Record<string, number> = { approved: 1, in_production: 2, pending_delivery: 3, delivered: 4, completed: 5 }
@@ -117,17 +117,20 @@ function statusStep(s: string) {
 }
 function handleSearch() {
   pagination.currentPage = 1
+  fetchData()
 }
 function handleReset() {
   searchForm.code = ''
   searchForm.customer_name = ''
   searchForm.status = ''
   pagination.currentPage = 1
+  fetchData()
 }
 function viewDetail(row: Order) {
   router.push('/crm/order/' + row.id)
 }
-function createDelivery(row: Order) {
+async function createDelivery(row: Order) {
+  await updateSalesOrder(row.id, { status: 'completed' as const })
   row.status = 'completed'
   ElMessage.success('已生成发货通知')
 }

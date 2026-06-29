@@ -35,25 +35,16 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
 import type { TableColumnItem } from 'gi-component'
-import { workOrders, salesOrders } from '@/mock'
+import { getDashboardStats, getHomeCharts } from '@/api/dashboard'
 
-// 从 mock 数据计算 topCards
-const topCards = computed(() => {
-  const completedOrders = salesOrders.filter((o: any) => o.status === 'completed')
-  const revenue = completedOrders.reduce((sum: number, o: any) => sum + o.amount, 0) / 10000
-  const activeWos = workOrders.filter((wo: any) => wo.status === 'in_progress' || wo.status === 'released').length
-  const totalWos = workOrders.length
-  const completedWos = workOrders.filter((wo: any) => wo.status === 'completed' || wo.status === 'closed').length
-  const oee = totalWos > 0 ? Math.min(95, 65 + (completedWos / totalWos) * 25) : 0
-  const deliveryRate = completedOrders.length > 0 ? 94.2 : 92.0
+// 从 API 数据计算 topCards
+const topCards = ref([
+  { title: '本月营收', value: 0, unit: '万元', trend: 0, color: '#409eff' },
+  { title: '在制工单', value: 0, unit: '单', trend: 0, color: '#67c23a' },
+  { title: '设备OEE', value: 0, unit: '%', trend: 0, color: '#e6a23c' },
+  { title: '订单交付率', value: 0, unit: '%', trend: 0, color: '#f56c6c' }
+])
 
-  return [
-    { title: '本月营收', value: Math.round(revenue || 850), unit: '万元', trend: 12.5, color: '#409eff' },
-    { title: '在制工单', value: activeWos || 28, unit: '单', trend: -5.2, color: '#67c23a' },
-    { title: '设备OEE', value: Number(oee.toFixed(1)), unit: '%', trend: 3.1, color: '#e6a23c' },
-    { title: '订单交付率', value: deliveryRate, unit: '%', trend: 1.8, color: '#f56c6c' }
-  ]
-})
 const chart1 = ref()
 const chart2 = ref()
 const chart3 = ref()
@@ -67,43 +58,70 @@ function handleResize() {
   chart3Instance?.resize()
 }
 
-onMounted(() => {
+const rankData = ref<any[]>([])
+const rankCols: TableColumnItem<any>[] = [
+  { type: 'index', label: '#', minWidth: 50 },
+  { prop: 'material', label: '产品', minWidth: 180 },
+  { prop: 'qty', label: '产量', minWidth: 80, align: 'center' }
+]
+
+async function fetchDashboardData() {
+  try {
+    const [statsRes, chartsRes] = await Promise.all([
+      getDashboardStats(),
+      getHomeCharts()
+    ])
+
+    if (statsRes.data) {
+      const s = statsRes.data
+      topCards.value = [
+        { title: '本月营收', value: s.revenue ?? 850, unit: '万元', trend: s.revenue_trend ?? 12.5, color: '#409eff' },
+        { title: '在制工单', value: s.active_orders ?? 28, unit: '单', trend: s.orders_trend ?? -5.2, color: '#67c23a' },
+        { title: '设备OEE', value: s.oee ?? 85.2, unit: '%', trend: s.oee_trend ?? 3.1, color: '#e6a23c' },
+        { title: '订单交付率', value: s.delivery_rate ?? 94.2, unit: '%', trend: s.delivery_trend ?? 1.8, color: '#f56c6c' }
+      ]
+      rankData.value = s.top_products || []
+    }
+
+    if (chartsRes.data) {
+      const c = chartsRes.data
+      // Init charts with API data
+      initCharts(c)
+    }
+  } catch {
+    // Fallback with default charts
+    initCharts(null)
+  }
+}
+
+function initCharts(chartData: any) {
   if (chart1.value) {
     chart1Instance = echarts.init(chart1.value)
     chart1Instance.setOption({
       tooltip: { trigger: 'axis' },
       legend: { data: ['营收', '成本', '利润'] },
-      xAxis: { type: 'category', data: ['7月', '8月', '9月', '10月', '11月', '12月', '1月'] },
+      xAxis: { type: 'category', data: chartData?.trend?.months || ['7月', '8月', '9月', '10月', '11月', '12月', '1月'] },
       yAxis: { type: 'value' },
       series: [
-        { name: '营收', type: 'bar', data: [680, 720, 780, 750, 820, 800, 850], itemStyle: { color: '#409eff' } },
-        { name: '成本', type: 'bar', data: [520, 550, 580, 570, 600, 590, 620], itemStyle: { color: '#e6a23c' } },
-        { name: '利润', type: 'line', data: [160, 170, 200, 180, 220, 210, 230], itemStyle: { color: '#67c23a' } }
+        { name: '营收', type: 'bar', data: chartData?.trend?.revenue || [680, 720, 780, 750, 820, 800, 850], itemStyle: { color: '#409eff' } },
+        { name: '成本', type: 'bar', data: chartData?.trend?.cost || [520, 550, 580, 570, 600, 590, 620], itemStyle: { color: '#e6a23c' } },
+        { name: '利润', type: 'line', data: chartData?.trend?.profit || [160, 170, 200, 180, 220, 210, 230], itemStyle: { color: '#67c23a' } }
       ]
     })
   }
   if (chart2.value) {
-    const statusCount: Record<string, number> = { released: 0, in_progress: 0, completed: 0, draft: 0, closed: 0 }
-    workOrders.forEach((wo: any) => {
-      const s = wo.status
-      if (s === 'released') statusCount.released++
-      else if (s === 'in_progress') statusCount.in_progress++
-      else if (s === 'completed') statusCount.completed++
-      else if (s === 'draft' || s === 'approved') statusCount.draft++
-      else if (s === 'closed') statusCount.closed++
-    })
     chart2Instance = echarts.init(chart2.value)
     chart2Instance.setOption({
       series: [
         {
           type: 'pie',
           radius: ['55%', '80%'],
-          data: [
-            { value: statusCount.released || 12, name: '已下发' },
-            { value: statusCount.in_progress || 28, name: '生产中' },
-            { value: statusCount.completed || 8, name: '已完工' },
-            { value: statusCount.draft || 5, name: '待审批' },
-            { value: statusCount.closed || 3, name: '已关闭' }
+          data: chartData?.order_status || [
+            { value: 12, name: '已下发' },
+            { value: 28, name: '生产中' },
+            { value: 8, name: '已完工' },
+            { value: 5, name: '待审批' },
+            { value: 3, name: '已关闭' }
           ],
           label: { formatter: '{b}\n{d}%' }
         }
@@ -114,16 +132,20 @@ onMounted(() => {
     chart3Instance = echarts.init(chart3.value)
     chart3Instance.setOption({
       tooltip: { trigger: 'axis' },
-      legend: { data: ['一车间', '二车间', '装配车间'] },
-      xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五', '周六'] },
+      legend: { data: chartData?.capacity?.legend || ['一车间', '二车间', '装配车间'] },
+      xAxis: { type: 'category', data: chartData?.capacity?.days || ['周一', '周二', '周三', '周四', '周五', '周六'] },
       yAxis: { type: 'value', max: 100 },
-      series: [
-        { name: '一车间', type: 'line', data: [85, 88, 82, 90, 86, 45], itemStyle: { color: '#409eff' } },
-        { name: '二车间', type: 'line', data: [78, 80, 75, 82, 79, 40], itemStyle: { color: '#67c23a' } },
-        { name: '装配车间', type: 'line', data: [92, 90, 88, 95, 91, 50], itemStyle: { color: '#e6a23c' } }
-      ]
+      series: (chartData?.capacity?.series || [
+        { name: '一车间', data: [85, 88, 82, 90, 86, 45], itemStyle: { color: '#409eff' } },
+        { name: '二车间', data: [78, 80, 75, 82, 79, 40], itemStyle: { color: '#67c23a' } },
+        { name: '装配车间', data: [92, 90, 88, 95, 91, 50], itemStyle: { color: '#e6a23c' } }
+      ]).map((s: any) => ({ ...s, type: 'line' }))
     })
   }
+}
+
+onMounted(() => {
+  fetchDashboardData()
   window.addEventListener('resize', handleResize)
 })
 
@@ -133,23 +155,6 @@ onBeforeUnmount(() => {
   chart2Instance?.dispose()
   chart3Instance?.dispose()
 })
-// Top10 产品产量：从工单数据聚合
-const rankData = computed(() => {
-  const map = new Map<string, number>()
-  workOrders.forEach((wo: any) => {
-    const name = wo.material_name
-    map.set(name, (map.get(name) || 0) + (wo.completed_qty || 0))
-  })
-  return Array.from(map.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([material, qty], i) => ({ rank: i + 1, material, qty }))
-})
-const rankCols: TableColumnItem<any>[] = [
-  { type: 'index', label: '#', minWidth: 50 },
-  { prop: 'material', label: '产品', minWidth: 180 },
-  { prop: 'qty', label: '产量', minWidth: 80, align: 'center' }
-]
 </script>
 <style scoped>
 .dashboard-v2 {

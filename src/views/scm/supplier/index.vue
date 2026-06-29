@@ -23,11 +23,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { suppliers as mockSuppliers } from '@/mock'
+import { getSupplierList, createSupplier, updateSupplier, deleteSupplier } from '@/api/scm'
 import StatusTag from '@/components/StatusTag.vue'
-import { CUSTOMER_STATUS } from '@/common/status-maps'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
 const SUPPLIER_STATUS = [
@@ -47,12 +46,7 @@ interface S {
   qualified: boolean
   score?: number
 }
-const suppliers = ref<S[]>(
-  (mockSuppliers as any).map((s: any, i: number) => ({
-    ...s,
-    score: [95, 88, 72, 60, 91, 85][i] || 75
-  }))
-)
+const suppliers = ref<S[]>([])
 const columns: TableColumnItem<S>[] = [
   { prop: 'code', label: '编码', width: 150 },
   { prop: 'name', label: '名称', minWidth: 180 },
@@ -75,6 +69,19 @@ const formCols: FormColumnItem[] = [
   { type: 'input', label: '电话', field: 'phone' },
   { type: 'input', label: '付款条款', field: 'terms' }
 ]
+
+onMounted(() => {
+  fetchData()
+})
+
+async function fetchData() {
+  const res = await getSupplierList({ page: 1, page_size: 100 })
+  suppliers.value = (res.data.items as any[]).map((s: any, i: number) => ({
+    ...s,
+    score: [95, 88, 72, 60, 91, 85][i] || 75
+  }))
+}
+
 function openAdd() {
   mode.value = 'add'
   Object.assign(form, { code: '', name: '', contact: '', phone: '', terms: '月结30天' })
@@ -91,13 +98,20 @@ async function submit() {
     ElMessage.warning('请填写编码和名称')
     return false
   }
+  if (mode.value === 'add') {
+    await createSupplier({ ...form })
+  } else {
+    await updateSupplier(eid.value, { ...form })
+  }
   ElMessage.success('保存成功')
+  await fetchData()
   return true
 }
-function del(id: string) {
+async function del(id: string) {
   ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
-    .then(() => {
-      suppliers.value = suppliers.value.filter((s) => s.id !== id)
+    .then(async () => {
+      await deleteSupplier(id)
+      await fetchData()
       ElMessage.success('删除成功')
     })
     .catch(() => {})

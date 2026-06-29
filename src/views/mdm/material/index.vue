@@ -42,11 +42,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-import { materialTree as mockCatTree, materialList as mockMaterials } from '@/mock'
+import { getMaterialList, getMaterialTree, createMaterial, updateMaterial, deleteMaterial } from '@/api/mdm'
 
 interface M {
   id: string
@@ -57,9 +57,9 @@ interface M {
   unit: string
 }
 
-const catTree = ref(JSON.parse(JSON.stringify(mockCatTree)))
+const catTree = ref<any[]>([])
 
-const materials = ref<M[]>(mockMaterials as any)
+const materials = ref<M[]>([])
 
 const searchForm = reactive({ keyword: '', category: '' })
 const searchColumns: FormColumnItem[] = [
@@ -87,26 +87,32 @@ const columns: TableColumnItem<M>[] = [
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
+const pagedMaterials = ref<M[]>([])
 
-const filteredMaterials = computed(() => {
-  return materials.value.filter((m) => {
-    if (searchForm.keyword && !m.name.includes(searchForm.keyword) && !m.code.includes(searchForm.keyword)) return false
-    return true
-  })
+onMounted(() => {
+  fetchTree()
+  fetchData()
 })
 
-const pagedMaterials = computed(() => {
-  const start = (pagination.currentPage - 1) * pagination.pageSize
-  return filteredMaterials.value.slice(start, start + pagination.pageSize)
-})
+async function fetchTree() {
+  const res = await getMaterialTree()
+  catTree.value = res.data as any[]
+}
 
-watch(
-  filteredMaterials,
-  (val) => {
-    pagination.total = val.length
-  },
-  { immediate: true }
-)
+async function fetchData() {
+  const params: { page: number; page_size: number; code?: string; name?: string } = {
+    page: pagination.currentPage,
+    page_size: pagination.pageSize
+  }
+  if (searchForm.keyword) {
+    // Try both code and name search
+    params.name = searchForm.keyword
+  }
+  const res = await getMaterialList(params)
+  materials.value = res.data.items as M[]
+  pagination.total = res.data.total
+  pagedMaterials.value = res.data.items as M[]
+}
 
 function onCatClick(data: any) {
   searchForm.category = data.name
@@ -114,14 +120,13 @@ function onCatClick(data: any) {
 }
 function handleSearch() {
   pagination.currentPage = 1
+  fetchData()
 }
 function handleReset() {
   searchForm.keyword = ''
   searchForm.category = ''
   pagination.currentPage = 1
-}
-function handleExport() {
-  ElMessage.success('导出成功')
+  fetchData()
 }
 function refresh() {
   handleReset()
@@ -169,14 +174,15 @@ async function submitDialog() {
     return false
   }
   if (dialogMode.value === 'add') {
-    materials.value.unshift({ id: Date.now().toString(), ...formModel } as M)
+    await createMaterial({ ...formModel })
   } else {
-    const idx = materials.value.findIndex((m) => m.id === editingId.value)
-    if (idx > -1) Object.assign(materials.value[idx], formModel)
+    await updateMaterial(editingId.value, { ...formModel })
   }
+  await fetchData()
   return true
 }
-function remove(id: string) {
-  materials.value = materials.value.filter((m) => m.id !== id)
+async function remove(id: string) {
+  await deleteMaterial(id)
+  await fetchData()
 }
 </script>

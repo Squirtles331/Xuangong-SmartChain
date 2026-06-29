@@ -54,12 +54,12 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { inspectionTasks } from '@/mock'
+import { getInspectionTaskList, updateInspectionTask } from '@/api/qms'
 
 const INSPECTION_VERDICT = [
   { value: '合格', label: '合格', type: 'success' as const },
@@ -122,7 +122,7 @@ interface T {
   status: string
   verdict?: string
 }
-const data = ref<T[]>(mockTasks.map((t: any) => ({ ...t, verdict: '' })) as T[])
+const data = ref<T[]>([])
 
 const filteredData = computed(() => {
   return data.value.filter((d) => {
@@ -146,12 +146,32 @@ const pagedData = computed(() => {
   return filteredData.value.slice(start, end)
 })
 
+async function fetchList() {
+  try {
+    const res = await getInspectionTaskList({
+      page: 1,
+      page_size: 200,
+      code: s.value.keyword || undefined,
+      type: s.value.type || undefined,
+      material: s.value.keyword || undefined
+    })
+    data.value = (res.data.items || res.data || []).map((t: any) => ({
+      ...t,
+      verdict: t.verdict || ''
+    })) as T[]
+  } catch {
+    ElMessage.error('获取检验任务列表失败')
+  }
+}
+
 function hs() {
   pagination.value.currentPage = 1
+  fetchList()
 }
 function hr() {
   s.value = { keyword: '', type: '', verdict: '' }
   pagination.value.currentPage = 1
+  fetchList()
 }
 
 const cols: TableColumnItem<T>[] = [
@@ -168,14 +188,18 @@ const cols: TableColumnItem<T>[] = [
 const iv = ref(false)
 const ic = ref<T | null>(null)
 const ir = ref('qualified')
-const items = ref(inspectionTasks as any)
+const items = ref<any[]>([])
 function inspect(r: T) {
   ic.value = r
   iv.value = true
+  items.value = [
+    { name: '尺寸', standard: '100.00', value: '' },
+    { name: '硬度', standard: '45', value: '' },
+    { name: '表面粗糙度', standard: '3.2', value: '' }
+  ]
 }
-function submitInspect() {
+async function submitInspect() {
   if (ic.value) {
-    ic.value.status = 'done'
     const verdictMap: Record<string, string> = {
       qualified: '合格',
       concession: '让步',
@@ -183,9 +207,22 @@ function submitInspect() {
       return: '退货',
       scrap: '报废'
     }
-    ic.value.verdict = verdictMap[ir.value] || ''
+    try {
+      await updateInspectionTask(ic.value.id, {
+        status: 'done',
+        verdict: verdictMap[ir.value] || ''
+      })
+      ic.value.status = 'done'
+      ic.value.verdict = verdictMap[ir.value] || ''
+      ElMessage.success(`检验完成: ${ir.value}`)
+    } catch {
+      ElMessage.error('提交检验结果失败')
+    }
   }
   iv.value = false
-  ElMessage.success(`检验完成: ${ir.value}`)
 }
+
+onMounted(() => {
+  fetchList()
+})
 </script>

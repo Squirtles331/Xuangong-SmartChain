@@ -67,11 +67,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Folder, Document, Operation } from '@element-plus/icons-vue'
 import type { FormColumnItem } from 'gi-component'
-import { menuTree as mockMenuTree } from '@/mock'
+import { getMenuTree, createMenu, updateMenu, deleteMenu } from '@/api/system'
 
 interface MenuNode {
   id: string
@@ -90,7 +90,12 @@ interface MenuNode {
 type MenuNodeType = MenuNode['type']
 type MenuForm = Omit<MenuNode, 'id' | 'parent_id' | 'children'>
 
-const menuTree = ref<MenuNode[]>(JSON.parse(JSON.stringify(mockMenuTree)))
+const menuTree = ref<MenuNode[]>([])
+
+onMounted(async () => {
+  const res = await getMenuTree()
+  menuTree.value = res.data
+})
 const currentNode = ref<MenuNode | null>(null)
 
 const nodeForm = reactive<MenuForm>({
@@ -270,17 +275,18 @@ function addNode(type: MenuNodeType) {
   nodeForm.visible = true
 }
 
-function saveNode() {
+async function saveNode() {
   if (!nodeForm.name || !nodeForm.permission_code) {
     ElMessage.warning('请填写名称和权限编码')
     return
   }
   if (currentNode.value!.id) {
+    await updateMenu(currentNode.value!.id, { ...nodeForm })
     Object.assign(currentNode.value, nodeForm)
     ElMessage.success('保存成功')
   } else {
     const newNode: MenuNode = {
-      id: Date.now().toString(),
+      id: '',
       parent_id: currentNode.value!.parent_id,
       name: nodeForm.name,
       type: nodeForm.type,
@@ -291,24 +297,19 @@ function saveNode() {
       sort_order: nodeForm.sort_order,
       visible: nodeForm.visible
     }
-    const parent = currentNode.value!.parent_id
-    if (parent) {
-      const parentNode = findNode(menuTree.value, parent)
-      if (parentNode) {
-        if (!parentNode.children) parentNode.children = []
-        parentNode.children.push(newNode)
-      }
-    } else {
-      menuTree.value.push(newNode)
-    }
+    await createMenu(newNode)
+    // Reload tree to get server-assigned id
+    const res = await getMenuTree()
+    menuTree.value = res.data
     ElMessage.success('新增成功')
   }
   currentNode.value = null
 }
 
-function removeNode() {
+async function removeNode() {
   if (!currentNode.value?.id) return
   const id = currentNode.value.id
+  await deleteMenu(id)
   removeFromTree(menuTree.value, id)
   currentNode.value = null
   ElMessage.success('删除成功')

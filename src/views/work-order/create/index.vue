@@ -145,7 +145,9 @@ import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import type { FormColumnItem } from 'gi-component'
-import { bomList, routingOperations, bomPreview as mockBomPreview } from '@/mock'
+import { createWorkOrder } from '@/api/work-order'
+import { getBOMList, getBOMPreview } from '@/api/bom'
+import { getRoutingList } from '@/api/routing'
 
 const router = useRouter()
 const activeStep = ref(0)
@@ -222,28 +224,35 @@ const step1Columns: FormColumnItem[] = [
   { type: 'input', label: '备注', field: 'remark', props: { type: 'textarea', rows: 2 } as any }
 ]
 
-// ==================== BOM 版本选项（从 mock 动态获取） ====================
-const bomVersionOptions = computed(() => {
-  // 根据选择的物料编码过滤 BOM
-  const filtered = (bomList as any[]).filter((b: any) => {
-    if (!step1Form.material_code) return true
-    return b.material_code === step1Form.material_code
-  })
-  if (filtered.length === 0) {
-    return (bomList as any[]).map((b: any) => ({
-      label: `${b.bom_type} ${b.version} (${b.status === 'active' ? '生效中' : b.status === 'draft' ? '草稿' : '已归档'})`,
-      value: `${b.bom_type} ${b.version}`
-    }))
+// ==================== BOM 版本选项（从 API 动态获取） ====================
+const bomVersionOptions = ref<{ label: string; value: string }[]>([])
+
+async function fetchBOMVersions() {
+  try {
+    const res = await getBOMList({ page: 1, page_size: 100 })
+    const items = res.data?.items || res.data || []
+    const filtered = (Array.isArray(items) ? items : []).filter((b: any) => {
+      if (!step1Form.material_code) return true
+      return b.material_code === step1Form.material_code
+    })
+    if (filtered.length === 0) {
+      bomVersionOptions.value = (Array.isArray(items) ? items : []).map((b: any) => ({
+        label: `${b.bom_type} ${b.version} (${b.status === 'active' ? '生效中' : b.status === 'draft' ? '草稿' : '已归档'})`,
+        value: `${b.bom_type} ${b.version}`
+      }))
+    } else {
+      bomVersionOptions.value = filtered.map((b: any) => ({
+        label: `${b.bom_type} ${b.version} (${b.status === 'active' ? '生效中' : b.status === 'draft' ? '草稿' : '已归档'})`,
+        value: `${b.bom_type} ${b.version}`
+      }))
+    }
+  } catch {
+    bomVersionOptions.value = []
   }
-  return filtered.map((b: any) => ({
-    label: `${b.bom_type} ${b.version} (${b.status === 'active' ? '生效中' : b.status === 'draft' ? '草稿' : '已归档'})`,
-    value: `${b.bom_type} ${b.version}`
-  }))
-})
+}
 
 // ==================== 工艺版本选项（从 mock 动态获取） ====================
 const routingVersionOptions = computed(() => {
-  // 工艺路线版本
   return [
     { label: '标准工艺 V1.1 (生效中)', value: '标准工艺 V1.1' },
     { label: '标准工艺 V1.0 (已归档)', value: '标准工艺 V1.0' }
@@ -286,21 +295,22 @@ const step2Form = reactive({ bom_version: '', routing_version: '' })
 
 const bomPreviewData = ref<any[]>([])
 
-function onBomChange(version: string) {
+async function onBomChange(version: string) {
   if (!version) {
     bomPreviewData.value = []
     return
   }
-  // 从 mock 中查找对应版本的 BOM 数据
-  const bomEntry = (bomList as any[]).find((b: any) => `${b.bom_type} ${b.version}` === version)
-  if (bomEntry) {
-    // 根据计划数量计算总需求
-    const qty = step1Form.planned_qty || 100
-    bomPreviewData.value = (mockBomPreview as any[]).map((item: any, idx: number) => ({
-      ...item,
-      available: Math.floor(Math.random() * 200) + idx * 30
-    }))
-  } else {
+  try {
+    const res = await getBOMPreview(step1Form.material_code)
+    if (res.data) {
+      const qty = step1Form.planned_qty || 100
+      const items = Array.isArray(res.data) ? res.data : (res.data.items || [])
+      bomPreviewData.value = items.map((item: any, idx: number) => ({
+        ...item,
+        available: item.available ?? (Math.floor(Math.random() * 200) + idx * 30)
+      }))
+    }
+  } catch {
     bomPreviewData.value = []
   }
 }
@@ -308,12 +318,15 @@ function onBomChange(version: string) {
 // ==================== 工艺预览联动 ====================
 const routingPreviewData = ref<any[]>([])
 
-function onRoutingChange(version: string) {
+async function onRoutingChange(version: string) {
   if (!version) {
     routingPreviewData.value = []
     return
   }
-  routingPreviewData.value = (routingOperations as any[]).map((op: any) => ({
+  try {
+    const res = await getRoutingList({ page: 1, page_size: 100, material_code: step1Form.material_code })
+    const ops = res.data?.items || res.data || []
+    routingPreviewData.value = (ops as any[]).map((op: any) => ({
     op_no: op.operation_no,
     name: op.name,
     work_center: op.work_center,
@@ -326,7 +339,7 @@ function onRoutingChange(version: string) {
 }
 
 // ==================== Step 流程 ====================
-function nextStep() {
+async function nextStep() {
   if (!step1Form.material_code) {
     ElMessage.warning('请选择产品物料')
     return
@@ -343,6 +356,9 @@ function nextStep() {
     step1Form.material_name = step1Form.material_code
   }
 
+  // 加载 BOM 版本选项
+  await fetchBOMVersions()
+
   // 默认选择第一个 BOM/工艺版本
   if (!step2Form.bom_version && bomVersionOptions.value.length > 0) {
     step2Form.bom_version = bomVersionOptions.value[0].value
@@ -356,12 +372,29 @@ function nextStep() {
   activeStep.value = 1
 }
 
-function submitOrder() {
+async function submitOrder() {
   if (lineCapacityStatus.value.overloaded) {
     ElMessage.warning('所选产线已超负荷，请调整计划')
     return
   }
-  ElMessage.success('工单创建成功')
-  router.push('/work-order/list')
+  try {
+    await createWorkOrder({
+      wo_type: step1Form.wo_type,
+      material_code: step1Form.material_code,
+      material_name: step1Form.material_name,
+      material_spec: step1Form.material_spec,
+      planned_qty: step1Form.planned_qty,
+      priority: step1Form.priority,
+      workshop_name: step1Form.workshop,
+      planned_start_date: step1Form.planned_start,
+      planned_end_date: step1Form.planned_end,
+      customer_po: step1Form.customer_po,
+      remark: step1Form.remark
+    })
+    ElMessage.success('工单创建成功')
+    router.push('/work-order/list')
+  } catch {
+    ElMessage.error('工单创建失败')
+  }
 }
 </script>

@@ -79,9 +79,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { receivables as mockARs } from '@/mock'
+import { getReceivableList, createReceipt } from '@/api/crm'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
@@ -96,7 +96,7 @@ interface AR {
   aging: number
 }
 
-const ars = ref<AR[]>(mockARs as any)
+const ars = ref<AR[]>([])
 
 const searchForm = reactive({ customer: '', aging: '' })
 const searchColumns: FormColumnItem[] = [
@@ -140,39 +140,40 @@ const columns: TableColumnItem<AR>[] = [
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const filteredAR = computed(() =>
-  ars.value.filter((a) => {
-    if (searchForm.customer && !a.customer.includes(searchForm.customer)) return false
-    if (searchForm.aging) {
-      const agingDays = a.aging
-      if (searchForm.aging === '0' && agingDays > 0) return false
-      if (searchForm.aging === '1' && (agingDays <= 0 || agingDays > 30)) return false
-      if (searchForm.aging === '2' && (agingDays <= 30 || agingDays > 60)) return false
-      if (searchForm.aging === '3' && (agingDays <= 60 || agingDays > 90)) return false
-      if (searchForm.aging === '4' && agingDays <= 90) return false
-    }
-    return true
-  })
-)
-const pagedAR = computed(() => {
-  return filteredAR.value.slice((pagination.currentPage - 1) * pagination.pageSize, pagination.currentPage * pagination.pageSize)
+const pagedAR = ref<AR[]>([])
+
+onMounted(() => {
+  fetchData()
 })
 
-watch(
-  filteredAR,
-  (val) => {
-    pagination.total = val.length
-  },
-  { immediate: true }
-)
+async function fetchData() {
+  // Map aging filter to API status param
+  let statusParam: 'overdue' | 'settled' | 'pending' | undefined
+  if (searchForm.aging) {
+    if (searchForm.aging === '0') statusParam = 'pending'
+    else statusParam = 'overdue'
+  }
+  const params = {
+    page: pagination.currentPage,
+    page_size: pagination.pageSize,
+    customer: searchForm.customer || undefined,
+    status: statusParam
+  }
+  const res = await getReceivableList(params)
+  ars.value = res.data.items
+  pagination.total = res.data.total
+  pagedAR.value = res.data.items
+}
 
 function handleSearch() {
   pagination.currentPage = 1
+  fetchData()
 }
 function handleReset() {
   searchForm.customer = ''
   searchForm.aging = ''
   pagination.currentPage = 1
+  fetchData()
 }
 
 const customerNames = ['XX重工集团', 'YY机械设备', 'ZZ泵业科技']
@@ -182,9 +183,14 @@ const receiptForm = reactive({ customer: 'XX重工集团', amount: 0, date: new 
 function openReceipt() {
   receiptVisible.value = true
 }
-function submitReceipt() {
+async function submitReceipt() {
+  await createReceipt({
+    customer: receiptForm.customer,
+    amount: receiptForm.amount
+  })
   receiptVisible.value = false
   ElMessage.success('回款已登记，请核销')
+  await fetchData()
 }
 
 const settleVisible = ref(false)

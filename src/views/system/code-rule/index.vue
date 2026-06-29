@@ -30,8 +30,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { codeRules as mockCodeRules } from '@/mock'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { getCodeRules, createCodeRule, updateCodeRule, deleteCodeRule } from '@/api/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 
@@ -45,7 +45,12 @@ interface CodeRule {
   example: string
 }
 
-const rules = ref<CodeRule[]>(mockCodeRules as any)
+const rules = ref<CodeRule[]>([])
+
+onMounted(async () => {
+  const res = await getCodeRules()
+  rules.value = res.data
+})
 
 const columns: TableColumnItem<CodeRule>[] = [
   { type: 'index', label: '#', width: 60 },
@@ -134,9 +139,13 @@ async function submitDialog() {
   }
   const example = `${form.prefix}20250115${'0'.repeat(form.serial_length - 1)}1`
   if (dialogMode.value === 'add') {
-    rules.value.unshift({ id: Date.now().toString(), ...form, example })
+    await createCodeRule({ ...form, example })
+    // Reload list
+    const res = await getCodeRules()
+    rules.value = res.data
     ElMessage.success('新增成功')
   } else {
+    await updateCodeRule(editingId.value, { ...form, example })
     const r = rules.value.find((r) => r.id === editingId.value)
     if (r) {
       Object.assign(r, form)
@@ -149,7 +158,8 @@ async function submitDialog() {
 
 function deleteRule(id: string) {
   ElMessageBox.confirm('确定删除该编码规则？', '提示', { type: 'warning' })
-    .then(() => {
+    .then(async () => {
+      await deleteCodeRule(id)
       rules.value = rules.value.filter((r) => r.id !== id)
       ElMessage.success('删除成功')
     })

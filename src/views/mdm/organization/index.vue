@@ -54,19 +54,28 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { OfficeBuilding, HomeFilled, Grid, Location } from '@element-plus/icons-vue'
 import type { FormColumnItem } from 'gi-component'
-import { orgTree as mockOrgTree } from '@/mock'
+import { getOrgTree } from '@/api/mdm'
 
-const orgTree = ref(JSON.parse(JSON.stringify(mockOrgTree)))
+const orgTree = ref<any[]>([])
 const currentNode = ref<any>(null)
 
 const orgColumns: FormColumnItem[] = [
   { type: 'input', label: '名称', field: 'name', required: true },
   { type: 'input', label: '编码', field: 'code', props: { placeholder: '自动生成' } as any }
 ]
+
+onMounted(() => {
+  fetchData()
+})
+
+async function fetchData() {
+  const res = await getOrgTree()
+  orgTree.value = JSON.parse(JSON.stringify(res.data))
+}
 
 function onNodeClick(data: any) {
   currentNode.value = { ...data }

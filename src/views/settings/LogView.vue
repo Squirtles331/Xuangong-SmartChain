@@ -33,10 +33,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import StatusTag from '@/components/StatusTag.vue'
-import { auditLogs as mockLogs } from '@/mock'
+import { getAuditLogs } from '@/api/system'
 
 const AUDIT_ACTION = [
   { value: 'CREATE', label: '新增', type: 'success' as const },
@@ -56,7 +56,7 @@ interface Log {
   created_at: string
 }
 
-const logs = ref<Log[]>(mockLogs as any)
+const logs = ref<Log[]>([])
 
 const searchForm = reactive({ user_name: '', module: '', action: '', date_range: [] as string[] })
 const searchColumns: FormColumnItem[] = [
@@ -112,8 +112,26 @@ const pagedLogs = computed(() => {
   return filteredLogs.value.slice(s, s + pagination.pageSize)
 })
 
+async function fetchList() {
+  try {
+    const res = await getAuditLogs({
+      page: pagination.currentPage,
+      page_size: pagination.pageSize,
+      user_name: searchForm.user_name || undefined,
+      module: searchForm.module || undefined,
+      start_date: searchForm.date_range?.[0] || undefined,
+      end_date: searchForm.date_range?.[1] || undefined
+    })
+    logs.value = (res.data.items || []) as Log[]
+    pagination.total = res.data.total || 0
+  } catch {
+    // Silently fail for audit logs
+  }
+}
+
 function handleSearch() {
   pagination.currentPage = 1
+  fetchList()
 }
 function handleReset() {
   searchForm.user_name = ''
@@ -121,6 +139,7 @@ function handleReset() {
   searchForm.action = ''
   searchForm.date_range = []
   pagination.currentPage = 1
+  fetchList()
 }
 
 const detailVisible = ref(false)
@@ -137,6 +156,10 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  fetchList()
+})
 </script>
 
 <style scoped>

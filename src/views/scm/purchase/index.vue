@@ -48,12 +48,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { purchaseOrders as mockPOs } from '@/mock'
+import { getPurchaseOrderList, updatePurchaseOrder } from '@/api/scm'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { PURCHASE_STATUS } from '@/common/status-maps'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
 const PO_STATUS = [
@@ -74,7 +73,7 @@ interface PO {
   delivery: string
   status: string
 }
-const pos = ref<PO[]>(mockPOs as any)
+const pos = ref<PO[]>([])
 const s = reactive({ code: '', supplier: '', status: '' })
 const sc: FormColumnItem[] = [
   { type: 'input', label: '订单编号', field: 'code' } as any,
@@ -113,30 +112,36 @@ const cols: TableColumnItem<PO>[] = [
   { label: '操作', minWidth: 120, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() =>
-  pos.value.filter(
-    (o) => (!s.code || o.code.includes(s.code)) && (!s.supplier || o.supplier.includes(s.supplier)) && (!s.status || o.status === s.status)
-  )
-)
-const pd = computed(() => {
-  return fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize)
+const pd = ref<PO[]>([])
+
+onMounted(() => {
+  fetchData()
 })
 
-watch(
-  fd,
-  (val) => {
-    p.total = val.length
-  },
-  { immediate: true }
-)
+async function fetchData() {
+  const params = {
+    page: p.currentPage,
+    page_size: p.pageSize,
+    code: s.code || undefined,
+    supplier: s.supplier || undefined,
+    status: s.status || undefined
+  }
+  const res = await getPurchaseOrderList(params)
+  pos.value = res.data.items
+  p.total = res.data.total
+  pd.value = res.data.items
+}
+
 function hs() {
   p.currentPage = 1
+  fetchData()
 }
 function hr() {
   s.code = ''
   s.supplier = ''
   s.status = ''
   p.currentPage = 1
+  fetchData()
 }
 const rv = ref(false)
 const rc = ref<PO | null>(null)
@@ -147,17 +152,20 @@ function receive(row: PO) {
   rf.lot = ''
   rv.value = true
 }
-function confirmReceive() {
+async function confirmReceive() {
   if (rc.value) {
     rc.value.received += rf.qty
     rc.value.remain -= rf.qty
-    rc.value.status = rc.value.remain === 0 ? 'received' : 'partial'
+    const newStatus = rc.value.remain === 0 ? 'received' : 'partial'
+    rc.value.status = newStatus
+    await updatePurchaseOrder(rc.value.id, { received: rc.value.received, remain: rc.value.remain, status: newStatus as any })
   }
   rv.value = false
   ElMessage.success('收货成功')
 }
-function closePO(row: PO) {
+async function closePO(row: PO) {
   row.status = 'closed'
+  await updatePurchaseOrder(row.id, { status: 'closed' as const })
   ElMessage.success('订单已关闭')
 }
 

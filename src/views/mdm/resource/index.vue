@@ -29,10 +29,11 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import { equipments as mockEqs } from '@/mock'
+import { getEquipmentList, createEquipment, updateEquipment, deleteEquipment } from '@/api/mdm'
 
 interface Resource {
   id: string
@@ -69,39 +70,40 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-const data = ref<Resource[]>([
-  { id: '1', code: 'EQ0000000001', name: '数控车床', type: '数控设备', model: 'CK6150', status: 'running', workCenter: '数控车组' },
-  { id: '2', code: 'EQ0000000002', name: '数控车床', type: '数控设备', model: 'CK6150', status: 'idle', workCenter: '数控车组' },
-  { id: '3', code: 'EQ0000000003', name: '钻床', type: '钻削设备', model: 'Z3050', status: 'running', workCenter: '钻床组' },
-  { id: '4', code: 'EQ0000000004', name: '磨床', type: '磨削设备', model: 'M1432', status: 'repair', workCenter: '磨床组' },
-  { id: '5', code: 'EQ0000000005', name: '加工中心', type: '数控设备', model: 'VMC850', status: 'running', workCenter: '数控车组' },
-  { id: '6', code: 'EQ0000000006', name: '铣床', type: '铣削设备', model: 'X5032', status: 'idle', workCenter: '铣床组' },
-  { id: '7', code: 'EQ0000000007', name: '镗床', type: '镗削设备', model: 'T611B', status: 'running', workCenter: '镗床组' }
-])
-
-const filteredData = computed(() => {
-  return data.value.filter((r) => {
-    const matchKeyword =
-      !searchForm.value.keyword ||
-      r.code.includes(searchForm.value.keyword) ||
-      r.name.includes(searchForm.value.keyword) ||
-      r.type.includes(searchForm.value.keyword)
-    const matchStatus = !searchForm.value.status || r.status === searchForm.value.status
-    return matchKeyword && matchStatus
-  })
-})
+const data = ref<Resource[]>([])
 
 const pagination = ref({
   currentPage: 1,
   pageSize: 10,
-  total: computed(() => filteredData.value.length)
+  total: 0
 }) as any
 
-const pagedData = computed(() => {
-  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
-  const end = start + pagination.value.pageSize
-  return filteredData.value.slice(start, end)
+const pagedData = ref<Resource[]>([])
+
+onMounted(() => {
+  fetchData()
 })
+
+async function fetchData() {
+  const params: { page: number; page_size: number; name?: string; status?: string } = {
+    page: pagination.value.currentPage,
+    page_size: pagination.value.pageSize
+  }
+  if (searchForm.value.keyword) {
+    params.name = searchForm.value.keyword
+  }
+  if (searchForm.value.status) {
+    params.status = searchForm.value.status
+  }
+  const res = await getEquipmentList(params)
+  data.value = (res.data.items as any[]).map((item: any) => ({
+    ...item,
+    type: item.type || item.model || '',
+    workCenter: item.workshop || item.workCenter || ''
+  }))
+  pagination.value.total = res.data.total
+  pagedData.value = data.value
+}
 
 const cols: TableColumnItem<Resource>[] = [
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
@@ -141,15 +143,18 @@ const formCols: FormColumnItem[] = [
 
 function handleSearch() {
   pagination.value.currentPage = 1
+  fetchData()
 }
 
 function handleReset() {
   searchForm.value = { keyword: '', status: '' }
   pagination.value.currentPage = 1
+  fetchData()
 }
 
 function refresh() {
   pagination.value.currentPage = 1
+  fetchData()
 }
 
 function openAdd() {
@@ -164,11 +169,12 @@ function openEdit(row: Resource) {
   vis.value = true
 }
 
-function del(id: string) {
-  data.value = data.value.filter((r) => r.id !== id)
-  if ((pagination.value.currentPage - 1) * pagination.value.pageSize >= filteredData.value.length) {
+async function del(id: string) {
+  await deleteEquipment(id)
+  if ((pagination.value.currentPage - 1) * pagination.value.pageSize >= pagination.value.total - 1) {
     pagination.value.currentPage = Math.max(1, pagination.value.currentPage - 1)
   }
+  await fetchData()
 }
 
 async function submit() {
@@ -177,11 +183,11 @@ async function submit() {
     return false
   }
   if (mode.value === 'add') {
-    data.value.unshift({ ...form.value })
+    await createEquipment({ ...form.value })
   } else {
-    const idx = data.value.findIndex((r) => r.id === form.value.id)
-    if (idx > -1) data.value[idx] = { ...form.value }
+    await updateEquipment(form.value.id, { ...form.value })
   }
+  await fetchData()
   return true
 }
 </script>

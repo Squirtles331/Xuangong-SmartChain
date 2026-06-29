@@ -24,10 +24,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import { getSystemParams, updateSystemParam, batchUpdateSystemParams, resetSystemParam } from '@/api/system'
 
 interface Param {
   id: string
@@ -37,9 +38,12 @@ interface Param {
   description: string
 }
 
-import { systemParams as mockParams } from '@/mock'
+const params = ref<Param[]>([])
 
-const params = ref<Param[]>(mockParams as any)
+onMounted(async () => {
+  const res = await getSystemParams({ page: 1, page_size: 1000 })
+  params.value = res.data.items
+})
 
 const searchForm = reactive({ keyword: '' })
 const searchColumns: FormColumnItem[] = [
@@ -131,9 +135,13 @@ async function submitDialog() {
     return false
   }
   if (dialogMode.value === 'add') {
-    params.value.unshift({ id: Date.now().toString(), ...form })
+    await batchUpdateSystemParams([{ id: '', value: form.value }])
+    // Reload list
+    const res = await getSystemParams({ page: 1, page_size: 1000 })
+    params.value = res.data.items
     ElMessage.success('新增成功')
   } else {
+    await updateSystemParam(editingId.value, form.value)
     const p = params.value.find((p) => p.id === editingId.value)
     if (p) Object.assign(p, form)
     ElMessage.success('保存成功')
