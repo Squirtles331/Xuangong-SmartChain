@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true" :size="260" style="height: calc(100vh - 120px)">
+  <gi-page-layout :size="260" style="height: calc(100vh - 120px)">
     <template #left>
       <div class="tree-wrapper">
         <el-tree

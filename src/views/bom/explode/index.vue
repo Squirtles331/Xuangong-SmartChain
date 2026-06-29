@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header>
       <el-row :gutter="12">
         <el-col :span="12"><el-input v-model="code" placeholder="输入物料编码" /></el-col>

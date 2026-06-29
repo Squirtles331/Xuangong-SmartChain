@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <el-tabs v-model="activeTab">
       <el-tab-pane label="待开工" name="assigned">
         <!-- 搜索+筛选 -->

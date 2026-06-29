@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #tool><el-button type="primary" @click="runMRP">运行多工厂MRP</el-button></template>
 
     <!-- 各工厂产能利用率柱状图对比 -->

@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header>
       <SearchSetting
         :columns="allSearchColumns"

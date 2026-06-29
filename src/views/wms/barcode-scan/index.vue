@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <el-card shadow="never" style="margin-bottom: 16px">
       <el-form :inline="true">
         <el-form-item label="扫描条码">

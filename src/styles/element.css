@@ -35,7 +35,7 @@
 }
 .el-card__header {
   padding: 16px 20px;
-  border-bottom: 1px solid #EBEEF5;
+  border-bottom: 1px solid #ebeef5;
   font-size: 14px;
   font-weight: 600;
   color: #303133;
@@ -49,7 +49,7 @@
   font-size: 13px;
 }
 .el-table th.el-table__cell {
-  background-color: #FAFAFA;
+  background-color: #fafafa;
   color: #606266;
   font-weight: 600;
   font-size: 12px;
@@ -61,10 +61,10 @@
   color: #303133;
 }
 .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
-  background-color: #FAFAFA;
+  background-color: #fafafa;
 }
 .el-table__body tr:hover > td.el-table__cell {
-  background-color: #ECF5FF;
+  background-color: #ecf5ff;
 }
 
 /* ---- 4. 表单统一 ---- */
@@ -83,12 +83,12 @@
   border-radius: 4px;
 }
 .el-button--primary {
-  background-color: #409EFF;
-  border-color: #409EFF;
+  background-color: #409eff;
+  border-color: #409eff;
 }
 .el-button--primary:hover {
-  background-color: #53A8FF;
-  border-color: #53A8FF;
+  background-color: #53a8ff;
+  border-color: #53a8ff;
 }
 
 /* ---- 6. 对话框统一 ---- */
@@ -97,14 +97,14 @@
 }
 .el-dialog__header {
   padding: 20px 20px 16px;
-  border-bottom: 1px solid #EBEEF5;
+  border-bottom: 1px solid #ebeef5;
 }
 .el-dialog__body {
   padding: 20px;
 }
 .el-dialog__footer {
   padding: 12px 20px 20px;
-  border-top: 1px solid #EBEEF5;
+  border-top: 1px solid #ebeef5;
 }
 
 /* ---- 7. 标签统一 ---- */
@@ -158,7 +158,7 @@
 
 /* ---- 14. 空状态统一 ---- */
 .el-empty__description {
-  color: #C0C4CC;
+  color: #c0c4cc;
 }
 
 /* ---- 15. 滚动条美化 ---- */
@@ -167,7 +167,7 @@
   height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #C0C4CC;
+  background: #c0c4cc;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-track {

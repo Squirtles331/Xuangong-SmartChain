@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #tool>
       <el-button type="primary" @click="printBarcode">打印</el-button>
     </template>

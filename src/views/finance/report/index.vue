@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <el-card header="月度经营概览">
       <el-descriptions :column="3" border>
         <el-descriptions-item label="营业收入">

@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header
       ><h3>销售订单变更 — {{ order?.code }}</h3></template
     >

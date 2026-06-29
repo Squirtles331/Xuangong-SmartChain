@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header><h3>条码/RFID 仓储管理</h3></template>
     <el-tabs v-model="tab">
       <el-tab-pane label="条码打印" name="print">

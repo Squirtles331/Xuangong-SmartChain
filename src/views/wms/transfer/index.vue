@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #tool><gi-button type="add" @click="openAdd" /></template>
     <!-- 在途库存展示 -->
     <el-card header="在途库存概览" shadow="never" style="margin-bottom: 16px">

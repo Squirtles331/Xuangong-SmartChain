@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header><h3>约束理论排程配置</h3></template>
     <el-tabs v-model="tab">
       <el-tab-pane label="模具约束" name="mold">

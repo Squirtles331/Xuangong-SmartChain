@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <el-row :gutter="24">
       <!-- 产品介绍 -->
       <el-col :span="16">

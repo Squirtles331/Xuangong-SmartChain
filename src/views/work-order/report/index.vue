@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <div class="report-container">
       <div class="report-header">
         <h2>工序报工</h2>

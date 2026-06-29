@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header>
       <div class="mrp-header">
         <h2>MRP 运算结果</h2>

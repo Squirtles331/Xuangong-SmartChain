@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header
       ><h3>净变更 MRP</h3>
       <p style="color: #909399; margin: 4px 0">仅重算自上次MRP以来发生变化的部分，大幅缩短运算时间</p></template

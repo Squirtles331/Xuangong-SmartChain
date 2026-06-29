@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header
       ><SearchSetting :columns="allSearchColumns" storage-key="outsource-search" @update:visible-fields="onSearchFieldsChange">
         <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting

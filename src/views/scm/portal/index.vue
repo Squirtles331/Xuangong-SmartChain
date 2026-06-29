@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <el-tabs v-model="tab">
       <el-tab-pane label="供应商门户" name="portal">
         <gi-table :columns="portalCols" :data="orders" border stripe size="small">

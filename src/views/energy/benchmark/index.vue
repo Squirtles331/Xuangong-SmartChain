@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <el-tabs v-model="activeTab">
       <el-tab-pane label="电耗对标" name="electric">
         <el-card header="电耗对标分析" style="margin-top: 16px"><div ref="electricChartRef" style="height: 350px"></div></el-card>

@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header
       ><h3>工单拆分 — {{ wo?.code }}</h3></template
     >

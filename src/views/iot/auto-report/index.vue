@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header><h3>IoT 自动报工规则</h3></template>
     <template #tool><gi-button type="add" @click="openAdd" /></template>
     <!-- 报工成功率统计 -->

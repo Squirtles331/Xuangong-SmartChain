@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <el-row :gutter="16">
       <el-col :span="6" v-for="c in cards" :key="c.title">
         <el-card shadow="hover">

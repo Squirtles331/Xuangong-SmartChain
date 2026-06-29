@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <gi-table :columns="cols" :data="costDetails" border stripe size="small" />
   </gi-page-layout>
 </template>

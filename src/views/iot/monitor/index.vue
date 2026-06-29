@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <div class="iot-grid">
       <el-card v-for="d in devices" :key="d.id" shadow="hover" class="iot-card" :class="d.online ? 'online' : 'offline'" @click="showDetail(d)">
         <div class="iot-header">

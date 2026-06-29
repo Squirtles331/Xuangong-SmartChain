@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header><h3>BOM 版本比较</h3></template>
     <el-row :gutter="16" style="margin-bottom: 16px">
       <el-col :span="8"

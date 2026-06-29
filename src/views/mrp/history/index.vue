@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
       <template #status="{ row }"
         ><el-tag :type="row.status === 'completed' ? 'success' : 'danger'" size="small">{{

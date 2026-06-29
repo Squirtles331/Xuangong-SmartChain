@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <el-card header="单点登录配置">
       <el-form :model="form" label-width="140px" style="max-width: 600px">
         <el-form-item label="SSO协议"

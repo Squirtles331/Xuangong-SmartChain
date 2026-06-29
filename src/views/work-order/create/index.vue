@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header>
       <el-steps :active="activeStep" align-center style="margin-bottom: 24px">
         <el-step title="基本信息" />

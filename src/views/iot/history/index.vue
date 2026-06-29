@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header
       ><el-row :gutter="12"
         ><el-col :span="6"

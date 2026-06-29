@@ -1,5 +1,5 @@
 <template>
-  <gi-page-layout :bordered="true">
+  <gi-page-layout>
     <template #header>
       <el-select v-model="bom" placeholder="选择BOM版本" style="width: 300px">
         <el-option v-for="b in boms" :key="b" :label="b" :value="b" />

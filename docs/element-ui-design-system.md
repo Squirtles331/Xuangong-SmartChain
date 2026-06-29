@@ -6,9 +6,8 @@ description: Element UI 设计系统规范。当产品经理需要生成前端 H
 # Element UI 设计系统规范（通用版）
 
 > **用途**：放入任何 AI Agent（Codex / Cursor / WorkBuddy / Windsurf / Copilot 等）的 system prompt、rules 文件或 context 中，指导 AI 基于 Element UI 组件库精确生成 B 端 HTML 页面原型。
->
-<!--  作者：Charles.Chen 微信：yixiusztx  如有问题，欢迎指正，谢谢。  -->
----
+
+## <!--  作者：Charles.Chen 微信：yixiusztx  如有问题，欢迎指正，谢谢。  -->
 
 ## 如何使用本文件
 
@@ -39,72 +38,72 @@ description: Element UI 设计系统规范。当产品经理需要生成前端 H
 
 ### 2.1 品牌主色与 9 级派生
 
-| 变量 | 默认值 | 用途 |
-|------|--------|------|
+| 变量          | 默认值    | 用途                                  |
+| ------------- | --------- | ------------------------------------- |
 | color-primary | `#409EFF` | 品牌主色（按钮/链接/选中态/聚焦边框） |
 
 派生规则：`color-primary-light-N = mix(#FFFFFF, 主色, N×10%)`
 
-| 级别 | 值（#409EFF时） | 典型用途 |
-|------|--------------|---------|
-| light-1 | `#53A8FF` | hover 加亮 |
-| light-2 | `#66B1FF` | 链接默认色 |
-| light-3 | `#79BBFF` | 禁用主按钮 |
-| light-4 | `#8CC5FF` | — |
-| light-5 | `#A0CFFF` | — |
-| light-6 | `#B3D8FF` | — |
-| light-7 | `#C6E2FF` | 浅色边框 |
-| light-8 | `#D9ECFF` | 选中浅背景 |
-| light-9 | `#ECF5FF` | 表格当前行 / 菜单 hover 背景 |
+| 级别    | 值（#409EFF时） | 典型用途                     |
+| ------- | --------------- | ---------------------------- |
+| light-1 | `#53A8FF`       | hover 加亮                   |
+| light-2 | `#66B1FF`       | 链接默认色                   |
+| light-3 | `#79BBFF`       | 禁用主按钮                   |
+| light-4 | `#8CC5FF`       | —                            |
+| light-5 | `#A0CFFF`       | —                            |
+| light-6 | `#B3D8FF`       | —                            |
+| light-7 | `#C6E2FF`       | 浅色边框                     |
+| light-8 | `#D9ECFF`       | 选中浅背景                   |
+| light-9 | `#ECF5FF`       | 表格当前行 / 菜单 hover 背景 |
 
 ### 2.2 功能色
 
-| 变量 | 值 | lighter（背景） | light（边框） |
-|------|-----|--------------|-------------|
-| color-success | `#67C23A` | `#F0F9EB` | `#E1F3D8` |
-| color-warning | `#E6A23C` | `#FDF6EC` | `#FAECD8` |
-| color-danger | `#F56C6C` | `#FEF0F0` | `#FDE2E2` |
-| color-info | `#909399` | `#F4F4F5` | `#E9E9EB` |
+| 变量          | 值        | lighter（背景） | light（边框） |
+| ------------- | --------- | --------------- | ------------- |
+| color-success | `#67C23A` | `#F0F9EB`       | `#E1F3D8`     |
+| color-warning | `#E6A23C` | `#FDF6EC`       | `#FAECD8`     |
+| color-danger  | `#F56C6C` | `#FEF0F0`       | `#FDE2E2`     |
+| color-info    | `#909399` | `#F4F4F5`       | `#E9E9EB`     |
 
 ### 2.3 文字色
 
-| 变量 | 值 | 用途 |
-|------|-----|------|
-| color-text-primary | `#303133` | 标题/重要正文 |
-| color-text-regular | `#606266` | 正文/表格内容 |
-| color-text-secondary | `#909399` | 标签/辅助说明 |
+| 变量                   | 值        | 用途            |
+| ---------------------- | --------- | --------------- |
+| color-text-primary     | `#303133` | 标题/重要正文   |
+| color-text-regular     | `#606266` | 正文/表格内容   |
+| color-text-secondary   | `#909399` | 标签/辅助说明   |
 | color-text-placeholder | `#C0C4CC` | 占位符/禁用文字 |
 
 ### 2.4 边框色
 
-| 变量 | 值 | 用途 |
-|------|-----|------|
-| border-color-base | `#DCDFE6` | 默认边框（输入框） |
-| border-color-light | `#E4E7ED` | 较浅边框 |
-| border-color-lighter | `#EBEEF5` | 更浅边框（卡片/表格） |
-| border-color-extra-light | `#F2F6FC` | 极浅 |
+| 变量                     | 值        | 用途                  |
+| ------------------------ | --------- | --------------------- |
+| border-color-base        | `#DCDFE6` | 默认边框（输入框）    |
+| border-color-light       | `#E4E7ED` | 较浅边框              |
+| border-color-lighter     | `#EBEEF5` | 更浅边框（卡片/表格） |
+| border-color-extra-light | `#F2F6FC` | 极浅                  |
 
 ### 2.5 背景色
 
-| 变量 | 值 | 用途 |
-|------|-----|------|
-| color-white | `#FFFFFF` | 容器/卡片/输入框背景 |
+| 变量                  | 值        | 用途                   |
+| --------------------- | --------- | ---------------------- |
+| color-white           | `#FFFFFF` | 容器/卡片/输入框背景   |
 | background-color-base | `#F5F7FA` | 页面/禁用态/hover 背景 |
 
 ---
 
 ## 三、字体体系
 
-| 变量 | 值 | 用途 |
-|------|-----|------|
-| font-size-extra-large | `20px` | 超大标题 |
-| font-size-large | `18px` | 大标题（Dialog 标题） |
-| font-size-medium | `16px` | 中标题（Card/Notification 标题） |
-| font-size-base | `14px` | 基准字号（正文/控件） |
-| font-size-small | `13px` | 小字号 |
-| font-size-extra-small | `12px` | 极小字号（Tag/Badge） |
-| font-weight-primary | `500` | 主要字重 |
-| font-line-height-primary | `24px` | 主要行高 |
+| 变量                     | 值     | 用途                             |
+| ------------------------ | ------ | -------------------------------- |
+| font-size-extra-large    | `20px` | 超大标题                         |
+| font-size-large          | `18px` | 大标题（Dialog 标题）            |
+| font-size-medium         | `16px` | 中标题（Card/Notification 标题） |
+| font-size-base           | `14px` | 基准字号（正文/控件）            |
+| font-size-small          | `13px` | 小字号                           |
+| font-size-extra-small    | `12px` | 极小字号（Tag/Badge）            |
+| font-weight-primary      | `500`  | 主要字重                         |
+| font-line-height-primary | `24px` | 主要行高                         |
 
 > 默认字体栈：`"Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif`
 
@@ -112,15 +111,15 @@ description: Element UI 设计系统规范。当产品经理需要生成前端 H
 
 ## 四、间距体系
 
-| 名称 | 值 | 用途 |
-|------|-----|------|
-| 极小 | `4px` | 图标与文字 |
-| 小 | `8px` | 标签组/按钮组 |
-| 中 | `12px` | 表单内间距/Popover |
-| 标准 | `16px` | 卡片内元素/Alert |
+| 名称         | 值     | 用途                        |
+| ------------ | ------ | --------------------------- |
+| 极小         | `4px`  | 图标与文字                  |
+| 小           | `8px`  | 标签组/按钮组               |
+| 中           | `12px` | 表单内间距/Popover          |
+| 标准         | `16px` | 卡片内元素/Alert            |
 | 大（标志性） | `20px` | **容器/卡片/Dialog 内边距** |
-| 超大 | `24px` | 区块之间 |
-| 特大 | `40px` | 空状态/结果页留白 |
+| 超大         | `24px` | 区块之间                    |
+| 特大         | `40px` | 空状态/结果页留白           |
 
 ---
 
@@ -128,68 +127,68 @@ description: Element UI 设计系统规范。当产品经理需要生成前端 H
 
 ### 圆角
 
-| 变量 | 值 | 用途 |
-|------|-----|------|
-| border-radius-base | `4px` | 按钮/输入框/卡片 |
-| border-radius-small | `2px` | Checkbox |
-| border-radius-circle | `100%` | 头像/Radio |
+| 变量                 | 值     | 用途             |
+| -------------------- | ------ | ---------------- |
+| border-radius-base   | `4px`  | 按钮/输入框/卡片 |
+| border-radius-small  | `2px`  | Checkbox         |
+| border-radius-circle | `100%` | 头像/Radio       |
 
 ### 边框
 
-| 变量 | 值 |
-|------|-----|
+| 变量        | 值                  |
+| ----------- | ------------------- |
 | border-base | `1px solid #DCDFE6` |
 
 ### 阴影
 
-| 变量 | 值 | 用途 |
-|------|-----|------|
-| box-shadow-base | `0 2px 4px rgba(0,0,0,.12), 0 0 6px rgba(0,0,0,.04)` | Message |
-| box-shadow-light | `0 2px 12px 0 rgba(0,0,0,0.1)` | 下拉/Popover/Card |
-| box-shadow-dark | `0 2px 4px rgba(0,0,0,.12), 0 0 6px rgba(0,0,0,.12)` | 深阴影 |
+| 变量             | 值                                                   | 用途              |
+| ---------------- | ---------------------------------------------------- | ----------------- |
+| box-shadow-base  | `0 2px 4px rgba(0,0,0,.12), 0 0 6px rgba(0,0,0,.04)` | Message           |
+| box-shadow-light | `0 2px 12px 0 rgba(0,0,0,0.1)`                       | 下拉/Popover/Card |
+| box-shadow-dark  | `0 2px 4px rgba(0,0,0,.12), 0 0 6px rgba(0,0,0,.12)` | 深阴影            |
 
 ---
 
 ## 六、控件高度
 
-| 尺寸 | 高度 | 对应 size 属性 |
-|------|------|-------------|
-| 默认 | `40px` | 无/default |
-| medium | `36px` | size="medium" |
-| small | `32px` | size="small" |
-| mini | `28px` | size="mini" |
+| 尺寸   | 高度   | 对应 size 属性 |
+| ------ | ------ | -------------- |
+| 默认   | `40px` | 无/default     |
+| medium | `36px` | size="medium"  |
+| small  | `32px` | size="small"   |
+| mini   | `28px` | size="mini"    |
 
 ---
 
 ## 七、动效
 
-| 变量 | 值 |
-|------|-----|
-| all-transition | `all .3s cubic-bezier(.645,.045,.355,1)` |
-| fade-transition | `opacity 300ms cubic-bezier(0.23,1,0.32,1)` |
+| 变量              | 值                                                |
+| ----------------- | ------------------------------------------------- |
+| all-transition    | `all .3s cubic-bezier(.645,.045,.355,1)`          |
+| fade-transition   | `opacity 300ms cubic-bezier(0.23,1,0.32,1)`       |
 | border-transition | `border-color .2s cubic-bezier(.645,.045,.355,1)` |
 
 ---
 
 ## 八、z-index
 
-| 变量 | 值 | 用途 |
-|------|-----|------|
-| index-normal | `1` | 基础 |
-| index-top | `1000` | 固定元素 |
+| 变量         | 值     | 用途              |
+| ------------ | ------ | ----------------- |
+| index-normal | `1`    | 基础              |
+| index-top    | `1000` | 固定元素          |
 | index-popper | `2000` | 浮层（下拉/弹窗） |
 
 ---
 
 ## 九、响应式断点与栅格
 
-| 区间 | 范围 | el-col 属性 |
-|------|------|-----------|
-| xs | < 768px | :xs |
-| sm | ≥ 768px | :sm |
-| md | ≥ 992px | :md |
-| lg | ≥ 1200px | :lg |
-| xl | ≥ 1920px | :xl |
+| 区间 | 范围     | el-col 属性 |
+| ---- | -------- | ----------- |
+| xs   | < 768px  | :xs         |
+| sm   | ≥ 768px  | :sm         |
+| md   | ≥ 992px  | :md         |
+| lg   | ≥ 1200px | :lg         |
+| xl   | ≥ 1920px | :xl         |
 
 栅格为 **24 列**，常用 gutter 为 `20px`。
 
@@ -199,12 +198,12 @@ description: Element UI 设计系统规范。当产品经理需要生成前端 H
 
 ### Button 按钮
 
-| 尺寸 | 高度 | 圆角 | 字号 | 内边距 |
-|------|------|------|------|--------|
-| 默认 | `40px` | `4px` | `14px` | `12px 20px` |
+| 尺寸   | 高度   | 圆角  | 字号   | 内边距      |
+| ------ | ------ | ----- | ------ | ----------- |
+| 默认   | `40px` | `4px` | `14px` | `12px 20px` |
 | medium | `36px` | `4px` | `14px` | `10px 20px` |
-| small | `32px` | `3px` | `12px` | `9px 15px` |
-| mini | `28px` | `3px` | `12px` | `7px 15px` |
+| small  | `32px` | `3px` | `12px` | `9px 15px`  |
+| mini   | `28px` | `3px` | `12px` | `7px 15px`  |
 
 - 默认按钮：文字 `#606266` 背景 `#FFF` 边框 `#DCDFE6`
 - 主按钮：背景/边框 `#409EFF` 文字 `#FFF`
@@ -338,14 +337,14 @@ description: Element UI 设计系统规范。当产品经理需要生成前端 H
 
 ### 页面间距
 
-| 层级 | 间距 | 用途 |
-|------|------|------|
-| 页面级 | 20px | main 内边距 |
-| 区块级 | 20px | 卡片之间 |
-| 组件级 | 16px | 卡片内元素 |
+| 层级   | 间距 | 用途               |
+| ------ | ---- | ------------------ |
+| 页面级 | 20px | main 内边距        |
+| 区块级 | 20px | 卡片之间           |
+| 组件级 | 16px | 卡片内元素         |
 | 元素级 | 10px | 按钮组/表单 inline |
-| 紧凑级 | 8px | 标签组 |
-| 最小级 | 4px | 图标与文字 |
+| 紧凑级 | 8px  | 标签组             |
+| 最小级 | 4px  | 图标与文字         |
 
 ### 表格页结构
 
@@ -398,22 +397,24 @@ fontFamily = "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Mi
 
 ## 十三、禁用态
 
-| 变量 | 值 | 用途 |
-|------|-----|------|
-| disabled-fill-base | `#F5F7FA` | 禁用填充 |
-| disabled-color-base | `#C0C4CC` | 禁用文字 |
+| 变量                 | 值        | 用途     |
+| -------------------- | --------- | -------- |
+| disabled-fill-base   | `#F5F7FA` | 禁用填充 |
+| disabled-color-base  | `#C0C4CC` | 禁用文字 |
 | disabled-border-base | `#E4E7ED` | 禁用边框 |
 
 ---
 
 ## 十四、链接
 
-| 属性 | 值 |
-|------|-----|
+| 属性   | 值                           |
+| ------ | ---------------------------- |
 | 默认色 | `#66B1FF`（primary-light-2） |
-| hover | `#409EFF`（primary） |
-| 字重 | `500` |
+| hover  | `#409EFF`（primary）         |
+| 字重   | `500`                        |
 
 ---
+
 <!--  作者：Charles.Chen 微信：yixiusztx  如有问题，欢迎指正，谢谢。  -->
+
 > **结束**。将本文件整体放入 AI Agent 上下文后，Agent 生成的页面原型将自动遵循 Element UI 精确设计规范。
