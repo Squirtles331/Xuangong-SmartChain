@@ -46,15 +46,14 @@
       </template>
     </TableSetting>
 
-    <gi-dialog
-      v-model="dialogVisible"
-      :footer="true"
-      :on-before-ok="submitDialog"
-      :on-cancel="closeDialog"
-      :title="dialogMode === 'add' ? '新增用户' : '编辑用户'"
-    >
-      <gi-form v-model="formModel" :columns="formColumns" :label-width="100" />
-    </gi-dialog>
+    <UserFormDialog
+      v-model:visible="dialogVisible"
+      v-model:form="formModel"
+      :mode="dialogMode"
+      :role-options="roleOptions"
+      :status-options="statusOptions"
+      @submit="submitDialog"
+    />
   </gi-page-layout>
 </template>
 
@@ -66,8 +65,7 @@ import SearchSetting from '@/components/SearchSetting.vue'
 import BaseTableSetting from '@/components/TableSetting.vue'
 import { createUser, deleteUser, getUserList, updateUser, type SysUser, type UserQuery } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
-
-type UserStatus = '启用' | '禁用'
+import UserFormDialog, { type UserFormModel, type UserStatus } from './UserFormDialog.vue'
 
 interface UserRow {
   id: string
@@ -76,14 +74,6 @@ interface UserRow {
   role: string
   status: UserStatus
   createdAt: string
-}
-
-interface UserFormModel {
-  id: string
-  username: string
-  nickname: string
-  role: string
-  status: UserStatus
 }
 
 type TableSettingSlotProps = {
@@ -114,7 +104,7 @@ const roleOptions = [
   { label: '财务', value: '财务' }
 ]
 
-const statusOptions = [
+const statusOptions: Array<{ label: string; value: UserStatus }> = [
   { label: '启用', value: '启用' },
   { label: '禁用', value: '禁用' }
 ]
@@ -126,6 +116,10 @@ const searchForm = ref({
   role: '',
   status: ''
 })
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<UserFormModel>(createDefaultFormModel())
 
 const searchColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '用户名', field: 'username' },
@@ -151,9 +145,35 @@ const searchColumns = computed<FormColumnItem[]>(() => [
 const allSearchColumns = computed(() => searchColumns.value)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
+const columns: TableColumnItem<UserRow>[] = [
+  { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
+  { prop: 'username', label: '用户名', minWidth: 120 },
+  { prop: 'nickname', label: '昵称', minWidth: 120 },
+  { prop: 'role', label: '角色', minWidth: 120 },
+  { prop: 'status', label: '状态', minWidth: 100, slotName: 'status' },
+  { prop: 'createdAt', label: '创建时间', minWidth: 180 },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<UserRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: UserQuery = {
+      page,
+      page_size: size,
+      username: searchForm.value.username || undefined,
+      role: searchForm.value.role || undefined,
+      status: searchForm.value.status ? mapStatusToApi(searchForm.value.status as UserStatus) : undefined
+    }
+    const response = await getUserList(params)
+
+    return {
+      list: response.data.items.map(mapUserRow),
+      total: response.data.total
+    }
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteUser(id)))
+})
 
 function createDefaultFormModel(): UserFormModel {
   return {
@@ -163,6 +183,10 @@ function createDefaultFormModel(): UserFormModel {
     role: '',
     status: '启用'
   }
+}
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
 
 function mapStatusToApi(status: UserStatus): SysUser['status'] {
@@ -198,63 +222,6 @@ function buildUserPayload(model: UserFormModel): Partial<SysUser> {
   }
 }
 
-const formModel = ref<UserFormModel>(createDefaultFormModel())
-
-const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '用户名', field: 'username', required: true },
-  { type: 'input', label: '昵称', field: 'nickname' },
-  {
-    type: 'select-v2',
-    label: '角色',
-    field: 'role',
-    required: true,
-    props: {
-      options: roleOptions
-    } as any
-  },
-  {
-    type: 'select-v2',
-    label: '状态',
-    field: 'status',
-    props: {
-      options: statusOptions
-    } as any
-  }
-]
-
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<UserRow>({
-  rowKey: 'id',
-  listAPI: async ({ page, size }) => {
-    const params: UserQuery = {
-      page,
-      page_size: size,
-      username: searchForm.value.username || undefined,
-      role: searchForm.value.role || undefined,
-      status: searchForm.value.status ? mapStatusToApi(searchForm.value.status as UserStatus) : undefined
-    }
-    const response = await getUserList(params)
-
-    return {
-      list: response.data.items.map(mapUserRow),
-      total: response.data.total
-    }
-  },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteUser(id)))
-})
-
-const columns: TableColumnItem<UserRow>[] = [
-  { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
-  { prop: 'username', label: '用户名', minWidth: 120 },
-  { prop: 'nickname', label: '昵称', minWidth: 120 },
-  { prop: 'role', label: '角色', minWidth: 120 },
-  { prop: 'status', label: '状态', minWidth: 100, slotName: 'status' },
-  { prop: 'createdAt', label: '创建时间', minWidth: 180 },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
-]
-
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-
 function handleSearch() {
   search()
 }
@@ -286,14 +253,10 @@ function openEdit(row: UserRow) {
   dialogVisible.value = true
 }
 
-function closeDialog() {
-  dialogVisible.value = false
-}
-
 async function submitDialog() {
   if (!formModel.value.username || !formModel.value.role) {
     ElMessage.warning('请填写用户名和角色')
-    return false
+    return
   }
 
   const payload = buildUserPayload(formModel.value)
@@ -304,8 +267,8 @@ async function submitDialog() {
     await updateUser(formModel.value.id, payload)
   }
 
+  dialogVisible.value = false
   await refresh()
-  return true
 }
 
 function remove(row: UserRow) {
@@ -313,4 +276,8 @@ function remove(row: UserRow) {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>
