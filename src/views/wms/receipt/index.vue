@@ -12,16 +12,12 @@
       ></template
     >
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #type="{ row }"
-        ><el-tag :type="row.type === 'purchase' ? 'primary' : row.type === 'production' ? 'success' : 'info'" size="small">{{
-          row.type === 'purchase' ? '采购入库' : row.type === 'production' ? '生产入库' : '其他'
-        }}</el-tag></template
-      >
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'pending' ? 'warning' : 'success'" size="small">{{
-          row.status === 'pending' ? '待入库' : '已入库'
-        }}</el-tag></template
-      >
+      <template #type="{ row }">
+        <StatusTag :value="row.type" :options="RECEIPT_TYPE" />
+      </template>
+      <template #status="{ row }">
+        <StatusTag :value="row.status" :options="RECEIPT_STATUS" />
+      </template>
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增入库单' : '编辑入库单'" width="600px">
@@ -33,7 +29,19 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+
+const RECEIPT_TYPE = [
+  { value: 'purchase', label: '采购入库', type: 'primary' as const },
+  { value: 'production', label: '生产入库', type: 'success' as const },
+  { value: 'other', label: '其他', type: 'info' as const }
+]
+
+const RECEIPT_STATUS = [
+  { value: 'pending', label: '待入库', type: 'warning' as const },
+  { value: 'completed', label: '已入库', type: 'success' as const }
+]
 interface In {
   id: string
   code: string

@@ -30,7 +30,7 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
 import type { TableColumnItem } from 'gi-component'
 const devices = ['数控车床 CK6150', '钻床 Z3050', '加工中心 VMC850']
@@ -70,10 +70,16 @@ watch(
   { immediate: true }
 )
 const chartRef = ref<HTMLDivElement>()
+let chartInstance: echarts.ECharts | null = null
+
+function handleResize() {
+  chartInstance?.resize()
+}
+
 onMounted(() => {
   if (chartRef.value) {
-    const c = echarts.init(chartRef.value)
-    c.setOption({
+    chartInstance = echarts.init(chartRef.value)
+    chartInstance.setOption({
       tooltip: { trigger: 'axis' },
       legend: { data: ['转速', '温度', '电流'] },
       xAxis: { type: 'category', data: logs.value.map((l) => l.time.slice(11)) },
@@ -94,7 +100,13 @@ onMounted(() => {
         }
       ]
     })
+    window.addEventListener('resize', handleResize)
   }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  chartInstance?.dispose()
 })
 function query() {}
 </script>

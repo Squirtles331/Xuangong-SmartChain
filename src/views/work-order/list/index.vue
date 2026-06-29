@@ -20,10 +20,7 @@
 
     <gi-table :columns="columns" :data="pagedOrders" :pagination="pagination" border stripe style="height: 100%">
       <template #priority="{ row }">
-        <el-tag v-if="row.priority === 'urgent'" type="danger" size="small">紧急</el-tag>
-        <el-tag v-else-if="row.priority === 'high'" type="warning" size="small">高</el-tag>
-        <el-tag v-else-if="row.priority === 'normal'" type="info" size="small">普通</el-tag>
-        <el-tag v-else size="small">低</el-tag>
+        <StatusTag :value="row.priority" :options="WORK_ORDER_PRIORITY" />
       </template>
       <template #progress="{ row }">
         <div class="progress-cell">
@@ -31,12 +28,7 @@
         </div>
       </template>
       <template #status="{ row }">
-        <el-tag v-if="row.status === 'draft'" type="info" size="small">草稿</el-tag>
-        <el-tag v-else-if="row.status === 'approved'" size="small">已审批</el-tag>
-        <el-tag v-else-if="row.status === 'released'" type="warning" size="small">已下发</el-tag>
-        <el-tag v-else-if="row.status === 'in_progress'" type="primary" size="small">生产中</el-tag>
-        <el-tag v-else-if="row.status === 'completed'" type="success" size="small">已完工</el-tag>
-        <el-tag v-else size="small">已关闭</el-tag>
+        <StatusTag :value="row.status" :options="WORK_ORDER_STATUS" />
       </template>
       <template #planned_end_date="{ row }">
         <span :style="{ color: isOverdue(row) ? '#f56c6c' : '' }">{{ row.planned_end_date }}</span>
@@ -71,6 +63,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { workOrders as mockWOs } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import { WORK_ORDER_STATUS, WORK_ORDER_PRIORITY } from '@/common/status-maps'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
 interface WorkOrder {

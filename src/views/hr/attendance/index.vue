@@ -12,11 +12,9 @@
       ></template
     >
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #result="{ row }"
-        ><el-tag :type="row.result === 'normal' ? 'success' : row.result === 'late' ? 'warning' : 'danger'" size="small">{{
-          row.result === 'normal' ? '正常' : row.result === 'late' ? '迟到' : '旷工'
-        }}</el-tag></template
-      >
+      <template #result="{ row }">
+        <StatusTag :value="row.result" :options="ATTENDANCE_RESULT" />
+      </template>
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增考勤' : '编辑考勤'" width="500px">
@@ -28,7 +26,14 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+
+const ATTENDANCE_RESULT = [
+  { value: 'normal', label: '正常', type: 'success' as const },
+  { value: 'late', label: '迟到', type: 'warning' as const },
+  { value: 'absent', label: '旷工', type: 'danger' as const }
+]
 interface Att {
   id: string
   employee: string

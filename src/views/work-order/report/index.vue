@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { reportHistory as mockHistory } from '@/mock'
 import { useRouter } from 'vue-router'
@@ -102,8 +102,9 @@ onMounted(() => {
   timer = setInterval(() => elapsed.value++, 60000)
   nextTick(() => initParetoChart())
 })
-onUnmounted(() => {
+onBeforeUnmount(() => {
   clearInterval(timer)
+  window.removeEventListener('resize', handleParetoResize)
   if (paretoChart) paretoChart.dispose()
 })
 
@@ -186,6 +187,10 @@ function submitReport() {
     .catch(() => {})
 }
 
+function handleParetoResize() {
+  paretoChart?.resize()
+}
+
 // Pareto 图
 const paretoChartRef = ref<HTMLDivElement>()
 let paretoChart: echarts.ECharts | null = null
@@ -217,6 +222,7 @@ function initParetoChart() {
     return Math.round((cum / total) * 100)
   })
 
+  window.addEventListener('resize', handleParetoResize)
   paretoChart.setOption({
     title: { text: '不良原因 Pareto 图', left: 'center' },
     tooltip: {

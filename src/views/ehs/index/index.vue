@@ -12,16 +12,12 @@
       ></template
     >
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #level="{ row }"
-        ><el-tag :type="row.level === 'major' ? 'danger' : row.level === 'moderate' ? 'warning' : 'info'" size="small">{{
-          row.level === 'major' ? '重大' : row.level === 'moderate' ? '一般' : '低风险'
-        }}</el-tag></template
-      >
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'open' ? 'danger' : row.status === 'processing' ? 'warning' : 'success'" size="small">{{
-          row.status === 'open' ? '待整改' : row.status === 'processing' ? '整改中' : '已关闭'
-        }}</el-tag></template
-      >
+      <template #level="{ row }">
+        <StatusTag :value="row.level" :options="EHS_RISK_LEVEL" />
+      </template>
+      <template #status="{ row }">
+        <StatusTag :value="row.status" :options="EHS_STATUS" />
+      </template>
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增隐患' : '编辑隐患'" width="600px">
@@ -33,7 +29,21 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import { RISK_LEVEL } from '@/common/status-maps'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+
+const EHS_RISK_LEVEL = [
+  { value: 'major', label: '重大', type: 'danger' as const },
+  { value: 'moderate', label: '一般', type: 'warning' as const },
+  { value: 'minor', label: '低风险', type: 'info' as const }
+]
+
+const EHS_STATUS = [
+  { value: 'open', label: '待整改', type: 'danger' as const },
+  { value: 'processing', label: '整改中', type: 'warning' as const },
+  { value: 'closed', label: '已关闭', type: 'success' as const }
+]
 interface Hz {
   id: string
   code: string

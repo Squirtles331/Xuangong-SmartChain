@@ -15,7 +15,9 @@
       <div class="ops-panel">
         <div class="ops-toolbar">
           <el-button type="primary" size="small" @click="addOp">+ 添加工序</el-button>
-          <span style="margin-left: 12px; color: #909399; font-size: 13px">总标准工时: {{ totalHours }}min | 总准备工时: {{ totalSetup }}min</span>
+          <span style="margin-left: 12px; color: #909399; font-size: 13px"
+            >总标准工时: {{ totalHours }}min | 总准备工时: {{ totalSetup }}min | 含排队/转移: {{ totalWithQueue }}min</span
+          >
         </div>
         <div class="ops-list">
           <div v-for="(op, idx) in operations" :key="op.id" class="op-item" :class="{ active: currentOp?.id === op.id }" @click="selectOp(op)">
@@ -97,6 +99,7 @@ const currentOp = ref<Operation | null>(null)
 
 const totalHours = computed(() => operations.value.reduce((s, o) => s + o.setup_hours + o.run_hours, 0))
 const totalSetup = computed(() => operations.value.reduce((s, o) => s + o.setup_hours, 0))
+const totalWithQueue = computed(() => operations.value.reduce((s, o) => s + o.setup_hours + o.run_hours + o.queue_hours + o.move_hours, 0))
 
 function selectOp(op: Operation) {
   currentOp.value = op
@@ -122,19 +125,29 @@ function addOp() {
   currentOp.value = newOp
 }
 
-function removeOp(idx: number) {
-  operations.value.splice(idx, 1)
-  currentOp.value = null
-}
 function moveUp(idx: number) {
   if (idx > 0) {
     ;[operations.value[idx], operations.value[idx - 1]] = [operations.value[idx - 1], operations.value[idx]]
+    renumberOps()
   }
 }
 function moveDown(idx: number) {
   if (idx < operations.value.length - 1) {
     ;[operations.value[idx], operations.value[idx + 1]] = [operations.value[idx + 1], operations.value[idx]]
+    renumberOps()
   }
+}
+function removeOp(idx: number) {
+  operations.value.splice(idx, 1)
+  currentOp.value = null
+  renumberOps()
+}
+
+// 移动工序后自动重排工序号（10/20/30...）
+function renumberOps() {
+  operations.value.forEach((op, i) => {
+    op.operation_no = (i + 1) * 10
+  })
 }
 
 function saveRouting() {

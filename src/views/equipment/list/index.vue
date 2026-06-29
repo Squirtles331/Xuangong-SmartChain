@@ -9,13 +9,27 @@
       <gi-button type="add" @click="openAdd" />
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
+    <div class="stats-row">
+      <el-card shadow="hover" class="stat-card">
+        <div class="stat-value">{{ eqs.length }}</div>
+        <div class="stat-label">设备总数</div>
+      </el-card>
+      <el-card shadow="hover" class="stat-card stat-running">
+        <div class="stat-value">{{ runningCount }}</div>
+        <div class="stat-label">运行中</div>
+      </el-card>
+      <el-card shadow="hover" class="stat-card stat-idle">
+        <div class="stat-value">{{ idleCount }}</div>
+        <div class="stat-label">空闲</div>
+      </el-card>
+      <el-card shadow="hover" class="stat-card stat-repair">
+        <div class="stat-value">{{ repairCount }}</div>
+        <div class="stat-label">维修/保养</div>
+      </el-card>
+    </div>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
       <template #status="{ row }">
-        <el-tag
-          :type="row.status === 'running' ? 'success' : row.status === 'idle' ? 'info' : row.status === 'maintenance' ? 'warning' : 'danger'"
-          size="small"
-          >{{ row.status === 'running' ? '运行' : row.status === 'idle' ? '空闲' : row.status === 'maintenance' ? '保养' : '维修' }}</el-tag
-        >
+        <StatusTag :value="row.status" :options="EQUIPMENT_STATUS" />
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
@@ -34,6 +48,8 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import { EQUIPMENT_STATUS } from '@/common/status-maps'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
 interface Eq {
@@ -148,6 +164,9 @@ const cols: TableColumnItem<Eq>[] = [
   { label: '操作', minWidth: 280, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
+const runningCount = computed(() => eqs.value.filter((e) => e.status === 'running').length)
+const idleCount = computed(() => eqs.value.filter((e) => e.status === 'idle').length)
+const repairCount = computed(() => eqs.value.filter((e) => e.status === 'repair' || e.status === 'maintenance').length)
 const fd = computed(() =>
   eqs.value.filter(
     (e) =>
@@ -249,3 +268,38 @@ function del(id: string) {
     .catch(() => {})
 }
 </script>
+<style scoped>
+.stats-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  flex: 1;
+  text-align: center;
+  cursor: default;
+}
+.stat-card :deep(.el-card__body) {
+  padding: 16px 12px;
+}
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #303133;
+  line-height: 1.2;
+}
+.stat-label {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 4px;
+}
+.stat-running .stat-value {
+  color: #67c23a;
+}
+.stat-idle .stat-value {
+  color: #909399;
+}
+.stat-repair .stat-value {
+  color: #e6a23c;
+}
+</style>

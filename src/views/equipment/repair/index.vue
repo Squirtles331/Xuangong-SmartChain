@@ -12,18 +12,12 @@
       ></template
     >
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #priority="{ row }"
-        ><el-tag :type="row.priority === 'urgent' ? 'danger' : row.priority === 'high' ? 'warning' : 'info'" size="small">{{
-          row.priority === 'urgent' ? '紧急' : row.priority === 'high' ? '高' : '普通'
-        }}</el-tag></template
-      >
-      <template #status="{ row }"
-        ><el-tag
-          :type="row.status === 'pending' ? 'warning' : row.status === 'running' ? 'primary' : row.status === 'done' ? 'success' : 'info'"
-          size="small"
-          >{{ row.status === 'pending' ? '待派工' : row.status === 'running' ? '维修中' : row.status === 'done' ? '已完成' : '已验收' }}</el-tag
-        ></template
-      >
+      <template #priority="{ row }">
+        <StatusTag :value="row.priority" :options="WORK_ORDER_PRIORITY" />
+      </template>
+      <template #status="{ row }">
+        <StatusTag :value="row.status" :options="REPAIR_STATUS" />
+      </template>
       <template #actions="{ row }"
         ><gi-button type="edit" @click="openEdit(row)" /><el-button
           v-if="row.status === 'pending'"
@@ -44,6 +38,8 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import { WORK_ORDER_PRIORITY } from '@/common/status-maps'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 interface R {
   id: string
@@ -137,7 +133,13 @@ const sf = ref<FormInstance | null>()
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
-const cols: TableColumnItem<R>[] = [
+const REPAIR_STATUS = [
+  { value: 'pending', label: '待派工', type: 'warning' as const },
+  { value: 'running', label: '维修中', type: 'primary' as const },
+  { value: 'done', label: '已完成', type: 'success' as const },
+  { value: 'verified', label: '已验收', type: 'info' as const }
+]
+const cols: TableColumnItem<any>[] = [
   { prop: 'code', label: '维修单号', minWidth: 170 },
   { prop: 'equipment', label: '设备', minWidth: 160 },
   { prop: 'fault_desc', label: '故障描述', minWidth: 200 },

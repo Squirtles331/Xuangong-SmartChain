@@ -24,7 +24,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, nextTick, watch } from 'vue'
+import { ref, reactive, computed, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
 import type { TableColumnItem } from 'gi-component'
 import * as echarts from 'echarts'
 
@@ -85,6 +85,10 @@ function formatCost(val: number): string {
 const pieChartRef = ref<HTMLDivElement>()
 let pieChart: echarts.ECharts | null = null
 
+function handlePieResize() {
+  pieChart?.resize()
+}
+
 function initPieChart() {
   if (!pieChartRef.value || costData.value.length === 0) return
   if (pieChart) pieChart.dispose()
@@ -113,9 +117,15 @@ function initPieChart() {
       }
     ]
   })
+  window.addEventListener('resize', handlePieResize)
 }
 
 watch(costData, () => {
   nextTick(() => initPieChart())
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handlePieResize)
+  pieChart?.dispose()
 })
 </script>

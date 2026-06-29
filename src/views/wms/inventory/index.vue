@@ -5,9 +5,12 @@
         <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
     ></template>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe style="height: 100%">
-      <template #qty="{ row }"
-        ><span :style="{ color: row.qty < row.safety ? '#f56c6c' : '' }">{{ row.qty }}</span></template
-      >
+      <template #qty="{ row }">
+        <div class="qty-cell">
+          <span :class="{ 'qty-warn': row.qty < row.safety }">{{ row.qty }}</span>
+          <el-tag v-if="row.qty < row.safety" type="danger" size="small" class="qty-tag">低于安全库存</el-tag>
+        </div>
+      </template>
       <template #actions="{ row }"><el-button type="primary" link size="small" @click="trace(row)">追溯</el-button></template>
     </gi-table>
     <el-dialog v-model="tv" title="批次追溯" width="700px">
@@ -116,6 +119,7 @@ const cols: TableColumnItem<Inv>[] = [
   { prop: 'location', label: '库位', width: 100 },
   { prop: 'lot', label: '批号', width: 150 },
   { label: '库存', minWidth: 80, slotName: 'qty', align: 'center' },
+  { prop: 'safety', label: '安全库存', minWidth: 80, align: 'center' },
   { prop: 'reserved', label: '已预留', minWidth: 80, align: 'center' },
   { prop: 'available', label: '可用', minWidth: 80, align: 'center' },
   { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
@@ -154,3 +158,18 @@ function trace(row: Inv) {
   tv.value = true
 }
 </script>
+<style scoped>
+.qty-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.qty-warn {
+  color: #f56c6c;
+  font-weight: 700;
+}
+.qty-tag {
+  flex-shrink: 0;
+}
+</style>

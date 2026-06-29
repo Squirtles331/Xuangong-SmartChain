@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 import { useConstraintStore } from '@/stores/constraint'
@@ -139,10 +139,16 @@ const loadData = ref([
 ])
 
 const chartRef = ref<HTMLDivElement>()
+let chartInstance: echarts.ECharts | null = null
+
+function handleResize() {
+  chartInstance?.resize()
+}
+
 onMounted(() => {
   if (chartRef.value) {
-    const c = echarts.init(chartRef.value)
-    c.setOption({
+    chartInstance = echarts.init(chartRef.value)
+    chartInstance.setOption({
       tooltip: { trigger: 'axis' },
       legend: { data: ['下料组', '数控车组', '磨床组', '装配组'] },
       xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] },
@@ -154,7 +160,13 @@ onMounted(() => {
         { name: '装配组', type: 'line', data: [5, 4, 6, 5, 8, 2, 0], itemStyle: { color: '#e6a23c' } }
       ]
     })
+    window.addEventListener('resize', handleResize)
   }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  chartInstance?.dispose()
 })
 
 function runSchedule() {

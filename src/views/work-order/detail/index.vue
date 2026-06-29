@@ -4,8 +4,7 @@
       <div class="detail-header">
         <div class="header-left">
           <h2>工单 {{ order.code }}</h2>
-          <el-tag v-if="order.priority === 'urgent'" type="danger" style="margin-left: 12px">紧急</el-tag>
-          <el-tag v-else-if="order.priority === 'high'" type="warning" style="margin-left: 12px">高</el-tag>
+          <StatusTag :value="order.priority" :options="WORK_ORDER_PRIORITY" style="margin-left: 12px" />
         </div>
         <div class="header-right">
           <el-button v-if="order.status === 'draft'" type="primary" @click="submitApproval">提交审批</el-button>
@@ -26,7 +25,7 @@
             order.wo_type === 'production' ? '生产工单' : order.wo_type === 'rework' ? '返工工单' : '样品工单'
           }}</el-descriptions-item>
           <el-descriptions-item label="状态">
-            <el-tag :type="statusTagType(order.status)">{{ statusText(order.status) }}</el-tag>
+            <StatusTag :value="order.status" :options="WORK_ORDER_STATUS" />
           </el-descriptions-item>
           <el-descriptions-item label="产品编码">{{ order.material_code }}</el-descriptions-item>
           <el-descriptions-item label="产品名称">{{ order.material_name }}</el-descriptions-item>
@@ -38,9 +37,9 @@
           </el-descriptions-item>
           <el-descriptions-item label="生产车间">{{ order.workshop_name }}</el-descriptions-item>
           <el-descriptions-item label="生产产线">{{ order.line_name || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="优先级">{{
-            order.priority === 'urgent' ? '紧急' : order.priority === 'high' ? '高' : order.priority === 'normal' ? '普通' : '低'
-          }}</el-descriptions-item>
+          <el-descriptions-item label="优先级">
+            <StatusTag :value="order.priority" :options="WORK_ORDER_PRIORITY" />
+          </el-descriptions-item>
           <el-descriptions-item label="计划开工">{{ order.planned_start_date }}</el-descriptions-item>
           <el-descriptions-item label="计划完工">{{ order.planned_end_date }}</el-descriptions-item>
           <el-descriptions-item label="实际开工">{{ order.actual_start_date || '-' }}</el-descriptions-item>
@@ -61,11 +60,7 @@
           <el-table-column prop="work_center" label="工作中心" width="120" />
           <el-table-column label="状态" width="100">
             <template #default="{ row }">
-              <el-tag v-if="row.status === 'pending'" type="info" size="small">待开工</el-tag>
-              <el-tag v-else-if="row.status === 'assigned'" size="small">已派工</el-tag>
-              <el-tag v-else-if="row.status === 'running'" type="warning" size="small">生产中</el-tag>
-              <el-tag v-else-if="row.status === 'completed'" type="success" size="small">已完工</el-tag>
-              <el-tag v-else-if="row.status === 'inspected'" type="primary" size="small">已质检</el-tag>
+              <StatusTag :value="row.status" :options="OPERATION_STATUS" />
             </template>
           </el-table-column>
           <el-table-column prop="worker" label="操作工" width="100" />
@@ -96,6 +91,16 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import StatusTag from '@/components/StatusTag.vue'
+import { WORK_ORDER_STATUS, WORK_ORDER_PRIORITY } from '@/common/status-maps'
+
+const OPERATION_STATUS = [
+  { value: 'pending', label: '待开工', type: 'info' as const },
+  { value: 'assigned', label: '已派工', type: '' as const },
+  { value: 'running', label: '生产中', type: 'warning' as const },
+  { value: 'completed', label: '已完工', type: 'success' as const },
+  { value: 'inspected', label: '已质检', type: 'primary' as const }
+]
 
 const activeTab = ref('info')
 
@@ -239,30 +244,6 @@ const logs = [
   { id: '5', time: '2025-01-10 14:00', type: 'warning', content: '车间主任审批通过，工单已下发', user: '车间主任-陈七' },
   { id: '6', time: '2025-01-09 14:00', type: 'info', content: '张三创建工单', user: '张三' }
 ]
-
-function statusTagType(s: string) {
-  const map: Record<string, string> = {
-    draft: 'info',
-    approved: '',
-    released: 'warning',
-    in_progress: 'primary',
-    completed: 'success',
-    closed: 'info'
-  }
-  return map[s] || 'info'
-}
-
-function statusText(s: string) {
-  const map: Record<string, string> = {
-    draft: '草稿',
-    approved: '已审批',
-    released: '已下发',
-    in_progress: '生产中',
-    completed: '已完工',
-    closed: '已关闭'
-  }
-  return map[s] || s
-}
 
 function submitApproval() {
   order.status = 'approved'

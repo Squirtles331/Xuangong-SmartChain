@@ -6,12 +6,22 @@
     ></template>
     <template #tool><gi-button type="add" @click="$router.push('/scm/purchase/create')">新建采购订单</gi-button></template>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe style="height: 100%">
+      <template #progress="{ row }">
+        <div class="progress-cell">
+          <el-progress
+            :percentage="row.qty > 0 ? Math.round((row.received / row.qty) * 100) : 0"
+            :stroke-width="6"
+            :color="row.qty > 0 && row.received >= row.qty ? '#67c23a' : '#409eff'"
+          />
+          <span class="progress-text">{{ row.received }}/{{ row.qty }}</span>
+        </div>
+      </template>
+      <template #delivery="{ row }">
+        <span :class="{ 'overdue-text': isOverdue(row) }">{{ row.delivery }}</span>
+        <el-tag v-if="isOverdue(row)" type="danger" size="small" class="overdue-tag">已逾期</el-tag>
+      </template>
       <template #status="{ row }">
-        <el-tag v-if="row.status === 'sent'" type="warning" size="small">已发送</el-tag>
-        <el-tag v-else-if="row.status === 'partial'" type="primary" size="small">部分收货</el-tag>
-        <el-tag v-else-if="row.status === 'received'" type="success" size="small">已收货</el-tag>
-        <el-tag v-else-if="row.status === 'closed'" type="info" size="small">已关闭</el-tag>
-        <el-tag v-else size="small">{{ row.status }}</el-tag>
+        <StatusTag :value="row.status" :options="PO_STATUS" />
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="receive(row)">收货</el-button>
@@ -42,7 +52,16 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { purchaseOrders as mockPOs } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import { PURCHASE_STATUS } from '@/common/status-maps'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+
+const PO_STATUS = [
+  { value: 'sent', label: '已发送', type: 'warning' as const },
+  { value: 'partial', label: '部分收货', type: 'primary' as const },
+  { value: 'received', label: '已收货', type: 'success' as const },
+  { value: 'closed', label: '已关闭', type: 'info' as const }
+]
 
 interface PO {
   id: string
@@ -88,9 +107,8 @@ const cols: TableColumnItem<PO>[] = [
   { prop: 'supplier', label: '供应商', minWidth: 150 },
   { prop: 'material', label: '物料', minWidth: 140 },
   { prop: 'qty', label: '订购数量', minWidth: 100, align: 'center' },
-  { prop: 'received', label: '已收货', minWidth: 80, align: 'center' },
-  { prop: 'remain', label: '未收货', minWidth: 80, align: 'center' },
-  { prop: 'delivery', label: '交期', width: 110 },
+  { label: '收货进度', minWidth: 160, slotName: 'progress' },
+  { label: '交期', width: 130, slotName: 'delivery' },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 120, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
@@ -142,4 +160,29 @@ function closePO(row: PO) {
   row.status = 'closed'
   ElMessage.success('订单已关闭')
 }
+
+function isOverdue(row: PO) {
+  if (row.status === 'received' || row.status === 'closed') return false
+  return new Date(row.delivery) < new Date()
+}
 </script>
+<style scoped>
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 130px;
+}
+.progress-text {
+  font-size: 12px;
+  color: #909399;
+  white-space: nowrap;
+}
+.overdue-text {
+  color: #f56c6c;
+  font-weight: 600;
+}
+.overdue-tag {
+  margin-left: 4px;
+}
+</style>

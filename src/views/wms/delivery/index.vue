@@ -12,11 +12,9 @@
       ></template
     >
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'pending' ? 'warning' : 'success'" size="small">{{
-          row.status === 'pending' ? '待发货' : '已发货'
-        }}</el-tag></template
-      >
+      <template #status="{ row }">
+        <StatusTag :value="row.status" :options="DELIVERY_STATUS" />
+      </template>
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增发货单' : '编辑发货单'" width="600px">
@@ -28,7 +26,13 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+
+const DELIVERY_STATUS = [
+  { value: 'pending', label: '待发货', type: 'warning' as const },
+  { value: 'completed', label: '已发货', type: 'success' as const }
+]
 interface Del {
   id: string
   code: string

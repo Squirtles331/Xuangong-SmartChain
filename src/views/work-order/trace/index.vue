@@ -83,8 +83,23 @@ const reports = ref<Rpt[]>([
     time: '2025-01-15 10:00'
   }
 ])
-const s = reactive({ wo_code: '', worker: '' })
-const sc: FormColumnItem[] = [{ type: 'input', label: '工单号', field: 'wo_code' } as any, { type: 'input', label: '操作人', field: 'worker' } as any]
+const s = reactive({ wo_code: '', worker: '', date_range: [] as string[] })
+const sc: FormColumnItem[] = [
+  { type: 'input', label: '工单号', field: 'wo_code' } as any,
+  { type: 'input', label: '操作人', field: 'worker' } as any,
+  {
+    type: 'date-picker',
+    label: '日期范围',
+    field: 'date_range',
+    props: {
+      type: 'daterange',
+      'range-separator': '至',
+      'start-placeholder': '开始日期',
+      'end-placeholder': '结束日期',
+      'value-format': 'YYYY-MM-DD'
+    } as any
+  } as any
+]
 
 // SearchSetting: 所有可用字段
 const allSearchColumns = computed(() => sc)
@@ -105,7 +120,21 @@ const cols: TableColumnItem<Rpt>[] = [
   { label: '操作', minWidth: 80, slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() => reports.value.filter((r) => (!s.wo_code || r.wo_code.includes(s.wo_code)) && (!s.worker || r.worker.includes(s.worker))))
+const fd = computed(() =>
+  reports.value.filter(
+    (r) =>
+      (!s.wo_code || r.wo_code.includes(s.wo_code)) &&
+      (!s.worker || r.worker.includes(s.worker)) &&
+      (!s.date_range || s.date_range.length < 2 || filterDateRange(r.time))
+  )
+)
+
+function filterDateRange(time: string): boolean {
+  if (!s.date_range || s.date_range.length < 2) return true
+  const [start, end] = s.date_range
+  const t = time.substring(0, 10)
+  return t >= start && t <= end
+}
 const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
 watch(
   fd,
@@ -120,6 +149,7 @@ function hs() {
 function hr() {
   s.wo_code = ''
   s.worker = ''
+  s.date_range = []
   p.currentPage = 1
 }
 const detailVis = ref(false)

@@ -12,6 +12,11 @@
       ></template
     >
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
+      <template #due_date="{ row }"
+        ><span :style="isOverdue(row) ? 'color: #f56c6c; font-weight: 600' : ''"
+          >{{ row.due_date }}<el-tag v-if="isOverdue(row)" type="danger" size="small" style="margin-left: 4px">超期</el-tag></span
+        ></template
+      >
       <template #status="{ row }"
         ><el-tag
           :type="row.status === 'sent' ? 'warning' : row.status === 'processing' ? 'primary' : row.status === 'received' ? 'success' : 'info'"
@@ -124,7 +129,7 @@ const cols: TableColumnItem<OS>[] = [
   { prop: 'supplier', label: '委外供应商', minWidth: 160 },
   { prop: 'operation', label: '委外工序', minWidth: 140 },
   { prop: 'send_date', label: '发出日期', minWidth: 100 },
-  { prop: 'due_date', label: '交回日期', minWidth: 100 },
+  { prop: 'due_date', label: '交回日期', minWidth: 120, slotName: 'due_date' },
   { prop: 'price', label: '加工费(元)', minWidth: 110, align: 'right' },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
@@ -203,5 +208,14 @@ function confirmSend(r: OS) {
 function confirmReceive(r: OS) {
   r.status = 'received'
   ElMessage.success('已确认收回')
+}
+
+// 超期预警：当前日期 > 交回日期 且 状态非 'received'/'settled'
+function isOverdue(row: OS): boolean {
+  if (row.status === 'received' || row.status === 'settled') return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(row.due_date)
+  return due < today
 }
 </script>

@@ -36,7 +36,7 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as echarts from 'echarts'
 import SearchSetting from '@/components/SearchSetting.vue'
@@ -216,6 +216,11 @@ function del(id: string) {
 }
 const funnelRef = ref<HTMLElement | null>(null)
 let funnelChart: echarts.ECharts | null = null
+
+function handleFunnelResize() {
+  funnelChart?.resize()
+}
+
 function renderFunnel() {
   if (!funnelRef.value) return
   if (!funnelChart) {
@@ -255,5 +260,11 @@ function renderFunnel() {
 watch(data, () => nextTick(renderFunnel), { deep: true })
 onMounted(() => {
   nextTick(renderFunnel)
+  window.addEventListener('resize', handleFunnelResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleFunnelResize)
+  funnelChart?.dispose()
 })
 </script>

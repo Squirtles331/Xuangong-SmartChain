@@ -108,7 +108,14 @@ const cols: TableColumnItem<TD>[] = [
   { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() => data.value.filter((r) => !s.keyword || r.operation.includes(s.keyword)))
+const fd = computed(() => data.value.filter((r) => (!s.keyword || r.operation.includes(s.keyword)) && (!s.deviation || filterDeviation(r.deviation))))
+
+function filterDeviation(v: number): boolean {
+  if (s.deviation === 'low') return v <= 10
+  if (s.deviation === 'mid') return v > 10 && v <= 20
+  if (s.deviation === 'high') return v > 20
+  return true
+}
 const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
 watch(
   fd,

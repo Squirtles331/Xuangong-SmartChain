@@ -24,7 +24,7 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
@@ -234,6 +234,11 @@ function initForecastChart() {
       }
     ]
   })
+  window.addEventListener('resize', handleForecastResize)
+}
+
+function handleForecastResize() {
+  forecastChart?.resize()
 }
 
 watch(
@@ -246,5 +251,10 @@ watch(
 
 onMounted(() => {
   nextTick(() => initForecastChart())
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleForecastResize)
+  forecastChart?.dispose()
 })
 </script>

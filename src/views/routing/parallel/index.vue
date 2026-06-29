@@ -3,7 +3,9 @@
     <template #header><h3>并行工序配置</h3></template>
     <template #tool><gi-button type="add" @click="openAdd" /></template>
     <gi-table :columns="cols" :data="groups" border stripe size="small">
-      <template #operations="{ row }">{{ row.operations.join(', ') }}</template>
+      <template #operations="{ row }"
+        ><el-tag v-for="(op, i) in row.operations" :key="i" size="small" style="margin: 2px">{{ op }}</el-tag></template
+      >
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增并行组' : '编辑并行组'" width="600px">
@@ -34,10 +36,28 @@ const cols: TableColumnItem<PG>[] = [
 const vis = ref(false)
 const mode = ref<'add' | 'edit'>('add')
 const eid = ref('')
-const form = reactive({ routing_name: '', operations: '', merge_rule: '全部完成后继续' })
+const form = reactive({ routing_name: '', operations: [] as string[], merge_rule: '全部完成后继续' })
 const formCols: FormColumnItem[] = [
   { type: 'input', label: '工艺路线', field: 'routing_name', required: true },
-  { type: 'input', label: '并行工序(逗号分隔)', field: 'operations', required: true, props: { placeholder: '工序40:钻孔,工序50:热处理' } as any },
+  {
+    type: 'select-v2',
+    label: '并行工序',
+    field: 'operations',
+    required: true,
+    props: {
+      multiple: true,
+      options: [
+        { label: '工序10:下料', value: '工序10:下料' },
+        { label: '工序20:粗车', value: '工序20:粗车' },
+        { label: '工序30:精车', value: '工序30:精车' },
+        { label: '工序40:钻孔', value: '工序40:钻孔' },
+        { label: '工序50:热处理', value: '工序50:热处理' },
+        { label: '工序60:磨削', value: '工序60:磨削' },
+        { label: '工序70:装配', value: '工序70:装配' },
+        { label: '工序80:测试', value: '工序80:测试' }
+      ]
+    } as any
+  },
   {
     type: 'select-v2',
     label: '汇合规则',
@@ -52,23 +72,23 @@ const formCols: FormColumnItem[] = [
 ]
 function openAdd() {
   mode.value = 'add'
-  Object.assign(form, { routing_name: '', operations: '', merge_rule: '全部完成后继续' })
+  Object.assign(form, { routing_name: '', operations: [], merge_rule: '全部完成后继续' })
   vis.value = true
 }
 function openEdit(r: PG) {
   mode.value = 'edit'
   eid.value = r.id
-  form.operations = r.operations.join(', ')
+  form.operations = [...r.operations]
   form.routing_name = r.routing_name
   form.merge_rule = r.merge_rule
   vis.value = true
 }
 async function submit() {
-  if (!form.routing_name) {
+  if (!form.routing_name || form.operations.length === 0) {
     ElMessage.warning('请填写必填项')
     return false
   }
-  const ops = form.operations.split(',').map((s: string) => s.trim())
+  const ops = [...form.operations]
   if (mode.value === 'add') {
     groups.value.unshift({ id: Date.now().toString(), routing_name: form.routing_name, operations: ops, merge_rule: form.merge_rule } as PG)
   } else {

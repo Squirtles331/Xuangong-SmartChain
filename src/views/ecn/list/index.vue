@@ -11,16 +11,10 @@
 
     <gi-table :columns="columns" :data="pagedEcns" :pagination="pagination" border stripe style="height: 100%">
       <template #urgency="{ row }">
-        <el-tag v-if="row.urgency === 'urgent'" type="danger" size="small">紧急</el-tag>
-        <el-tag v-else-if="row.urgency === 'normal'" type="warning" size="small">普通</el-tag>
-        <el-tag v-else size="small">计划性</el-tag>
+        <StatusTag :value="row.urgency" :options="ECN_URGENCY" />
       </template>
       <template #status="{ row }">
-        <el-tag v-if="row.status === 'draft'" type="info" size="small">草稿</el-tag>
-        <el-tag v-else-if="row.status === 'approved'" type="primary" size="small">已审批</el-tag>
-        <el-tag v-else-if="row.status === 'executed'" type="success" size="small">已执行</el-tag>
-        <el-tag v-else-if="row.status === 'verified'" type="success" size="small">已验证</el-tag>
-        <el-tag v-else type="info" size="small">已关闭</el-tag>
+        <StatusTag :value="row.status" :options="ECN_STATUS" />
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="viewImpact(row)">影响分析</el-button>
@@ -51,7 +45,22 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ecnOrders as mockEcns } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+
+const ECN_URGENCY = [
+  { value: 'urgent', label: '紧急', type: 'danger' as const },
+  { value: 'normal', label: '普通', type: 'warning' as const },
+  { value: 'planned', label: '计划性', type: 'info' as const }
+]
+
+const ECN_STATUS = [
+  { value: 'draft', label: '草稿', type: 'info' as const },
+  { value: 'approved', label: '已审批', type: 'primary' as const },
+  { value: 'executed', label: '已执行', type: 'success' as const },
+  { value: 'verified', label: '已验证', type: 'success' as const },
+  { value: 'closed', label: '已关闭', type: 'info' as const }
+]
 
 interface ECN {
   id: string

@@ -32,7 +32,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
 import type { TableColumnItem } from 'gi-component'
 const topCards = [
@@ -44,10 +44,20 @@ const topCards = [
 const chart1 = ref()
 const chart2 = ref()
 const chart3 = ref()
+let chart1Instance: echarts.ECharts | null = null
+let chart2Instance: echarts.ECharts | null = null
+let chart3Instance: echarts.ECharts | null = null
+
+function handleResize() {
+  chart1Instance?.resize()
+  chart2Instance?.resize()
+  chart3Instance?.resize()
+}
+
 onMounted(() => {
   if (chart1.value) {
-    const c = echarts.init(chart1.value)
-    c.setOption({
+    chart1Instance = echarts.init(chart1.value)
+    chart1Instance.setOption({
       tooltip: { trigger: 'axis' },
       legend: { data: ['营收', '成本', '利润'] },
       xAxis: { type: 'category', data: ['7月', '8月', '9月', '10月', '11月', '12月', '1月'] },
@@ -60,8 +70,8 @@ onMounted(() => {
     })
   }
   if (chart2.value) {
-    const c = echarts.init(chart2.value)
-    c.setOption({
+    chart2Instance = echarts.init(chart2.value)
+    chart2Instance.setOption({
       series: [
         {
           type: 'pie',
@@ -79,8 +89,8 @@ onMounted(() => {
     })
   }
   if (chart3.value) {
-    const c = echarts.init(chart3.value)
-    c.setOption({
+    chart3Instance = echarts.init(chart3.value)
+    chart3Instance.setOption({
       tooltip: { trigger: 'axis' },
       legend: { data: ['一车间', '二车间', '装配车间'] },
       xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五', '周六'] },
@@ -92,6 +102,14 @@ onMounted(() => {
       ]
     })
   }
+  window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  chart1Instance?.dispose()
+  chart2Instance?.dispose()
+  chart3Instance?.dispose()
 })
 const rankData = ref([
   { rank: 1, material: '离心泵 XJP-100', qty: 450 },

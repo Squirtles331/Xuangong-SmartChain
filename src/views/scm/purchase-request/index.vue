@@ -12,12 +12,7 @@
     </template>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
       <template #status="{ row }">
-        <el-tag
-          :type="row.status === 'draft' ? 'info' : row.status === 'approved' ? 'primary' : row.status === 'ordered' ? 'success' : 'warning'"
-          size="small"
-        >
-          {{ row.status === 'draft' ? '草稿' : row.status === 'approved' ? '已审批' : row.status === 'ordered' ? '已转订单' : '已驳回' }}
-        </el-tag>
+        <StatusTag :value="row.status" :options="PR_STATUS" />
       </template>
       <template #source="{ row }">
         <el-tag :type="row.source === 'mrp' ? 'primary' : 'info'" size="small">{{ row.source === 'mrp' ? 'MRP' : '手动' }}</el-tag>
@@ -77,7 +72,15 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+
+const PR_STATUS = [
+  { value: 'draft', label: '草稿', type: 'info' as const },
+  { value: 'approved', label: '已审批', type: 'primary' as const },
+  { value: 'ordered', label: '已转订单', type: 'success' as const },
+  { value: 'rejected', label: '已驳回', type: 'warning' as const }
+]
 
 interface PR {
   id: string

@@ -7,16 +7,10 @@
     </template>
     <gi-table :columns="cols" :data="pagedData" :pagination="pagination" border stripe>
       <template #verdict="{ row }">
-        <el-tag v-if="row.verdict === '合格'" type="success" size="small">合格</el-tag>
-        <el-tag v-else-if="row.verdict === '让步'" type="warning" size="small">让步</el-tag>
-        <el-tag v-else-if="row.verdict === '返工'" type="danger" size="small">返工</el-tag>
-        <el-tag v-else-if="row.verdict === '退货'" type="danger" size="small">退货</el-tag>
-        <el-tag v-else-if="row.verdict === '报废'" type="info" size="small">报废</el-tag>
-        <el-tag v-else type="info" size="small">-</el-tag>
+        <StatusTag :value="row.verdict || ''" :options="INSPECTION_VERDICT" />
       </template>
       <template #status="{ row }">
-        <el-tag v-if="row.status === 'pending'" type="warning" size="small">待检</el-tag>
-        <el-tag v-else-if="row.status === 'done'" type="success" size="small">已完成</el-tag>
+        <StatusTag :value="row.status" :options="INSPECTION_STATUS" />
       </template>
       <template #actions="{ row }">
         <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="inspect(row)">检验</el-button>
@@ -64,7 +58,21 @@ import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import { inspectionTasks as mockTasks } from '@/mock'
+
+const INSPECTION_VERDICT = [
+  { value: '合格', label: '合格', type: 'success' as const },
+  { value: '让步', label: '让步', type: 'warning' as const },
+  { value: '返工', label: '返工', type: 'danger' as const },
+  { value: '退货', label: '退货', type: 'danger' as const },
+  { value: '报废', label: '报废', type: 'info' as const }
+]
+
+const INSPECTION_STATUS = [
+  { value: 'pending', label: '待检', type: 'warning' as const },
+  { value: 'done', label: '已完成', type: 'success' as const }
+]
 
 const s = ref({ keyword: '', type: '', verdict: '' })
 const sc: FormColumnItem[] = [

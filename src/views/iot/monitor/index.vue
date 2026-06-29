@@ -1,10 +1,10 @@
 <template>
   <gi-page-layout :bordered="true">
     <div class="iot-grid">
-      <el-card v-for="d in devices" :key="d.id" shadow="hover" class="iot-card" :class="d.online ? 'online' : 'offline'">
+      <el-card v-for="d in devices" :key="d.id" shadow="hover" class="iot-card" :class="d.online ? 'online' : 'offline'" @click="showDetail(d)">
         <div class="iot-header">
-          <span class="iot-name">{{ d.name }}</span
-          ><el-tag :type="d.online ? 'success' : 'danger'" size="small">{{ d.online ? '在线' : '离线' }}</el-tag>
+          <span class="iot-name">{{ d.name }}</span>
+          <el-tag :type="d.online ? 'success' : 'danger'" size="small">{{ d.online ? '在线' : '离线' }}</el-tag>
         </div>
         <div class="iot-body">
           <div class="iot-row">
@@ -14,10 +14,10 @@
             <span>转速</span><strong>{{ d.rpm }} rpm</strong>
           </div>
           <div class="iot-row">
-            <span>温度</span><strong :style="{ color: d.temp > 60 ? '#f56c6c' : '' }">{{ d.temp }}°C</strong>
+            <span>温度</span><strong :style="{ color: d.temp > 60 ? '#f56c6c' : '' }">{{ d.temp.toFixed(1) }}°C</strong>
           </div>
           <div class="iot-row">
-            <span>电流</span><strong>{{ d.current }}A</strong>
+            <span>电流</span><strong>{{ d.current.toFixed(1) }}A</strong>
           </div>
         </div>
         <div class="iot-footer">
@@ -25,10 +25,31 @@
         </div>
       </el-card>
     </div>
+
+    <!-- 设备详情弹窗 -->
+    <el-dialog v-model="detailVisible" :title="detailDevice?.name" width="500px">
+      <el-descriptions v-if="detailDevice" :column="2" border>
+        <el-descriptions-item label="设备名称">{{ detailDevice.name }}</el-descriptions-item>
+        <el-descriptions-item label="在线状态">
+          <el-tag :type="detailDevice.online ? 'success' : 'danger'" size="small">{{ detailDevice.online ? '在线' : '离线' }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="运行状态">
+          <el-tag :type="detailDevice.running ? 'success' : 'info'" size="small">{{ detailDevice.running ? '运行中' : '已停机' }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="转速">{{ detailDevice.rpm }} rpm</el-descriptions-item>
+        <el-descriptions-item label="温度">
+          <span :style="{ color: detailDevice.temp > 60 ? '#f56c6c' : '' }">{{ detailDevice.temp.toFixed(1) }}°C</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="电流">{{ detailDevice.current.toFixed(1) }}A</el-descriptions-item>
+        <el-descriptions-item label="最后上报" :span="2">{{ detailDevice.last_report }}</el-descriptions-item>
+      </el-descriptions>
+    </el-dialog>
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+
 const devices = ref([
   { id: '1', name: '数控车床 CK6150', online: true, running: true, rpm: 1500, temp: 52, current: 18.5, last_report: '2025-01-15 14:30:00' },
   { id: '2', name: '数控车床 CK6150', online: true, running: false, rpm: 0, temp: 28, current: 0.5, last_report: '2025-01-15 14:28:00' },
@@ -36,7 +57,47 @@ const devices = ref([
   { id: '4', name: '磨床 M1432', online: false, running: false, rpm: 0, temp: 22, current: 0, last_report: '2025-01-14 08:00:00' },
   { id: '5', name: '加工中心 VMC850', online: true, running: true, rpm: 3000, temp: 65, current: 25.8, last_report: '2025-01-15 14:29:00' }
 ])
+
+const detailVisible = ref(false)
+const detailDevice = ref<(typeof devices.value)[0] | null>(null)
+
+function showDetail(d: (typeof devices.value)[0]) {
+  detailDevice.value = d
+  detailVisible.value = true
+}
+
+let timer: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  timer = setInterval(() => {
+    const now = new Date()
+    const ts = now.toISOString().slice(0, 19).replace('T', ' ')
+    devices.value.forEach((d) => {
+      if (!d.online) return
+      // 微调数值：在线运行设备随机变化
+      if (d.running) {
+        d.rpm = Math.round(d.rpm + (Math.random() - 0.5) * 20)
+        if (d.rpm < 0) d.rpm = 0
+        d.temp = +(d.temp + (Math.random() - 0.5) * 0.8).toFixed(1)
+        d.current = +(d.current + (Math.random() - 0.5) * 0.3).toFixed(1)
+        if (d.current < 0) d.current = 0
+      } else {
+        d.temp = +(d.temp + (Math.random() - 0.5) * 0.3).toFixed(1)
+        d.current = +(0.3 + Math.random() * 0.4).toFixed(1)
+      }
+      d.last_report = ts
+    })
+  }, 3000)
+})
+
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer)
+    timer = null
+  }
+})
 </script>
+
 <style scoped>
 .iot-grid {
   display: grid;
@@ -45,6 +106,11 @@ const devices = ref([
 }
 .iot-card {
   border-left: 4px solid #67c23a;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.iot-card:hover {
+  transform: translateY(-2px);
 }
 .iot-card.offline {
   border-left-color: #f56c6c;

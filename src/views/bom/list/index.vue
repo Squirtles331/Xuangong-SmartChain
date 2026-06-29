@@ -12,14 +12,10 @@
 
     <gi-table :columns="columns" :data="pagedBoms" :pagination="pagination" border stripe style="height: 100%">
       <template #bom_type="{ row }">
-        <el-tag v-if="row.bom_type === 'EBOM'" type="primary" size="small">EBOM</el-tag>
-        <el-tag v-else-if="row.bom_type === 'PBOM'" type="warning" size="small">PBOM</el-tag>
-        <el-tag v-else type="success" size="small">MBOM</el-tag>
+        <StatusTag :value="row.bom_type" :options="BOM_TYPE" />
       </template>
       <template #status="{ row }">
-        <el-tag v-if="row.status === 'active'" type="success" size="small">生效中</el-tag>
-        <el-tag v-else-if="row.status === 'draft'" type="info" size="small">草稿</el-tag>
-        <el-tag v-else type="info" size="small">已归档</el-tag>
+        <StatusTag :value="row.status" :options="BOM_STATUS" />
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="$router.push(`/bom/editor/${row.id}`)">编辑</el-button>
@@ -39,7 +35,20 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { bomList as mockBoms } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+
+const BOM_TYPE = [
+  { value: 'EBOM', label: 'EBOM', type: 'primary' as const },
+  { value: 'PBOM', label: 'PBOM', type: 'warning' as const },
+  { value: 'MBOM', label: 'MBOM', type: 'success' as const }
+]
+
+const BOM_STATUS = [
+  { value: 'active', label: '生效中', type: 'success' as const },
+  { value: 'draft', label: '草稿', type: 'info' as const },
+  { value: 'archived', label: '已归档', type: 'info' as const }
+]
 
 interface BOM {
   id: string

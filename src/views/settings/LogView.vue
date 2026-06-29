@@ -6,11 +6,7 @@
 
     <gi-table :columns="columns" :data="pagedLogs" :pagination="pagination" border style="height: 100%">
       <template #action_type="{ row }">
-        <el-tag v-if="row.action === 'CREATE'" type="success" size="small">新增</el-tag>
-        <el-tag v-else-if="row.action === 'UPDATE'" type="warning" size="small">修改</el-tag>
-        <el-tag v-else-if="row.action === 'DELETE'" type="danger" size="small">删除</el-tag>
-        <el-tag v-else-if="row.action === 'APPROVE'" type="primary" size="small">审批</el-tag>
-        <el-tag v-else size="small">{{ row.action }}</el-tag>
+        <StatusTag :value="row.action" :options="AUDIT_ACTION" />
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="showDetail(row)">详情</el-button>
@@ -24,10 +20,7 @@
         <el-descriptions-item label="操作时间">{{ detailLog?.created_at }}</el-descriptions-item>
         <el-descriptions-item label="模块">{{ detailLog?.module }}</el-descriptions-item>
         <el-descriptions-item label="操作类型">
-          <el-tag v-if="detailLog?.action === 'CREATE'" type="success" size="small">新增</el-tag>
-          <el-tag v-else-if="detailLog?.action === 'UPDATE'" type="warning" size="small">修改</el-tag>
-          <el-tag v-else-if="detailLog?.action === 'DELETE'" type="danger" size="small">删除</el-tag>
-          <el-tag v-else size="small">{{ detailLog?.action }}</el-tag>
+          <StatusTag v-if="detailLog" :value="detailLog.action" :options="AUDIT_ACTION" />
         </el-descriptions-item>
         <el-descriptions-item label="操作对象">{{ detailLog?.target }}</el-descriptions-item>
         <el-descriptions-item label="IP地址">{{ detailLog?.ip }}</el-descriptions-item>
@@ -42,7 +35,15 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import StatusTag from '@/components/StatusTag.vue'
 import { auditLogs as mockLogs } from '@/mock'
+
+const AUDIT_ACTION = [
+  { value: 'CREATE', label: '新增', type: 'success' as const },
+  { value: 'UPDATE', label: '修改', type: 'warning' as const },
+  { value: 'DELETE', label: '删除', type: 'danger' as const },
+  { value: 'APPROVE', label: '审批', type: 'primary' as const }
+]
 
 interface Log {
   id: string

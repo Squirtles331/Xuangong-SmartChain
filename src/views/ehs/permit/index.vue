@@ -17,11 +17,9 @@
           row.type === 'hot' ? '动火' : row.type === 'height' ? '高处' : row.type === 'confined' ? '受限空间' : '临时用电'
         }}</el-tag></template
       >
-      <template #status="{ row }"
-        ><el-tag :type="row.status === 'approved' ? 'success' : row.status === 'pending' ? 'warning' : 'info'" size="small">{{
-          row.status === 'approved' ? '已批准' : row.status === 'pending' ? '待审批' : '已关闭'
-        }}</el-tag></template
-      >
+      <template #status="{ row }">
+        <StatusTag :value="row.status" :options="PERMIT_STATUS" />
+      </template>
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增作业票' : '编辑作业票'" width="600px">
@@ -33,7 +31,14 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+
+const PERMIT_STATUS = [
+  { value: 'pending', label: '待审批', type: 'warning' as const },
+  { value: 'approved', label: '已批准', type: 'success' as const },
+  { value: 'closed', label: '已关闭', type: 'info' as const }
+]
 interface Pm {
   id: string
   code: string

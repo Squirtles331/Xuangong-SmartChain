@@ -16,7 +16,7 @@
             ><el-option label="产线A" value="产线A" /><el-option label="产线B" value="产线B" /></el-select></template
       ></el-table-column>
       <el-table-column prop="qty" label="分配数量" width="150"
-        ><template #default="{ row }"><el-input-number v-model="row.qty" :min="1" :max="remaining" size="small" /></template
+        ><template #default="{ row }"><el-input-number v-model="row.qty" :min="1" :max="row.qty + remaining" size="small" /></template
       ></el-table-column>
       <el-table-column label="操作" width="60"
         ><template #default="{ $index }"
@@ -26,8 +26,21 @@
     </el-table>
     <div style="margin-top: 12px"><el-button size="small" @click="splits.push({ line: '产线A', qty: 1 })">+ 添加产线</el-button></div>
     <div style="text-align: center; margin-top: 24px">
-      <span style="color: #909399; margin-right: 12px">剩余未分配: {{ remaining }}</span
-      ><el-button type="primary" :disabled="remaining !== 0" @click="confirmSplit">确认拆分</el-button>
+      <span
+        :style="{
+          color: remaining > 0 ? '#e6a23c' : remaining < 0 ? '#f56c6c' : '#67c23a',
+          marginRight: '12px',
+          fontWeight: remaining !== 0 ? 600 : 400
+        }"
+      >
+        剩余未分配: {{ remaining }}
+        <span v-if="remaining > 0">（还需分配 {{ remaining }}）</span>
+        <span v-if="remaining < 0">（超出 {{ Math.abs(remaining) }}，请调整）</span>
+      </span>
+      <el-button type="primary" :disabled="remaining !== 0" @click="confirmSplit">确认拆分</el-button>
+      <div v-if="remaining !== 0" style="margin-top: 4px; font-size: 12px; color: #909399">
+        ∑子工单 = {{ splits.reduce((s, i) => s + i.qty, 0) }}，需等于总数量 {{ wo?.qty }}
+      </div>
     </div>
   </gi-page-layout>
 </template>
