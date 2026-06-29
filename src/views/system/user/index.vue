@@ -1,17 +1,19 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #header>
-      <gi-form
-        ref="searchFormRef"
-        v-model="searchForm"
-        :columns="searchColumns"
-        :grid-item-props="{
-          span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-        }"
-        search
-        @reset="handleReset"
-        @search="handleSearch"
-      />
+      <SearchConfig :columns="allSearchColumns" :required-fields="['username']" storage-key="user-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          ref="searchFormRef"
+          v-model="searchForm"
+          :columns="visibleSearchColumns"
+          :grid-item-props="{
+            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+          }"
+          search
+          @reset="handleReset"
+          @search="handleSearch"
+        />
+      </SearchConfig>
     </template>
 
     <template #tool>
@@ -51,6 +53,7 @@
 import { computed, ref } from 'vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import BaseTableSetting from '@/components/TableSetting.vue'
+import SearchConfig from '@/components/SearchConfig.vue'
 type UserStatus = '启用' | '禁用'
 interface User {
   id: number
@@ -127,6 +130,14 @@ const searchColumns = computed(() => {
     }
   ] as FormColumnItem[]
 })
+
+// SearchConfig: 所有可用字段
+const allSearchColumns = computed(() => searchColumns.value)
+// SearchConfig: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 
 const filteredUsers = computed(() => {
   return users.value.filter(
