@@ -9,7 +9,7 @@
   height: calc(100vh - 80px);
   overflow: hidden;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
 }
 .gi-page-layout__header {
   margin-bottom: 16px;
