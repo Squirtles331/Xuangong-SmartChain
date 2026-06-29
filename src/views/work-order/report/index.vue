@@ -33,12 +33,12 @@
           </el-form-item>
           <el-form-item v-if="form.defective_qty > 0" label="不良原因" required>
             <el-checkbox-group v-model="form.defect_reasons">
-              <el-checkbox label="尺寸超差" value="dimension" />
-              <el-checkbox label="外观缺陷" value="appearance" />
-              <el-checkbox label="材质问题" value="material" />
-              <el-checkbox label="设备精度" value="equipment" />
-              <el-checkbox label="操作失误" value="operation" />
-              <el-checkbox label="其他" value="other" />
+              <el-checkbox label="尺寸超差" value="尺寸超差" />
+              <el-checkbox label="外观缺陷" value="外观缺陷" />
+              <el-checkbox label="材质问题" value="材质问题" />
+              <el-checkbox label="设备精度" value="设备精度" />
+              <el-checkbox label="操作失误" value="操作失误" />
+              <el-checkbox label="其他" value="其他" />
             </el-checkbox-group>
           </el-form-item>
           <el-form-item label="实际工时(分钟)">
@@ -59,24 +59,28 @@
 
       <!-- 报工历史 -->
       <el-card header="报工记录" shadow="never" style="margin-top: 16px">
-        <el-table :data="reportHistory" border size="small">
-          <el-table-column prop="time" label="时间" width="160" />
-          <el-table-column prop="qualified_qty" label="合格数" width="80" align="center" />
-          <el-table-column prop="defective_qty" label="不良数" width="80" align="center" />
-          <el-table-column prop="defect_reasons" label="不良原因" minWidth="150" />
-          <el-table-column prop="actual_hours" label="工时(分)" width="90" align="center" />
-          <el-table-column prop="worker" label="操作人" width="100" />
-        </el-table>
+        <gi-table :columns="historyColumns" :data="pagedHistory" :pagination="historyPagination" border size="small">
+          <template #defect_reasons="{ row }">
+            <span>{{ row.defect_reasons }}</span>
+          </template>
+        </gi-table>
+      </el-card>
+
+      <!-- 不良原因 Pareto 图 -->
+      <el-card header="不良原因 Pareto 分析" shadow="never" style="margin-top: 16px">
+        <div ref="paretoChartRef" style="width: 100%; height: 400px"></div>
       </el-card>
     </div>
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { reportHistory as mockHistory } from '@/mock'
 import { useRouter } from 'vue-router'
+import type { TableColumnItem } from 'gi-component'
+import * as echarts from 'echarts'
 
 const router = useRouter()
 
@@ -96,8 +100,12 @@ const elapsed = ref(65) // 分钟，模拟已过时间
 let timer: ReturnType<typeof setInterval>
 onMounted(() => {
   timer = setInterval(() => elapsed.value++, 60000)
+  nextTick(() => initParetoChart())
 })
-onUnmounted(() => clearInterval(timer))
+onUnmounted(() => {
+  clearInterval(timer)
+  if (paretoChart) paretoChart.dispose()
+})
 
 const elapsedDisplay = computed(() => {
   const h = Math.floor(elapsed.value / 60)
@@ -116,6 +124,28 @@ const form = reactive({
 })
 
 const reportHistory = ref(mockHistory)
+
+const historyPagination = reactive({ currentPage: 1, pageSize: 5, total: 0 })
+watch(
+  reportHistory,
+  (val) => {
+    historyPagination.total = val.length
+  },
+  { immediate: true }
+)
+const pagedHistory = computed(() => {
+  const s = (historyPagination.currentPage - 1) * historyPagination.pageSize
+  return reportHistory.value.slice(s, s + historyPagination.pageSize)
+})
+
+const historyColumns: TableColumnItem<any>[] = [
+  { prop: 'time', label: '时间', width: 160 },
+  { prop: 'qualified_qty', label: '合格数', width: 80, align: 'center' },
+  { prop: 'defective_qty', label: '不良数', width: 80, align: 'center' },
+  { prop: 'defect_reasons', label: '不良原因', minWidth: 150, slotName: 'defect_reasons' },
+  { prop: 'actual_hours', label: '工时(分)', width: 90, align: 'center' },
+  { prop: 'worker', label: '操作人', width: 100 }
+]
 
 function submitReport() {
   if (form.qualified_qty + form.defective_qty === 0) {
@@ -155,6 +185,75 @@ function submitReport() {
     })
     .catch(() => {})
 }
+
+// Pareto 图
+const paretoChartRef = ref<HTMLDivElement>()
+let paretoChart: echarts.ECharts | null = null
+
+function initParetoChart() {
+  if (!paretoChartRef.value) return
+  if (paretoChart) paretoChart.dispose()
+  paretoChart = echarts.init(paretoChartRef.value)
+
+  // 统计不良原因频次
+  const reasonMap: Record<string, number> = {}
+  reportHistory.value.forEach((r: any) => {
+    const reasons = (r.defect_reasons || '')
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter(Boolean)
+    reasons.forEach((reason: string) => {
+      reasonMap[reason] = (reasonMap[reason] || 0) + 1
+    })
+  })
+
+  const sorted = Object.entries(reasonMap).sort((a, b) => b[1] - a[1])
+  const names = sorted.map(([k]) => k)
+  const values = sorted.map(([, v]) => v)
+  const total = values.reduce((a, b) => a + b, 0)
+  let cum = 0
+  const cumPct = values.map((v) => {
+    cum += v
+    return Math.round((cum / total) * 100)
+  })
+
+  paretoChart.setOption({
+    title: { text: '不良原因 Pareto 图', left: 'center' },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'cross' },
+      formatter: (params: any) => {
+        const bar = params[0]
+        const line = params[1]
+        return `${bar.name}<br/>${bar.marker}频次: ${bar.value}<br/>${line.marker}累计占比: ${line.value}%`
+      }
+    },
+    grid: { left: 60, right: 60, bottom: 40, top: 60 },
+    xAxis: { type: 'category', data: names, axisLabel: { rotate: 30 } },
+    yAxis: [
+      { type: 'value', name: '频次' },
+      { type: 'value', name: '累计(%)', max: 100, axisLabel: { formatter: '{value}%' } }
+    ],
+    series: [
+      { name: '频次', type: 'bar', data: values, itemStyle: { color: '#409eff' } },
+      {
+        name: '累计占比',
+        type: 'line',
+        yAxisIndex: 1,
+        data: cumPct,
+        smooth: true,
+        lineStyle: { color: '#f56c6c', width: 2 },
+        itemStyle: { color: '#f56c6c' },
+        symbol: 'circle',
+        symbolSize: 6
+      }
+    ]
+  })
+}
+
+watch(reportHistory, () => {
+  nextTick(() => initParetoChart())
+})
 </script>
 
 <style scoped>

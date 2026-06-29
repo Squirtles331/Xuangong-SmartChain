@@ -13,6 +13,7 @@
     <gi-table :columns="columns" :data="pagedData" :pagination="pagination" border style="height: 100%">
       <template #actions="{ row }">
         <gi-button type="edit" @click="openEdit(row)" />
+        <gi-button type="delete" @click="del(row.id)" />
       </template>
     </gi-table>
 
@@ -60,7 +61,7 @@ const columns: TableColumnItem<Param>[] = [
   { prop: 'name', label: '参数名称', minWidth: 180 },
   { prop: 'value', label: '参数值', minWidth: 120, align: 'center' },
   { prop: 'description', label: '说明', minWidth: 250 },
-  { label: '操作', minWidth: 120, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
@@ -95,6 +96,9 @@ function del(id: string) {
   ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
     .then(() => {
       params.value = params.value.filter((e: any) => e.id !== id)
+      if ((pagination.currentPage - 1) * pagination.pageSize >= filteredData.value.length) {
+        pagination.currentPage = Math.max(1, pagination.currentPage - 1)
+      }
       ElMessage.success('删除成功')
     })
     .catch(() => {})

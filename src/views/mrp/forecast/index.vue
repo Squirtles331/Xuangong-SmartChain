@@ -13,16 +13,22 @@
       >
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
     </gi-table>
+
+    <!-- 预测 vs 实际对比图 -->
+    <el-card header="预测 vs 实际需求对比" shadow="never" style="margin-top: 16px">
+      <div ref="forecastChartRef" style="width: 100%; height: 400px"></div>
+    </el-card>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增预测需求' : '编辑预测需求'" width="600px">
       <gi-form v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import * as echarts from 'echarts'
 interface FC {
   id: string
   material_code: string
@@ -175,4 +181,70 @@ function del(id: string) {
     })
     .catch(() => {})
 }
+
+// 预测 vs 实际对比图
+const forecastChartRef = ref<HTMLDivElement>()
+let forecastChart: echarts.ECharts | null = null
+
+function initForecastChart() {
+  if (!forecastChartRef.value) return
+  if (forecastChart) forecastChart.dispose()
+  forecastChart = echarts.init(forecastChartRef.value)
+
+  // 按日期汇总预测数量，生成模拟实际数据
+  const dateMap: Record<string, { forecast: number; actual: number }> = {}
+  data.value.forEach((r) => {
+    const d = r.need_date
+    if (!dateMap[d]) dateMap[d] = { forecast: 0, actual: 0 }
+    dateMap[d].forecast += r.qty
+    dateMap[d].actual += Math.round(r.qty * (0.7 + Math.random() * 0.5))
+  })
+
+  const dates = Object.keys(dateMap).sort()
+  const forecastVals = dates.map((d) => dateMap[d].forecast)
+  const actualVals = dates.map((d) => dateMap[d].actual)
+
+  forecastChart.setOption({
+    title: { text: '预测 vs 实际需求', left: 'center' },
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['预测需求', '实际需求'], bottom: 0 },
+    grid: { left: 60, right: 30, bottom: 40, top: 50 },
+    xAxis: { type: 'category', data: dates, boundaryGap: false },
+    yAxis: { type: 'value', name: '数量(台)' },
+    series: [
+      {
+        name: '预测需求',
+        type: 'line',
+        data: forecastVals,
+        smooth: true,
+        lineStyle: { color: '#409eff', width: 2 },
+        itemStyle: { color: '#409eff' },
+        symbol: 'circle',
+        symbolSize: 8
+      },
+      {
+        name: '实际需求',
+        type: 'line',
+        data: actualVals,
+        smooth: true,
+        lineStyle: { color: '#67c23a', width: 2, type: 'dashed' },
+        itemStyle: { color: '#67c23a' },
+        symbol: 'diamond',
+        symbolSize: 8
+      }
+    ]
+  })
+}
+
+watch(
+  data,
+  () => {
+    nextTick(() => initForecastChart())
+  },
+  { deep: true }
+)
+
+onMounted(() => {
+  nextTick(() => initForecastChart())
+})
 </script>

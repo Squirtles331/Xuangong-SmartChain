@@ -1,9 +1,10 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="file-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" storage-key="file-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" />
+      </SearchSetting>
+    </template>
     <template #tool>
       <el-upload :auto-upload="false" :show-file-list="false" @change="handleUpload">
         <gi-button type="add">上传文件</gi-button>
@@ -11,7 +12,15 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="files" border style="height: 100%">
+    <gi-table :columns="columns" :data="filteredFiles" border style="height: 100%">
+      <template #name="{ row }">
+        <span style="display: flex; align-items: center; gap: 8px">
+          <el-icon :size="20" :color="fileIconColor(row.type)">
+            <component :is="fileIcon(row.type)" />
+          </el-icon>
+          {{ row.name }}
+        </span>
+      </template>
       <template #size="{ row }">
         {{ formatSize(row.size) }}
       </template>
@@ -28,7 +37,7 @@
         <img :src="previewFileData.url" style="max-width: 100%; max-height: 500px" />
       </div>
       <div v-else style="text-align: center; padding: 40px">
-        <el-icon :size="64" color="#909399"><Document /></el-icon>
+        <el-icon :size="64" color="#909399"><component :is="fileIcon(previewFileData?.type || '')" /></el-icon>
         <p style="margin-top: 16px; color: #909399">{{ previewFileData?.name }}</p>
         <p style="color: #c0c4cc; font-size: 12px">暂不支持在线预览，请下载后查看</p>
       </div>
@@ -37,9 +46,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, shallowRef } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Document } from '@element-plus/icons-vue'
+import { Document, Picture, VideoCamera, Files, Grid } from '@element-plus/icons-vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { UploadFile } from 'element-plus'
@@ -117,9 +126,42 @@ const files = ref<FileItem[]>([
   }
 ])
 
+// 搜索过滤逻辑
+const filteredFiles = computed(() => {
+  const kw = s.value.keyword?.toLowerCase() || ''
+  if (!kw) return files.value
+  return files.value.filter(
+    (f) => f.name.toLowerCase().includes(kw) || f.module.toLowerCase().includes(kw) || f.object_type.toLowerCase().includes(kw)
+  )
+})
+
+const fileIconMap: Record<string, any> = {
+  pdf: Document,
+  word: Document,
+  excel: Grid,
+  image: Picture,
+  video: VideoCamera
+}
+
+const fileIconColorMap: Record<string, string> = {
+  pdf: '#f56c6c',
+  word: '#409eff',
+  excel: '#67c23a',
+  image: '#e6a23c',
+  video: '#909399'
+}
+
+function fileIcon(type: string) {
+  return fileIconMap[type] || Files
+}
+
+function fileIconColor(type: string) {
+  return fileIconColorMap[type] || '#909399'
+}
+
 const columns: TableColumnItem<FileItem>[] = [
   { type: 'index', label: '#', width: 60 },
-  { prop: 'name', label: '文件名', minWidth: 220 },
+  { label: '文件名', minWidth: 240, slotName: 'name' },
   { prop: 'module', label: '所属模块', width: 120 },
   { prop: 'object_type', label: '关联类型', width: 120 },
   { label: '大小', minWidth: 100, slotName: 'size', align: 'right' },
@@ -134,13 +176,14 @@ function formatSize(bytes: number): string {
 }
 
 function handleUpload(file: UploadFile) {
+  const ext = file.name.split('.').pop() || 'unknown'
   const newFile: FileItem = {
     id: Date.now().toString(),
     name: file.name,
     module: '文件管理',
     object_type: '通用文件',
     size: file.size || 0,
-    type: file.name.split('.').pop() || 'unknown',
+    type: ext,
     url: '',
     uploaded_at: new Date().toLocaleString('zh-CN')
   }

@@ -10,10 +10,11 @@
     </template>
     <gi-table :columns="columns" :data="pagedOrders" :pagination="pagination" border stripe style="height: 100%">
       <template #status="{ row }">
-        <el-steps :active="statusStep(row.status)" align-center style="min-width: 200px">
+        <el-steps :active="statusStep(row.status)" align-center style="min-width: 280px">
           <el-step title="审批" />
           <el-step title="生产" />
           <el-step title="发货" />
+          <el-step title="收货" />
           <el-step title="完成" />
         </el-steps>
       </template>
@@ -30,6 +31,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { salesOrders as mockOrders } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
@@ -48,6 +50,8 @@ interface Order {
 
 const orders = ref<Order[]>(mockOrders as any)
 
+const router = useRouter()
+
 const searchForm = reactive({ code: '', customer_name: '', status: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '订单编号', field: 'code' } as any,
@@ -62,6 +66,7 @@ const searchColumns: FormColumnItem[] = [
         { label: '已审批', value: 'approved' },
         { label: '生产中', value: 'in_production' },
         { label: '待发货', value: 'pending_delivery' },
+        { label: '已发货', value: 'delivered' },
         { label: '已完成', value: 'completed' }
       ]
     }
@@ -82,9 +87,9 @@ const columns: TableColumnItem<Order>[] = [
   { prop: 'customer_name', label: '客户', minWidth: 140 },
   { prop: 'material_name', label: '产品', minWidth: 140 },
   { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
-  { prop: 'amount', label: '金额(元)', minWidth: 120, align: 'right' },
+  { prop: 'amount', label: '金额(元)', minWidth: 120, align: 'right', formatter: (row: Order) => row.amount.toLocaleString() },
   { prop: 'delivery_date', label: '交期', width: 110 },
-  { label: '进度', minWidth: 240, slotName: 'status' },
+  { label: '进度', minWidth: 320, slotName: 'status' },
   { label: '操作', minWidth: 120, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
@@ -110,7 +115,7 @@ watch(
 )
 
 function statusStep(s: string) {
-  const map: Record<string, number> = { approved: 1, in_production: 2, pending_delivery: 3, completed: 4 }
+  const map: Record<string, number> = { approved: 1, in_production: 2, pending_delivery: 3, delivered: 4, completed: 5 }
   return map[s] || 0
 }
 function handleSearch() {
@@ -122,7 +127,9 @@ function handleReset() {
   searchForm.status = ''
   pagination.currentPage = 1
 }
-function viewDetail(_row: Order) {}
+function viewDetail(row: Order) {
+  router.push('/crm/order/' + row.id)
+}
 function createDelivery(row: Order) {
   row.status = 'completed'
   ElMessage.success('已生成发货通知')

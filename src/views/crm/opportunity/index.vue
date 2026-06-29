@@ -5,6 +5,10 @@
         <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
     ></template>
     <template #tool><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /></template>
+    <div style="margin-bottom: 16px; padding: 16px; background: #fafafa; border-radius: 4px">
+      <div style="text-align: center; font-weight: bold; margin-bottom: 8px">商机阶段漏斗</div>
+      <div ref="funnelRef" style="width: 100%; height: 300px"></div>
+    </div>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
       <template #stage="{ row }"
         ><el-steps :active="stageStep(row.stage)" align-center style="min-width: 200px"
@@ -17,7 +21,11 @@
           :color="row.probability >= 70 ? '#67c23a' : row.probability >= 40 ? '#e6a23c' : '#909399'"
       /></template>
       <template #actions="{ row }"
-        ><gi-button type="edit" @click="openEdit(row)" /><el-button type="success" link size="small" @click="convertToOrder(row)"
+        ><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /><el-button
+          type="success"
+          link
+          size="small"
+          @click="convertToOrder(row)"
           >转订单</el-button
         ></template
       >
@@ -28,8 +36,9 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import * as echarts from 'echarts'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 interface Opp {
@@ -112,7 +121,13 @@ const cols: TableColumnItem<Opp>[] = [
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() => data.value.filter((r) => (!s.keyword || r.customer.includes(s.keyword)) && (!s.stage || r.stage === s.stage)))
+const fd = computed(() =>
+  data.value.filter(
+    (r) =>
+      (!s.keyword || r.customer.includes(s.keyword) || r.product.includes(s.keyword) || r.owner.includes(s.keyword)) &&
+      (!s.stage || r.stage === s.stage)
+  )
+)
 const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
 watch(
   fd,
@@ -190,4 +205,55 @@ function convertToOrder(r: Opp) {
   r.probability = 100
   ElMessage.success('已转为销售订单')
 }
+function del(id: string) {
+  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+    .then(() => {
+      data.value = data.value.filter((e) => e.id !== id)
+      ElMessage.success('删除成功')
+      renderFunnel()
+    })
+    .catch(() => {})
+}
+const funnelRef = ref<HTMLElement | null>(null)
+let funnelChart: echarts.ECharts | null = null
+function renderFunnel() {
+  if (!funnelRef.value) return
+  if (!funnelChart) {
+    funnelChart = echarts.init(funnelRef.value)
+  }
+  const stageCount: Record<string, number> = { initial: 0, solution: 0, quotation: 0, won: 0 }
+  data.value.forEach((r) => {
+    if (stageCount[r.stage] !== undefined) stageCount[r.stage]++
+  })
+  const stageNames: Record<string, string> = { initial: '初步接触', solution: '方案制定', quotation: '报价中', won: '成交' }
+  const funnelData = Object.entries(stageCount)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => ({ name: stageNames[k] || k, value: v }))
+  funnelChart.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} 个' },
+    series: [
+      {
+        type: 'funnel',
+        left: '20%',
+        right: '20%',
+        top: 20,
+        bottom: 20,
+        width: '60%',
+        min: 0,
+        max: funnelData.length ? funnelData[0].value : 1,
+        minSize: '20%',
+        maxSize: '100%',
+        gap: 4,
+        label: { show: true, position: 'inside', formatter: '{b}: {c}' },
+        labelLine: { show: false },
+        itemStyle: { borderWidth: 0 },
+        data: funnelData
+      }
+    ]
+  })
+}
+watch(data, () => nextTick(renderFunnel), { deep: true })
+onMounted(() => {
+  nextTick(renderFunnel)
+})
 </script>

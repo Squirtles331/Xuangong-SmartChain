@@ -11,7 +11,7 @@
         >导出</el-button
       ></template
     >
-    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
+    <gi-table :columns="cols" :data="pd" :pagination="p" border stripe :row-class-name="rowClassName">
       <template #status="{ row }"
         ><el-tag
           :type="row.status === 'active' ? 'success' : row.status === 'draft' ? 'warning' : row.status === 'expired' ? 'info' : 'danger'"
@@ -110,7 +110,9 @@ const cols: TableColumnItem<CT>[] = [
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() => data.value.filter((r) => (!s.keyword || r.customer.includes(s.keyword)) && (!s.status || r.status === s.status)))
+const fd = computed(() =>
+  data.value.filter((r) => (!s.keyword || r.customer.includes(s.keyword) || r.code.includes(s.keyword)) && (!s.status || r.status === s.status))
+)
 const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
 watch(
   fd,
@@ -119,6 +121,15 @@ watch(
   },
   { immediate: true }
 )
+function rowClassName({ row }: { row: CT }) {
+  if (row.status === 'active') {
+    const today = new Date().toISOString().slice(0, 10)
+    if (row.end_date < today) {
+      return 'row-expired'
+    }
+  }
+  return ''
+}
 function hs() {
   p.currentPage = 1
 }
@@ -151,7 +162,8 @@ const formCols: FormColumnItem[] = [
     props: {
       options: [
         { label: '草稿', value: 'draft' },
-        { label: '生效中', value: 'active' }
+        { label: '生效中', value: 'active' },
+        { label: '已过期', value: 'expired' }
       ]
     } as any
   }
@@ -193,3 +205,11 @@ function del(id: string) {
     .catch(() => {})
 }
 </script>
+<style scoped>
+:deep(.row-expired) {
+  background-color: #fef0f0 !important;
+}
+:deep(.row-expired td) {
+  background-color: #fef0f0 !important;
+}
+</style>

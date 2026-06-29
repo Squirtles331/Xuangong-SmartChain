@@ -125,7 +125,13 @@ const cols: TableColumnItem<Inv>[] = [
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 const p = reactive({ currentPage: 1, pageSize: 10, total: 0 })
-const fd = computed(() => data.value.filter((r) => (!s.keyword || r.customer.includes(s.keyword)) && (!s.status || r.status === s.status)))
+const fd = computed(() =>
+  data.value.filter(
+    (r) =>
+      (!s.keyword || r.customer.includes(s.keyword) || r.code.includes(s.keyword) || r.order_code.includes(s.keyword)) &&
+      (!s.status || r.status === s.status)
+  )
+)
 const pd = computed(() => fd.value.slice((p.currentPage - 1) * p.pageSize, p.currentPage * p.pageSize))
 watch(
   fd,
@@ -167,6 +173,14 @@ function openAdd() {
   Object.assign(form, { code: '', customer: '', order_code: '', amount: 0, tax_rate: 13, tax_amount: 0, total: 0, issue_date: '', status: 'draft' })
   vis.value = true
 }
+// Auto-calculate tax amount and total when amount or tax rate changes
+watch(
+  () => [form.amount, form.tax_rate],
+  () => {
+    form.tax_amount = Math.round(((form.amount * form.tax_rate) / 100) * 100) / 100
+    form.total = Math.round((form.amount + form.tax_amount) * 100) / 100
+  }
+)
 function openEdit(r: Inv) {
   mode.value = 'edit'
   eid.value = r.id

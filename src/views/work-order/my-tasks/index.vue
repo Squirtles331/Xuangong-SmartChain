@@ -2,9 +2,31 @@
   <gi-page-layout :bordered="true">
     <el-tabs v-model="activeTab">
       <el-tab-pane label="待开工" name="assigned">
-        <el-empty v-if="assignedTasks.length === 0" description="暂无待开工任务" />
+        <!-- 搜索+筛选 -->
+        <div class="search-bar">
+          <el-input
+            v-model="assignedSearch.keyword"
+            placeholder="搜索工单号"
+            clearable
+            style="width: 200px"
+            @input="assignedPagination.currentPage = 1"
+          />
+          <el-select
+            v-model="assignedSearch.priority"
+            placeholder="优先级"
+            clearable
+            style="width: 120px; margin-left: 8px"
+            @change="assignedPagination.currentPage = 1"
+          >
+            <el-option label="紧急" value="urgent" />
+            <el-option label="高" value="high" />
+            <el-option label="普通" value="normal" />
+            <el-option label="低" value="low" />
+          </el-select>
+        </div>
+        <el-empty v-if="pagedAssigned.length === 0" description="暂无待开工任务" />
         <div v-else class="task-list">
-          <el-card v-for="task in assignedTasks" :key="task.id" shadow="hover" class="task-card">
+          <el-card v-for="task in pagedAssigned" :key="task.id" shadow="hover" class="task-card">
             <div class="task-header">
               <span class="task-code">{{ task.wo_code }}</span>
               <el-tag :type="task.wo_priority === 'urgent' ? 'danger' : 'info'" size="small">{{
@@ -25,12 +47,43 @@
             </div>
           </el-card>
         </div>
+        <el-pagination
+          v-if="filteredAssigned.length > assignedPagination.pageSize"
+          v-model:current-page="assignedPagination.currentPage"
+          v-model:page-size="assignedPagination.pageSize"
+          :total="filteredAssigned.length"
+          :page-sizes="[6, 12, 18]"
+          layout="total, sizes, prev, pager, next"
+          small
+          style="margin-top: 16px; justify-content: center"
+        />
       </el-tab-pane>
 
       <el-tab-pane label="生产中" name="running">
-        <el-empty v-if="runningTasks.length === 0" description="暂无生产中任务" />
+        <div class="search-bar">
+          <el-input
+            v-model="runningSearch.keyword"
+            placeholder="搜索工单号"
+            clearable
+            style="width: 200px"
+            @input="runningPagination.currentPage = 1"
+          />
+          <el-select
+            v-model="runningSearch.priority"
+            placeholder="优先级"
+            clearable
+            style="width: 120px; margin-left: 8px"
+            @change="runningPagination.currentPage = 1"
+          >
+            <el-option label="紧急" value="urgent" />
+            <el-option label="高" value="high" />
+            <el-option label="普通" value="normal" />
+            <el-option label="低" value="low" />
+          </el-select>
+        </div>
+        <el-empty v-if="pagedRunning.length === 0" description="暂无生产中任务" />
         <div v-else class="task-list">
-          <el-card v-for="task in runningTasks" :key="task.id" shadow="hover" class="task-card">
+          <el-card v-for="task in pagedRunning" :key="task.id" shadow="hover" class="task-card">
             <div class="task-header">
               <span class="task-code">{{ task.wo_code }}</span>
               <el-tag type="warning" size="small">进行中</el-tag>
@@ -49,6 +102,16 @@
             </div>
           </el-card>
         </div>
+        <el-pagination
+          v-if="filteredRunning.length > runningPagination.pageSize"
+          v-model:current-page="runningPagination.currentPage"
+          v-model:page-size="runningPagination.pageSize"
+          :total="filteredRunning.length"
+          :page-sizes="[6, 12, 18]"
+          layout="total, sizes, prev, pager, next"
+          small
+          style="margin-top: 16px; justify-content: center"
+        />
       </el-tab-pane>
 
       <el-tab-pane label="已完工" name="completed">
@@ -85,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { myTasks as mockMyTasks } from '@/mock'
 import type { TableColumnItem } from 'gi-component'
@@ -111,10 +174,41 @@ interface Task {
 const activeTab = ref('assigned')
 
 const assignedTasks = ref<Task[]>(mockMyTasks.assigned as any)
-
 const runningTasks = ref<Task[]>(mockMyTasks.running as any)
-
 const completedTasks = ref<Task[]>(mockMyTasks.completed as any)
+
+// 搜索+筛选
+const assignedSearch = reactive({ keyword: '', priority: '' })
+const runningSearch = reactive({ keyword: '', priority: '' })
+
+const assignedPagination = reactive({ currentPage: 1, pageSize: 6 })
+const runningPagination = reactive({ currentPage: 1, pageSize: 6 })
+
+const filteredAssigned = computed(() => {
+  return assignedTasks.value.filter((t) => {
+    if (assignedSearch.keyword && !t.wo_code.includes(assignedSearch.keyword)) return false
+    if (assignedSearch.priority && t.wo_priority !== assignedSearch.priority) return false
+    return true
+  })
+})
+
+const filteredRunning = computed(() => {
+  return runningTasks.value.filter((t) => {
+    if (runningSearch.keyword && !t.wo_code.includes(runningSearch.keyword)) return false
+    if (runningSearch.priority && t.wo_priority !== runningSearch.priority) return false
+    return true
+  })
+})
+
+const pagedAssigned = computed(() => {
+  const s = (assignedPagination.currentPage - 1) * assignedPagination.pageSize
+  return filteredAssigned.value.slice(s, s + assignedPagination.pageSize)
+})
+
+const pagedRunning = computed(() => {
+  const s = (runningPagination.currentPage - 1) * runningPagination.pageSize
+  return filteredRunning.value.slice(s, s + runningPagination.pageSize)
+})
 
 const completedColumns: TableColumnItem<Task>[] = [
   { prop: 'wo_code', label: '工单', width: 150 },
@@ -143,6 +237,11 @@ function submitException() {
 </script>
 
 <style scoped>
+.search-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
 .task-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

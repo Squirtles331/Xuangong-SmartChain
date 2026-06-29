@@ -13,26 +13,42 @@
 
     <el-tabs v-model="tab">
       <el-tab-pane label="建议采购" name="purchase">
-        <div style="margin-bottom: 12px"><el-button type="primary" size="small" @click="confirmAll('purchase')">批量生成采购申请</el-button></div>
+        <div style="margin-bottom: 12px">
+          <el-button type="primary" size="small" @click="confirmAll('purchase')">批量生成采购申请</el-button>
+        </div>
         <gi-table :columns="purCols" :data="purchaseList" border stripe size="small" @selection-change="onPurSelect">
-          <template #actions="{ row }"
-            ><el-button type="primary" link size="small" @click="confirmOne('purchase', row)">生成申请</el-button></template
-          >
+          <template #actions="{ row }">
+            <el-button type="primary" link size="small" @click="confirmOne('purchase', row)">生成申请</el-button>
+          </template>
         </gi-table>
       </el-tab-pane>
 
       <el-tab-pane label="建议生产" name="production">
-        <div style="margin-bottom: 12px"><el-button type="primary" size="small" @click="confirmAll('production')">批量生成工单</el-button></div>
+        <div style="margin-bottom: 12px">
+          <el-button type="primary" size="small" @click="confirmAll('production')">批量生成工单</el-button>
+        </div>
         <gi-table :columns="prodCols" :data="productionList" border stripe size="small">
-          <template #actions="{ row }"
-            ><el-button type="primary" link size="small" @click="confirmOne('production', row)">生成工单</el-button></template
-          >
+          <template #actions="{ row }">
+            <el-button type="primary" link size="small" @click="confirmOne('production', row)">生成工单</el-button>
+          </template>
         </gi-table>
       </el-tab-pane>
 
       <el-tab-pane label="例外报告" name="exception">
         <el-tag v-if="exceptions.length === 0" type="success" size="large">无例外</el-tag>
-        <gi-table v-else :columns="excCols" :data="exceptions" border stripe size="small" />
+        <gi-table v-else :columns="excCols" :data="exceptions" border stripe size="small">
+          <template #type="{ row }">
+            <el-tag :type="levelTagType(row.level)" size="small" effect="dark">{{ row.type }}</el-tag>
+          </template>
+          <template #detail="{ row }">
+            <span :style="{ color: levelColor(row.level), fontWeight: row.level === 'severe' ? 'bold' : 'normal' }">
+              {{ row.detail }}
+            </span>
+          </template>
+          <template #action="{ row }">
+            <span :style="{ color: levelColor(row.level) }">{{ row.action }}</span>
+          </template>
+        </gi-table>
       </el-tab-pane>
     </el-tabs>
   </gi-page-layout>
@@ -42,40 +58,11 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
+import { mrpPurchaseList, mrpProductionList, mrpExceptions } from '@/mock'
 
 const tab = ref('purchase')
-const purchaseList = ref([
-  {
-    id: '1',
-    code: '01.01.001-00001',
-    name: '45#圆钢 φ50',
-    qty: 300,
-    order_date: '2025-01-02',
-    need_date: '2025-01-18',
-    supplier: 'XX钢材有限公司',
-    source: 'SO202501150001'
-  },
-  {
-    id: '2',
-    code: '02.04.001-00001',
-    name: '轴承 6308',
-    qty: 150,
-    order_date: '2025-01-05',
-    need_date: '2025-01-20',
-    supplier: 'YY轴承制造厂',
-    source: 'SO202501150001'
-  },
-  {
-    id: '3',
-    code: '02.02.001-00001',
-    name: '螺栓 M16×60',
-    qty: 800,
-    order_date: '2025-01-08',
-    need_date: '2025-01-22',
-    supplier: 'ZZ标准件有限公司',
-    source: 'SO202501100002'
-  }
-])
+
+const purchaseList = ref(mrpPurchaseList as any[])
 const purCols: TableColumnItem<any>[] = [
   { type: 'selection', width: 50 },
   { prop: 'code', label: '物料编码', width: 180 },
@@ -88,30 +75,7 @@ const purCols: TableColumnItem<any>[] = [
   { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
 
-const productionList = ref([
-  {
-    id: '1',
-    code: '04.01.001-00001',
-    name: '离心泵 XJP-100',
-    qty: 70,
-    start_date: '2025-01-10',
-    end_date: '2025-01-25',
-    bom: 'MBOM V1.2',
-    routing: '标准工艺 V1.1',
-    source: 'SO202501150001'
-  },
-  {
-    id: '2',
-    code: '03.01.001-00001',
-    name: '传动轴 DS-50',
-    qty: 50,
-    start_date: '2025-01-12',
-    end_date: '2025-01-22',
-    bom: 'MBOM V1.1',
-    routing: '标准工艺 V1.0',
-    source: 'SO202501150001'
-  }
-])
+const productionList = ref(mrpProductionList as any[])
 const prodCols: TableColumnItem<any>[] = [
   { type: 'selection', width: 50 },
   { prop: 'code', label: '产品编码', width: 180 },
@@ -125,15 +89,25 @@ const prodCols: TableColumnItem<any>[] = [
   { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
 
-const exceptions = ref([
-  { id: '1', type: '延期风险', material: '轴承 6308', detail: '建议下单日期(1月5日)已过，需要加急采购', action: '建议联系供应商紧急供货' }
-])
+const exceptions = ref(mrpExceptions as any[])
 const excCols: TableColumnItem<any>[] = [
-  { prop: 'type', label: '类型', width: 100 },
+  { label: '类型', width: 100, slotName: 'type' },
   { prop: 'material', label: '物料', width: 150 },
-  { prop: 'detail', label: '详情', minWidth: 250 },
-  { prop: 'action', label: '建议动作', minWidth: 200 }
+  { label: '详情', minWidth: 250, slotName: 'detail' },
+  { label: '建议动作', minWidth: 200, slotName: 'action' }
 ]
+
+// 颜色分级
+function levelTagType(level: string): string {
+  if (level === 'severe') return 'danger'
+  if (level === 'warning') return 'warning'
+  return 'info'
+}
+function levelColor(level: string): string {
+  if (level === 'severe') return '#f56c6c'
+  if (level === 'warning') return '#e6a23c'
+  return '#909399'
+}
 
 const selectedPur = ref<any[]>([])
 function onPurSelect(rows: any[]) {
@@ -149,6 +123,7 @@ function runMRP() {
   ElMessage.success('MRP 运算已启动，请稍候查看结果')
 }
 </script>
+
 <style scoped>
 .mrp-header {
   display: flex;

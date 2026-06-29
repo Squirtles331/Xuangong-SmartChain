@@ -1,7 +1,23 @@
 <template>
   <gi-page-layout :bordered="true">
+    <template #header>
+      <el-form inline>
+        <el-form-item label="时间范围">
+          <el-date-picker
+            v-model="dateRange"
+            type="monthrange"
+            range-separator="至"
+            start-placeholder="起始月"
+            end-placeholder="结束月"
+            format="YYYY-MM"
+            value-format="YYYY-MM"
+            @change="handleDateChange"
+          />
+        </el-form-item>
+      </el-form>
+    </template>
     <el-row :gutter="16">
-      <el-col :span="6" v-for="c in cards" :key="c.title"
+      <el-col :span="6" v-for="c in filteredCards" :key="c.title"
         ><el-card shadow="hover"
           ><div class="card-title">{{ c.title }}</div>
           <div class="card-value">
@@ -24,34 +40,79 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import * as echarts from 'echarts'
-const cards = [
-  { title: '本月用电', value: 125800, unit: 'kWh', trend: 5.2 },
-  { title: '本月用水', value: 3200, unit: '吨', trend: -3.1 },
-  { title: '本月用气', value: 8500, unit: 'm³', trend: 8.7 },
-  { title: '碳排放', value: 98.5, unit: '吨CO₂', trend: 5.2 }
+import type { EChartsType } from 'echarts'
+
+const dateRange = ref<string[]>(['2025-01', '2025-12'])
+let chartInstance: EChartsType | null = null
+let pieInstance: EChartsType | null = null
+
+const allCards = [
+  { title: '本月用电', value: 125800, unit: 'kWh', trend: 5.2, month: '2025-06' },
+  { title: '本月用水', value: 3200, unit: '吨', trend: -3.1, month: '2025-06' },
+  { title: '本月用气', value: 8500, unit: 'm³', trend: 8.7, month: '2025-06' },
+  { title: '碳排放', value: 98.5, unit: '吨CO₂', trend: 5.2, month: '2025-06' }
 ]
+
+const filteredCards = computed(() => {
+  if (!dateRange.value || dateRange.value.length < 2) return allCards
+  return allCards
+})
+
+function handleDateChange() {
+  if (chartInstance) {
+    updateChart()
+  }
+}
+
 const chartRef = ref<HTMLDivElement>()
 const pieRef = ref<HTMLDivElement>()
+
+function getChartOption() {
+  const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+  let startIdx = 0
+  let endIdx = 11
+  if (dateRange.value && dateRange.value.length === 2) {
+    startIdx = parseInt(dateRange.value[0].split('-')[1]) - 1
+    endIdx = parseInt(dateRange.value[1].split('-')[1]) - 1
+  }
+  const xData = months.slice(startIdx, endIdx + 1)
+  const allElectric = [120, 132, 101, 134, 90, 145, 156, 130, 125, 140, 135, 125]
+  const allWater = [3.2, 3.5, 2.8, 3.0, 3.1, 3.3, 3.0, 3.2, 2.9, 3.1, 3.0, 3.2]
+  const allGas = [8.5, 9.0, 7.8, 8.2, 8.8, 9.2, 8.5, 8.0, 8.5, 9.0, 8.5, 8.5]
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['电', '水', '气'] },
+    xAxis: { type: 'category', data: xData },
+    yAxis: { type: 'value' },
+    series: [
+      { name: '电', type: 'bar', data: allElectric.slice(startIdx, endIdx + 1), itemStyle: { color: '#e6a23c' } },
+      { name: '水', type: 'line', data: allWater.slice(startIdx, endIdx + 1), itemStyle: { color: '#409eff' } },
+      { name: '气', type: 'line', data: allGas.slice(startIdx, endIdx + 1), itemStyle: { color: '#67c23a' } }
+    ]
+  }
+}
+
+function updateChart() {
+  if (chartInstance) {
+    chartInstance.setOption(getChartOption())
+  }
+}
+
+function handleResize() {
+  chartInstance?.resize()
+  pieInstance?.resize()
+}
+
 onMounted(() => {
   if (chartRef.value) {
-    const c = echarts.init(chartRef.value)
-    c.setOption({
-      tooltip: { trigger: 'axis' },
-      legend: { data: ['电', '水', '气'] },
-      xAxis: { type: 'category', data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'] },
-      yAxis: { type: 'value' },
-      series: [
-        { name: '电', type: 'bar', data: [120, 132, 101, 134, 90, 145, 156, 130, 125, 140, 135, 125], itemStyle: { color: '#e6a23c' } },
-        { name: '水', type: 'line', data: [3.2, 3.5, 2.8, 3.0, 3.1, 3.3, 3.0, 3.2, 2.9, 3.1, 3.0, 3.2], itemStyle: { color: '#409eff' } },
-        { name: '气', type: 'line', data: [8.5, 9.0, 7.8, 8.2, 8.8, 9.2, 8.5, 8.0, 8.5, 9.0, 8.5, 8.5], itemStyle: { color: '#67c23a' } }
-      ]
-    })
+    chartInstance = echarts.init(chartRef.value)
+    chartInstance.setOption(getChartOption())
   }
   if (pieRef.value) {
-    const c = echarts.init(pieRef.value)
-    c.setOption({
+    pieInstance = echarts.init(pieRef.value)
+    pieInstance.setOption({
       series: [
         {
           type: 'pie',
@@ -65,6 +126,13 @@ onMounted(() => {
       ]
     })
   }
+  window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  chartInstance?.dispose()
+  pieInstance?.dispose()
 })
 </script>
 <style scoped>

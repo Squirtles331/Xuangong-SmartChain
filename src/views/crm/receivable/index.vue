@@ -12,10 +12,10 @@
     <gi-table :columns="columns" :data="pagedAR" :pagination="pagination" border stripe style="height: 100%">
       <template #aging="{ row }">
         <el-tag v-if="row.aging <= 0" type="success" size="small">未到期</el-tag>
-        <el-tag v-else-if="row.aging <= 30" type="warning" size="small">逾期{{ row.aging }}天</el-tag>
+        <el-tag v-else-if="row.aging <= 30" type="success" size="small">逾期{{ row.aging }}天</el-tag>
         <el-tag v-else-if="row.aging <= 60" type="warning" size="small">逾期{{ row.aging }}天</el-tag>
-        <el-tag v-else-if="row.aging <= 90" type="danger" size="small">逾期{{ row.aging }}天</el-tag>
-        <el-tag v-else type="danger" size="small">坏账风险</el-tag>
+        <el-tag v-else-if="row.aging <= 90" type="" size="small" color="#e6a23c" style="color: #fff">逾期{{ row.aging }}天</el-tag>
+        <el-tag v-else type="danger" size="small">逾期{{ row.aging }}天</el-tag>
       </template>
       <template #status="{ row }">
         <el-tag v-if="row.balance === 0" type="success" size="small">已结</el-tag>
@@ -47,7 +47,7 @@
     </el-dialog>
 
     <!-- 核销弹窗 -->
-    <el-dialog v-model="settleVisible" title="回款核销" width="600px">
+    <el-dialog v-model="settleVisible" title="回款核销" width="650px">
       <p>
         当前回款余额: <strong>{{ receiptForm.amount.toLocaleString() }} 元</strong>
       </p>
@@ -57,6 +57,19 @@
         <el-table-column prop="amount" label="金额" width="120" align="right" />
         <el-table-column prop="balance" label="余额" width="120" align="right" />
         <el-table-column prop="aging" label="账龄" width="100" />
+        <el-table-column label="核销金额" minWidth="120" align="center">
+          <template #default="{ row }">
+            <el-input-number
+              v-model="settleAmountMap[row.id]"
+              :min="0"
+              :max="row.balance"
+              :precision="2"
+              size="small"
+              controls-position="right"
+              style="width: 100%"
+            />
+          </template>
+        </el-table-column>
       </el-table>
       <template #footer
         ><el-button @click="settleVisible = false">取消</el-button><el-button type="primary" @click="submitSettle">确认核销</el-button></template
@@ -177,20 +190,34 @@ function submitReceipt() {
 const settleVisible = ref(false)
 const settleList = ref<AR[]>([])
 const selectedSettle = ref<AR[]>([])
+const settleAmountMap = reactive<Record<string, number>>({})
 function openSettle(row: AR) {
   settleList.value = ars.value.filter((a) => a.customer === row.customer && a.balance > 0)
+  selectedSettle.value = []
+  // Initialize settle amounts to 0 for each row
+  settleList.value.forEach((a) => {
+    settleAmountMap[a.id] = 0
+  })
   settleVisible.value = true
 }
 function onSettleSelect(rows: AR[]) {
   selectedSettle.value = rows
 }
 function submitSettle() {
-  const total = selectedSettle.value.reduce((s, a) => s + a.balance, 0)
-  selectedSettle.value.forEach((a) => {
-    a.settled = a.amount
-    a.balance = 0
+  let totalSettled = 0
+  settleList.value.forEach((a) => {
+    const settleAmount = settleAmountMap[a.id] || 0
+    if (settleAmount > 0) {
+      a.settled += settleAmount
+      a.balance -= settleAmount
+      totalSettled += settleAmount
+    }
   })
+  if (totalSettled === 0) {
+    ElMessage.warning('请输入核销金额')
+    return
+  }
   settleVisible.value = false
-  ElMessage.success(`已核销 ${total.toLocaleString()} 元`)
+  ElMessage.success(`已核销 ${totalSettled.toLocaleString()} 元`)
 }
 </script>

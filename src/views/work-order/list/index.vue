@@ -43,13 +43,20 @@
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="$router.push(`/work-order/${row.id}`)">详情</el-button>
-        <el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="submitApproval(row)">提交审批</el-button>
-        <el-button v-if="row.status === 'approved'" type="warning" link size="small" @click="releaseOrder(row)">下发</el-button>
-        <el-button v-if="row.status === 'completed'" type="success" link size="small" @click="closeOrder(row)">关闭</el-button>
-        <el-button v-if="row.status === 'in_progress'" type="primary" link size="small" @click="$router.push(`/work-order/report/${row.id}`)"
-          >报工</el-button
-        >
-        <gi-button v-if="['draft', 'approved'].includes(row.status)" type="delete" size="small" @click="deleteOrder(row.id)" />
+        <el-dropdown trigger="click">
+          <el-button type="primary" link size="small">
+            更多<el-icon class="el-icon--right"><arrow-down /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-if="row.status === 'draft'" @click="submitApproval(row)">提交审批</el-dropdown-item>
+              <el-dropdown-item v-if="row.status === 'approved'" @click="releaseOrder(row)">下发</el-dropdown-item>
+              <el-dropdown-item v-if="row.status === 'completed'" @click="closeOrder(row)">关闭</el-dropdown-item>
+              <el-dropdown-item v-if="row.status === 'in_progress'" @click="$router.push(`/work-order/report/${row.id}`)">报工</el-dropdown-item>
+              <el-dropdown-item v-if="['draft', 'approved'].includes(row.status)" @click="deleteOrder(row.id)" divided>删除</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
@@ -61,6 +68,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowDown } from '@element-plus/icons-vue'
 import { workOrders as mockWOs } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
@@ -147,7 +155,7 @@ const columns: TableColumnItem<WorkOrder>[] = [
   { label: '优先级', minWidth: 70, slotName: 'priority', align: 'center' },
   { prop: 'workshop_name', label: '车间', width: 130 },
   { label: '计划完工', minWidth: 110, slotName: 'planned_end_date' },
-  { label: '操作', minWidth: 280, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 140, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const pagination = reactive({ currentPage: 1, pageSize: 10, total: 0 })
@@ -157,6 +165,13 @@ const filteredOrders = computed(() => {
     if (searchForm.code && !o.code.includes(searchForm.code)) return false
     if (searchForm.status && o.status !== searchForm.status) return false
     if (searchForm.priority && o.priority !== searchForm.priority) return false
+    if (searchForm.date_range && searchForm.date_range.length === 2) {
+      const start = searchForm.date_range[0]
+      const end = searchForm.date_range[1]
+      if (start && end) {
+        if (o.planned_end_date < start || o.planned_end_date > end) return false
+      }
+    }
     return true
   })
 })

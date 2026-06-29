@@ -10,15 +10,18 @@
         @node-click="onNodeClick"
       />
     </template>
-    <template #header
-      ><h3 style="margin: 0">{{ currentEmp?.name || '请选择员工' }} 技能矩阵</h3></template
-    >
+    <template #header>
+      <h3 style="margin: 0">{{ currentEmp?.name || '请选择员工' }} 技能矩阵</h3>
+    </template>
     <template #tool><gi-button type="add" @click="openAdd" /></template>
     <gi-table :columns="cols" :data="skills" border stripe size="small">
-      <template #level="{ row }"><el-rate v-model="row.level" :max="5" disabled size="small" /></template>
-      <template #actions="{ row }"
-        ><gi-button type="edit" size="small" @click="openEdit(row)" /><gi-button type="delete" size="small" @click="del(row.id)"
-      /></template>
+      <template #level="{ row }">
+        <el-rate v-model="row.level" :max="5" disabled size="small" />
+      </template>
+      <template #actions="{ row }">
+        <gi-button type="edit" size="small" @click="openEdit(row)" />
+        <gi-button type="delete" size="small" @click="del(row.id)" />
+      </template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增技能' : '编辑技能'" width="500px">
       <gi-form v-model="form" :columns="formCols" :label-width="100" />
@@ -80,7 +83,13 @@ const eid = ref('')
 const form = reactive({ skill_name: '', level: 1, cert_number: '', expire_date: '' })
 const formCols: FormColumnItem[] = [
   { type: 'input', label: '技能名称', field: 'skill_name', required: true },
-  { type: 'input-number', label: '等级(1-5)', field: 'level', required: true, props: { min: 1, max: 5 } as any },
+  {
+    type: 'input-number',
+    label: '等级(1-5)',
+    field: 'level',
+    required: true,
+    props: { min: 1, max: 5 } as any
+  },
   { type: 'input', label: '证书编号', field: 'cert_number' },
   { type: 'date-picker', label: '有效期至', field: 'expire_date' }
 ]

@@ -1,16 +1,29 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header
-      ><SearchSetting :columns="allSearchColumns" storage-key="piecework-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
-    ></template>
-    <template #tool
-      ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
-        style="margin-left: 8px"
-        @click="handleExport"
-        >导出</el-button
-      ></template
-    >
+    <template #header>
+      <SearchSetting :columns="allSearchColumns" storage-key="piecework-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" />
+      </SearchSetting>
+    </template>
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    </template>
+
+    <!-- 工资月度汇总卡片 -->
+    <el-row :gutter="16" style="margin-bottom: 16px">
+      <el-col :span="6" v-for="c in summaryCards" :key="c.title">
+        <el-card shadow="hover">
+          <div class="card-title">{{ c.title }}</div>
+          <div class="card-value">{{ c.value.toLocaleString() }}<span class="card-unit"> 元</span></div>
+          <div class="card-trend" :style="{ color: c.trend > 0 ? '#f56c6c' : '#67c23a' }">
+            {{ c.trend > 0 ? '↑' : '↓' }}{{ Math.abs(c.trend) }}% 较上月
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /></template>
     </gi-table>
@@ -32,6 +45,14 @@ interface PW {
   qualified_bonus: number
   defective_penalty: number
 }
+
+const summaryCards = ref([
+  { title: '本月计件工资总额', value: 186500, trend: 8.5 },
+  { title: '人均工资', value: 9325, trend: 3.2 },
+  { title: '合格奖励总额', value: 28500, trend: -2.1 },
+  { title: '不良扣款总额', value: 4200, trend: -15.3 }
+])
+
 const data = ref<PW[]>([
   { id: '1', operation: '下料', unit_price: 2.5, unit: '件', qualified_bonus: 0.5, defective_penalty: 5 },
   { id: '2', operation: '粗车', unit_price: 8.0, unit: '件', qualified_bonus: 1.0, defective_penalty: 15 },
@@ -118,3 +139,22 @@ async function submit() {
   return true
 }
 </script>
+<style scoped>
+.card-title {
+  font-size: 13px;
+  color: #909399;
+}
+.card-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 8px 0;
+}
+.card-unit {
+  font-size: 14px;
+  color: #909399;
+  margin-left: 4px;
+}
+.card-trend {
+  font-size: 12px;
+}
+</style>
