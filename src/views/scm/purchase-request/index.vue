@@ -2,7 +2,8 @@
   <gi-page-layout :bordered="true">
     <template #header>
       <SearchSetting :columns="allSearchColumns" storage-key="purchase-request-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" />
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" />
+      </SearchSetting>
     </template>
     <template #tool>
       <gi-button type="add" @click="openAdd">手动创建</gi-button>
@@ -31,8 +32,7 @@
 
     <!-- 采购申请弹窗 -->
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新建采购申请' : '编辑采购申请'" width="700px">
-      <SearchSetting :columns="allSearchColumns" storage-key="purchase-request-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formCols" :label-width="100" />
+      <gi-form v-model="form" :columns="formCols" :label-width="100" />
       <el-divider />
       <div class="lines-header"><strong>申请明细</strong><el-button type="primary" size="small" @click="addLine">+ 添加物料</el-button></div>
       <el-table :data="lines" border size="small" style="margin-top: 8px">
@@ -77,7 +77,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
 interface PR {
   id: string
@@ -151,6 +151,15 @@ const sc: FormColumnItem[] = [
     }
   } as any
 ]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => sc)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const sf = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 const cols: TableColumnItem<PR>[] = [
   { prop: 'code', label: '申请编号', width: 160 },
   { prop: 'dept', label: '申请部门', width: 100 },
@@ -258,8 +267,9 @@ async function submit() {
   return true
 }
 function del(id: string) {
-  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
-  prs.value = prs.value.filter((r) => r.id !== id)
+  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' }).then(() => {
+    prs.value = prs.value.filter((r) => r.id !== id)
+  })
 }
 function submitApprove(r: PR) {
   r.status = 'approved'

@@ -1,7 +1,9 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><SearchSetting :columns="allSearchColumns" storage-key="picking-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header
+      ><SearchSetting :columns="allSearchColumns" storage-key="picking-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
+    ></template>
     <template #tool
       ><gi-button type="add" @click="openAdd" /><gi-button style="margin-left: 8px" type="reset" @click="refresh" /><el-button
         style="margin-left: 8px"
@@ -18,16 +20,15 @@
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增领料单' : '编辑领料单'" width="600px">
-      <SearchSetting :columns="allSearchColumns" storage-key="picking-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formCols" :label-width="100" />
+      <gi-form v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
 import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 interface Pick {
   id: string
   wo_code: string
@@ -56,6 +57,15 @@ const sc: FormColumnItem[] = [
     }
   } as any
 ]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => sc)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const sf = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 const cols: TableColumnItem<Pick>[] = [
   { prop: 'wo_code', label: '工单号', width: 170 },
   { prop: 'material', label: '产品', minWidth: 160 },
@@ -132,7 +142,11 @@ async function submit() {
   return true
 }
 function del(id: string) {
-  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
-  data.value = data.value.filter((e) => e.id !== id)
+  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+    .then(() => {
+      data.value = data.value.filter((e) => e.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 </script>

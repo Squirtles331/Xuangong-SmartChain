@@ -224,7 +224,7 @@ function onDragStart(e: DragEvent, op: KanbanOp) {
   display: flex;
   flex-direction: column;
   border-radius: 8px;
-  background: #FAFAFA;
+  background: #fafafa;
   overflow: hidden;
 }
 .column-header {

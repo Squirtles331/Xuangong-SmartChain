@@ -2,7 +2,8 @@
   <gi-page-layout :bordered="true">
     <template #header>
       <SearchSetting :columns="allSearchColumns" storage-key="list-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      </SearchSetting>
     </template>
     <template #tool>
       <gi-button type="add" @click="$router.push('/bom/create')">新建BOM</gi-button>
@@ -28,8 +29,7 @@
       </template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
-      <SearchSetting :columns="allSearchColumns" storage-key="list-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formCols" :label-width="100" />
+      <gi-form v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
@@ -39,7 +39,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { bomList as mockBoms } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
 interface BOM {
   id: string
@@ -72,6 +72,15 @@ const searchColumns: FormColumnItem[] = [
     } as any
   }
 ]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => searchColumns)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchFormRef = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 
 const columns: TableColumnItem<BOM>[] = [
   { prop: 'material_code', label: '产品编码', width: 180 },
@@ -115,7 +124,12 @@ function handleReset() {
   pagination.currentPage = 1
 }
 function del(id: string) {
-  data.value = data.value.filter((e: any) => e.id !== id)
+  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+    .then(() => {
+      boms.value = boms.value.filter((b) => b.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 const vis = ref(false)
 const mode = ref<'add' | 'edit'>('add')
@@ -139,10 +153,10 @@ async function submit() {
     return false
   }
   if (mode.value === 'add') {
-    data.value.unshift({ id: Date.now().toString(), ...form })
+    boms.value.unshift({ id: Date.now().toString(), ...form })
   } else {
-    const i = data.value.findIndex((e: any) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
+    const i = boms.value.findIndex((e: any) => e.id === eid.value)
+    if (i > -1) Object.assign(boms.value[i], form)
   }
   return true
 }

@@ -1,7 +1,9 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><SearchSetting :columns="allSearchColumns" storage-key="stock-count-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header
+      ><SearchSetting :columns="allSearchColumns" storage-key="stock-count-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
+    ></template>
     <template #tool><gi-button type="add" @click="openCreate" /></template>
     <gi-table :columns="cols" :data="plans" border stripe>
       <template #type="{ row }"
@@ -61,9 +63,25 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
+const s = ref({ keyword: '' })
+const sc: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword' } as any]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => sc)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const sf = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+function hs() {}
+function hr() {
+  s.value.keyword = ''
+}
 interface Plan {
   id: string
   code: string

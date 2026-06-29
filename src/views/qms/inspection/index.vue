@@ -1,7 +1,9 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><SearchSetting :columns="allSearchColumns" storage-key="inspection-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header
+      ><SearchSetting :columns="allSearchColumns" storage-key="inspection-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
+    ></template>
     <gi-table :columns="cols" :data="data" border stripe>
       <template #status="{ row }"
         ><el-tag v-if="row.status === 'pending'" type="warning" size="small">待检</el-tag
@@ -40,10 +42,22 @@
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
 import { inspectionTasks as mockTasks } from '@/mock'
+const s = ref({ keyword: '' })
+const sc: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword' } as any]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => sc)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const sf = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 interface T {
   id: string
   code: string

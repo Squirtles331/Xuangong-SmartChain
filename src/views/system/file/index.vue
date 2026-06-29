@@ -1,7 +1,9 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><SearchSetting :columns="allSearchColumns" storage-key="file-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header
+      ><SearchSetting :columns="allSearchColumns" storage-key="file-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
+    ></template>
     <template #tool>
       <el-upload :auto-upload="false" :show-file-list="false" @change="handleUpload">
         <gi-button type="add">上传文件</gi-button>
@@ -35,11 +37,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Document } from '@element-plus/icons-vue'
-import type { TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
 import type { UploadFile } from 'element-plus'
+
+const s = ref({ keyword: '' })
+const sc: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword' } as any]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => sc)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const sf = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+function hs() {}
+function hr() {
+  s.value.keyword = ''
+}
+function refresh() {
+  hr()
+}
 
 interface FileItem {
   id: string
@@ -143,6 +165,4 @@ function deleteFile(id: string) {
     })
     .catch(() => {})
 }
-
-function refresh() {}
 </script>

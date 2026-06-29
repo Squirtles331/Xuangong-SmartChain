@@ -46,7 +46,7 @@
             </el-input>
             <el-divider style="margin: 8px 0" />
             <div class="search-setting__scheme-title">已保存方案</div>
-            <div v-if="schemes.length === 0" style="color: #C0C4CC; font-size: 12px; padding: 8px 0">暂无保存方案</div>
+            <div v-if="schemes.length === 0" style="color: #c0c4cc; font-size: 12px; padding: 8px 0">暂无保存方案</div>
             <div v-for="s in schemes" :key="s.name" class="search-setting__scheme-item">
               <span class="search-setting__scheme-name" @click="loadScheme(s)">{{ s.name }}</span>
               <el-button type="danger" link size="small" @click="deleteScheme(s.name)">

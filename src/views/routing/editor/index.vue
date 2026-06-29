@@ -159,13 +159,13 @@ function saveRouting() {
 }
 .ops-panel {
   width: 360px;
-  border-right: 1px solid #EBEEF5;
+  border-right: 1px solid #ebeef5;
   display: flex;
   flex-direction: column;
 }
 .ops-toolbar {
   padding: 12px;
-  border-bottom: 1px solid #EBEEF5;
+  border-bottom: 1px solid #ebeef5;
 }
 .ops-list {
   flex: 1;
@@ -173,12 +173,12 @@ function saveRouting() {
 }
 .op-item {
   padding: 12px;
-  border-bottom: 1px solid #EBEEF5;
+  border-bottom: 1px solid #ebeef5;
   cursor: pointer;
   transition: background 0.2s;
 }
 .op-item:hover {
-  background: #FAFAFA;
+  background: #fafafa;
 }
 .op-item.active {
   background: #ecf5ff;

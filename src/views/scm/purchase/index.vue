@@ -1,7 +1,9 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><SearchSetting :columns="allSearchColumns" storage-key="purchase-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header
+      ><SearchSetting :columns="allSearchColumns" storage-key="purchase-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
+    ></template>
     <template #tool><gi-button type="add" @click="$router.push('/scm/purchase/create')">新建采购订单</gi-button></template>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe style="height: 100%">
       <template #status="{ row }">
@@ -40,7 +42,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { purchaseOrders as mockPOs } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
 interface PO {
   id: string
@@ -72,6 +74,15 @@ const sc: FormColumnItem[] = [
     }
   } as any
 ]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => sc)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const sf = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 const cols: TableColumnItem<PO>[] = [
   { prop: 'code', label: '订单编号', width: 160 },
   { prop: 'supplier', label: '供应商', minWidth: 150 },

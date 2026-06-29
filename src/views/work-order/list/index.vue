@@ -2,15 +2,16 @@
   <gi-page-layout :bordered="true">
     <template #header>
       <SearchSetting :columns="allSearchColumns" storage-key="list-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns"
-        ref="searchFormRef"
-        v-model="searchForm"
-        :columns="searchColumns"
-        :grid-item-props="{ span: { xs: 24, sm: 12, md: 8, lg: 8, xl: 6, xxl: 6 } }"
-        search
-        @search="handleSearch"
-        @reset="handleReset"
-      />
+        <gi-form
+          :columns="visibleSearchColumns"
+          ref="searchFormRef"
+          v-model="searchForm"
+          :grid-item-props="{ span: { xs: 24, sm: 12, md: 8, lg: 8, xl: 6, xxl: 6 } }"
+          search
+          @search="handleSearch"
+          @reset="handleReset"
+        />
+      </SearchSetting>
     </template>
     <template #tool>
       <gi-button type="add" @click="$router.push('/work-order/create')">新建工单</gi-button>
@@ -52,8 +53,7 @@
       </template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
-      <SearchSetting :columns="allSearchColumns" storage-key="list-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formCols" :label-width="100" />
+      <gi-form v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
@@ -63,7 +63,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { workOrders as mockWOs } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
 interface WorkOrder {
   id: string
@@ -128,6 +128,15 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => searchColumns)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchFormRef = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+
 const columns: TableColumnItem<WorkOrder>[] = [
   { prop: 'code', label: '工单编号', width: 160 },
   { prop: 'material_name', label: '产品', minWidth: 140 },
@@ -175,7 +184,12 @@ function handleReset() {
   pagination.currentPage = 1
 }
 function del(id: string) {
-  data.value = data.value.filter((e: any) => e.id !== id)
+  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+    .then(() => {
+      orders.value = orders.value.filter((e: any) => e.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 const vis = ref(false)
 const mode = ref<'add' | 'edit'>('add')
@@ -199,10 +213,10 @@ async function submit() {
     return false
   }
   if (mode.value === 'add') {
-    data.value.unshift({ id: Date.now().toString(), ...form })
+    orders.value.unshift({ id: Date.now().toString(), ...form } as any)
   } else {
-    const i = data.value.findIndex((e: any) => e.id === eid.value)
-    if (i > -1) Object.assign(data.value[i], form)
+    const i = orders.value.findIndex((e: any) => e.id === eid.value)
+    if (i > -1) Object.assign(orders.value[i], form)
   }
   return true
 }

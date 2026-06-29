@@ -36,7 +36,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface Plan {
   id: string
@@ -132,8 +132,12 @@ function handleExport() {
   ElMessage.success('导出成功')
 }
 function del(id: string) {
-  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
-  data.value = data.value.filter((e: any) => e.id !== id)
+  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+    .then(() => {
+      plans.value = plans.value.filter((p) => p.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 function refresh() {}
 const execVis = ref(false)

@@ -2,7 +2,8 @@
   <gi-page-layout :bordered="true">
     <template #header>
       <SearchSetting :columns="allSearchColumns" storage-key="params-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      </SearchSetting>
     </template>
     <template #tool>
       <gi-button type="add" @click="openAdd" />
@@ -16,17 +17,16 @@
     </gi-table>
 
     <gi-dialog v-model="dialogVisible" :footer="true" :on-before-ok="submitDialog" :title="dialogMode === 'add' ? '新增参数' : '编辑参数'">
-      <SearchSetting :columns="allSearchColumns" storage-key="params-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formColumns" :label-width="120" />
+      <gi-form v-model="form" :columns="formColumns" :label-width="120" />
     </gi-dialog>
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
 interface Param {
   id: string
@@ -44,6 +44,15 @@ const searchForm = reactive({ keyword: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '编码/名称', clearable: true } as any }
 ]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => searchColumns)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchFormRef = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 
 const columns: TableColumnItem<Param>[] = [
   { type: 'index', label: '#', width: 60 },
@@ -83,8 +92,12 @@ function handleReset() {
   pagination.currentPage = 1
 }
 function del(id: string) {
-  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
-  params.value = params.value.filter((e: any) => e.id !== id)
+  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+    .then(() => {
+      params.value = params.value.filter((e: any) => e.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 function refresh() {
   handleReset()

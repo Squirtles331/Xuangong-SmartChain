@@ -146,7 +146,7 @@ const rankCols: TableColumnItem<any>[] = [
 }
 :deep(.el-card__header) {
   padding: 16px 20px;
-  border-bottom: 1px solid #EBEEF5;
+  border-bottom: 1px solid #ebeef5;
   font-size: 14px;
   font-weight: 600;
   color: #303133;

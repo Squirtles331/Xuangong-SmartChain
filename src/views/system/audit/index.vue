@@ -2,7 +2,8 @@
   <gi-page-layout :bordered="true">
     <template #header>
       <SearchSetting :columns="allSearchColumns" storage-key="audit-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      </SearchSetting>
     </template>
 
     <gi-table :columns="columns" :data="pagedLogs" :pagination="pagination" border style="height: 100%">
@@ -43,7 +44,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import { auditLogs as mockLogs } from '@/mock'
 
 interface Log {
@@ -85,6 +86,15 @@ const searchColumns: FormColumnItem[] = [
     props: { type: 'daterange', startPlaceholder: '开始', endPlaceholder: '结束' } as any
   }
 ]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => searchColumns)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchFormRef = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 
 const columns: TableColumnItem<Log>[] = [
   { type: 'index', label: '#', width: 60 },

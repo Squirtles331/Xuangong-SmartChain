@@ -32,7 +32,7 @@
 </template>
 <script lang="ts" setup>
 import { ref, reactive } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface Rule {
   id: string
@@ -148,8 +148,12 @@ function toggle(r: Rule) {
   ElMessage.success(r.status === 'active' ? '已启用' : '已停用')
 }
 function del(id: string) {
-  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
-  rules.value = rules.value.filter((e) => e.id !== id)
+  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+    .then(() => {
+      rules.value = rules.value.filter((e) => e.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 function refresh() {}
 </script>

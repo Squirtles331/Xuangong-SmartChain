@@ -2,7 +2,8 @@
   <gi-page-layout :bordered="true">
     <template #header>
       <SearchSetting :columns="allSearchColumns" storage-key="list-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      </SearchSetting>
     </template>
     <template #tool>
       <gi-button type="add" @click="$router.push('/ecn/create')">新建变更单</gi-button>
@@ -50,7 +51,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ecnOrders as mockEcns } from '@/mock'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 
 interface ECN {
   id: string
@@ -84,6 +85,15 @@ const searchColumns: FormColumnItem[] = [
     }
   } as any
 ]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => searchColumns)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchFormRef = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 
 const columns: TableColumnItem<ECN>[] = [
   { prop: 'code', label: '变更单号', width: 170 },

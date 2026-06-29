@@ -2,7 +2,8 @@
   <gi-page-layout :bordered="true">
     <template #header>
       <SearchSetting :columns="allSearchColumns" storage-key="dict-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      </SearchSetting>
     </template>
     <template #tool>
       <gi-button type="add" @click="openAddType" />
@@ -27,8 +28,7 @@
       :on-before-ok="submitTypeDialog"
       :title="typeDialogMode === 'add' ? '新增字典类型' : '编辑字典类型'"
     >
-      <SearchSetting :columns="allSearchColumns" storage-key="dict-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" v-model="typeForm" :columns="typeFormColumns" :label-width="100" />
+      <gi-form v-model="typeForm" :columns="typeFormColumns" :label-width="100" />
     </gi-dialog>
 
     <!-- 字典项管理弹窗 -->
@@ -54,8 +54,7 @@
         :title="itemDialogMode === 'add' ? '新增字典项' : '编辑字典项'"
         width="500px"
       >
-        <SearchSetting :columns="allSearchColumns" storage-key="dict-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" v-model="itemForm" :columns="itemFormColumns" :label-width="100" />
+        <gi-form v-model="itemForm" :columns="itemFormColumns" :label-width="100" />
       </gi-dialog>
     </gi-dialog>
   </gi-page-layout>
@@ -65,7 +64,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import type { DictType, DictItem } from '@/api/system'
 import { dictTypes as mockDictTypes, dictItems as mockDictItems } from '@/mock'
 
@@ -78,6 +77,15 @@ const searchForm = reactive({ keyword: '' })
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '字典编码/名称', clearable: true } as any }
 ]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => searchColumns)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchFormRef = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 
 // ==================== 字典类型表格 ====================
 const typeColumns: TableColumnItem<DictType>[] = [

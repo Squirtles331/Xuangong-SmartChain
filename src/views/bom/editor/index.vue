@@ -85,7 +85,7 @@
             </el-form-item>
           </el-form>
           <!-- 子件操作 -->
-          <div v-if="currentNode.id" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #EBEEF5">
+          <div v-if="currentNode.id" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #ebeef5">
             <el-button type="success" size="small" @click="addChild(currentNode.id)">+ 添加子件</el-button>
           </div>
         </div>
@@ -246,7 +246,7 @@ function saveBom() {
 }
 .tree-panel {
   width: 420px;
-  border-right: 1px solid #EBEEF5;
+  border-right: 1px solid #ebeef5;
   overflow: auto;
   padding: 12px;
 }

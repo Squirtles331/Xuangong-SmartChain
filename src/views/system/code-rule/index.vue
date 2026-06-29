@@ -127,7 +127,12 @@ function deleteRule(id: string) {
 }
 
 function del(id: string) {
-  data.value = data.value.filter((e: any) => e.id !== id)
+  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+    .then(() => {
+      rules.value = rules.value.filter((r) => r.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 function refresh() {}
 </script>

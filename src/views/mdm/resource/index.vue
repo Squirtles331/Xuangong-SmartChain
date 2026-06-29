@@ -1,7 +1,9 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><SearchSetting :columns="allSearchColumns" storage-key="resource-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header
+      ><SearchSetting :columns="allSearchColumns" storage-key="resource-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
+    ></template>
     <template #tool><gi-button type="add" @click="openAdd" /></template>
     <gi-table :columns="cols" :data="data" border stripe size="small">
       <template #status="{ row }"
@@ -12,15 +14,26 @@
       <template #actions="{ row }"><gi-button type="edit" @click="openEdit(row)" /><gi-button type="delete" @click="del(row.id)" /></template>
     </gi-table>
     <gi-dialog v-model="vis" :footer="true" :on-before-ok="submit" :title="mode === 'add' ? '新增' : '编辑'" width="600px">
-      <SearchSetting :columns="allSearchColumns" storage-key="resource-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" v-model="form" :columns="formCols" :label-width="100" />
+      <gi-form v-model="form" :columns="formCols" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
 <script lang="ts" setup>
-import { ref } from 'vue'
-import type { TableColumnItem } from 'gi-component'
+import { ref, computed } from 'vue'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
 import { equipments as mockEqs } from '@/mock'
+const s = ref({ keyword: '' })
+const sc: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword' } as any]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => sc)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const sf = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 const data = ref(mockEqs)
 const cols: TableColumnItem<any>[] = [
   { prop: 'code', label: '设备编码', width: 150 },

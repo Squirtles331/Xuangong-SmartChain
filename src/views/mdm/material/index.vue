@@ -12,7 +12,8 @@
     </template>
     <template #header>
       <SearchSetting :columns="allSearchColumns" storage-key="material-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+        <gi-form :columns="visibleSearchColumns" ref="searchFormRef" v-model="searchForm" search @search="handleSearch" @reset="handleReset" />
+      </SearchSetting>
     </template>
     <template #tool>
       <gi-button type="add" @click="openAdd" />
@@ -35,8 +36,7 @@
       :title="dialogMode === 'add' ? '新增物料' : '编辑物料'"
       width="600px"
     >
-      <SearchSetting :columns="allSearchColumns" storage-key="material-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" v-model="formModel" :columns="formColumns" :label-width="100" />
+      <gi-form v-model="formModel" :columns="formColumns" :label-width="100" />
     </gi-dialog>
   </gi-page-layout>
 </template>
@@ -45,7 +45,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import { materialTree as mockCatTree, materialList as mockMaterials } from '@/mock'
 
 interface M {
@@ -66,6 +66,15 @@ const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '物料编码/名称', clearable: true } as any },
   { type: 'input', label: '分类', field: 'category', props: { disabled: true } as any }
 ]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => searchColumns)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchFormRef = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 
 const columns: TableColumnItem<M>[] = [
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
@@ -166,7 +175,6 @@ async function submitDialog() {
     if (idx > -1) Object.assign(materials.value[idx], formModel)
   }
   return true
-  }).catch(() => {})
 }
 function remove(id: string) {
   materials.value = materials.value.filter((m) => m.id !== id)

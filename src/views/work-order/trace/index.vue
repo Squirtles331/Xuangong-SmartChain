@@ -1,7 +1,9 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><SearchSetting :columns="allSearchColumns" storage-key="trace-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header
+      ><SearchSetting :columns="allSearchColumns" storage-key="trace-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
+    ></template>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe>
       <template #actions="{ row }"><el-button type="primary" link size="small" @click="viewDetail(row)">详情</el-button></template>
     </gi-table>
@@ -23,7 +25,7 @@
 <script lang="ts" setup>
 import { ref, reactive, computed, watch } from 'vue'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 interface Rpt {
   id: string
   wo_code: string
@@ -83,6 +85,15 @@ const reports = ref<Rpt[]>([
 ])
 const s = reactive({ wo_code: '', worker: '' })
 const sc: FormColumnItem[] = [{ type: 'input', label: '工单号', field: 'wo_code' } as any, { type: 'input', label: '操作人', field: 'worker' } as any]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => sc)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const sf = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 const cols: TableColumnItem<Rpt>[] = [
   { prop: 'wo_code', label: '工单号', width: 170 },
   { prop: 'op_name', label: '工序', width: 130 },

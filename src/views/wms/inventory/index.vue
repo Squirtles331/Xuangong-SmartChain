@@ -1,7 +1,9 @@
 <template>
   <gi-page-layout :bordered="true">
-    <template #header><SearchSetting :columns="allSearchColumns" storage-key="inventory-search" @update:visible-fields="onSearchFieldsChange">
-        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" :columns="sc" search @search="hs" @reset="hr" /></template>
+    <template #header
+      ><SearchSetting :columns="allSearchColumns" storage-key="inventory-search" @update:visible-fields="onSearchFieldsChange">
+        <gi-form :columns="visibleSearchColumns" ref="sf" v-model="s" search @search="hs" @reset="hr" /> </SearchSetting
+    ></template>
     <gi-table :columns="cols" :data="pd" :pagination="p" border stripe style="height: 100%">
       <template #qty="{ row }"
         ><span :style="{ color: row.qty < row.safety ? '#f56c6c' : '' }">{{ row.qty }}</span></template
@@ -21,7 +23,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 interface Inv {
   id: string
   code: string
@@ -97,6 +99,15 @@ const sc: FormColumnItem[] = [
     }
   } as any
 ]
+
+// SearchSetting: 所有可用字段
+const allSearchColumns = computed(() => sc)
+// SearchSetting: 当前可见字段
+const visibleSearchColumns = ref<FormColumnItem[]>([])
+const sf = ref<FormInstance | null>()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 const cols: TableColumnItem<Inv>[] = [
   { prop: 'code', label: '物料编码', width: 170 },
   { prop: 'name', label: '名称', minWidth: 130 },

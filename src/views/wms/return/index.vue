@@ -87,7 +87,8 @@ const formCols: FormColumnItem[] = [
   { type: 'input', label: '原因', field: 'reason' }
 ]
 function openAdd() {
-  mode.value = 'add'; eid.value = ''
+  mode.value = 'add'
+  eid.value = ''
   Object.assign(form, { type: 'return', source: '', material: '', qty: 1, reason: '多余退料' })
   vis.value = true
 }

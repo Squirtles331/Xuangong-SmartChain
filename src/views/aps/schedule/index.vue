@@ -196,19 +196,19 @@ function runSchedule() {
 }
 .gantt-container {
   display: flex;
-  border: 1px solid #EBEEF5;
+  border: 1px solid #ebeef5;
   border-radius: 8px;
   overflow: hidden;
   height: 400px;
 }
 .gantt-sidebar {
   width: 180px;
-  border-right: 1px solid #EBEEF5;
+  border-right: 1px solid #ebeef5;
   flex-shrink: 0;
 }
 .gantt-row-label {
   padding: 10px 12px;
-  border-bottom: 1px solid #EBEEF5;
+  border-bottom: 1px solid #ebeef5;
   height: 40px;
   display: flex;
   flex-direction: column;
@@ -228,7 +228,7 @@ function runSchedule() {
 }
 .gantt-timeline {
   display: flex;
-  border-bottom: 1px solid #EBEEF5;
+  border-bottom: 1px solid #ebeef5;
   position: sticky;
   top: 0;
   background: #fff;
@@ -239,16 +239,16 @@ function runSchedule() {
   padding: 8px 4px;
   text-align: center;
   font-size: 11px;
-  border-right: 1px solid #EBEEF5;
+  border-right: 1px solid #ebeef5;
 }
 .gantt-day.weekend {
-  background: #FAFAFA;
+  background: #fafafa;
   color: #c0c4cc;
 }
 .gantt-row {
   height: 40px;
   position: relative;
-  border-bottom: 1px solid #EBEEF5;
+  border-bottom: 1px solid #ebeef5;
 }
 .gantt-bar {
   position: absolute;

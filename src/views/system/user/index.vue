@@ -1,7 +1,12 @@
 <template>
   <gi-page-layout :bordered="true">
     <template #header>
-      <SearchSetting :columns="allSearchColumns" :required-fields="['username']" storage-key="user-search" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting
+        :columns="allSearchColumns"
+        :required-fields="['username']"
+        storage-key="user-search"
+        @update:visible-fields="onSearchFieldsChange"
+      >
         <gi-form
           ref="searchFormRef"
           v-model="searchForm"

@@ -81,7 +81,10 @@ function openEdit(row: Customer) {
   dialogVisible.value = true
 }
 async function submitDialog() {
-  if (!form.code || !form.name) { ElMessage.warning('请填写编码和名称'); return false }
+  if (!form.code || !form.name) {
+    ElMessage.warning('请填写编码和名称')
+    return false
+  }
   ElMessage.success(dialogMode.value === 'add' ? '新增成功' : '保存成功')
   return true
 }

@@ -22,7 +22,7 @@
 </template>
 <script lang="ts" setup>
 import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 interface Sch {
   id: string
@@ -101,7 +101,11 @@ async function submit() {
   return true
 }
 function del(id: string) {
-  ElMessageBox.confirm(\'确定删除？\', \'警告\', { type: \'warning\' }).then(() => {
-  data.value = data.value.filter((e) => e.id !== id)
+  ElMessageBox.confirm('确定删除？', '警告', { type: 'warning' })
+    .then(() => {
+      data.value = data.value.filter((e) => e.id !== id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 </script>
