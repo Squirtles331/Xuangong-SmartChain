@@ -1,12 +1,7 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting
-        :columns="allSearchColumns"
-        :required-fields="['username']"
-        storage-key="user-search"
-        @update:visible-fields="onSearchFieldsChange"
-      >
+      <SearchSetting :columns="allSearchColumns" :required-fields="['username']" @update:visible-fields="onSearchFieldsChange">
         <gi-form
           ref="searchFormRef"
           v-model="searchForm"
@@ -318,8 +313,4 @@ function remove(row: UserRow) {
 }
 </script>
 
-<style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-</style>
+<style scoped></style>
