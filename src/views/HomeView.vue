@@ -132,5 +132,23 @@ const rankCols: TableColumnItem<any>[] = [
 }
 .top-trend {
   font-size: 12px;
+  color: #909399;
+}
+
+/* 设计规范统一 */
+:deep(.el-card) {
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s;
+}
+:deep(.el-card:hover) {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+:deep(.el-card__header) {
+  padding: 16px 20px;
+  border-bottom: 1px solid #EBEEF5;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
 }
 </style>

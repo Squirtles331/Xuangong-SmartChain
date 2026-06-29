@@ -1,6 +1,164 @@
-.el-drawer__body {
-  flex: 1;
-  overflow: auto;
-  padding: var(--el-drawer-padding-primary);
-  scrollbar-width: none;
+/* ============================================
+ * Element UI 设计系统 — 全局样式统一
+ * 基于 docs/element-ui-design-system.md
+ * ============================================ */
+
+/* ---- 1. gi-page-layout 统一 ---- */
+.gi-page-layout {
+  padding: var(--el-main-padding, 20px);
+}
+.gi-page-layout__header {
+  margin-bottom: 16px;
+}
+.gi-page-layout__tool {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- 2. 卡片统一 ---- */
+.el-card {
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+.el-card__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #EBEEF5;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+.el-card__body {
+  padding: 20px;
+}
+
+/* ---- 3. 表格统一 ---- */
+.el-table {
+  font-size: 13px;
+}
+.el-table th.el-table__cell {
+  background-color: #FAFAFA;
+  color: #606266;
+  font-weight: 600;
+  font-size: 12px;
+  height: 40px;
+  padding: 8px 0;
+}
+.el-table td.el-table__cell {
+  padding: 10px 0;
+  color: #303133;
+}
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background-color: #FAFAFA;
+}
+.el-table__body tr:hover > td.el-table__cell {
+  background-color: #ECF5FF;
+}
+
+/* ---- 4. 表单统一 ---- */
+.el-form-item {
+  margin-bottom: 18px;
+}
+.el-form-item__label {
+  color: #606266;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ---- 5. 按钮统一 ---- */
+.el-button {
+  font-size: 13px;
+  border-radius: 4px;
+}
+.el-button--primary {
+  background-color: #409EFF;
+  border-color: #409EFF;
+}
+.el-button--primary:hover {
+  background-color: #53A8FF;
+  border-color: #53A8FF;
+}
+
+/* ---- 6. 对话框统一 ---- */
+.el-dialog {
+  border-radius: 4px;
+}
+.el-dialog__header {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid #EBEEF5;
+}
+.el-dialog__body {
+  padding: 20px;
+}
+.el-dialog__footer {
+  padding: 12px 20px 20px;
+  border-top: 1px solid #EBEEF5;
+}
+
+/* ---- 7. 标签统一 ---- */
+.el-tag {
+  border-radius: 2px;
+  font-size: 12px;
+}
+
+/* ---- 8. 分页统一 ---- */
+.el-pagination {
+  padding: 16px 0 0;
+  justify-content: flex-end;
+}
+
+/* ---- 9. 输入框统一 ---- */
+.el-input__wrapper {
+  border-radius: 4px;
+}
+.el-input__inner {
+  font-size: 13px;
+}
+
+/* ---- 10. 下拉菜单统一 ---- */
+.el-select-dropdown__item {
+  font-size: 13px;
+}
+
+/* ---- 11. 标签页统一 ---- */
+.el-tabs__header {
+  margin-bottom: 16px;
+}
+.el-tabs__item {
+  font-size: 13px;
+  height: 40px;
+  line-height: 40px;
+}
+
+/* ---- 12. 步骤条统一 ---- */
+.el-steps {
+  margin-bottom: 20px;
+}
+
+/* ---- 13. 描述列表统一 ---- */
+.el-descriptions__title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.el-descriptions__body .el-descriptions__table .el-descriptions__cell {
+  font-size: 13px;
+}
+
+/* ---- 14. 空状态统一 ---- */
+.el-empty__description {
+  color: #C0C4CC;
+}
+
+/* ---- 15. 滚动条美化 ---- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #C0C4CC;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
 }
