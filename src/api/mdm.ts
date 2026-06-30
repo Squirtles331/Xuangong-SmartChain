@@ -144,6 +144,43 @@ export function deleteEquipment(id: string) {
   return apiDelete<Record<string, never>>(`/mdm/equipments/${id}`)
 }
 
+export interface Resource {
+  id: string
+  code: string
+  name: string
+  type: string
+  model: string
+  status: 'running' | 'idle' | 'repair'
+  workCenter: string
+}
+
+export interface ResourceQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  status?: Resource['status']
+}
+
+export function getResourceList(params: ResourceQuery) {
+  if (isMockMode) return mockService.getResourceList(params) as Promise<ApiResponse<PaginatedData<Resource>>>
+  return apiGet<PaginatedData<Resource>>('/mdm/resources', { params })
+}
+
+export function createResource(data: Partial<Resource>) {
+  if (isMockMode) return mockService.createResource(data)
+  return apiPost<Record<string, never>, Partial<Resource>>('/mdm/resources', data)
+}
+
+export function updateResource(id: string, data: Partial<Resource>) {
+  if (isMockMode) return mockService.updateResource(id, data)
+  return apiPut<Record<string, never>, Partial<Resource>>(`/mdm/resources/${id}`, data)
+}
+
+export function deleteResource(id: string) {
+  if (isMockMode) return mockService.deleteResource(id)
+  return apiDelete<Record<string, never>>(`/mdm/resources/${id}`)
+}
+
 export interface WorkCenter {
   id: string
   code: string

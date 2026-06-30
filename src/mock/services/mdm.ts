@@ -6,7 +6,7 @@ import { simulateDelay } from '../shared/delay'
 import { paginate, searchItems } from '../shared/paginate'
 import { wrapListResponse, wrapDetailResponse, wrapSuccessResponse } from '../shared/response'
 import { generateId } from '../shared/id'
-import { orgTree, materialTree, materialList, equipments, workCenters, molds } from '../modules/mdm'
+import { orgTree, materialTree, materialList, equipments, resources, workCenters, molds } from '../modules/mdm'
 
 // ==================== 组织架构 ====================
 export async function getOrgTree() {
@@ -226,6 +226,37 @@ export async function deleteEquipment(id: string) {
 export async function getWorkCenterList() {
   await simulateDelay()
   return wrapDetailResponse(workCenters)
+}
+
+// ==================== 资源管理 ====================
+export async function getResourceList(params: { pageNum: number; pageSize: number; keyword?: string; status?: string }) {
+  await simulateDelay()
+  let filtered = [...resources]
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['code', 'name', 'type', 'model', 'workCenter'])
+  if (params.status) filtered = filtered.filter((item) => (item as any).status === params.status)
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function createResource(data: any) {
+  await simulateDelay()
+  const newResource = { id: generateId(), ...data }
+  ;(resources as any[]).unshift(newResource)
+  return wrapSuccessResponse('资源创建成功')
+}
+
+export async function updateResource(id: string, data: any) {
+  await simulateDelay()
+  const idx = (resources as any[]).findIndex((item: any) => String(item.id) === id)
+  if (idx > -1) Object.assign((resources as any[])[idx], data)
+  return wrapSuccessResponse('资源更新成功')
+}
+
+export async function deleteResource(id: string) {
+  await simulateDelay()
+  const idx = (resources as any[]).findIndex((item: any) => String(item.id) === id)
+  if (idx > -1) (resources as any[]).splice(idx, 1)
+  return wrapSuccessResponse('资源删除成功')
 }
 
 // ==================== 模具管理 ====================

@@ -135,6 +135,45 @@ export const equipments = [
   }
 ]
 
+export const resources = [
+  {
+    id: '1',
+    code: 'RES00000001',
+    name: '数控车床',
+    type: '加工设备',
+    model: 'CK6150',
+    status: 'running',
+    workCenter: '数控班组'
+  },
+  {
+    id: '2',
+    code: 'RES00000002',
+    name: '加工中心',
+    type: '加工设备',
+    model: 'VMC850',
+    status: 'idle',
+    workCenter: '数控班组'
+  },
+  {
+    id: '3',
+    code: 'RES00000003',
+    name: '三坐标测量机',
+    type: '检测设备',
+    model: 'CMM-7106',
+    status: 'repair',
+    workCenter: '质量检测班组'
+  },
+  {
+    id: '4',
+    code: 'RES00000004',
+    name: '装配工装台',
+    type: '工装资源',
+    model: 'AT-2400',
+    status: 'idle',
+    workCenter: '装配班组'
+  }
+]
+
 export const workCenters = [
   { id: '1', code: 'WC00000001', name: '数控班组', workshop: '机加工一车间', capacity: '16h/天', cost: '150元/小时' },
   { id: '2', code: 'WC00000002', name: '钻床班组', workshop: '机加工一车间', capacity: '8h/天', cost: '80元/小时' },

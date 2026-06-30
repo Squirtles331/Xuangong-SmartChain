@@ -21,7 +21,7 @@ export interface ResourceFormModel {
   name: string
   type: string
   model: string
-  status: string
+  status: 'running' | 'idle' | 'repair'
   workCenter: string
 }
 
