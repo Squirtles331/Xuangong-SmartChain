@@ -130,14 +130,14 @@ function buildPlans(lines: any[]) {
 const { tableData, pagination, loading, search, refresh } = useTable<PlanRow>({
   rowKey: 'id',
   listAPI: async () => {
-    const [execRes, diffRes] = await Promise.all([getStockCountList({ page: 1, page_size: 100 }), getStockCountDiff({ page: 1, page_size: 100 })])
+    const [execRes, diffRes] = await Promise.all([getStockCountList({ pageNum: 1, pageSize: 100 }), getStockCountDiff({ pageNum: 1, pageSize: 100 })])
 
-    rawExecLines.value = (execRes.data.items || []).map((item: any) => ({
+    rawExecLines.value = execRes.data.list.map((item: any) => ({
       ...item,
       id: String(item.id),
       actual: Number(item.actual_qty ?? item.book_qty ?? 0)
     }))
-    rawDiffLines.value = (diffRes.data.items || []).map((item: any) => ({
+    rawDiffLines.value = diffRes.data.list.map((item: any) => ({
       ...item,
       id: String(item.id),
       disposition: 'ignore'

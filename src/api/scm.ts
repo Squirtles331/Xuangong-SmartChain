@@ -1,10 +1,7 @@
-import http from '@/utils/http'
-import type { ApiResponse } from '@/utils/http'
 import { isMockMode } from './_config'
-import { unwrapApiResponse } from './_factory'
+import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
 import * as mockService from '@/mock/services/scm'
 
-// ==================== 供应商 ====================
 export interface Supplier {
   id: string
   code: string
@@ -17,33 +14,32 @@ export interface Supplier {
 }
 
 export interface SupplierQuery {
-  page: number
-  page_size: number
+  pageNum: number
+  pageSize: number
   name?: string
   status?: string
 }
 
 export function getSupplierList(params: SupplierQuery) {
-  if (isMockMode) return mockService.getSupplierList(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: Supplier[] }>>('/scm/suppliers', { params }))
+  if (isMockMode) return mockService.getSupplierList(params) as Promise<ApiResponse<PaginatedData<Supplier>>>
+  return apiGet<PaginatedData<Supplier>>('/scm/suppliers', { params })
 }
 
 export function createSupplier(data: Partial<Supplier>) {
   if (isMockMode) return mockService.createSupplier(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/scm/suppliers', data))
+  return apiPost<Record<string, never>, Partial<Supplier>>('/scm/suppliers', data)
 }
 
 export function updateSupplier(id: string, data: Partial<Supplier>) {
   if (isMockMode) return mockService.updateSupplier(id, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/scm/suppliers/${id}`, data))
+  return apiPut<Record<string, never>, Partial<Supplier>>(`/scm/suppliers/${id}`, data)
 }
 
 export function deleteSupplier(id: string) {
   if (isMockMode) return mockService.deleteSupplier(id)
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/scm/suppliers/${id}`))
+  return apiDelete<Record<string, never>>(`/scm/suppliers/${id}`)
 }
 
-// ==================== 采购订单 ====================
 export interface PurchaseOrder {
   id: string
   code: string
@@ -57,49 +53,49 @@ export interface PurchaseOrder {
 }
 
 export interface PurchaseOrderQuery {
-  page: number
-  page_size: number
+  pageNum: number
+  pageSize: number
   code?: string
   supplier?: string
   status?: string
 }
 
 export function getPurchaseOrderList(params: PurchaseOrderQuery) {
-  if (isMockMode) return mockService.getPurchaseOrderList(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: PurchaseOrder[] }>>('/scm/purchase-orders', { params }))
+  if (isMockMode) return mockService.getPurchaseOrderList(params) as Promise<ApiResponse<PaginatedData<PurchaseOrder>>>
+  return apiGet<PaginatedData<PurchaseOrder>>('/scm/purchase-orders', { params })
 }
 
 export function createPurchaseOrder(data: Partial<PurchaseOrder>) {
   if (isMockMode) return mockService.createPurchaseOrder(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/scm/purchase-orders', data))
+  return apiPost<Record<string, never>, Partial<PurchaseOrder>>('/scm/purchase-orders', data)
 }
 
 export function updatePurchaseOrder(id: string, data: Partial<PurchaseOrder>) {
   if (isMockMode) return mockService.updatePurchaseOrder(id, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/scm/purchase-orders/${id}`, data))
+  return apiPut<Record<string, never>, Partial<PurchaseOrder>>(`/scm/purchase-orders/${id}`, data)
 }
 
 export function deletePurchaseOrder(id: string) {
   if (isMockMode) return mockService.deletePurchaseOrder(id)
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/scm/purchase-orders/${id}`))
+  return apiDelete<Record<string, never>>(`/scm/purchase-orders/${id}`)
 }
 
 export function getSupplierPortalData() {
   if (isMockMode) return mockService.getSupplierPortalData()
-  return unwrapApiResponse(http.get<ApiResponse<any>>('/scm/portal'))
+  return apiGet<any>('/scm/portal')
 }
 
 export function confirmPortalOrder(id: string) {
   if (isMockMode) return mockService.confirmPortalOrder(id)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/scm/portal/orders/${id}/confirm`))
+  return apiPut<Record<string, never>>(`/scm/portal/orders/${id}/confirm`)
 }
 
 export function rejectPortalOrder(id: string) {
   if (isMockMode) return mockService.rejectPortalOrder(id)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/scm/portal/orders/${id}/reject`))
+  return apiPut<Record<string, never>>(`/scm/portal/orders/${id}/reject`)
 }
 
 export function confirmPortalDelivery(id: string) {
   if (isMockMode) return mockService.confirmPortalDelivery(id)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/scm/portal/deliveries/${id}/confirm`))
+  return apiPut<Record<string, never>>(`/scm/portal/deliveries/${id}/confirm`)
 }

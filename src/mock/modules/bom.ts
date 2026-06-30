@@ -14,7 +14,7 @@ export const bomList = [
     status: 'active',
     effective_date: '2025-01-10',
     created_by: '张工',
-    created_at: '2025-01-10'
+    createdAt: '2025-01-10'
   },
   {
     id: '2',
@@ -25,7 +25,7 @@ export const bomList = [
     status: 'active',
     effective_date: '2025-01-12',
     created_by: '李工',
-    created_at: '2025-01-12'
+    createdAt: '2025-01-12'
   },
   {
     id: '3',
@@ -36,7 +36,7 @@ export const bomList = [
     status: 'active',
     effective_date: '2025-01-05',
     created_by: '张工',
-    created_at: '2025-01-05'
+    createdAt: '2025-01-05'
   },
   {
     id: '4',
@@ -47,7 +47,7 @@ export const bomList = [
     status: 'active',
     effective_date: '2025-01-08',
     created_by: '李工',
-    created_at: '2025-01-08'
+    createdAt: '2025-01-08'
   },
   {
     id: '5',
@@ -58,7 +58,7 @@ export const bomList = [
     status: 'draft',
     effective_date: '-',
     created_by: '李工',
-    created_at: '2025-01-15'
+    createdAt: '2025-01-15'
   },
   {
     id: '6',
@@ -69,7 +69,7 @@ export const bomList = [
     status: 'archived',
     effective_date: '2024-12-01',
     created_by: '王工',
-    created_at: '2024-12-01'
+    createdAt: '2024-12-01'
   },
   {
     id: '7',
@@ -80,7 +80,7 @@ export const bomList = [
     status: 'archived',
     effective_date: '2024-10-15',
     created_by: '王工',
-    created_at: '2024-10-15'
+    createdAt: '2024-10-15'
   }
 ]
 
@@ -391,7 +391,7 @@ export const ecnOrders = Mock.mock({
       'status|1': ['draft', 'approved', 'executed', 'verified', 'closed'],
       'urgency|1': ['urgent', 'normal', 'planned'],
       applicant: '@cname',
-      created_at: '@date("yyyy-MM-dd")'
+      createdAt: '@date("yyyy-MM-dd")'
     }
   ]
 }).list

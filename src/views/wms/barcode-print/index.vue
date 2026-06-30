@@ -82,8 +82,8 @@ function printBarcode() {
 
 async function fetchMaterials() {
   try {
-    const res = await getMaterialListForBarcode({ page: 1, page_size: 200 })
-    materialList.value = (res.data.items || res.data || []) as Material[]
+    const res = await getMaterialListForBarcode({ pageNum: 1, pageSize: 200 })
+    materialList.value = res.data.list as Material[]
   } catch {
     ElMessage.error('获取物料列表失败')
   }

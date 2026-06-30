@@ -12,7 +12,7 @@
       <div class="toolbar-right">
         <el-button type="success" :icon="Select" plain @click="batchEnable">批量启用</el-button>
         <el-button type="warning" :icon="CloseBold" plain @click="batchDisable">批量禁用</el-button>
-        <el-button type="danger" :icon="Delete" plain :disabled="selectedKeys.length === 0" @click="onBatchDelete">批量删除</el-button>
+        <el-button type="danger" :icon="Delete" plain :disabled="selectedKeys.length === 0" @click="removeSelected">批量删除</el-button>
       </div>
     </template>
 
@@ -23,22 +23,14 @@
 
       <template #valueCell="{ row }">
         <template v-if="editingId === row.id">
-          <el-input v-if="row.value_type === 'string'" v-model="editingValue" size="small" @keyup.enter="saveEdit(row)" @keyup.escape="cancelEdit" />
-          <el-input-number
-            v-else-if="row.value_type === 'number'"
-            v-model="editingValue"
-            size="small"
-            controls-position="right"
-            @keyup.enter="saveEdit(row)"
-          />
-          <el-switch v-else-if="row.value_type === 'boolean'" v-model="editingValue" active-text="是" inactive-text="否" @change="saveEdit(row)" />
+          <el-input v-if="row.valueType === 'string'" v-model="editingValue" size="small" @keyup.enter="saveEdit(row)" @keyup.escape="cancelEdit" />
+          <el-input-number v-else-if="row.valueType === 'number'" v-model="editingValue" size="small" controls-position="right" />
+          <el-switch v-else-if="row.valueType === 'boolean'" v-model="editingValue" active-text="是" inactive-text="否" @change="saveEdit(row)" />
           <el-input v-else v-model="editingValue" type="textarea" size="small" :rows="2" />
         </template>
         <template v-else>
-          <span class="param-value" :class="{ 'is-default': row.value === row.default_value }">
-            {{ formatDisplayValue(row) }}
-          </span>
-          <el-tag v-if="row.value === row.default_value" type="info" size="small" class="default-tag">默认</el-tag>
+          <span class="param-value" :class="{ 'is-default': row.value === row.defaultValue }">{{ formatDisplayValue(row) }}</span>
+          <el-tag v-if="row.value === row.defaultValue" type="info" size="small" class="default-tag">默认</el-tag>
         </template>
       </template>
 
@@ -49,7 +41,7 @@
           inactive-text="禁用"
           inline-prompt
           size="small"
-          @change="(val: boolean) => toggleStatus(row, val)"
+          @change="(value: boolean) => toggleStatus(row, value)"
         />
       </template>
 
@@ -71,58 +63,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import { Plus, Refresh, Select, CloseBold, Delete } from '@element-plus/icons-vue'
+import { CloseBold, Delete, Plus, Refresh, Select } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getSystemParams, updateSystemParam, batchUpdateSystemParams, resetSystemParam, type SystemParam } from '@/api/system'
+import { batchUpdateSystemParams, getSystemParams, resetSystemParam, updateSystemParam, type SystemParam } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import ConfigFormDialog, { type ConfigFormModel } from './ConfigFormDialog.vue'
 
-// ==================== 分类配置 ====================
-const CATEGORIES: Record<string, string> = {
+const categories: Record<string, string> = {
   auth: '认证与安全',
-  mrp: 'MRP计划',
-  stock: '库存与仓库',
+  mrp: 'MRP 计划',
+  stock: '库存与仓储',
   production: '生产管理',
   finance: '财务管理',
-  system: '系统通用'
+  system: '系统通用',
+  security: '安全',
+  file: '文件'
 }
 
-const CATEGORY_TAG_TYPES: Record<string, 'danger' | 'warning' | 'primary' | 'success' | '' | 'info'> = {
+const categoryTagTypes: Record<string, 'danger' | 'warning' | 'primary' | 'success' | '' | 'info'> = {
   auth: 'danger',
+  security: 'danger',
   mrp: 'warning',
   stock: 'primary',
   production: 'success',
   finance: '' as const,
-  system: 'info'
+  system: 'info',
+  file: 'info'
 }
 
 function categoryLabel(code: string) {
-  return CATEGORIES[code] || code
-}
-function categoryTagType(code: string) {
-  return CATEGORY_TAG_TYPES[code] || 'info'
+  return categories[code] || code
 }
 
-// ==================== 搜索 ====================
+function categoryTagType(code: string) {
+  return categoryTagTypes[code] || 'info'
+}
+
 const searchForm = reactive({ keyword: '', category: '', status: '' })
 
 const searchColumns: FormColumnItem[] = [
-  {
-    type: 'input',
-    label: '关键字',
-    field: 'keyword',
-    props: { placeholder: '参数名称/编码', clearable: true }
-  },
+  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '参数名称/编码', clearable: true } as any },
   {
     type: 'select-v2',
     label: '分类',
     field: 'category',
     props: {
-      options: [{ label: '全部', value: '' }, ...Object.entries(CATEGORIES).map(([k, v]) => ({ label: v, value: k }))],
+      options: [{ label: '全部', value: '' }, ...Object.entries(categories).map(([value, label]) => ({ label, value }))],
       clearable: true
-    }
+    } as any
   },
   {
     type: 'select-v2',
@@ -135,11 +125,10 @@ const searchColumns: FormColumnItem[] = [
         { label: '禁用', value: 'disabled' }
       ],
       clearable: true
-    }
+    } as any
   }
 ]
 
-// ==================== 表格列 ====================
 const columns: TableColumnItem<SystemParam>[] = [
   { type: 'selection', width: 50 },
   { type: 'index', label: '#', width: 60 },
@@ -149,22 +138,21 @@ const columns: TableColumnItem<SystemParam>[] = [
   { label: '参数值', minWidth: 200, slotName: 'valueCell' },
   { prop: 'description', label: '描述', minWidth: 200, showOverflowTooltip: true },
   { label: '状态', width: 100, slotName: 'status', align: 'center' },
-  { prop: 'updated_at', label: '更新时间', width: 170 },
-  { prop: 'updated_by', label: '更新人', width: 100 },
+  { prop: 'updatedAt', label: '更新时间', width: 170 },
+  { prop: 'updatedBy', label: '更新人', width: 100 },
   { label: '操作', width: 220, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-// ==================== useTable ====================
 const allParams = ref<SystemParam[]>([])
 
-const { tableData, pagination, loading, search, refresh, onDelete, onBatchDelete, onSelectionChange, selectedKeys } = useTable<SystemParam>({
+const { tableData, pagination, loading, search, refresh, onSelectionChange, selectedKeys } = useTable<SystemParam>({
   rowKey: 'id',
   immediate: false,
   listAPI: async ({ page, size }) => {
     let filtered = allParams.value
     if (searchForm.keyword) {
-      const kw = searchForm.keyword.toLowerCase()
-      filtered = filtered.filter((item) => item.name.toLowerCase().includes(kw) || item.code.toLowerCase().includes(kw))
+      const keyword = searchForm.keyword.toLowerCase()
+      filtered = filtered.filter((item) => item.name.toLowerCase().includes(keyword) || item.code.toLowerCase().includes(keyword))
     }
     if (searchForm.category) {
       filtered = filtered.filter((item) => item.category === searchForm.category)
@@ -180,15 +168,14 @@ const { tableData, pagination, loading, search, refresh, onDelete, onBatchDelete
   }
 })
 
-// ==================== 编辑状态 ====================
 const editingId = ref<string | null>(null)
 const editingValue = ref<any>('')
 
 function startEdit(row: SystemParam) {
   editingId.value = row.id
-  if (row.value_type === 'boolean') {
+  if (row.valueType === 'boolean') {
     editingValue.value = row.value === 'true' || row.value === '1'
-  } else if (row.value_type === 'number') {
+  } else if (row.valueType === 'number') {
     editingValue.value = Number(row.value)
   } else {
     editingValue.value = row.value
@@ -201,44 +188,45 @@ function cancelEdit() {
 }
 
 async function saveEdit(row: SystemParam) {
-  try {
-    const saveValue = String(editingValue.value)
-    await updateSystemParam(row.id, saveValue)
-    row.value = saveValue
-    row.updated_at = new Date().toLocaleString('zh-CN')
-    ElMessage.success('保存成功')
-    editingId.value = null
-  } catch {
-    // 拦截器已处理
-  }
+  const saveValue = String(editingValue.value)
+  await updateSystemParam(row.id, saveValue)
+  row.value = saveValue
+  row.updatedAt = new Date().toLocaleString('zh-CN')
+  ElMessage.success('保存成功')
+  editingId.value = null
 }
 
 async function resetToDefault(row: SystemParam) {
-  try {
-    await ElMessageBox.confirm(`确认将「${row.name}」恢复为默认值「${row.default_value}」？`, '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-    await resetSystemParam(row.id)
-    row.value = row.default_value
-    row.updated_at = new Date().toLocaleString('zh-CN')
-    ElMessage.success('已恢复默认值')
-  } catch {
-    // 用户取消
-  }
+  await ElMessageBox.confirm(`确认将“${row.name}”恢复为默认值“${row.defaultValue}”？`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+  await resetSystemParam(row.id)
+  row.value = row.defaultValue
+  row.updatedAt = new Date().toLocaleString('zh-CN')
+  ElMessage.success('已恢复默认值')
 }
 
 function formatDisplayValue(row: SystemParam): string {
-  if (row.value_type === 'boolean') {
+  if (row.valueType === 'boolean') {
     return row.value === 'true' || row.value === '1' ? '是' : '否'
   }
   return row.value
 }
 
-// ==================== 批量操作 ====================
+async function batchUpdateStatus(ids: string[], status: SystemParam['status']) {
+  await batchUpdateSystemParams(ids.map((id) => ({ id, value: status })))
+  ids.forEach((id) => {
+    const item = allParams.value.find((current) => current.id === id)
+    if (item) item.status = status
+  })
+  ElMessage.success(`已${status === 'active' ? '启用' : '禁用'} ${ids.length} 个参数`)
+  refresh()
+}
+
 function batchEnable() {
-  const ids = selectedKeys.value.length > 0 ? selectedKeys.value : allParams.value.map((p) => p.id)
+  const ids = selectedKeys.value.length > 0 ? selectedKeys.value : allParams.value.map((item) => item.id)
   if (selectedKeys.value.length === 0) {
     ElMessage.info('将启用所有参数')
   }
@@ -253,51 +241,33 @@ function batchDisable() {
   batchUpdateStatus(selectedKeys.value, 'disabled')
 }
 
-async function batchUpdateStatus(ids: string[], status: string) {
-  try {
-    const updates = ids.map((id) => ({ id, value: status }))
-    await batchUpdateSystemParams(updates)
-    ids.forEach((id) => {
-      const p = allParams.value.find((item) => item.id === id)
-      if (p) p.status = status as SystemParam['status']
-    })
-    ElMessage.success(`已${status === 'active' ? '启用' : '禁用'} ${ids.length} 个参数`)
-    refresh()
-  } catch {
-    // 拦截器已处理
-  }
+async function toggleStatus(row: SystemParam, value: boolean) {
+  row.status = value ? 'active' : 'disabled'
+  row.updatedAt = new Date().toLocaleString('zh-CN')
+  ElMessage.success(value ? '已启用' : '已禁用')
 }
 
-// ==================== 状态切换 ====================
-async function toggleStatus(row: SystemParam, val: boolean) {
-  const newStatus = val ? 'active' : 'disabled'
-  try {
-    await updateSystemParam(row.id, newStatus === 'active' ? row.value : '')
-    row.status = newStatus as SystemParam['status']
-    ElMessage.success(newStatus === 'active' ? '已启用' : '已禁用')
-  } catch {
-    // 拦截器已处理
-  }
-}
-
-// ==================== 删除 ====================
 function remove(row: SystemParam) {
-  ElMessageBox.confirm(`确认删除参数「${row.name}」？`, '提示', {
+  ElMessageBox.confirm(`确认删除参数“${row.name}”？`, '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
     .then(() => {
-      allParams.value = allParams.value.filter((p) => p.id !== row.id)
+      allParams.value = allParams.value.filter((item) => item.id !== row.id)
       refresh()
       ElMessage.success('删除成功')
     })
-    .catch(() => {
-      // 取消
-    })
+    .catch(() => {})
 }
 
-// ==================== 对话框 ====================
+function removeSelected() {
+  if (selectedKeys.value.length === 0) return
+  allParams.value = allParams.value.filter((item) => !selectedKeys.value.includes(item.id))
+  refresh()
+  ElMessage.success('批量删除成功')
+}
+
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ConfigFormModel>(createDefaultFormModel())
@@ -308,9 +278,9 @@ function createDefaultFormModel(): ConfigFormModel {
     code: '',
     name: '',
     value: '',
-    default_value: '',
+    defaultValue: '',
     category: '',
-    value_type: 'string',
+    valueType: 'string',
     description: '',
     status: 'active'
   }
@@ -329,25 +299,24 @@ function submitDialog() {
     code: formModel.value.code,
     name: formModel.value.name,
     value: formModel.value.value,
-    default_value: formModel.value.default_value || formModel.value.value,
+    defaultValue: formModel.value.defaultValue || formModel.value.value,
     description: formModel.value.description,
     category: formModel.value.category,
-    value_type: formModel.value.value_type,
+    valueType: formModel.value.valueType,
     status: formModel.value.status,
-    updated_at: now,
-    updated_by: '当前用户'
+    updatedAt: now,
+    updatedBy: '当前用户'
   }
-
   allParams.value.unshift(newParam)
   dialogVisible.value = false
   refresh()
   ElMessage.success('新增成功')
 }
 
-// ==================== 搜索处理 ====================
 function handleSearch() {
   search()
 }
+
 function handleReset() {
   searchForm.keyword = ''
   searchForm.category = ''
@@ -355,21 +324,9 @@ function handleReset() {
   search()
 }
 
-// ==================== 数据加载 ====================
 async function loadParams() {
-  try {
-    const res = await getSystemParams({ page: 1, page_size: 999 })
-    const data = res.data
-    if (data && Array.isArray(data.items)) {
-      allParams.value = data.items as SystemParam[]
-    } else if (Array.isArray(data)) {
-      allParams.value = data as SystemParam[]
-    } else {
-      allParams.value = []
-    }
-  } catch {
-    allParams.value = []
-  }
+  const response = await getSystemParams({ pageNum: 1, pageSize: 999 })
+  allParams.value = response.data.list
 }
 
 loadParams().then(() => refresh())
@@ -381,18 +338,22 @@ loadParams().then(() => refresh())
   align-items: center;
   gap: 8px;
 }
+
 .toolbar-right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .param-value {
   font-family: 'Courier New', monospace;
   font-size: 13px;
 }
+
 .param-value.is-default {
   color: #909399;
 }
+
 .default-tag {
   margin-left: 6px;
   font-size: 11px;

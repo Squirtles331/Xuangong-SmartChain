@@ -9,7 +9,6 @@
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
 
-    <!-- 图标选择器 -->
     <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #ebeef5">
       <el-form-item label="图标预览">
         <div style="display: flex; align-items: center; gap: 12px">
@@ -20,7 +19,6 @@
       </el-form-item>
     </div>
 
-    <!-- 图标选择对话框 -->
     <el-dialog v-model="iconDialogVisible" title="选择图标" width="700px" append-to-body :lock-scroll="false">
       <el-input v-model="iconSearch" placeholder="搜索图标名称..." clearable style="margin-bottom: 12px" />
       <div class="icon-grid">
@@ -35,19 +33,19 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { FormColumnItem } from 'gi-component'
 
 export interface MenuFormModel {
   id: string
-  parent_id: string | null
+  parentId: string | null
   name: string
   type: 'directory' | 'menu' | 'button'
   path: string
   component: string
-  permission_code: string
+  permissionCode: string
   icon: string
-  sort_order: number
+  sortOrder: number
   visible: boolean
 }
 
@@ -79,15 +77,14 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'input', label: '路由路径', field: 'path', props: { placeholder: '菜单类型时必填' } as any },
-  { type: 'input', label: '组件路径', field: 'component', props: { placeholder: '如 views/system/user/index.vue' } as any },
-  { type: 'input', label: '权限编码', field: 'permission_code', required: true },
-  { type: 'input', label: '图标', field: 'icon', props: { placeholder: '搜索并选择图标' } as any },
-  { type: 'input-number', label: '排序', field: 'sort_order', props: { min: 0 } as any },
+  { type: 'input', label: '路由路径', field: 'path' },
+  { type: 'input', label: '组件路径', field: 'component' },
+  { type: 'input', label: '权限编码', field: 'permissionCode', required: true },
+  { type: 'input', label: '图标', field: 'icon' },
+  { type: 'input-number', label: '排序', field: 'sortOrder', props: { min: 0 } as any },
   { type: 'switch', label: '是否可见', field: 'visible' }
 ]
 
-// 图标选择
 const iconSearch = ref('')
 const iconDialogVisible = ref(false)
 const commonIcons = ref([
@@ -183,8 +180,8 @@ const commonIcons = ref([
 
 const filteredIcons = computed(() => {
   if (!iconSearch.value) return commonIcons.value
-  const kw = iconSearch.value.toLowerCase()
-  return commonIcons.value.filter((i) => i.toLowerCase().includes(kw))
+  const keyword = iconSearch.value.toLowerCase()
+  return commonIcons.value.filter((item) => item.toLowerCase().includes(keyword))
 })
 
 function selectIcon(name: string) {
@@ -206,6 +203,7 @@ async function handleSubmit() {
   max-height: 400px;
   overflow: auto;
 }
+
 .icon-item {
   display: flex;
   flex-direction: column;
@@ -216,14 +214,17 @@ async function handleSubmit() {
   cursor: pointer;
   transition: all 0.2s;
 }
+
 .icon-item:hover {
   border-color: #409eff;
   background: #ecf5ff;
 }
+
 .icon-item.active {
   border-color: #409eff;
   background: #d9ecff;
 }
+
 .icon-name {
   font-size: 11px;
   margin-top: 6px;

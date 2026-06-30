@@ -108,13 +108,13 @@ const { tableData, pagination, loading, search, refresh } = useTable<IoTConfigRo
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getIoTConfigList({
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       keyword: searchForm.value.keyword || undefined,
       protocol: searchForm.value.protocol || undefined,
       status: searchForm.value.status || undefined
     })
-    return { list: res.data.items, total: res.data.total }
+    return { list: res.data.list, total: res.data.total }
   }
 })
 

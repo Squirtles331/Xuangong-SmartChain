@@ -1,10 +1,7 @@
-import http from '@/utils/http'
-import type { ApiResponse } from '@/utils/http'
 import { isMockMode } from './_config'
-import { unwrapApiResponse } from './_factory'
+import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
 import * as mockService from '@/mock/services/routing'
 
-// ==================== 工艺路线 ====================
 export interface RoutingOperation {
   id: string
   operation_no: number
@@ -22,30 +19,30 @@ export interface RoutingOperation {
 }
 
 export interface RoutingListQuery {
-  page: number
-  page_size: number
-  material_code?: string
+  pageNum: number
+  pageSize: number
+  materialCode?: string
 }
 
 export function getRoutingList(params: RoutingListQuery) {
-  if (isMockMode) return mockService.getRoutingList(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: RoutingOperation[] }>>('/routing/list', { params }))
+  if (isMockMode) return mockService.getRoutingList(params) as Promise<ApiResponse<PaginatedData<RoutingOperation>>>
+  return apiGet<PaginatedData<RoutingOperation>>('/routing/list', { params })
 }
 
 export function saveRouting(data: Partial<RoutingOperation>) {
   if (isMockMode) return mockService.saveRouting(data)
   if (data.id) {
-    return unwrapApiResponse(http.put<ApiResponse<null>>(`/routing/${data.id}`, data))
+    return apiPut<Record<string, never>, Partial<RoutingOperation>>(`/routing/${data.id}`, data)
   }
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/routing', data))
+  return apiPost<Record<string, never>, Partial<RoutingOperation>>('/routing', data)
 }
 
 export function deleteRouting(id: string) {
   if (isMockMode) return mockService.deleteRouting(id)
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/routing/${id}`))
+  return apiDelete<Record<string, never>>(`/routing/${id}`)
 }
 
 export function getRoutingDetail(id: string) {
   if (isMockMode) return mockService.getRoutingDetail(id)
-  return unwrapApiResponse(http.get<ApiResponse<RoutingOperation>>(`/routing/${id}`))
+  return apiGet<RoutingOperation>(`/routing/${id}`)
 }

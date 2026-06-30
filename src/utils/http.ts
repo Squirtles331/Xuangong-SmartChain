@@ -1,119 +1,261 @@
-import axios from 'axios'
-import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import axios, { type AxiosError, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
-import router from '@/router'
 
-// 响应数据结构（后端统一返回格式）
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   code: number
+  msg: string
   data: T
-  message: string
 }
 
+export interface PaginatedData<T> {
+  total: number
+  pageNum: number
+  pageSize: number
+  pages: number
+  list: T[]
+}
+
+export type PageData<T> = PaginatedData<T>
+
+export interface ApiRequestConfig<D = unknown> extends AxiosRequestConfig<D> {
+  silent?: boolean
+  skipAuthRedirect?: boolean
+}
+
+interface RequestConfig<D = unknown> extends InternalAxiosRequestConfig<D> {
+  silent?: boolean
+  skipAuthRedirect?: boolean
+  _retry?: boolean
+}
+
+interface RefreshTokenData {
+  accessToken: string
+  refreshToken: string
+}
+
+const successCode = 0
+const baseURL = import.meta.env.VITE_API_URL || '/api'
+const timeout = 15000
+
 const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '/api',
-  timeout: 15000
+  baseURL,
+  timeout
 })
 
-// ==================== 请求拦截器 ====================
+let refreshTokenRequest: Promise<string> | null = null
+
+function getAccessToken() {
+  return localStorage.getItem('access_token') || ''
+}
+
+function getRefreshToken() {
+  return localStorage.getItem('refresh_token') || ''
+}
+
+function getTenantId() {
+  return localStorage.getItem('tenant_id') || ''
+}
+
+function saveAccessToken(token: string) {
+  localStorage.setItem('access_token', token)
+}
+
+function saveRefreshToken(token: string) {
+  localStorage.setItem('refresh_token', token)
+}
+
+function clearAuthStorage() {
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+  localStorage.removeItem('user_info')
+}
+
+function redirectToLogin() {
+  if (typeof window === 'undefined') return
+  if (window.location.pathname === '/login') return
+  window.location.assign('/login')
+}
+
+function setHeader(config: { headers?: unknown }, key: string, value: string) {
+  if (!config.headers) {
+    config.headers = {}
+  }
+
+  if (typeof (config.headers as { set?: unknown }).set === 'function') {
+    ;(config.headers as { set: (name: string, headerValue: string) => void }).set(key, value)
+    return
+  }
+
+  ;(config.headers as Record<string, string>)[key] = value
+}
+
+function isApiResponse<T>(value: unknown): value is ApiResponse<T> {
+  if (!value || typeof value !== 'object') return false
+  return 'code' in value && 'msg' in value && 'data' in value
+}
+
+function extractMessage(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const responseData = error.response?.data
+
+    if (isApiResponse(responseData) && responseData.msg) {
+      return responseData.msg
+    }
+
+    if (typeof responseData === 'object' && responseData && 'msg' in responseData) {
+      return String((responseData as { msg?: unknown }).msg || '')
+    }
+
+    if (error.message) {
+      return error.message
+    }
+  }
+
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return '请求失败'
+}
+
+function showErrorMessage(error: unknown, silent?: boolean) {
+  if (silent) return
+  const msg = extractMessage(error)
+  if (msg) {
+    ElMessage.error(msg)
+  }
+}
+
+function createBusinessError<T>(response: ApiResponse<T>) {
+  const error = new Error(response.msg || '请求失败') as Error & { response?: ApiResponse<T> }
+  error.response = response
+  return error
+}
+
+async function refreshAccessToken() {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) {
+    throw new Error('登录已过期')
+  }
+
+  if (!refreshTokenRequest) {
+    refreshTokenRequest = axios
+      .post<ApiResponse<RefreshTokenData>, AxiosResponse<ApiResponse<RefreshTokenData>>, { refreshToken: string }>(
+        '/auth/refresh',
+        { refreshToken },
+        { baseURL, timeout }
+      )
+      .then((response) => {
+        const result = response.data
+
+        if (!isApiResponse<RefreshTokenData>(result) || result.code !== successCode) {
+          throw createBusinessError(result)
+        }
+
+        const accessToken = result.data?.accessToken
+        const nextRefreshToken = result.data?.refreshToken
+
+        if (!accessToken || !nextRefreshToken) {
+          throw new Error('刷新令牌响应无效')
+        }
+
+        saveAccessToken(accessToken)
+        saveRefreshToken(nextRefreshToken)
+        return accessToken
+      })
+      .finally(() => {
+        refreshTokenRequest = null
+      })
+  }
+
+  return refreshTokenRequest
+}
+
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Token 注入
-    const token = localStorage.getItem('access_token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    const requestConfig = config as RequestConfig
+    const accessToken = getAccessToken()
+    const tenantId = getTenantId()
+
+    if (accessToken) {
+      setHeader(requestConfig, 'Authorization', `Bearer ${accessToken}`)
     }
-    // 租户 ID 注入（多租户场景）
-    const tenantId = localStorage.getItem('tenant_id')
+
     if (tenantId) {
-      config.headers['X-Tenant-Id'] = tenantId
+      setHeader(requestConfig, 'X-Tenant-Id', tenantId)
     }
-    return config
+
+    return requestConfig
   },
   (error) => Promise.reject(error)
 )
 
-// ==================== 响应拦截器 ====================
 http.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse>) => {
-    const { data } = response
-
-    // 文件下载等特殊响应，直接返回
+  (response) => {
     if (response.config.responseType === 'blob') {
       return response
     }
 
-    // 业务码判断（假设后端 code=0 或 200 表示成功）
-    if (data.code !== 0 && data.code !== 200) {
-      ElMessage.error(data.message || '请求失败')
-      return Promise.reject(new Error(data.message || '请求失败'))
+    const result = response.data
+
+    if (!isApiResponse(result)) {
+      return result
     }
 
-    return response
+    if (result.code === successCode) {
+      return result
+    }
+
+    throw createBusinessError(result)
   },
-  async (error) => {
-    if (error.response) {
-      const { status, data } = error.response
+  async (error: AxiosError<ApiResponse<unknown>>) => {
+    const config = (error.config || {}) as RequestConfig
 
-      switch (status) {
-        case 401:
-          // Token 过期，尝试刷新
-          const refreshed = await tryRefreshToken()
-          if (refreshed) {
-            // 刷新成功，重试原请求
-            return http(error.config)
-          }
-          // 刷新失败，跳转登录
-          ElMessage.error('登录已过期，请重新登录')
-          clearAuthAndRedirect()
-          break
-        case 403:
-          ElMessage.error('没有权限执行此操作')
-          break
-        case 404:
-          ElMessage.error('请求的资源不存在')
-          break
-        case 500:
-          ElMessage.error(data?.message || '服务器内部错误')
-          break
-        default:
-          ElMessage.error(data?.message || `请求失败 (${status})`)
+    if (error.response?.status === 401 && !config._retry) {
+      try {
+        config._retry = true
+        const accessToken = await refreshAccessToken()
+        setHeader(config, 'Authorization', `Bearer ${accessToken}`)
+        return http.request(config)
+      } catch (refreshError) {
+        clearAuthStorage()
+
+        if (!config.skipAuthRedirect) {
+          redirectToLogin()
+        }
+
+        showErrorMessage(refreshError, config.silent)
+        return Promise.reject(refreshError)
       }
-    } else if (error.code === 'ECONNABORTED') {
-      ElMessage.error('请求超时，请稍后重试')
-    } else {
-      ElMessage.error('网络异常，请检查网络连接')
     }
 
+    showErrorMessage(error, config.silent)
     return Promise.reject(error)
   }
 )
 
-// ==================== Token 刷新 ====================
-async function tryRefreshToken(): Promise<boolean> {
-  const refreshToken = localStorage.getItem('refresh_token')
-  if (!refreshToken) return false
-
-  try {
-    const res = await axios.post(`${http.defaults.baseURL}/auth/refresh`, { refresh_token: refreshToken })
-    if (res.data?.data?.access_token) {
-      localStorage.setItem('access_token', res.data.data.access_token)
-      if (res.data.data.refresh_token) {
-        localStorage.setItem('refresh_token', res.data.data.refresh_token)
-      }
-      return true
-    }
-    return false
-  } catch {
-    return false
-  }
+export function requestApi<T, D = unknown>(config: ApiRequestConfig<D>) {
+  return http.request<ApiResponse<T>, ApiResponse<T>, D>(config)
 }
 
-function clearAuthAndRedirect() {
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('refresh_token')
-  localStorage.removeItem('user_info')
-  router.push('/login')
+export function getApi<T>(url: string, config?: ApiRequestConfig) {
+  return requestApi<T>({ ...config, url, method: 'get' })
+}
+
+export function postApi<T, D = unknown>(url: string, data?: D, config?: ApiRequestConfig<D>) {
+  return requestApi<T, D>({ ...config, url, data, method: 'post' })
+}
+
+export function putApi<T, D = unknown>(url: string, data?: D, config?: ApiRequestConfig<D>) {
+  return requestApi<T, D>({ ...config, url, data, method: 'put' })
+}
+
+export function patchApi<T, D = unknown>(url: string, data?: D, config?: ApiRequestConfig<D>) {
+  return requestApi<T, D>({ ...config, url, data, method: 'patch' })
+}
+
+export function deleteApi<T>(url: string, config?: ApiRequestConfig) {
+  return requestApi<T>({ ...config, url, method: 'delete' })
 }
 
 export default http

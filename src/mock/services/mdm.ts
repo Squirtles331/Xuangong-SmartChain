@@ -20,14 +20,14 @@ export async function getMaterialTree() {
   return wrapDetailResponse(materialTree)
 }
 
-export async function getMaterialList(params: { page: number; page_size: number; code?: string; name?: string; type?: string }) {
+export async function getMaterialList(params: { pageNum: number; pageSize: number; code?: string; name?: string; type?: string }) {
   await simulateDelay()
   let filtered = [...materialList]
   if (params.code) filtered = searchItems(filtered, params.code, ['code'])
   if (params.name) filtered = searchItems(filtered, params.name, ['name'])
   if (params.type) filtered = filtered.filter((m) => (m as any).type === params.type)
-  const result = paginate(filtered, params.page, params.page_size)
-  return wrapListResponse(result.items, result.total, result.page, result.page_size)
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function createMaterial(data: any) {
@@ -52,14 +52,14 @@ export async function deleteMaterial(id: string) {
 }
 
 // ==================== 设备管理 ====================
-export async function getEquipmentList(params: { page: number; page_size: number; name?: string; workshop?: string; status?: string }) {
+export async function getEquipmentList(params: { pageNum: number; pageSize: number; name?: string; workshop?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...equipments]
   if (params.name) filtered = searchItems(filtered, params.name, ['name'])
   if (params.workshop) filtered = searchItems(filtered, params.workshop, ['workshop'])
   if (params.status) filtered = filtered.filter((e) => (e as any).status === params.status)
-  const result = paginate(filtered, params.page, params.page_size)
-  return wrapListResponse(result.items, result.total, result.page, result.page_size)
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function createEquipment(data: any) {

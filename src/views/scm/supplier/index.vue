@@ -115,14 +115,14 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<S
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: SupplierQuery = {
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       name: searchForm.value.name || undefined,
       status: searchForm.value.status || undefined
     }
     const res = await getSupplierList(params)
     return {
-      list: res.data.items.map((s: any, i: number) => mapSupplierRow(s, (page - 1) * size + i)),
+      list: res.data.list.map((s: any, i: number) => mapSupplierRow(s, (page - 1) * size + i)),
       total: res.data.total
     }
   },

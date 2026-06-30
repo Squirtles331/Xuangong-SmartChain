@@ -123,15 +123,15 @@ const { tableData, pagination, loading, search, refresh } = useTable<PORow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: PurchaseOrderQuery = {
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       code: searchForm.value.code || undefined,
       supplier: searchForm.value.supplier || undefined,
       status: searchForm.value.status || undefined
     }
     const res = await getPurchaseOrderList(params)
     return {
-      list: res.data.items.map(mapPORow),
+      list: res.data.list.map(mapPORow),
       total: res.data.total
     }
   }

@@ -73,13 +73,13 @@ const { tableData, pagination, loading, search } = useTable<ScanRecord>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getBarcodeScanList({
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       barcode: undefined,
       operator: undefined
     })
     return {
-      list: (res.data.items || []).map(mapRow),
+      list: res.data.list.map(mapRow),
       total: res.data.total
     }
   }

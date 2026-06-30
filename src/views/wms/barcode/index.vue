@@ -124,8 +124,8 @@ const scanOutColumns: TableColumnItem<any>[] = [
 const { tableData, pagination, loading } = useTable<any>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getMaterialListForBarcode({ page, page_size: size })
-    const items = (res.data.items || []).map((item: any, index: number) => ({
+    const res = await getMaterialListForBarcode({ pageNum: page, pageSize: size })
+    const items = res.data.list.map((item: any, index: number) => ({
       id: String(item.id),
       barcode: `BC${String(index + 1).padStart(5, '0')}${String(item.code).replace(/\W/g, '').slice(-6)}`,
       code: item.code,

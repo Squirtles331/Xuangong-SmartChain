@@ -102,8 +102,8 @@ function mapRow(raw: any): SupplierQualityRow {
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<SupplierQualityRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getSupplierQualityList({ page, page_size: size })
-    const items = (res.data.items || res.data || []).map(mapRow)
+    const res = await getSupplierQualityList({ pageNum: page, pageSize: size })
+    const items = res.data.list.map(mapRow)
     return { list: items, total: res.data.total || items.length }
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => Promise.resolve()))

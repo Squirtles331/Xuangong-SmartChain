@@ -66,7 +66,7 @@ const resultColumns: TableColumnItem<any>[] = [
 ]
 
 async function loadData() {
-  const res = await getNetChangeMRP({ page: 1, page_size: 100 })
+  const res = await getNetChangeMRP({ pageNum: 1, pageSize: 100 })
   events.value = res.data.events || []
   affected.value = res.data.affected || []
 }

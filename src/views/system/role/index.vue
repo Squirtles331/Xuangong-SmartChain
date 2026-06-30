@@ -25,11 +25,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import { getRoleList, createRole, updateRole, deleteRole, type SysRole } from '@/api/system'
+import { createRole, deleteRole, getRoleList, updateRole, type SysRole } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import RoleFormDialog, { type RoleFormModel } from './RoleFormDialog.vue'
 
@@ -39,14 +39,13 @@ interface RoleRow {
   name: string
   description: string
   status: 'active' | 'disabled'
-  user_count: number
+  userCount: number
 }
 
 const searchFormRef = ref<FormInstance | null>()
 const searchForm = ref({ name: '' })
 
 const searchColumns: FormColumnItem[] = [{ type: 'input', label: '角色名称', field: 'name' }]
-
 const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([])
 
@@ -60,21 +59,21 @@ const columns: TableColumnItem<RoleRow>[] = [
   { prop: 'name', label: '角色名称', minWidth: 140 },
   { prop: 'description', label: '描述', minWidth: 200 },
   { label: '状态', minWidth: 100, slotName: 'status', align: 'center' },
-  { prop: 'user_count', label: '用户数', width: 80, align: 'center' },
+  { prop: 'userCount', label: '用户数', width: 80, align: 'center' },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<RoleRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const params = {
-      page,
-      page_size: size,
+    const response = await getRoleList({
+      pageNum: page,
+      pageSize: size,
       name: searchForm.value.name || undefined
-    }
-    const response = await getRoleList(params)
+    })
+
     return {
-      list: (response.data.items as SysRole[]).map(mapRoleRow),
+      list: response.data.list.map(mapRoleRow),
       total: response.data.total
     }
   },
@@ -88,7 +87,7 @@ function mapRoleRow(role: SysRole): RoleRow {
     name: role.name,
     description: role.description,
     status: role.status,
-    user_count: role.user_count
+    userCount: role.userCount
   }
 }
 
@@ -106,7 +105,7 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<RoleFormModel>(createDefaultFormModel())
 
 function createDefaultFormModel(): RoleFormModel {
-  return { id: '', code: '', name: '', description: '', status: 'active', permission_ids: [] }
+  return { id: '', code: '', name: '', description: '', status: 'active', permissionIds: [] }
 }
 
 function openAdd() {
@@ -123,7 +122,7 @@ function openEdit(row: RoleRow) {
     name: row.name,
     description: row.description,
     status: row.status,
-    permission_ids: []
+    permissionIds: []
   }
   dialogVisible.value = true
 }
@@ -133,12 +132,14 @@ async function submitDialog() {
     ElMessage.warning('请填写必填项')
     return
   }
+
   if (dialogMode.value === 'add') {
     await createRole({
       code: formModel.value.code,
       name: formModel.value.name,
       description: formModel.value.description,
-      status: formModel.value.status
+      status: formModel.value.status,
+      permissionIds: formModel.value.permissionIds
     })
     ElMessage.success('新增成功')
   } else {
@@ -146,10 +147,12 @@ async function submitDialog() {
       code: formModel.value.code,
       name: formModel.value.name,
       description: formModel.value.description,
-      status: formModel.value.status
+      status: formModel.value.status,
+      permissionIds: formModel.value.permissionIds
     })
     ElMessage.success('保存成功')
   }
+
   dialogVisible.value = false
   await refresh()
 }

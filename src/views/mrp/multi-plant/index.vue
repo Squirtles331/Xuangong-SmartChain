@@ -66,7 +66,7 @@ function renderChart() {
 }
 
 async function loadData() {
-  const res = await getMultiPlantMRP({ page: 1, page_size: 100 })
+  const res = await getMultiPlantMRP({ pageNum: 1, pageSize: 100 })
   plantCapacity.value = res.data.plantCapacity || []
   results.value = res.data.results || []
   await nextTick()

@@ -17,7 +17,7 @@ import type { FormColumnItem } from 'gi-component'
 export interface ApprovalFlowFormModel {
   id: string
   name: string
-  business_type: string
+  businessType: string
   nodes: string
 }
 
@@ -39,20 +39,20 @@ const formColumns: FormColumnItem[] = [
   {
     type: 'select-v2',
     label: '关联业务',
-    field: 'business_type',
+    field: 'businessType',
     required: true,
     props: {
       options: [
-        { label: '普通工单', value: 'work_order_normal' },
-        { label: '紧急工单', value: 'work_order_urgent' },
-        { label: 'BOM/工艺', value: 'bom_routing' },
-        { label: 'ECN变更', value: 'ecn' },
-        { label: '销售订单', value: 'sales_order' },
-        { label: '采购订单', value: 'purchase_order' }
+        { label: '普通工单', value: 'workOrderNormal' },
+        { label: '紧急工单', value: 'workOrderUrgent' },
+        { label: 'BOM/工艺', value: 'bomRouting' },
+        { label: 'ECN 变更', value: 'ecn' },
+        { label: '销售订单', value: 'salesOrder' },
+        { label: '采购订单', value: 'purchaseOrder' }
       ]
     } as any
   },
-  { type: 'input', label: '审批节点', field: 'nodes', required: true, props: { placeholder: '多个节点用逗号分隔，如：车间主任,生产部长' } as any }
+  { type: 'input', label: '审批节点', field: 'nodes', required: true, props: { placeholder: '多个节点用逗号分隔，例如：车间主任,生产部长' } as any }
 ]
 
 async function handleSubmit() {

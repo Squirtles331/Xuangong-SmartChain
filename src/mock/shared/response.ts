@@ -1,44 +1,70 @@
-/**
- * Mock 公共响应格式工具
- * 统一返回 ApiResponse 结构，与 http.ts 拦截器期望一致
- */
+import type { ApiResponse, PaginatedData } from '@/utils/http'
 
-export interface ApiResponse<T = any> {
-  code: number
-  data: T
-  message: string
-}
+export class MockResponse {
+  static success<T>(data: T, msg = '操作成功'): ApiResponse<T> {
+    return {
+      code: 0,
+      data,
+      msg
+    }
+  }
 
-export interface PaginatedData<T> {
-  items: T[]
-  total: number
-  page: number
-  page_size: number
-}
+  static detail<T>(data: T, msg = '查询成功'): ApiResponse<T> {
+    return this.success(data, msg)
+  }
 
-/** 包装列表响应 */
-export function wrapListResponse<T>(items: T[], total: number, page: number, pageSize: number): ApiResponse<PaginatedData<T>> {
-  return {
-    code: 200,
-    data: { items, total, page, page_size: pageSize },
-    message: 'success'
+  static paginated<T>(list: T[], total: number, pageNum: number, pageSize: number, msg = '查询列表成功'): ApiResponse<PaginatedData<T>> {
+    const pages = pageSize > 0 ? Math.ceil(total / pageSize) : 0
+
+    return this.success(
+      {
+        total,
+        pageNum,
+        pageSize,
+        pages,
+        list
+      },
+      msg
+    )
+  }
+
+  static created<T>(data: T, msg = '创建成功'): ApiResponse<T> {
+    return this.success(data, msg)
+  }
+
+  static updated<T>(data: T, msg = '更新成功'): ApiResponse<T> {
+    return this.success(data, msg)
+  }
+
+  static empty(msg = '操作成功'): ApiResponse<Record<string, never>> {
+    return this.success({}, msg)
+  }
+
+  static fail<T>(code: number, msg: string, data: T): ApiResponse<T> {
+    return {
+      code,
+      msg,
+      data
+    }
   }
 }
 
-/** 包装详情响应 */
-export function wrapDetailResponse<T>(data: T): ApiResponse<T> {
-  return {
-    code: 200,
-    data,
-    message: 'success'
-  }
+export function wrapListResponse<T>(list: T[], total: number, pageNum: number, pageSize: number) {
+  return MockResponse.paginated(list, total, pageNum, pageSize)
 }
 
-/** 包装操作成功响应 */
-export function wrapSuccessResponse(message = '操作成功'): ApiResponse<null> {
-  return {
-    code: 200,
-    data: null,
-    message
-  }
+export function wrapDetailResponse<T>(data: T, msg?: string) {
+  return MockResponse.detail(data, msg)
+}
+
+export function wrapCreatedResponse<T>(data: T, msg?: string) {
+  return MockResponse.created(data, msg)
+}
+
+export function wrapUpdatedResponse<T>(data: T, msg?: string) {
+  return MockResponse.updated(data, msg)
+}
+
+export function wrapSuccessResponse(msg = '操作成功') {
+  return MockResponse.empty(msg)
 }

@@ -61,9 +61,9 @@ interface TransferRow {
 const { tableData, pagination, loading, refresh } = useTable<TransferRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getTransferList({ page, page_size: size })
+    const res = await getTransferList({ pageNum: page, pageSize: size })
     return {
-      list: (res.data.items || []).map(mapRow),
+      list: res.data.list.map(mapRow),
       total: res.data.total
     }
   }

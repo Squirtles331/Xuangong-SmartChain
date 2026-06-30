@@ -1,41 +1,55 @@
-/**
- * ECN 变更单 Mock Service
- * 模拟 ECN 变更单的 CRUD 操作
- */
-import { simulateDelay } from '../shared/delay'
-import { paginate, searchItems } from '../shared/paginate'
-import { wrapListResponse, wrapDetailResponse, wrapSuccessResponse } from '../shared/response'
-import { generateId } from '../shared/id'
 import { ecnOrders } from '../modules/bom'
+import { simulateDelay } from '../shared/delay'
+import { generateId } from '../shared/id'
+import { paginate, searchItems } from '../shared/paginate'
+import { wrapDetailResponse, wrapListResponse, wrapSuccessResponse } from '../shared/response'
 
-// ==================== ECN 变更单 ====================
-export async function getECNList(params: { page: number; page_size: number; code?: string; material?: string; status?: string }) {
+export async function getECNList(params: { pageNum: number; pageSize: number; code?: string; material?: string; status?: string }) {
   await simulateDelay()
+
   let filtered = [...ecnOrders]
-  if (params.code) filtered = searchItems(filtered, params.code, ['code'])
-  if (params.material) filtered = searchItems(filtered, params.material, ['material'])
-  if (params.status) filtered = filtered.filter((e: any) => e.status === params.status)
-  const result = paginate(filtered, params.page, params.page_size)
-  return wrapListResponse(result.items, result.total, result.page, result.page_size)
+
+  if (params.code) {
+    filtered = searchItems(filtered, params.code, ['code'])
+  }
+
+  if (params.material) {
+    filtered = searchItems(filtered, params.material, ['material'])
+  }
+
+  if (params.status) {
+    filtered = filtered.filter((item: any) => item.status === params.status)
+  }
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function createECN(data: any) {
   await simulateDelay()
-  const newECN = { id: generateId(), created_at: new Date().toISOString().slice(0, 19), ...data }
+  const newECN = { id: generateId(), createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '), ...data }
   ecnOrders.unshift(newECN)
-  return wrapSuccessResponse('ECN 变更单创建成功')
+  return wrapSuccessResponse('ECN变更单创建成功')
 }
 
 export async function updateECN(id: string, data: any) {
   await simulateDelay()
-  const idx = ecnOrders.findIndex((e: any) => String(e.id) === id)
-  if (idx > -1) Object.assign(ecnOrders[idx], data)
-  return wrapSuccessResponse('ECN 变更单更新成功')
+  const index = ecnOrders.findIndex((item: any) => String(item.id) === id)
+
+  if (index > -1) {
+    Object.assign(ecnOrders[index], data)
+  }
+
+  return wrapSuccessResponse('ECN变更单更新成功')
 }
 
 export async function deleteECN(id: string) {
   await simulateDelay()
-  const idx = ecnOrders.findIndex((e: any) => String(e.id) === id)
-  if (idx > -1) ecnOrders.splice(idx, 1)
-  return wrapSuccessResponse('ECN 变更单删除成功')
+  const index = ecnOrders.findIndex((item: any) => String(item.id) === id)
+
+  if (index > -1) {
+    ecnOrders.splice(index, 1)
+  }
+
+  return wrapSuccessResponse('ECN变更单删除成功')
 }

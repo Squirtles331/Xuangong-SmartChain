@@ -86,12 +86,12 @@ const { tableData, pagination, loading, search, refresh } = useTable<EmergencyRo
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getEhsEmergencyList({
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       name: searchForm.value.name || undefined,
       type: searchForm.value.type || undefined
     })
-    return { list: res.data.items, total: res.data.total }
+    return { list: res.data.list, total: res.data.total }
   }
 })
 

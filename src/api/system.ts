@@ -1,10 +1,7 @@
-import http from '@/utils/http'
-import type { ApiResponse } from '@/utils/http'
 import { isMockMode } from './_config'
-import { unwrapApiResponse } from './_factory'
+import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
 import * as mockService from '@/mock/services/system'
 
-// ==================== 登录（始终走真实接口） ====================
 export interface LoginParams {
   tenant_id: string
   username: string
@@ -26,127 +23,132 @@ export interface LoginResult {
 }
 
 export function login(params: LoginParams) {
-  return unwrapApiResponse(http.post<ApiResponse<LoginResult>>('/auth/login', params))
+  return apiPost<LoginResult, LoginParams>('/auth/login', params)
 }
 
 export function logout() {
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/auth/logout'))
+  return apiPost<null>('/auth/logout')
 }
 
-export function refreshToken(refresh_token: string) {
-  return unwrapApiResponse(http.post<ApiResponse<{ access_token: string; refresh_token: string }>>('/auth/refresh', { refresh_token }))
+export function refreshToken(refreshToken: string) {
+  return apiPost<{ access_token: string; refresh_token: string }, { refresh_token: string }>('/auth/refresh', { refresh_token: refreshToken })
 }
 
-// ==================== 用户管理 ====================
 export interface SysUser {
   id: string
   username: string
-  real_name: string
+  realName: string
   email: string
   phone: string
-  department_id?: string
-  status: 'active' | 'disabled'
+  departmentId?: string
+  status: 1 | 0
   roles: string[]
-  created_at: string
+  createdAt: string
 }
 
 export interface UserQuery {
-  page: number
-  page_size: number
+  pageNum: number
+  pageSize: number
   username?: string
-  real_name?: string
+  realName?: string
   role?: string
-  status?: string
+  status?: SysUser['status']
 }
 
 export function getUserList(params: UserQuery) {
-  if (isMockMode) return mockService.getUserList(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: SysUser[] }>>('/system/users', { params }))
+  if (isMockMode) return mockService.getUserList(params) as Promise<ApiResponse<PaginatedData<SysUser>>>
+  return apiGet<PaginatedData<SysUser>>('/system/users', { params })
 }
 
 export function createUser(data: Partial<SysUser>) {
   if (isMockMode) return mockService.createUser(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/system/users', data))
+  return apiPost<SysUser, Partial<SysUser>>('/system/users', data)
 }
 
 export function updateUser(id: string, data: Partial<SysUser>) {
   if (isMockMode) return mockService.updateUser(id, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/system/users/${id}`, data))
+  return apiPut<SysUser, Partial<SysUser>>(`/system/users/${id}`, data)
 }
 
 export function deleteUser(id: string) {
   if (isMockMode) return mockService.deleteUser(id)
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/system/users/${id}`))
+  return apiDelete<Record<string, never>>(`/system/users/${id}`)
 }
 
 export function resetUserPassword(id: string, password: string) {
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/system/users/${id}/reset-password`, { password }))
+  return apiPut<null, { password: string }>(`/system/users/${id}/reset-password`, { password })
 }
 
-// ==================== 角色管理 ====================
 export interface SysRole {
   id: string
   code: string
   name: string
   description: string
   status: 'active' | 'disabled'
-  permission_ids: string[]
-  user_count: number
+  permissionIds: string[]
+  userCount: number
 }
 
-export function getRoleList(params: { page: number; page_size: number; name?: string }) {
-  if (isMockMode) return mockService.getRoleList(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: SysRole[] }>>('/system/roles', { params }))
+export interface RoleQuery {
+  pageNum: number
+  pageSize: number
+  name?: string
+}
+
+export function getRoleList(params: RoleQuery) {
+  if (isMockMode) return mockService.getRoleList(params) as Promise<ApiResponse<PaginatedData<SysRole>>>
+  return apiGet<PaginatedData<SysRole>>('/system/roles', { params })
 }
 
 export function createRole(data: Partial<SysRole>) {
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/system/roles', data))
+  if (isMockMode) return mockService.createRole(data)
+  return apiPost<SysRole, Partial<SysRole>>('/system/roles', data)
 }
 
 export function updateRole(id: string, data: Partial<SysRole>) {
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/system/roles/${id}`, data))
+  if (isMockMode) return mockService.updateRole(id, data)
+  return apiPut<SysRole, Partial<SysRole>>(`/system/roles/${id}`, data)
 }
 
 export function deleteRole(id: string) {
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/system/roles/${id}`))
+  if (isMockMode) return mockService.deleteRole(id)
+  return apiDelete<null>(`/system/roles/${id}`)
 }
 
-// ==================== 菜单管理 ====================
 export interface SysMenu {
   id: string
-  parent_id: string | null
+  parentId: string | null
   name: string
   type: 'directory' | 'menu' | 'button'
   path?: string
   component?: string
-  permission_code: string
+  permissionCode: string
   icon?: string
-  sort_order: number
+  sortOrder: number
   visible: boolean
   children?: SysMenu[]
 }
 
 export function getMenuTree() {
-  if (isMockMode) return mockService.getMenuTree()
-  return unwrapApiResponse(http.get<ApiResponse<SysMenu[]>>('/system/menus/tree'))
+  if (isMockMode) return mockService.getMenuTree() as Promise<ApiResponse<SysMenu[]>>
+  return apiGet<SysMenu[]>('/system/menus/tree')
 }
 
 export function createMenu(data: Partial<SysMenu>) {
   if (isMockMode) return mockService.createMenu(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/system/menus', data))
+  return apiPost<SysMenu, Partial<SysMenu>>('/system/menus', data)
 }
 
 export function updateMenu(id: string, data: Partial<SysMenu>) {
   if (isMockMode) return mockService.updateMenu(id, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/system/menus/${id}`, data))
+  return apiPut<SysMenu, Partial<SysMenu>>(`/system/menus/${id}`, data)
 }
 
 export function deleteMenu(id: string) {
   if (isMockMode) return mockService.deleteMenu(id)
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/system/menus/${id}`))
+  return apiDelete<null>(`/system/menus/${id}`)
 }
 
-// ==================== 字典管理 ====================
 export interface DictType {
   id: string
   code: string
@@ -157,149 +159,173 @@ export interface DictType {
 
 export interface DictItem {
   id: string
-  dict_type_id: string
+  dictTypeCode: string
+  dictTypeId: string
   code: string
   name: string
-  sort_order: number
-  css_class?: string
+  sortOrder: number
+  cssClass?: string
   status: 'active' | 'disabled'
 }
 
-export function getDictTypeList(params: { page: number; page_size: number }) {
-  if (isMockMode) return mockService.getDictTypeList(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: DictType[] }>>('/system/dict-types', { params }))
+export interface DictTypeQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+}
+
+export function getDictTypeList(params: DictTypeQuery) {
+  if (isMockMode) return mockService.getDictTypeList(params) as Promise<ApiResponse<PaginatedData<DictType>>>
+  return apiGet<PaginatedData<DictType>>('/system/dict-types', { params })
 }
 
 export function getDictItems(dictTypeCode: string) {
-  if (isMockMode) return mockService.getDictItems(dictTypeCode)
-  return unwrapApiResponse(http.get<ApiResponse<DictItem[]>>(`/system/dict-items/${dictTypeCode}`))
+  if (isMockMode) return mockService.getDictItems(dictTypeCode) as Promise<ApiResponse<DictItem[]>>
+  return apiGet<DictItem[]>(`/system/dict-items/${dictTypeCode}`)
 }
 
 export function createDictType(data: Partial<DictType>) {
   if (isMockMode) return mockService.createDictType(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/system/dict-types', data))
+  return apiPost<DictType, Partial<DictType>>('/system/dict-types', data)
 }
 
 export function createDictItem(data: Partial<DictItem>) {
   if (isMockMode) return mockService.createDictItem(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/system/dict-items', data))
+  return apiPost<DictItem, Partial<DictItem>>('/system/dict-items', data)
 }
 
 export function updateDictItem(id: string, data: Partial<DictItem>) {
   if (isMockMode) return mockService.updateDictItem(id, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/system/dict-items/${id}`, data))
+  return apiPut<DictItem, Partial<DictItem>>(`/system/dict-items/${id}`, data)
 }
 
 export function deleteDictItem(id: string) {
   if (isMockMode) return mockService.deleteDictItem(id)
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/system/dict-items/${id}`))
+  return apiDelete<null>(`/system/dict-items/${id}`)
 }
 
-// ==================== 操作日志 ====================
 export interface AuditLog {
   id: string
-  user_name: string
+  userName: string
   module: string
   action: string
   target: string
   ip: string
-  request_params?: string
-  created_at: string
+  requestParams?: string
+  createdAt: string
 }
 
-export function getAuditLogs(params: {
-  page: number
-  page_size: number
-  user_name?: string
+export interface AuditLogQuery {
+  pageNum: number
+  pageSize: number
+  userName?: string
   module?: string
-  start_date?: string
-  end_date?: string
-}) {
-  if (isMockMode) return mockService.getAuditLogs(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: AuditLog[] }>>('/system/audit-logs', { params }))
+  action?: string
+  startDate?: string
+  endDate?: string
 }
 
-// ==================== 系统参数 ====================
+export function getAuditLogs(params: AuditLogQuery) {
+  if (isMockMode) return mockService.getAuditLogs(params) as Promise<ApiResponse<PaginatedData<AuditLog>>>
+  return apiGet<PaginatedData<AuditLog>>('/system/audit-logs', { params })
+}
+
 export interface SystemParam {
   id: string
   code: string
   name: string
   value: string
-  default_value: string
+  defaultValue: string
   description: string
   category: string
-  value_type: 'string' | 'number' | 'boolean' | 'json'
+  valueType: 'string' | 'number' | 'boolean' | 'json'
   status: 'active' | 'disabled'
-  updated_at: string
-  updated_by: string
+  updatedAt: string
+  updatedBy: string
 }
 
 export interface SystemParamQuery {
-  page: number
-  page_size: number
+  pageNum: number
+  pageSize: number
   category?: string
   keyword?: string
   status?: string
 }
 
 export function getSystemParams(params?: Partial<SystemParamQuery>) {
-  if (isMockMode) return mockService.getSystemParams(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: SystemParam[] }>>('/system/params', { params }))
+  if (isMockMode) return mockService.getSystemParams(params) as Promise<ApiResponse<PaginatedData<SystemParam>>>
+  return apiGet<PaginatedData<SystemParam>>('/system/params', { params })
 }
 
 export function updateSystemParam(id: string, value: string) {
   if (isMockMode) return mockService.updateSystemParam(id, value)
-  return unwrapApiResponse(http.put<ApiResponse<SystemParam>>(`/system/params/${id}`, { value }))
+  return apiPut<SystemParam, { value: string }>(`/system/params/${id}`, { value })
 }
 
 export function batchUpdateSystemParams(updates: { id: string; value: string }[]) {
   if (isMockMode) return mockService.batchUpdateSystemParams(updates)
-  return unwrapApiResponse(http.put<ApiResponse<null>>('/system/params/batch', { updates }))
+  return apiPut<null, { updates: { id: string; value: string }[] }>('/system/params/batch', { updates })
 }
 
 export function resetSystemParam(id: string) {
   if (isMockMode) return mockService.resetSystemParam(id)
-  return unwrapApiResponse(http.put<ApiResponse<SystemParam>>(`/system/params/${id}/reset`))
+  return apiPut<SystemParam>(`/system/params/${id}/reset`)
 }
 
-// ==================== 编码规则 ====================
+export interface CodeRule {
+  id: string
+  code: string
+  name: string
+  prefix: string
+  dateFormat: string
+  serialLength: number
+  example: string
+}
+
 export function getCodeRules() {
-  if (isMockMode) return mockService.getCodeRules()
-  return unwrapApiResponse(http.get<ApiResponse<any>>('/system/code-rules'))
+  if (isMockMode) return mockService.getCodeRules() as Promise<ApiResponse<CodeRule[]>>
+  return apiGet<CodeRule[]>('/system/code-rules')
 }
 
-export function createCodeRule(data: any) {
+export function createCodeRule(data: Partial<CodeRule>) {
   if (isMockMode) return mockService.createCodeRule(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/system/code-rules', data))
+  return apiPost<CodeRule, Partial<CodeRule>>('/system/code-rules', data)
 }
 
-export function updateCodeRule(id: string, data: any) {
+export function updateCodeRule(id: string, data: Partial<CodeRule>) {
   if (isMockMode) return mockService.updateCodeRule(id, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/system/code-rules/${id}`, data))
+  return apiPut<CodeRule, Partial<CodeRule>>(`/system/code-rules/${id}`, data)
 }
 
 export function deleteCodeRule(id: string) {
   if (isMockMode) return mockService.deleteCodeRule(id)
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/system/code-rules/${id}`))
+  return apiDelete<null>(`/system/code-rules/${id}`)
 }
 
-// ==================== 审批流 ====================
+export interface ApprovalFlow {
+  id: string
+  name: string
+  businessType: string
+  nodes: string[]
+  status: 'active' | 'disabled'
+}
+
 export function getApprovalFlows() {
-  if (isMockMode) return mockService.getApprovalFlows()
-  return unwrapApiResponse(http.get<ApiResponse<any>>('/system/approval-flows'))
+  if (isMockMode) return mockService.getApprovalFlows() as Promise<ApiResponse<ApprovalFlow[]>>
+  return apiGet<ApprovalFlow[]>('/system/approval-flows')
 }
 
-export function createApprovalFlow(data: any) {
+export function createApprovalFlow(data: Partial<ApprovalFlow>) {
   if (isMockMode) return mockService.createApprovalFlow(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/system/approval-flows', data))
+  return apiPost<ApprovalFlow, Partial<ApprovalFlow>>('/system/approval-flows', data)
 }
 
-export function updateApprovalFlow(id: string, data: any) {
+export function updateApprovalFlow(id: string, data: Partial<ApprovalFlow>) {
   if (isMockMode) return mockService.updateApprovalFlow(id, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/system/approval-flows/${id}`, data))
+  return apiPut<ApprovalFlow, Partial<ApprovalFlow>>(`/system/approval-flows/${id}`, data)
 }
 
 export function deleteApprovalFlow(id: string) {
   if (isMockMode) return mockService.deleteApprovalFlow(id)
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/system/approval-flows/${id}`))
+  return apiDelete<null>(`/system/approval-flows/${id}`)
 }

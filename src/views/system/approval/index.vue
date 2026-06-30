@@ -12,10 +12,10 @@
       <template #nodes="{ row }">
         <el-steps :active="row.nodes.length" align-center style="max-width: 600px">
           <el-step
-            v-for="(node, i) in row.nodes"
-            :key="i"
+            v-for="(node, index) in row.nodes"
+            :key="index"
             :title="node"
-            :description="i === 0 ? '发起' : i === row.nodes.length - 1 ? '终审' : `第${i + 1}级`"
+            :description="index === 0 ? '发起' : index === row.nodes.length - 1 ? '终审' : `第 ${index + 1} 级`"
           />
         </el-steps>
       </template>
@@ -36,36 +36,27 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
-import { getApprovalFlows, createApprovalFlow, updateApprovalFlow, deleteApprovalFlow } from '@/api/system'
+import { createApprovalFlow, deleteApprovalFlow, getApprovalFlows, updateApprovalFlow, type ApprovalFlow } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import ApprovalFlowFormDialog, { type ApprovalFlowFormModel } from './ApprovalFlowFormDialog.vue'
-
-interface ApprovalFlow {
-  id: string
-  name: string
-  business_type: string
-  nodes: string[]
-  status: string
-}
 
 const columns: TableColumnItem<ApprovalFlow>[] = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'name', label: '审批流名称', minWidth: 160 },
-  { prop: 'business_type', label: '关联业务', width: 160 },
+  { prop: 'businessType', label: '关联业务', width: 160 },
   { label: '审批节点', minWidth: 250, slotName: 'nodes' },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ApprovalFlow>({
+const { tableData, pagination, loading, refresh, onDelete } = useTable<ApprovalFlow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const response = await getApprovalFlows()
-    const allItems = (response.data || []) as ApprovalFlow[]
     const start = (page - 1) * size
     return {
-      list: allItems.slice(start, start + size),
-      total: allItems.length
+      list: response.data.slice(start, start + size),
+      total: response.data.length
     }
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteApprovalFlow(id)))
@@ -76,7 +67,7 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ApprovalFlowFormModel>(createDefaultFormModel())
 
 function createDefaultFormModel(): ApprovalFlowFormModel {
-  return { id: '', name: '', business_type: '', nodes: '' }
+  return { id: '', name: '', businessType: '', nodes: '' }
 }
 
 function openAdd() {
@@ -90,29 +81,40 @@ function openEdit(row: ApprovalFlow) {
   formModel.value = {
     id: row.id,
     name: row.name,
-    business_type: row.business_type,
+    businessType: row.businessType,
     nodes: row.nodes.join(',')
   }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
-  if (!formModel.value.name || !formModel.value.business_type || !formModel.value.nodes) {
+  if (!formModel.value.name || !formModel.value.businessType || !formModel.value.nodes) {
     ElMessage.warning('请填写必填项')
     return
   }
+
   const nodes = formModel.value.nodes
     .split(',')
-    .map((s) => s.trim())
+    .map((item) => item.trim())
     .filter(Boolean)
 
   if (dialogMode.value === 'add') {
-    await createApprovalFlow({ name: formModel.value.name, business_type: formModel.value.business_type, nodes, status: 'active' })
+    await createApprovalFlow({
+      name: formModel.value.name,
+      businessType: formModel.value.businessType,
+      nodes,
+      status: 'active'
+    })
     ElMessage.success('新增成功')
   } else {
-    await updateApprovalFlow(formModel.value.id, { name: formModel.value.name, business_type: formModel.value.business_type, nodes })
+    await updateApprovalFlow(formModel.value.id, {
+      name: formModel.value.name,
+      businessType: formModel.value.businessType,
+      nodes
+    })
     ElMessage.success('保存成功')
   }
+
   dialogVisible.value = false
   await refresh()
 }

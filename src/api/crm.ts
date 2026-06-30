@@ -1,10 +1,7 @@
-import http from '@/utils/http'
-import type { ApiResponse } from '@/utils/http'
 import { isMockMode } from './_config'
-import { unwrapApiResponse } from './_factory'
+import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
 import * as mockService from '@/mock/services/crm'
 
-// ==================== 客户 ====================
 export interface Customer {
   id: string
   code: string
@@ -17,33 +14,32 @@ export interface Customer {
 }
 
 export interface CustomerQuery {
-  page: number
-  page_size: number
+  pageNum: number
+  pageSize: number
   name?: string
   status?: string
 }
 
 export function getCustomerList(params: CustomerQuery) {
-  if (isMockMode) return mockService.getCustomerList(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: Customer[] }>>('/crm/customers', { params }))
+  if (isMockMode) return mockService.getCustomerList(params) as Promise<ApiResponse<PaginatedData<Customer>>>
+  return apiGet<PaginatedData<Customer>>('/crm/customers', { params })
 }
 
 export function createCustomer(data: Partial<Customer>) {
   if (isMockMode) return mockService.createCustomer(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/crm/customers', data))
+  return apiPost<Record<string, never>, Partial<Customer>>('/crm/customers', data)
 }
 
 export function updateCustomer(id: string, data: Partial<Customer>) {
   if (isMockMode) return mockService.updateCustomer(id, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/crm/customers/${id}`, data))
+  return apiPut<Record<string, never>, Partial<Customer>>(`/crm/customers/${id}`, data)
 }
 
 export function deleteCustomer(id: string) {
   if (isMockMode) return mockService.deleteCustomer(id)
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/crm/customers/${id}`))
+  return apiDelete<Record<string, never>>(`/crm/customers/${id}`)
 }
 
-// ==================== 销售订单 ====================
 export interface SalesOrder {
   id: string
   code: string
@@ -56,34 +52,33 @@ export interface SalesOrder {
 }
 
 export interface SalesOrderQuery {
-  page: number
-  page_size: number
+  pageNum: number
+  pageSize: number
   code?: string
-  customer_name?: string
+  customerName?: string
   status?: string
 }
 
 export function getSalesOrderList(params: SalesOrderQuery) {
-  if (isMockMode) return mockService.getSalesOrderList(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: SalesOrder[] }>>('/crm/sales-orders', { params }))
+  if (isMockMode) return mockService.getSalesOrderList(params) as Promise<ApiResponse<PaginatedData<SalesOrder>>>
+  return apiGet<PaginatedData<SalesOrder>>('/crm/sales-orders', { params })
 }
 
 export function createSalesOrder(data: Partial<SalesOrder>) {
   if (isMockMode) return mockService.createSalesOrder(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/crm/sales-orders', data))
+  return apiPost<Record<string, never>, Partial<SalesOrder>>('/crm/sales-orders', data)
 }
 
 export function updateSalesOrder(id: string, data: Partial<SalesOrder>) {
   if (isMockMode) return mockService.updateSalesOrder(id, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/crm/sales-orders/${id}`, data))
+  return apiPut<Record<string, never>, Partial<SalesOrder>>(`/crm/sales-orders/${id}`, data)
 }
 
 export function deleteSalesOrder(id: string) {
   if (isMockMode) return mockService.deleteSalesOrder(id)
-  return unwrapApiResponse(http.delete<ApiResponse<null>>(`/crm/sales-orders/${id}`))
+  return apiDelete<Record<string, never>>(`/crm/sales-orders/${id}`)
 }
 
-// ==================== 应收台账 ====================
 export interface Receivable {
   id: string
   code: string
@@ -96,18 +91,18 @@ export interface Receivable {
 }
 
 export interface ReceivableQuery {
-  page: number
-  page_size: number
+  pageNum: number
+  pageSize: number
   customer?: string
   status?: 'overdue' | 'settled' | 'pending'
 }
 
 export function getReceivableList(params: ReceivableQuery) {
-  if (isMockMode) return mockService.getReceivableList(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: Receivable[] }>>('/crm/receivables', { params }))
+  if (isMockMode) return mockService.getReceivableList(params) as Promise<ApiResponse<PaginatedData<Receivable>>>
+  return apiGet<PaginatedData<Receivable>>('/crm/receivables', { params })
 }
 
 export function createReceipt(data: Partial<Receivable>) {
   if (isMockMode) return mockService.createReceipt(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/crm/receivables', data))
+  return apiPost<Record<string, never>, Partial<Receivable>>('/crm/receivables', data)
 }

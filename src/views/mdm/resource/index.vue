@@ -89,9 +89,9 @@ const cols: TableColumnItem<ResourceRow>[] = [
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ResourceRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const params: { page: number; page_size: number; name?: string; status?: string } = {
-      page,
-      page_size: size
+    const params: { pageNum: number; pageSize: number; name?: string; status?: string } = {
+      pageNum: page,
+      pageSize: size
     }
     if (searchForm.value.keyword) {
       params.name = searchForm.value.keyword
@@ -101,7 +101,7 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<R
     }
     const res = await getEquipmentList(params)
     return {
-      list: (res.data.items as any[]).map((item: any) => ({
+      list: res.data.list.map((item: any) => ({
         id: item.id,
         code: item.code,
         name: item.name,

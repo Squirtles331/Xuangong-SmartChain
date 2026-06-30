@@ -225,8 +225,8 @@ const bomVersionOptions = ref<{ label: string; value: string }[]>([])
 
 async function fetchBOMVersions() {
   try {
-    const res = await getBOMList({ page: 1, page_size: 100 })
-    const items = res.data?.items || res.data || []
+    const res = await getBOMList({ pageNum: 1, pageSize: 100 })
+    const items = res.data.list
     const filtered = (Array.isArray(items) ? items : []).filter((b: any) => {
       if (!step1Form.material_code) return true
       return b.material_code === step1Form.material_code
@@ -298,7 +298,7 @@ async function onBomChange(version: string) {
   try {
     const res = await getBOMPreview(step1Form.material_code)
     if (res.data) {
-      const items = Array.isArray(res.data) ? res.data : res.data.items || []
+      const items = Array.isArray(res.data) ? res.data : res.data.list || []
       bomPreviewData.value = items.map((item: any, idx: number) => ({
         ...item,
         available: item.available ?? Math.floor(Math.random() * 200) + idx * 30
@@ -318,8 +318,8 @@ async function onRoutingChange(version: string) {
     return
   }
   try {
-    const res = await getRoutingList({ page: 1, page_size: 100, material_code: step1Form.material_code })
-    const ops = res.data?.items || res.data || []
+    const res = await getRoutingList({ pageNum: 1, pageSize: 100, materialCode: step1Form.material_code })
+    const ops = res.data.list
     routingPreviewData.value = (ops as any[]).map((op: any) => ({
       op_no: op.operation_no,
       name: op.name,

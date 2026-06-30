@@ -40,8 +40,16 @@ import { computed, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { DictItem, DictType } from '@/api/system'
-import { createDictItem, createDictType, deleteDictItem, getDictItems, getDictTypeList, updateDictItem } from '@/api/system'
+import {
+  createDictItem,
+  createDictType,
+  deleteDictItem,
+  getDictItems,
+  getDictTypeList,
+  updateDictItem,
+  type DictItem,
+  type DictType
+} from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import DictItemsDialog from './DictItemsDialog.vue'
 import DictTypeDialog, { type DictTypeFormModel } from './DictTypeDialog.vue'
@@ -72,9 +80,14 @@ const typeColumns: TableColumnItem<DictType>[] = [
 const { tableData, pagination, loading, search, refresh } = useTable<DictType>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const response = await getDictTypeList({ page, page_size: size })
+    const response = await getDictTypeList({
+      pageNum: page,
+      pageSize: size,
+      keyword: searchForm.value.keyword || undefined
+    })
+
     return {
-      list: response.data.items as DictType[],
+      list: response.data.list,
       total: response.data.total
     }
   },
@@ -137,7 +150,7 @@ async function submitTypeDialog() {
   await refresh()
 }
 
-function deleteType(row: DictType) {
+function deleteType(_row: DictType) {
   ElMessageBox.confirm('删除字典类型将同时删除其下所有字典项，确认删除？', '警告', { type: 'warning' })
     .then(async () => {
       await refresh()
@@ -152,32 +165,31 @@ const currentItems = ref<DictItem[]>([])
 
 async function openItems(row: DictType) {
   currentType.value = row
-  const res = await getDictItems(row.code)
-  currentItems.value = (res.data || []) as DictItem[]
+  const response = await getDictItems(row.code)
+  currentItems.value = response.data
   itemDialogVisible.value = true
 }
 
-async function createItemFromDialog(form: { id: string; code: string; name: string; sort_order: number; css_class: string }) {
-  if (!form.code || !form.name) {
+async function createItemFromDialog(form: { id: string; code: string; name: string; sortOrder: number; cssClass: string }) {
+  if (!form.code || !form.name || !currentType.value) {
     ElMessage.warning('请填写必填项')
     return
   }
 
-  if (!currentType.value) return
-
   await createDictItem({
-    dict_type_id: currentType.value.id,
+    dictTypeId: currentType.value.id,
+    dictTypeCode: currentType.value.code,
     code: form.code,
     name: form.name,
-    sort_order: form.sort_order,
-    css_class: form.css_class || undefined,
+    sortOrder: form.sortOrder,
+    cssClass: form.cssClass || undefined,
     status: 'active'
   })
   ElMessage.success('新增成功')
   await reloadCurrentItems()
 }
 
-async function updateItemFromDialog(form: { id: string; code: string; name: string; sort_order: number; css_class: string }) {
+async function updateItemFromDialog(form: { id: string; code: string; name: string; sortOrder: number; cssClass: string }) {
   if (!form.code || !form.name) {
     ElMessage.warning('请填写必填项')
     return
@@ -186,8 +198,8 @@ async function updateItemFromDialog(form: { id: string; code: string; name: stri
   await updateDictItem(form.id, {
     code: form.code,
     name: form.name,
-    sort_order: form.sort_order,
-    css_class: form.css_class || undefined
+    sortOrder: form.sortOrder,
+    cssClass: form.cssClass || undefined
   })
   ElMessage.success('编辑成功')
   await reloadCurrentItems()
@@ -205,8 +217,8 @@ function deleteItem(id: string) {
 
 async function reloadCurrentItems() {
   if (!currentType.value) return
-  const res = await getDictItems(currentType.value.code)
-  currentItems.value = (res.data || []) as DictItem[]
+  const response = await getDictItems(currentType.value.code)
+  currentItems.value = response.data
 }
 
 function closeItemDialog() {

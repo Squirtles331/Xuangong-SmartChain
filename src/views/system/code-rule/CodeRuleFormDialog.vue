@@ -8,7 +8,6 @@
     width="550px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="120" />
-    <!-- 实时预览 -->
     <div class="preview-box" style="margin-top: 16px; padding: 12px; background: #f5f7fa; border-radius: 6px">
       <span style="font-size: 13px; color: #606266">编码预览：</span>
       <span style="font-size: 16px; font-weight: bold; color: #409eff; margin-left: 8px">{{ previewCode }}</span>
@@ -25,8 +24,8 @@ export interface CodeRuleFormModel {
   code: string
   name: string
   prefix: string
-  date_format: string
-  serial_length: number
+  dateFormat: string
+  serialLength: number
 }
 
 interface Props {
@@ -49,7 +48,7 @@ const formColumns: FormColumnItem[] = [
   {
     type: 'select-v2',
     label: '日期格式',
-    field: 'date_format',
+    field: 'dateFormat',
     required: true,
     props: {
       options: [
@@ -59,30 +58,32 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'input-number', label: '流水号长度', field: 'serial_length', required: true, props: { min: 2, max: 10 } as any }
+  { type: 'input-number', label: '流水号长度', field: 'serialLength', required: true, props: { min: 2, max: 10 } as any }
 ]
 
 const previewCode = computed(() => {
   const prefix = formData.value.prefix || '???'
   const now = new Date()
-  const y = now.getFullYear().toString()
-  const m = (now.getMonth() + 1).toString().padStart(2, '0')
-  const d = now.getDate().toString().padStart(2, '0')
+  const year = now.getFullYear().toString()
+  const month = (now.getMonth() + 1).toString().padStart(2, '0')
+  const day = now.getDate().toString().padStart(2, '0')
   let dateStr = ''
-  switch (formData.value.date_format) {
+
+  switch (formData.value.dateFormat) {
     case 'YYYYMMDD':
-      dateStr = y + m + d
+      dateStr = year + month + day
       break
     case 'YYMMDD':
-      dateStr = y.slice(2) + m + d
+      dateStr = year.slice(2) + month + day
       break
     case 'YYYYMM':
-      dateStr = y + m
+      dateStr = year + month
       break
     default:
-      dateStr = y + m + d
+      dateStr = year + month + day
   }
-  const serial = '1'.padStart(formData.value.serial_length || 4, '0')
+
+  const serial = '1'.padStart(formData.value.serialLength || 4, '0')
   return `${prefix}${dateStr}${serial}`
 })
 

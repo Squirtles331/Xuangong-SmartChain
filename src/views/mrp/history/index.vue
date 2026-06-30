@@ -81,8 +81,8 @@ const cols: TableColumnItem<RunRow>[] = [
 const { tableData, pagination, loading } = useTable<RunRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getMRPHistory({ page, page_size: size })
-    const items = res.data.items || res.data || []
+    const res = await getMRPHistory({ pageNum: page, pageSize: size })
+    const items = res.data.list
     return { list: items, total: res.data.total || items.length }
   }
 })

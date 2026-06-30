@@ -50,14 +50,14 @@ const itemColumns: TableColumnItem<DictItem>[] = [
   { type: 'index', label: '#', width: 50 },
   { prop: 'code', label: '编码', width: 140 },
   { prop: 'name', label: '名称', width: 140 },
-  { prop: 'sort_order', label: '排序', minWidth: 80, align: 'center' },
-  { prop: 'css_class', label: '样式', width: 100 },
+  { prop: 'sortOrder', label: '排序', minWidth: 80, align: 'center' },
+  { prop: 'cssClass', label: '样式', width: 100 },
   { label: '状态', minWidth: 80, slotName: 'status' },
   { label: '操作', minWidth: 160, slotName: 'itemActions', align: 'center' }
 ]
 
 function createDefaultItemForm(): DictItemFormModel {
-  return { id: '', code: '', name: '', sort_order: 1, css_class: '' }
+  return { id: '', code: '', name: '', sortOrder: 1, cssClass: '' }
 }
 
 function openAddItem() {
@@ -72,8 +72,8 @@ function openEditItem(row: DictItem) {
     id: row.id,
     code: row.code,
     name: row.name,
-    sort_order: row.sort_order,
-    css_class: row.css_class || ''
+    sortOrder: row.sortOrder,
+    cssClass: row.cssClass || ''
   }
   itemFormVisible.value = true
 }

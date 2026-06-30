@@ -22,11 +22,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import { getSystemParams, updateSystemParam, batchUpdateSystemParams, type SystemParam } from '@/api/system'
+import { batchUpdateSystemParams, getSystemParams, updateSystemParam, type SystemParam } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import ParamFormDialog, { type ParamFormModel } from './ParamFormDialog.vue'
 
@@ -64,26 +64,26 @@ const columns: TableColumnItem<ParamRow>[] = [
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ParamRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const params = {
-      page,
-      page_size: size,
+    const response = await getSystemParams({
+      pageNum: page,
+      pageSize: size,
       keyword: searchForm.value.keyword || undefined
-    }
-    const response = await getSystemParams(params)
+    })
+
     return {
-      list: (response.data.items as SystemParam[]).map(mapParamRow),
+      list: response.data.list.map(mapParamRow),
       total: response.data.total
     }
   }
 })
 
-function mapParamRow(p: SystemParam): ParamRow {
+function mapParamRow(item: SystemParam): ParamRow {
   return {
-    id: p.id,
-    code: p.code,
-    name: p.name,
-    value: p.value,
-    description: p.description
+    id: item.id,
+    code: item.code,
+    name: item.name,
+    value: item.value,
+    description: item.description
   }
 }
 
@@ -127,6 +127,7 @@ async function submitDialog() {
     ElMessage.warning('请填写必填项')
     return
   }
+
   if (dialogMode.value === 'add') {
     await batchUpdateSystemParams([{ id: '', value: formModel.value.value }])
     ElMessage.success('新增成功')
@@ -134,6 +135,7 @@ async function submitDialog() {
     await updateSystemParam(formModel.value.id, formModel.value.value)
     ElMessage.success('保存成功')
   }
+
   dialogVisible.value = false
   await refresh()
 }

@@ -62,9 +62,9 @@ function showDetail(device: DeviceItem) {
 }
 
 async function loadDevices() {
-  const res = await getIoTDeviceList({ page: 1, page_size: 100 })
+  const res = await getIoTDeviceList({ pageNum: 1, pageSize: 100 })
   const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
-  devices.value = (res.data.items || []).map((item: any) => ({
+  devices.value = res.data.list.map((item: any) => ({
     id: String(item.id),
     name: item.name,
     online: item.status !== 'maintenance',

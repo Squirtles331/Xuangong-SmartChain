@@ -90,14 +90,14 @@ const { tableData, pagination, loading, search } = useTable<InvRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getInventoryList({
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       code: searchForm.value.keyword || undefined,
       name: searchForm.value.keyword || undefined,
       warehouse: searchForm.value.warehouse || undefined
     })
     return {
-      list: (res.data.items || []).map(mapInvRow),
+      list: res.data.list.map(mapInvRow),
       total: res.data.total
     }
   }

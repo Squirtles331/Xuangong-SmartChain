@@ -17,10 +17,10 @@ import { ref } from 'vue'
 import type { FormColumnItem } from 'gi-component'
 import type { SystemParam } from '@/api/system'
 
-const CATEGORIES: Record<string, string> = {
+const categories: Record<string, string> = {
   auth: '认证与安全',
-  mrp: 'MRP计划',
-  stock: '库存与仓库',
+  mrp: 'MRP 计划',
+  stock: '库存与仓储',
   production: '生产管理',
   finance: '财务管理',
   system: '系统通用'
@@ -31,9 +31,9 @@ export interface ConfigFormModel {
   code: string
   name: string
   value: string
-  default_value: string
+  defaultValue: string
   category: string
-  value_type: SystemParam['value_type']
+  valueType: SystemParam['valueType']
   description: string
   status: SystemParam['status']
 }
@@ -58,7 +58,7 @@ const formColumns: FormColumnItem[] = [
     type: 'input',
     label: '参数编码',
     field: 'code',
-    props: { placeholder: '唯一标识，如: login_lock_count' },
+    props: { placeholder: '唯一标识，如: loginLockCount' },
     rules: [{ required: true, message: '请输入参数编码', trigger: 'blur' }]
   },
   {
@@ -73,7 +73,7 @@ const formColumns: FormColumnItem[] = [
     label: '所属分类',
     field: 'category',
     props: {
-      options: Object.entries(CATEGORIES).map(([k, v]) => ({ label: v, value: k })),
+      options: Object.entries(categories).map(([value, label]) => ({ label, value })),
       placeholder: '请选择分类'
     },
     rules: [{ required: true, message: '请选择分类', trigger: 'change' }]
@@ -81,7 +81,7 @@ const formColumns: FormColumnItem[] = [
   {
     type: 'select-v2',
     label: '值类型',
-    field: 'value_type',
+    field: 'valueType',
     props: {
       options: [
         { label: '字符串', value: 'string' },
@@ -102,8 +102,7 @@ const formColumns: FormColumnItem[] = [
   {
     type: 'input',
     label: '默认值',
-    field: 'default_value',
-    props: { placeholder: '系统默认值' }
+    field: 'defaultValue'
   },
   {
     type: 'input',
@@ -119,6 +118,7 @@ function handleCancel() {
 
 async function handleSubmit() {
   if (!formRef.value) return false
+
   try {
     const valid = await formRef.value.validate()
     if (!valid) return false

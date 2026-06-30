@@ -125,12 +125,12 @@ async function fetchResults(type: string) {
   try {
     const res = await getMRPResults(runId.value, {
       type: type as 'purchase' | 'production' | 'exception',
-      page: 1,
-      page_size: 100
+      pageNum: 1,
+      pageSize: 100
     })
-    if (type === 'purchase') purchaseList.value = res.data.items || res.data || []
-    else if (type === 'production') productionList.value = res.data.items || res.data || []
-    else if (type === 'exception') exceptions.value = res.data.items || res.data || []
+    if (type === 'purchase') purchaseList.value = res.data.list
+    else if (type === 'production') productionList.value = res.data.list
+    else if (type === 'exception') exceptions.value = res.data.list
   } catch {
     ElMessage.error('获取MRP结果失败')
   }
@@ -166,7 +166,7 @@ async function confirmAll(type: string) {
 async function runMRP() {
   try {
     const res = await runMRPApi()
-    runId.value = res.data.run_id
+    runId.value = res.data.runId
     lastRunTime.value = new Date().toLocaleString()
     ElMessage.success('MRP 运算已启动，请稍候查看结果')
     fetchResults('purchase')
@@ -178,7 +178,7 @@ async function runMRP() {
 onMounted(async () => {
   try {
     const res = await runMRPApi()
-    runId.value = res.data.run_id
+    runId.value = res.data.runId
     lastRunTime.value = new Date().toLocaleString()
     fetchResults('purchase')
   } catch {

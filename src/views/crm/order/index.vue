@@ -6,9 +6,7 @@
           ref="searchFormRef"
           v-model="searchForm"
           :columns="visibleSearchColumns"
-          :grid-item-props="{
-            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-          }"
+          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
           search
           @search="handleSearch"
           @reset="handleReset"
@@ -48,19 +46,9 @@ import SearchSetting from '@/components/SearchSetting.vue'
 import { getSalesOrderList, updateSalesOrder, type SalesOrder, type SalesOrderQuery } from '@/api/crm'
 import { useTable } from '@/hooks/useTable'
 
-interface OrderRow {
-  id: string
-  code: string
-  customer_name: string
-  material_name: string
-  qty: number
-  amount: number
-  delivery_date: string
-  status: string
-}
+type OrderRow = SalesOrder
 
 const router = useRouter()
-
 const searchFormRef = ref<FormInstance | null>()
 const searchForm = ref({
   code: '',
@@ -81,7 +69,6 @@ const searchColumns: FormColumnItem[] = [
         { label: '已审批', value: 'approved' },
         { label: '生产中', value: 'in_production' },
         { label: '待发货', value: 'pending_delivery' },
-        { label: '已发货', value: 'delivered' },
         { label: '已完成', value: 'completed' }
       ]
     }
@@ -110,36 +97,23 @@ const { tableData, pagination, loading, search, refresh } = useTable<OrderRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: SalesOrderQuery = {
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       code: searchForm.value.code || undefined,
-      customer_name: searchForm.value.customer_name || undefined,
+      customerName: searchForm.value.customer_name || undefined,
       status: searchForm.value.status || undefined
     }
-    const res = await getSalesOrderList(params)
+    const response = await getSalesOrderList(params)
     return {
-      list: res.data.items.map(mapOrderRow),
-      total: res.data.total
+      list: response.data.list,
+      total: response.data.total
     }
   }
 })
 
-function mapOrderRow(order: SalesOrder): OrderRow {
-  return {
-    id: String(order.id),
-    code: order.code,
-    customer_name: order.customer_name,
-    material_name: order.material_name,
-    qty: order.qty,
-    amount: order.amount,
-    delivery_date: order.delivery_date,
-    status: order.status
-  }
-}
-
-function statusStep(s: string) {
+function statusStep(status: string) {
   const map: Record<string, number> = { approved: 1, in_production: 2, pending_delivery: 3, delivered: 4, completed: 5 }
-  return map[s] || 0
+  return map[status] || 0
 }
 
 function handleSearch() {

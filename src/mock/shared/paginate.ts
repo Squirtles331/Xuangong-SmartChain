@@ -10,21 +10,23 @@
  * @param filterFn 可选的过滤函数
  */
 export function paginate<T>(
-  items: T[],
-  page: number,
+  list: T[],
+  pageNum: number,
   pageSize: number,
   filterFn?: (item: T) => boolean
-): { items: T[]; total: number; page: number; page_size: number } {
-  const filtered = filterFn ? items.filter(filterFn) : items
+): { list: T[]; total: number; pageNum: number; pageSize: number; pages: number } {
+  const filtered = filterFn ? list.filter(filterFn) : list
   const total = filtered.length
-  const start = (page - 1) * pageSize
+  const start = (pageNum - 1) * pageSize
   const paged = filtered.slice(start, start + pageSize)
+  const pages = pageSize > 0 ? Math.ceil(total / pageSize) : 0
 
   return {
-    items: paged,
+    list: paged,
     total,
-    page,
-    page_size: pageSize
+    pageNum,
+    pageSize,
+    pages
   }
 }
 

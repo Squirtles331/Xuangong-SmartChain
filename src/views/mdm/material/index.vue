@@ -90,16 +90,16 @@ const columns: TableColumnItem<MaterialRow>[] = [
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<MaterialRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const params: { page: number; page_size: number; code?: string; name?: string } = {
-      page,
-      page_size: size
+    const params: { pageNum: number; pageSize: number; code?: string; name?: string } = {
+      pageNum: page,
+      pageSize: size
     }
     if (searchForm.value.keyword) {
       params.name = searchForm.value.keyword
     }
     const res = await getMaterialList(params)
     return {
-      list: (res.data.items as any[]).map((item) => ({
+      list: res.data.list.map((item) => ({
         id: item.id,
         code: item.code,
         name: item.name,

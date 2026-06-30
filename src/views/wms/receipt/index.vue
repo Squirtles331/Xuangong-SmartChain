@@ -112,14 +112,14 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<R
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getReceiptList({
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       code: searchForm.value.code || undefined,
       supplier: searchForm.value.type || undefined,
       status: searchForm.value.status || undefined
     })
     return {
-      list: (res.data.items || []).map(mapRow),
+      list: res.data.list.map(mapRow),
       total: res.data.total
     }
   }

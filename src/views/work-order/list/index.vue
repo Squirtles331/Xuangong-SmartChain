@@ -169,8 +169,8 @@ const {
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: any = {
-      page,
-      page_size: size
+      pageNum: page,
+      pageSize: size
     }
     if (searchForm.value.code) params.code = searchForm.value.code
     if (searchForm.value.status) params.status = searchForm.value.status
@@ -183,7 +183,7 @@ const {
     }
     const res = await getWorkOrderList(params)
     return {
-      list: (res.data.items as WorkOrderRow[]).map(mapWorkOrderRow),
+      list: res.data.list.map(mapWorkOrderRow),
       total: res.data.total
     }
   }
@@ -239,13 +239,13 @@ function isOverdue(row: WorkOrderRow) {
 
 async function submitApproval(row: WorkOrderRow) {
   const res = await approveWorkOrder(row.id, true)
-  ElMessage.success(res.message || `工单 ${row.code} 已提交审批`)
+  ElMessage.success(res.msg || `工单 ${row.code} 已提交审批`)
   refreshTable()
 }
 
 async function releaseOrder(row: WorkOrderRow) {
   const res = await releaseWorkOrder(row.id)
-  ElMessage.success(res.message || `工单 ${row.code} 已下发到车间`)
+  ElMessage.success(res.msg || `工单 ${row.code} 已下发到车间`)
   refreshTable()
 }
 
@@ -253,7 +253,7 @@ async function closeOrder(row: WorkOrderRow) {
   ElMessageBox.confirm('确认关闭该工单？', '确认', { type: 'warning' })
     .then(async () => {
       const res = await closeWorkOrder(row.id, { close_type: 'normal' })
-      ElMessage.success(res.message || '工单已关闭')
+      ElMessage.success(res.msg || '工单已关闭')
       refreshTable()
     })
     .catch(() => {})

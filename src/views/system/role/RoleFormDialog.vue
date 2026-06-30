@@ -13,7 +13,7 @@ export interface RoleFormModel {
   name: string
   description: string
   status: 'active' | 'disabled'
-  permission_ids: string[]
+  permissionIds: string[]
 }
 
 interface Props {

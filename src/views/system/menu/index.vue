@@ -3,7 +3,6 @@
     <template #left>
       <div class="tree-wrapper">
         <el-tree
-          ref="treeRef"
           :data="menuTree"
           :props="{ children: 'children', label: 'name' }"
           node-key="id"
@@ -30,12 +29,15 @@
         </div>
       </div>
     </template>
+
     <template #header>
       <h3 style="margin: 0">{{ currentNode ? (currentNode.id ? '编辑' : '新增') + '菜单节点' : '请选择左侧节点' }}</h3>
     </template>
+
     <div v-if="!currentNode" class="empty-tip">
-      <el-empty description="选择左侧菜单节点进行编辑，或点击下方按钮新增" />
+      <el-empty description="选择左侧节点进行编辑，或点击下方按钮新增" />
     </div>
+
     <div v-else class="form-wrapper">
       <gi-form v-model="nodeForm" :columns="formColumns" :label-width="100">
         <template #footer>
@@ -51,26 +53,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Folder, Document, Operation } from '@element-plus/icons-vue'
+import { Document, Folder, Operation } from '@element-plus/icons-vue'
 import type { FormColumnItem } from 'gi-component'
-import { getMenuTree, createMenu, updateMenu, deleteMenu, type SysMenu } from '@/api/system'
+import { createMenu, deleteMenu, getMenuTree, updateMenu, type SysMenu } from '@/api/system'
 import MenuFormDialog, { type MenuFormModel } from './MenuFormDialog.vue'
 
-interface MenuNode {
-  id: string
-  parent_id: string | null
-  name: string
-  type: 'directory' | 'menu' | 'button'
-  path?: string
-  component?: string
-  permission_code: string
-  icon?: string
-  sort_order: number
-  visible: boolean
-  children?: MenuNode[]
-}
+interface MenuNode extends SysMenu {}
 
 const menuTree = ref<MenuNode[]>([])
 const currentNode = ref<MenuNode | null>(null)
@@ -80,8 +70,8 @@ onMounted(async () => {
 })
 
 async function loadTree() {
-  const res = await getMenuTree()
-  menuTree.value = (res.data || []) as MenuNode[]
+  const response = await getMenuTree()
+  menuTree.value = response.data
 }
 
 const nodeForm = reactive({
@@ -89,9 +79,9 @@ const nodeForm = reactive({
   type: 'menu' as MenuNode['type'],
   path: '',
   component: '',
-  permission_code: '',
+  permissionCode: '',
   icon: '',
-  sort_order: 1,
+  sortOrder: 1,
   visible: true
 })
 
@@ -110,15 +100,14 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'input', label: '路由路径', field: 'path', props: { placeholder: '菜单类型时必填' } as any },
-  { type: 'input', label: '组件路径', field: 'component', props: { placeholder: '如 views/system/user/index.vue' } as any },
-  { type: 'input', label: '权限编码', field: 'permission_code', required: true },
-  { type: 'input', label: '图标', field: 'icon', props: { placeholder: '搜索并选择图标' } as any },
-  { type: 'input-number', label: '排序', field: 'sort_order', props: { min: 0 } as any },
+  { type: 'input', label: '路由路径', field: 'path' },
+  { type: 'input', label: '组件路径', field: 'component' },
+  { type: 'input', label: '权限编码', field: 'permissionCode', required: true },
+  { type: 'input', label: '图标', field: 'icon' },
+  { type: 'input-number', label: '排序', field: 'sortOrder', props: { min: 0 } as any },
   { type: 'switch', label: '是否可见', field: 'visible' }
 ]
 
-// Dialog
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const dialogFormModel = ref<MenuFormModel>(createDefaultFormModel())
@@ -126,14 +115,14 @@ const dialogFormModel = ref<MenuFormModel>(createDefaultFormModel())
 function createDefaultFormModel(): MenuFormModel {
   return {
     id: '',
-    parent_id: null,
+    parentId: null,
     name: '',
     type: 'menu',
     path: '',
     component: '',
-    permission_code: '',
+    permissionCode: '',
     icon: '',
-    sort_order: 1,
+    sortOrder: 1,
     visible: true
   }
 }
@@ -144,34 +133,34 @@ function onNodeClick(data: MenuNode) {
   nodeForm.type = data.type
   nodeForm.path = data.path || ''
   nodeForm.component = data.component || ''
-  nodeForm.permission_code = data.permission_code
+  nodeForm.permissionCode = data.permissionCode
   nodeForm.icon = data.icon || ''
-  nodeForm.sort_order = data.sort_order
+  nodeForm.sortOrder = data.sortOrder
   nodeForm.visible = data.visible
 }
 
 function addNode(type: MenuNode['type']) {
   const parent = currentNode.value
-  const newNode: MenuNode = {
+  currentNode.value = {
     id: '',
-    parent_id: parent?.id || null,
+    parentId: parent?.id || null,
     name: '',
     type,
     path: '',
     component: '',
-    permission_code: '',
+    permissionCode: '',
     icon: '',
-    sort_order: 1,
+    sortOrder: 1,
     visible: true
   }
-  currentNode.value = newNode
+
   nodeForm.name = ''
   nodeForm.type = type
   nodeForm.path = ''
   nodeForm.component = ''
-  nodeForm.permission_code = ''
+  nodeForm.permissionCode = ''
   nodeForm.icon = ''
-  nodeForm.sort_order = 1
+  nodeForm.sortOrder = 1
   nodeForm.visible = true
 }
 
@@ -179,21 +168,21 @@ function openDialog() {
   dialogMode.value = currentNode.value?.id ? 'edit' : 'add'
   dialogFormModel.value = {
     id: currentNode.value?.id || '',
-    parent_id: currentNode.value?.parent_id || null,
+    parentId: currentNode.value?.parentId || null,
     name: nodeForm.name,
     type: nodeForm.type,
     path: nodeForm.path,
     component: nodeForm.component,
-    permission_code: nodeForm.permission_code,
+    permissionCode: nodeForm.permissionCode,
     icon: nodeForm.icon,
-    sort_order: nodeForm.sort_order,
+    sortOrder: nodeForm.sortOrder,
     visible: nodeForm.visible
   }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
-  if (!dialogFormModel.value.name || !dialogFormModel.value.permission_code) {
+  if (!dialogFormModel.value.name || !dialogFormModel.value.permissionCode) {
     ElMessage.warning('请填写名称和权限编码')
     return
   }
@@ -204,22 +193,22 @@ async function submitDialog() {
       type: dialogFormModel.value.type,
       path: dialogFormModel.value.path || undefined,
       component: dialogFormModel.value.component || undefined,
-      permission_code: dialogFormModel.value.permission_code,
+      permissionCode: dialogFormModel.value.permissionCode,
       icon: dialogFormModel.value.icon || undefined,
-      sort_order: dialogFormModel.value.sort_order,
+      sortOrder: dialogFormModel.value.sortOrder,
       visible: dialogFormModel.value.visible
     })
     ElMessage.success('保存成功')
   } else {
     await createMenu({
-      parent_id: dialogFormModel.value.parent_id || null,
+      parentId: dialogFormModel.value.parentId || null,
       name: dialogFormModel.value.name,
       type: dialogFormModel.value.type,
       path: dialogFormModel.value.path || undefined,
       component: dialogFormModel.value.component || undefined,
-      permission_code: dialogFormModel.value.permission_code,
+      permissionCode: dialogFormModel.value.permissionCode,
       icon: dialogFormModel.value.icon || undefined,
-      sort_order: dialogFormModel.value.sort_order,
+      sortOrder: dialogFormModel.value.sortOrder,
       visible: dialogFormModel.value.visible
     })
     ElMessage.success('新增成功')
@@ -232,8 +221,7 @@ async function submitDialog() {
 
 async function removeNode() {
   if (!currentNode.value?.id) return
-  const id = currentNode.value.id
-  await deleteMenu(id)
+  await deleteMenu(currentNode.value.id)
   currentNode.value = null
   await loadTree()
   ElMessage.success('删除成功')
@@ -246,27 +234,32 @@ async function removeNode() {
   flex-direction: column;
   height: 100%;
 }
+
 .tree-wrapper :deep(.el-tree) {
   flex: 1;
   overflow: auto;
 }
+
 .tree-toolbar {
   padding: 8px 0;
   border-top: 1px solid #ebeef5;
   display: flex;
   gap: 8px;
 }
+
 .tree-node {
   display: flex;
   align-items: center;
   font-size: 13px;
 }
+
 .empty-tip {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
 }
+
 .form-wrapper {
   padding: 16px;
 }

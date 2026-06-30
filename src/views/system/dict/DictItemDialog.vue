@@ -18,8 +18,8 @@ export interface DictItemFormModel {
   id: string
   code: string
   name: string
-  sort_order: number
-  css_class: string
+  sortOrder: number
+  cssClass: string
 }
 
 interface Props {
@@ -38,14 +38,14 @@ const emit = defineEmits<{
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '编码', field: 'code', required: true },
   { type: 'input', label: '名称', field: 'name', required: true },
-  { type: 'input-number', label: '排序', field: 'sort_order', props: { min: 1 } as any },
+  { type: 'input-number', label: '排序', field: 'sortOrder', props: { min: 1 } as any },
   {
     type: 'select-v2',
     label: '标签样式',
-    field: 'css_class',
+    field: 'cssClass',
     props: {
       options: [
-        { label: '无', value: '' },
+        { label: '默认', value: '' },
         { label: '红色(danger)', value: 'danger' },
         { label: '橙色(warning)', value: 'warning' },
         { label: '绿色(success)', value: 'success' },

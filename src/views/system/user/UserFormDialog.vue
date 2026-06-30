@@ -13,21 +13,20 @@
 
 <script lang="ts" setup>
 import type { FormColumnItem } from 'gi-component'
-
-export type UserStatus = '启用' | '禁用'
+import type { SysUser } from '@/api/system'
 
 export interface UserFormModel {
   id: string
   username: string
-  nickname: string
-  role: string
-  status: UserStatus
+  realName: string
+  roles: string[]
+  status: SysUser['status']
 }
 
 interface Props {
   mode: 'add' | 'edit'
   roleOptions: Array<{ label: string; value: string }>
-  statusOptions: Array<{ label: string; value: UserStatus }>
+  statusOptions: Array<{ label: string; value: SysUser['status'] }>
 }
 
 const props = defineProps<Props>()
@@ -41,13 +40,16 @@ const emit = defineEmits<{
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '用户名', field: 'username', required: true },
-  { type: 'input', label: '昵称', field: 'nickname' },
+  { type: 'input', label: '姓名', field: 'realName' },
   {
     type: 'select-v2',
     label: '角色',
-    field: 'role',
+    field: 'roles',
     required: true,
     props: {
+      multiple: true,
+      collapseTags: true,
+      collapseTagsTooltip: true,
       options: props.roleOptions
     } as any
   },

@@ -183,8 +183,8 @@ async function fetchRouting() {
     }
   } else {
     try {
-      const res = await getRoutingList({ page: 1, page_size: 100 })
-      operations.value = (res.data.items || []) as Operation[]
+      const res = await getRoutingList({ pageNum: 1, pageSize: 100 })
+      operations.value = res.data.list as Operation[]
     } catch {
       ElMessage.error('获取工艺路线列表失败')
     }

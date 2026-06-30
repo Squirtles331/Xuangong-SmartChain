@@ -134,8 +134,8 @@ async function loadRules() {
 }
 
 async function loadHistory() {
-  const res = await getIoTAlertHistory({ page: 1, page_size: 100 })
-  alertHistory.value = (res.data.items || []).map((item: any) => ({
+  const res = await getIoTAlertHistory({ pageNum: 1, pageSize: 100 })
+  alertHistory.value = res.data.list.map((item: any) => ({
     id: String(item.id),
     device: item.device,
     metric: String(item.metric || 'current'),

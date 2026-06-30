@@ -9,14 +9,14 @@ import { generateId } from '../shared/id'
 import { bomList, bomTree, bomPreview } from '../modules/bom'
 
 // ==================== BOM 列表 ====================
-export async function getBOMList(params: { page: number; page_size: number; material_code?: string; material_name?: string; status?: string }) {
+export async function getBOMList(params: { pageNum: number; pageSize: number; materialCode?: string; materialName?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...bomList]
-  if (params.material_code) filtered = searchItems(filtered, params.material_code, ['material_code'])
-  if (params.material_name) filtered = searchItems(filtered, params.material_name, ['material_name'])
+  if (params.materialCode) filtered = searchItems(filtered, params.materialCode, ['material_code'])
+  if (params.materialName) filtered = searchItems(filtered, params.materialName, ['material_name'])
   if (params.status) filtered = filtered.filter((b) => b.status === params.status)
-  const result = paginate(filtered, params.page, params.page_size)
-  return wrapListResponse(result.items, result.total, result.page, result.page_size)
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function getBOMTree(versionId: string) {
@@ -32,7 +32,7 @@ export async function saveBOM(data: any) {
     Object.assign(bomList[idx], data)
     return wrapSuccessResponse('BOM 更新成功')
   }
-  const newBOM = { id: generateId(), created_at: new Date().toISOString().slice(0, 19), ...data }
+  const newBOM = { id: generateId(), createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '), ...data }
   bomList.unshift(newBOM)
   return wrapSuccessResponse('BOM 创建成功')
 }

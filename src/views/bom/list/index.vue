@@ -11,11 +11,11 @@
     </template>
 
     <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
-      <template #bom_type="{ row }">
-        <StatusTag :value="row.bom_type" :options="BOM_TYPE" />
+      <template #bomType="{ row }">
+        <StatusTag :value="row.bom_type" :options="bomTypeOptions" />
       </template>
       <template #status="{ row }">
-        <StatusTag :value="row.status" :options="BOM_STATUS" />
+        <StatusTag :value="row.status" :options="bomStatusOptions" />
       </template>
       <template #actions="{ row }">
         <el-button type="primary" link size="small" @click="openEditor(row)">编辑</el-button>
@@ -39,47 +39,37 @@
 import { computed, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { deleteBOM as deleteBOMApi, getBOMList, saveBOM } from '@/api/bom'
+import { deleteBOM as deleteBOMApi, getBOMList, saveBOM, type BOMVersion } from '@/api/bom'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import { useTable } from '@/hooks/useTable'
 import BOMCompareDialog from './BOMCompareDialog.vue'
 
-const BOM_TYPE = [
+const bomTypeOptions = [
   { value: 'EBOM', label: 'EBOM', type: 'primary' as const },
   { value: 'PBOM', label: 'PBOM', type: 'warning' as const },
   { value: 'MBOM', label: 'MBOM', type: 'success' as const }
 ]
 
-const BOM_STATUS = [
+const bomStatusOptions = [
   { value: 'active', label: '生效中', type: 'success' as const },
   { value: 'draft', label: '草稿', type: 'info' as const },
   { value: 'archived', label: '已归档', type: 'info' as const }
 ]
 
-interface BOMRow {
-  id: string
-  material_code: string
-  material_name: string
-  bom_type: string
-  version: string
-  status: string
-  effective_date: string
-  created_by: string
-  created_at: string
-}
+type BOMRow = BOMVersion
 
 const router = useRouter()
 const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({ keyword: '', bom_type: '' })
+const searchForm = ref({ keyword: '', bomType: '' })
 
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '物料编码/名称' } as any },
   {
     type: 'select-v2',
     label: 'BOM 类型',
-    field: 'bom_type',
+    field: 'bomType',
     props: {
       options: [
         { label: '全部', value: '' },
@@ -101,7 +91,7 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
 const columns: TableColumnItem<BOMRow>[] = [
   { prop: 'material_code', label: '产品编码', width: 180 },
   { prop: 'material_name', label: '产品名称', minWidth: 160 },
-  { label: 'BOM 类型', minWidth: 80, slotName: 'bom_type', align: 'center' },
+  { label: 'BOM 类型', minWidth: 80, slotName: 'bomType', align: 'center' },
   { prop: 'version', label: '版本', minWidth: 80, align: 'center' },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { prop: 'effective_date', label: '生效日期', width: 110 },
@@ -112,26 +102,16 @@ const columns: TableColumnItem<BOMRow>[] = [
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<BOMRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getBOMList({
-      page,
-      page_size: size,
-      material_code: searchForm.value.keyword || undefined,
-      material_name: searchForm.value.keyword || undefined,
-      status: searchForm.value.bom_type || undefined
+    const response = await getBOMList({
+      pageNum: page,
+      pageSize: size,
+      materialCode: searchForm.value.keyword || undefined,
+      materialName: searchForm.value.keyword || undefined,
+      status: searchForm.value.bomType || undefined
     })
     return {
-      list: (res.data.items || []).map((item: any) => ({
-        id: item.id,
-        material_code: item.material_code,
-        material_name: item.material_name,
-        bom_type: item.bom_type,
-        version: item.version,
-        status: item.status,
-        effective_date: item.effective_date || '',
-        created_by: item.created_by || '',
-        created_at: item.created_at || ''
-      })),
-      total: res.data.total || 0
+      list: response.data.list,
+      total: response.data.total
     }
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteBOMApi(id)))
@@ -142,7 +122,7 @@ function handleSearch() {
 }
 
 function handleReset() {
-  searchForm.value = { keyword: '', bom_type: '' }
+  searchForm.value = { keyword: '', bomType: '' }
   search()
 }
 
@@ -178,19 +158,15 @@ function doCompare() {
 function convertToMBOM(row: BOMRow) {
   ElMessageBox.confirm(`将 ${row.material_name} 的 EBOM ${row.version} 转换为 MBOM？`, '转换确认')
     .then(async () => {
-      try {
-        await saveBOM({
-          ...row,
-          bom_type: 'MBOM',
-          version: 'V1.0 (新)',
-          status: 'draft',
-          id: undefined
-        })
-        ElMessage.success('已创建 MBOM 草稿，请在编辑器中完善')
-        await refresh()
-      } catch {
-        ElMessage.error('转换失败')
-      }
+      await saveBOM({
+        ...row,
+        bom_type: 'MBOM',
+        version: 'V1.0 (新)',
+        status: 'draft',
+        id: undefined
+      })
+      ElMessage.success('已创建 MBOM 草稿，请在编辑器中完善')
+      await refresh()
     })
     .catch(() => {})
 }

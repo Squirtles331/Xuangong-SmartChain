@@ -24,20 +24,16 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import { deleteReport, downloadReport, getReportList, previewReport } from '@/api/analysis'
+import { deleteReport, downloadReport, getReportList, previewReport, type ReportItem } from '@/api/analysis'
 import { useTable } from '@/hooks/useTable'
 
-interface Report {
-  id: number
-  name: string
+interface Report extends ReportItem {
   type: string
-  createdAt: string
-  status: string
 }
 
 const searchForm = ref({ name: '' })
 
-const searchColumns: FormColumnItem[] = [{ type: 'input', label: '报表名称', field: 'name', props: { placeholder: '请输入报表名称' } }]
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: '报表名称', field: 'name', props: { placeholder: '请输入报表名称' } as any }]
 
 const columns: TableColumnItem<Report>[] = [
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
@@ -48,17 +44,17 @@ const columns: TableColumnItem<Report>[] = [
   { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<Report>({
+const { tableData, pagination, loading, search, onDelete } = useTable<Report>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getReportList({
-      page,
-      page_size: size,
+    const response = await getReportList({
+      pageNum: page,
+      pageSize: size,
       name: searchForm.value.name || undefined
     })
     return {
-      list: (res.data.items || []) as Report[],
-      total: res.data.total || 0
+      list: response.data.list.map((item) => ({ ...item, type: (item as any).type || (item as any).category || '-' })),
+      total: response.data.total
     }
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteReport(Number(id))))
@@ -83,13 +79,13 @@ function handleReset() {
 }
 
 async function handlePreview(row: Report) {
-  const res = await previewReport(row.id)
-  ElMessage.info(`预览报表：${res.data.name || row.name}`)
+  const response = await previewReport(row.id)
+  ElMessage.info(`预览报表：${response.data.name || row.name}`)
 }
 
 async function handleDownload(row: Report) {
-  const res = await downloadReport(row.id)
-  ElMessage.success(res.message || `下载报表：${row.name}`)
+  const response = await downloadReport(row.id)
+  ElMessage.success(response.msg || `下载报表：${row.name}`)
 }
 
 function remove(row: Report) {

@@ -83,14 +83,14 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<P
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getPickingList({
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       code: searchForm.value.wo_code || undefined,
       warehouse: undefined,
       status: searchForm.value.status || undefined
     })
     return {
-      list: (res.data.items || []).map(mapRow),
+      list: res.data.list.map(mapRow),
       total: res.data.total
     }
   }

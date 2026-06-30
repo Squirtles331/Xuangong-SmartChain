@@ -86,12 +86,12 @@ const { tableData, pagination, loading, search, refresh } = useTable<TrainingRow
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getEhsTrainingList({
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       title: searchForm.value.title || undefined,
       status: searchForm.value.status || undefined
     })
-    return { list: res.data.items, total: res.data.total }
+    return { list: res.data.list, total: res.data.total }
   }
 })
 

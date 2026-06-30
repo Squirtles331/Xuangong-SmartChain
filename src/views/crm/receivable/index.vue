@@ -59,16 +59,7 @@ import { useTable } from '@/hooks/useTable'
 import ReceiptDialog, { type ReceiptFormModel } from './ReceiptDialog.vue'
 import ReceivableSettleDialog from './ReceivableSettleDialog.vue'
 
-interface ARRow {
-  id: string
-  code: string
-  customer: string
-  amount: number
-  settled: number
-  balance: number
-  due_date: string
-  aging: number
-}
+type ARRow = Receivable
 
 const searchFormRef = ref<FormInstance | null>()
 const searchForm = ref({
@@ -117,36 +108,23 @@ const columns: TableColumnItem<ARRow>[] = [
 const { tableData, pagination, loading, search, refresh } = useTable<ARRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    let statusParam: 'overdue' | 'settled' | 'pending' | undefined
+    let status: 'overdue' | 'settled' | 'pending' | undefined
     if (searchForm.value.aging) {
-      statusParam = searchForm.value.aging === '0' ? 'pending' : 'overdue'
+      status = searchForm.value.aging === '0' ? 'pending' : 'overdue'
     }
     const params: ReceivableQuery = {
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       customer: searchForm.value.customer || undefined,
-      status: statusParam
+      status
     }
-    const res = await getReceivableList(params)
+    const response = await getReceivableList(params)
     return {
-      list: res.data.items.map(mapARRow),
-      total: res.data.total
+      list: response.data.list,
+      total: response.data.total
     }
   }
 })
-
-function mapARRow(ar: Receivable): ARRow {
-  return {
-    id: String(ar.id),
-    code: ar.code,
-    customer: ar.customer,
-    amount: ar.amount,
-    settled: ar.settled,
-    balance: ar.balance,
-    due_date: ar.due_date,
-    aging: ar.aging
-  }
-}
 
 function handleSearch() {
   search()
@@ -188,9 +166,7 @@ const settleAmountMap = reactive<Record<string, number>>({})
 function openSettle(row: ARRow) {
   settleList.value = tableData.value.filter((item) => item.customer === row.customer && item.balance > 0)
   selectedSettle.value = []
-  Object.keys(settleAmountMap).forEach((key) => {
-    delete settleAmountMap[key]
-  })
+  Object.keys(settleAmountMap).forEach((key) => delete settleAmountMap[key])
   settleList.value.forEach((item) => {
     settleAmountMap[item.id] = 0
   })

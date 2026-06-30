@@ -5,13 +5,13 @@ import { generateId } from '../shared/id'
 import { paginate, searchItems } from '../shared/paginate'
 import { wrapDetailResponse, wrapListResponse, wrapSuccessResponse } from '../shared/response'
 
-export async function getSupplierList(params: { page: number; page_size: number; name?: string; status?: string }) {
+export async function getSupplierList(params: { pageNum: number; pageSize: number; name?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...suppliers]
   if (params.name) filtered = searchItems(filtered, params.name, ['name'])
   if (params.status) filtered = filtered.filter((item) => (item as any).status === params.status)
-  const result = paginate(filtered, params.page, params.page_size)
-  return wrapListResponse(result.items, result.total, result.page, result.page_size)
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function createSupplier(data: any) {
@@ -34,14 +34,14 @@ export async function deleteSupplier(id: string) {
   return wrapSuccessResponse('供应商删除成功')
 }
 
-export async function getPurchaseOrderList(params: { page: number; page_size: number; code?: string; supplier?: string; status?: string }) {
+export async function getPurchaseOrderList(params: { pageNum: number; pageSize: number; code?: string; supplier?: string; status?: string }) {
   await simulateDelay()
   let filtered = [...purchaseOrders]
   if (params.code) filtered = searchItems(filtered, params.code, ['code'])
   if (params.supplier) filtered = searchItems(filtered, params.supplier, ['supplier'])
   if (params.status) filtered = filtered.filter((item) => (item as any).status === params.status)
-  const result = paginate(filtered, params.page, params.page_size)
-  return wrapListResponse(result.items, result.total, result.page, result.page_size)
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function createPurchaseOrder(data: any) {

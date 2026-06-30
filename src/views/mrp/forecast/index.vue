@@ -105,11 +105,11 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<F
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getMRPForecast({
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       period: searchForm.value.keyword || undefined
     })
-    const items = res.data.items || res.data || []
+    const items = res.data.list
     return { list: items, total: res.data.total || items.length }
   },
   deleteAPI: (ids) =>

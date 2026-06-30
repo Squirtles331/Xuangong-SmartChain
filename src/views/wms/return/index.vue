@@ -57,9 +57,9 @@ const cols: TableColumnItem<ReturnRow>[] = [
 const { tableData, pagination, loading, refresh } = useTable<ReturnRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getReturnList({ page, page_size: size })
+    const res = await getReturnList({ pageNum: page, pageSize: size })
     return {
-      list: (res.data.items || []).map(mapRow),
+      list: res.data.list.map(mapRow),
       total: res.data.total
     }
   }

@@ -158,7 +158,7 @@ async function handleRunSchedule() {
   applyConflicts()
 
   if (conflicts.value.length === 0) {
-    ElMessage.success(res.message || '排程完成，所有约束通过')
+    ElMessage.success(res.msg || '排程完成，所有约束通过')
     return
   }
 

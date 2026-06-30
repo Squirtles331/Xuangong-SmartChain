@@ -1,26 +1,25 @@
-/**
- * MRP mock service
- */
+import { mrpExceptions, mrpProductionList, mrpPurchaseList, multiPlantCapacity, multiPlantResults, netChangeAffected } from '../modules/mrp'
 import { simulateDelay } from '../shared/delay'
 import { paginate } from '../shared/paginate'
 import { wrapDetailResponse, wrapListResponse, wrapSuccessResponse } from '../shared/response'
-import { mrpExceptions, mrpProductionList, mrpPurchaseList, multiPlantCapacity, multiPlantResults, netChangeAffected } from '../modules/mrp'
 
-export async function runMRP(data?: { plant_id?: string }) {
+export async function runMRP(data?: { plantId?: string }) {
   await simulateDelay(800, 1500)
-  const runId = 'MRP' + Date.now()
+  const runId = `MRP${Date.now()}`
+
   return wrapDetailResponse({
-    run_id: runId,
-    plant_id: data?.plant_id || 'PLANT-001',
-    started_at: new Date().toISOString(),
+    runId,
+    plantId: data?.plantId || 'PLANT-001',
+    startedAt: new Date().toISOString(),
     status: 'running'
   })
 }
 
-export async function getMRPResults(runId: string, params: { type: 'purchase' | 'production' | 'exception'; page: number; page_size: number }) {
+export async function getMRPResults(runId: string, params: { type: 'purchase' | 'production' | 'exception'; pageNum: number; pageSize: number }) {
   await simulateDelay()
 
   let sourceData: any[]
+
   switch (params.type) {
     case 'purchase':
       sourceData = mrpPurchaseList
@@ -35,8 +34,8 @@ export async function getMRPResults(runId: string, params: { type: 'purchase' | 
       sourceData = []
   }
 
-  const result = paginate(sourceData, params.page, params.page_size)
-  return wrapListResponse(result.items, result.total, result.page, result.page_size)
+  const result = paginate(sourceData, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function confirmMRPSuggestions(runId: string, ids: string[]) {
@@ -47,46 +46,54 @@ export async function confirmMRPSuggestions(runId: string, ids: string[]) {
 const mrpHistoryStore: any[] = [
   {
     id: 'MRP1704067200000',
-    plant_id: 'PLANT-001',
-    started_at: '2025-01-01 08:00:00',
-    finished_at: '2025-01-01 08:02:30',
+    plantId: 'PLANT-001',
+    startedAt: '2025-01-01 08:00:00',
+    finishedAt: '2025-01-01 08:02:30',
     status: 'completed',
-    purchase_count: 5,
-    production_count: 4,
-    exception_count: 3,
-    triggered_by: 'system'
+    purchaseCount: 5,
+    productionCount: 4,
+    exceptionCount: 3,
+    triggeredBy: 'system'
   },
   {
     id: 'MRP1704153600000',
-    plant_id: 'PLANT-001',
-    started_at: '2025-01-02 08:00:00',
-    finished_at: '2025-01-02 08:03:15',
+    plantId: 'PLANT-001',
+    startedAt: '2025-01-02 08:00:00',
+    finishedAt: '2025-01-02 08:03:15',
     status: 'completed',
-    purchase_count: 3,
-    production_count: 2,
-    exception_count: 1,
-    triggered_by: 'user'
+    purchaseCount: 3,
+    productionCount: 2,
+    exceptionCount: 1,
+    triggeredBy: 'user'
   }
 ]
 
-export async function getMRPHistory(params: { page: number; page_size: number; plant_id?: string; status?: string }) {
+export async function getMRPHistory(params: { pageNum: number; pageSize: number; plantId?: string; status?: string }) {
   await simulateDelay()
+
   let filtered = [...mrpHistoryStore]
-  if (params.plant_id) filtered = filtered.filter((item) => item.plant_id === params.plant_id)
-  if (params.status) filtered = filtered.filter((item) => item.status === params.status)
-  const result = paginate(filtered, params.page, params.page_size)
-  return wrapListResponse(result.items, result.total, result.page, result.page_size)
+
+  if (params.plantId) {
+    filtered = filtered.filter((item) => item.plantId === params.plantId)
+  }
+
+  if (params.status) {
+    filtered = filtered.filter((item) => item.status === params.status)
+  }
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
-export async function getMRPForecast(params: { page: number; page_size: number; period?: string }) {
+export async function getMRPForecast(params: { pageNum: number; pageSize: number; period?: string }) {
   await simulateDelay()
-  return wrapListResponse([], 0, params.page, params.page_size)
+  return wrapListResponse([], 0, params.pageNum, params.pageSize)
 }
 
-export async function getMultiPlantMRP(params: { page: number; page_size: number; plant_ids?: string[] }) {
+export async function getMultiPlantMRP(params: { pageNum: number; pageSize: number; plantIds?: string[] }) {
   await simulateDelay()
 
-  const plantIds = params.plant_ids || []
+  const plantIds = params.plantIds || []
   const capacity = plantIds.length > 0 ? multiPlantCapacity.filter((item) => plantIds.includes(item.plant)) : multiPlantCapacity
   const results =
     plantIds.length > 0
@@ -95,16 +102,16 @@ export async function getMultiPlantMRP(params: { page: number; page_size: number
 
   return wrapDetailResponse({
     plantCapacity: capacity,
-    results: paginate(results, params.page, params.page_size).items
+    results: paginate(results, params.pageNum, params.pageSize).list
   })
 }
 
-export async function getNetChangeMRP(params: { page: number; page_size: number; change_type?: string }) {
+export async function getNetChangeMRP(params: { pageNum: number; pageSize: number; changeType?: string }) {
   await simulateDelay()
-  const events = params.change_type ? mrpExceptions.filter((item: any) => item.type === params.change_type) : mrpExceptions
+  const events = params.changeType ? mrpExceptions.filter((item: any) => item.type === params.changeType) : mrpExceptions
 
   return wrapDetailResponse({
-    events: paginate(events, params.page, params.page_size).items.map((item: any, index: number) => ({
+    events: paginate(events, params.pageNum, params.pageSize).list.map((item: any, index: number) => ({
       id: item.id,
       type: item.type,
       detail: item.detail,

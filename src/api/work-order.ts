@@ -1,10 +1,7 @@
-import http from '@/utils/http'
-import type { ApiResponse } from '@/utils/http'
 import { isMockMode } from './_config'
-import { unwrapApiResponse } from './_factory'
+import { apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
 import * as mockService from '@/mock/services/work-order'
 
-// ==================== 工单管理 ====================
 export interface WorkOrder {
   id: string
   code: string
@@ -23,47 +20,46 @@ export interface WorkOrder {
 }
 
 export interface WorkOrderQuery {
-  page: number
-  page_size: number
+  pageNum: number
+  pageSize: number
   code?: string
   status?: string
   priority?: string
-  workshop_id?: string
-  start_date?: string
-  end_date?: string
+  workshopId?: string
+  startDate?: string
+  endDate?: string
 }
 
 export function getWorkOrderList(params: WorkOrderQuery) {
-  if (isMockMode) return mockService.getWorkOrderList(params)
-  return unwrapApiResponse(http.get<ApiResponse<{ total: number; items: WorkOrder[] }>>('/work-orders', { params }))
+  if (isMockMode) return mockService.getWorkOrderList(params) as Promise<ApiResponse<PaginatedData<WorkOrder>>>
+  return apiGet<PaginatedData<WorkOrder>>('/work-orders', { params })
 }
 
 export function getWorkOrderDetail(id: string) {
   if (isMockMode) return mockService.getWorkOrderDetail(id)
-  return unwrapApiResponse(http.get<ApiResponse<WorkOrder>>(`/work-orders/${id}`))
+  return apiGet<WorkOrder>(`/work-orders/${id}`)
 }
 
 export function createWorkOrder(data: any) {
   if (isMockMode) return mockService.createWorkOrder(data)
-  return unwrapApiResponse(http.post<ApiResponse<null>>('/work-orders', data))
+  return apiPost<Record<string, never>, any>('/work-orders', data)
 }
 
 export function approveWorkOrder(id: string, approved: boolean, comment?: string) {
   if (isMockMode) return mockService.approveWorkOrder(id, approved, comment)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/work-orders/${id}/approve`, { approved, comment }))
+  return apiPut<Record<string, never>, { approved: boolean; comment?: string }>(`/work-orders/${id}/approve`, { approved, comment })
 }
 
 export function releaseWorkOrder(id: string) {
   if (isMockMode) return mockService.releaseWorkOrder(id)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/work-orders/${id}/release`))
+  return apiPut<Record<string, never>>(`/work-orders/${id}/release`)
 }
 
 export function closeWorkOrder(id: string, data: { close_type: string; reason?: string; wip_disposition?: string }) {
   if (isMockMode) return mockService.closeWorkOrder(id, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/work-orders/${id}/close`, data))
+  return apiPut<Record<string, never>, { close_type: string; reason?: string; wip_disposition?: string }>(`/work-orders/${id}/close`, data)
 }
 
-// 工序相关
 export interface WoOperation {
   id: string
   work_order_id: string
@@ -82,17 +78,17 @@ export interface WoOperation {
 
 export function getWorkOrderOperations(workOrderId: string) {
   if (isMockMode) return mockService.getWorkOrderOperations(workOrderId)
-  return unwrapApiResponse(http.get<ApiResponse<WoOperation[]>>(`/work-orders/${workOrderId}/operations`))
+  return apiGet<WoOperation[]>(`/work-orders/${workOrderId}/operations`)
 }
 
 export function assignOperation(operationId: string, data: { team_id: string; worker_id?: string; equipment_id?: string }) {
   if (isMockMode) return mockService.assignOperation(operationId, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/operations/${operationId}/assign`, data))
+  return apiPut<Record<string, never>, { team_id: string; worker_id?: string; equipment_id?: string }>(`/operations/${operationId}/assign`, data)
 }
 
 export function startOperation(operationId: string) {
   if (isMockMode) return mockService.startOperation(operationId)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/operations/${operationId}/start`))
+  return apiPut<Record<string, never>>(`/operations/${operationId}/start`)
 }
 
 export function reportOperation(
@@ -100,10 +96,12 @@ export function reportOperation(
   data: { qualified_qty: number; defective_qty: number; defect_reasons?: string[]; actual_hours: number }
 ) {
   if (isMockMode) return mockService.reportOperation(operationId, data)
-  return unwrapApiResponse(http.put<ApiResponse<null>>(`/operations/${operationId}/report`, data))
+  return apiPut<Record<string, never>, { qualified_qty: number; defective_qty: number; defect_reasons?: string[]; actual_hours: number }>(
+    `/operations/${operationId}/report`,
+    data
+  )
 }
 
-// ==================== Kanban 看板 ====================
 export interface KanbanOp {
   id: string
   wo_code: string
@@ -123,10 +121,9 @@ export interface KanbanOp {
 
 export function getKanbanData() {
   if (isMockMode) return mockService.getKanbanData()
-  return unwrapApiResponse(http.get<ApiResponse<KanbanOp[]>>('/work-orders/kanban'))
+  return apiGet<KanbanOp[]>('/work-orders/kanban')
 }
 
-// ==================== 我的任务 ====================
 export interface MyTask {
   id: string
   wo_id: string
@@ -153,10 +150,9 @@ export interface MyTasksData {
 
 export function getMyTasks() {
   if (isMockMode) return mockService.getMyTasks()
-  return unwrapApiResponse(http.get<ApiResponse<MyTasksData>>('/work-orders/my-tasks'))
+  return apiGet<MyTasksData>('/work-orders/my-tasks')
 }
 
-// ==================== 报工记录 ====================
 export interface ReportRecord {
   time: string
   qualified_qty: number
@@ -168,5 +164,5 @@ export interface ReportRecord {
 
 export function getReportHistory() {
   if (isMockMode) return mockService.getReportHistory()
-  return unwrapApiResponse(http.get<ApiResponse<ReportRecord[]>>('/work-orders/report-history'))
+  return apiGet<ReportRecord[]>('/work-orders/report-history')
 }

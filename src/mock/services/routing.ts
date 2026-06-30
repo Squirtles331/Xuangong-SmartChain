@@ -9,12 +9,12 @@ import { generateId } from '../shared/id'
 import { routingOperations } from '../modules/bom'
 
 // ==================== 工艺路线 ====================
-export async function getRoutingList(params: { page: number; page_size: number; material_code?: string }) {
+export async function getRoutingList(params: { pageNum: number; pageSize: number; materialCode?: string }) {
   await simulateDelay()
   let filtered = [...routingOperations]
-  if (params.material_code) filtered = searchItems(filtered, params.material_code, ['work_center'])
-  const result = paginate(filtered, params.page, params.page_size)
-  return wrapListResponse(result.items, result.total, result.page, result.page_size)
+  if (params.materialCode) filtered = searchItems(filtered, params.materialCode, ['work_center'])
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function saveRouting(data: any) {

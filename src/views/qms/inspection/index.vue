@@ -142,13 +142,13 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<I
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getInspectionTaskList({
-      page,
-      page_size: size,
+      pageNum: page,
+      pageSize: size,
       code: searchForm.value.keyword || undefined,
       type: searchForm.value.type || undefined,
       material: searchForm.value.keyword || undefined
     })
-    const items = (res.data.items || res.data || []).map(mapRow)
+    const items = res.data.list.map(mapRow)
     return { list: items, total: res.data.total || items.length }
   },
   deleteAPI: (ids) => Promise.all(ids.map(() => Promise.resolve()))

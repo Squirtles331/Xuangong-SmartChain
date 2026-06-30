@@ -15,7 +15,7 @@ export const inspectionTasks = Mock.mock({
 }).list
 
 export const qcTemplates = [
-  { id: '1', name: 'Steel Incoming Inspection', category: 'raw', items: 8 },
-  { id: '2', name: 'Pump Finished Inspection', category: 'finished', items: 12 },
-  { id: '3', name: 'Bearing Incoming Inspection', category: 'purchased', items: 6 }
+  { id: '1', name: 'Steel Incoming Inspection', category: 'raw', itemCount: 8 },
+  { id: '2', name: 'Pump Finished Inspection', category: 'finished', itemCount: 12 },
+  { id: '3', name: 'Bearing Incoming Inspection', category: 'purchased', itemCount: 6 }
 ]
