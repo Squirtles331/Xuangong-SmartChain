@@ -1,25 +1,48 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" :required-fields="['keyword']" @update:visible-fields="onSearchFieldsChange">
-        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="searchColumns" :required-fields="['keyword']" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
+
     <template #tool>
       <gi-button type="add" @click="openAddType" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <gi-table :columns="typeColumns" :data="tableData" :pagination="pagination" :loading="loading" border style="height: 100%">
-      <template #status="{ row }">
-        <el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ row.status === 'active' ? '启用' : '禁用' }}</el-tag>
+    <TableSetting title="表格工具栏" :columns="typeColumns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #status="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+              {{ row.status === 'active' ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEditType(row)" />
+            <gi-button type="delete" @click="deleteType(row)" />
+            <el-button type="primary" link size="small" @click="openItems(row)">字典项</el-button>
+          </template>
+        </gi-table>
       </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEditType(row)" />
-        <gi-button type="delete" @click="deleteType(row)" />
-        <el-button type="primary" link size="small" @click="openItems(row)">字典项</el-button>
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <DictTypeDialog v-model:visible="typeDialogVisible" v-model:form="typeFormModel" :mode="typeDialogMode" @submit="submitTypeDialog" />
 
@@ -36,36 +59,34 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
 import {
   createDictItem,
   createDictType,
   deleteDictItem,
+  deleteDictType,
   getDictItems,
   getDictTypeList,
   updateDictItem,
+  updateDictType,
   type DictItem,
-  type DictType
+  type DictType,
+  type DictTypeQuery
 } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import DictItemsDialog from './DictItemsDialog.vue'
 import DictTypeDialog, { type DictTypeFormModel } from './DictTypeDialog.vue'
 
-const searchForm = ref({ keyword: '' })
-const searchFormRef = ref<FormInstance | null>()
-
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '字典编码/名称', clearable: true } as any }
+  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '字典编码/字典名称' } as any }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
 const typeColumns: TableColumnItem<DictType>[] = [
@@ -77,38 +98,44 @@ const typeColumns: TableColumnItem<DictType>[] = [
   { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh } = useTable<DictType>({
-  rowKey: 'id',
-  listAPI: async ({ page, size }) => {
-    const response = await getDictTypeList({
-      pageNum: page,
-      pageSize: size,
-      keyword: searchForm.value.keyword || undefined
-    })
-
-    return {
-      list: response.data.list,
-      total: response.data.total
-    }
-  },
-  deleteAPI: () => Promise.resolve()
+const queryParams = reactive<{
+  keyword: string
+}>({
+  keyword: ''
 })
 
-function handleSearch() {
-  search()
-}
-
-function handleReset() {
-  searchForm.value.keyword = ''
-  search()
-}
-
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const typeDialogVisible = ref(false)
 const typeDialogMode = ref<'add' | 'edit'>('add')
 const typeFormModel = ref<DictTypeFormModel>(createDefaultTypeForm())
 
+const { tableData, pagination, loading, search, refresh } = useTable<DictType>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: DictTypeQuery = {
+      pageNum: page,
+      pageSize: size,
+      keyword: queryParams.keyword || undefined
+    }
+
+    const response = await getDictTypeList(params)
+    return response.data
+  }
+})
+
 function createDefaultTypeForm(): DictTypeFormModel {
   return { id: '', code: '', name: '', description: '' }
+}
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+
+function handleReset() {
+  Object.assign(queryParams, {
+    keyword: ''
+  })
+  search()
 }
 
 function openAddType() {
@@ -130,7 +157,7 @@ function openEditType(row: DictType) {
 
 async function submitTypeDialog() {
   if (!typeFormModel.value.code || !typeFormModel.value.name) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('请填写字典编码和字典名称')
     return
   }
 
@@ -141,22 +168,23 @@ async function submitTypeDialog() {
       description: typeFormModel.value.description,
       status: 'active'
     })
-    ElMessage.success('新增成功')
   } else {
-    ElMessage.success('编辑成功')
+    await updateDictType(typeFormModel.value.id, {
+      code: typeFormModel.value.code,
+      name: typeFormModel.value.name,
+      description: typeFormModel.value.description
+    })
   }
 
   typeDialogVisible.value = false
   await refresh()
 }
 
-function deleteType(_row: DictType) {
-  ElMessageBox.confirm('删除字典类型将同时删除其下所有字典项，确认删除？', '警告', { type: 'warning' })
-    .then(async () => {
-      await refresh()
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+async function deleteType(row: DictType) {
+  await ElMessageBox.confirm('删除字典类型将同时删除其下所有字典项，确认删除？', '警告', { type: 'warning' })
+  await deleteDictType(row.id)
+  ElMessage.success('删除成功')
+  await refresh()
 }
 
 const itemDialogVisible = ref(false)
@@ -172,7 +200,7 @@ async function openItems(row: DictType) {
 
 async function createItemFromDialog(form: { id: string; code: string; name: string; sortOrder: number; cssClass: string }) {
   if (!form.code || !form.name || !currentType.value) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('请填写字典项编码和字典项名称')
     return
   }
 
@@ -185,13 +213,14 @@ async function createItemFromDialog(form: { id: string; code: string; name: stri
     cssClass: form.cssClass || undefined,
     status: 'active'
   })
+
   ElMessage.success('新增成功')
   await reloadCurrentItems()
 }
 
 async function updateItemFromDialog(form: { id: string; code: string; name: string; sortOrder: number; cssClass: string }) {
   if (!form.code || !form.name) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('请填写字典项编码和字典项名称')
     return
   }
 
@@ -201,18 +230,16 @@ async function updateItemFromDialog(form: { id: string; code: string; name: stri
     sortOrder: form.sortOrder,
     cssClass: form.cssClass || undefined
   })
+
   ElMessage.success('编辑成功')
   await reloadCurrentItems()
 }
 
-function deleteItem(id: string) {
-  ElMessageBox.confirm('确定删除该字典项？', '提示', { type: 'warning' })
-    .then(async () => {
-      await deleteDictItem(id)
-      currentItems.value = currentItems.value.filter((item) => item.id !== id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+async function deleteItem(id: string) {
+  await ElMessageBox.confirm('确定删除该字典项？', '提示', { type: 'warning' })
+  await deleteDictItem(id)
+  currentItems.value = currentItems.value.filter((item) => item.id !== id)
+  ElMessage.success('删除成功')
 }
 
 async function reloadCurrentItems() {

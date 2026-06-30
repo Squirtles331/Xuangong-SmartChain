@@ -2,7 +2,20 @@ import { generateId } from '../shared/id'
 import { paginate, searchItems } from '../shared/paginate'
 import { wrapCreatedResponse, wrapDetailResponse, wrapListResponse, wrapSuccessResponse, wrapUpdatedResponse } from '../shared/response'
 import { simulateDelay } from '../shared/delay'
-import { approvalFlows, auditLogs, codeRules, dictItems, dictTypes, menuTree, systemParams, systemRoles, systemUsers } from '../modules/system'
+import {
+  approvalFlows,
+  auditLogs,
+  codeRules,
+  dictItems,
+  dictTypes,
+  menuTree,
+  notificationRules,
+  ssoConfigs,
+  systemFiles,
+  systemParams,
+  systemRoles,
+  systemUsers
+} from '../modules/system'
 
 function buildSystemUser(data: Partial<(typeof systemUsers)[number]> & { id: string }) {
   return {
@@ -16,6 +29,30 @@ function buildSystemUser(data: Partial<(typeof systemUsers)[number]> & { id: str
     roles: Array.isArray(data.roles) ? data.roles : [],
     createdAt: data.createdAt || new Date().toISOString().slice(0, 19).replace('T', ' ')
   }
+}
+
+function flattenMenuTree(nodes: any[], parentName = ''): any[] {
+  return nodes.flatMap((node) => {
+    const current = {
+      ...node,
+      parentName
+    }
+    const children = Array.isArray(node.children) ? flattenMenuTree(node.children, node.name) : []
+    return [current, ...children]
+  })
+}
+
+function walkMenuTree(nodes: any[], callback: (node: any, index: number, parent: any[] | null) => boolean): boolean {
+  for (let index = 0; index < nodes.length; index += 1) {
+    const node = nodes[index]
+    if (callback(node, index, nodes)) {
+      return true
+    }
+    if (Array.isArray(node.children) && walkMenuTree(node.children, callback)) {
+      return true
+    }
+  }
+  return false
 }
 
 export async function getUserList(params: {
@@ -32,21 +69,10 @@ export async function getUserList(params: {
   systemUsers.splice(0, systemUsers.length, ...normalizedUsers)
   let filtered = [...systemUsers]
 
-  if (params.username) {
-    filtered = searchItems(filtered, params.username, ['username'])
-  }
-
-  if (params.realName) {
-    filtered = searchItems(filtered, params.realName, ['realName'])
-  }
-
-  if (params.role) {
-    filtered = filtered.filter((user) => Array.isArray(user.roles) && user.roles.includes(params.role!))
-  }
-
-  if (params.status !== undefined) {
-    filtered = filtered.filter((user) => user.status === params.status)
-  }
+  if (params.username) filtered = searchItems(filtered, params.username, ['username'])
+  if (params.realName) filtered = searchItems(filtered, params.realName, ['realName'])
+  if (params.role) filtered = filtered.filter((user) => Array.isArray(user.roles) && user.roles.includes(params.role!))
+  if (params.status !== undefined) filtered = filtered.filter((user) => user.status === params.status)
 
   const result = paginate(filtered, params.pageNum, params.pageSize)
   return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
@@ -68,10 +94,7 @@ export async function updateUser(id: string, data: any) {
   await simulateDelay()
 
   const index = systemUsers.findIndex((user) => String(user.id) === id)
-  const nextUser = buildSystemUser({
-    ...data,
-    id
-  })
+  const nextUser = buildSystemUser({ ...data, id })
 
   if (index > -1) {
     systemUsers[index] = { ...systemUsers[index], ...nextUser }
@@ -86,9 +109,7 @@ export async function deleteUser(id: string) {
   await simulateDelay()
 
   const index = systemUsers.findIndex((user) => String(user.id) === id)
-  if (index > -1) {
-    systemUsers.splice(index, 1)
-  }
+  if (index > -1) systemUsers.splice(index, 1)
 
   return wrapSuccessResponse('删除用户成功')
 }
@@ -97,9 +118,7 @@ export async function getRoleList(params: { pageNum: number; pageSize: number; n
   await simulateDelay()
 
   let filtered = [...systemRoles]
-  if (params.name) {
-    filtered = searchItems(filtered, params.name, ['code', 'name', 'description'])
-  }
+  if (params.name) filtered = searchItems(filtered, params.name, ['code', 'name', 'description'])
 
   const result = paginate(filtered, params.pageNum, params.pageSize)
   return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
@@ -138,9 +157,7 @@ export async function deleteRole(id: string) {
   await simulateDelay()
 
   const index = systemRoles.findIndex((role) => String(role.id) === id)
-  if (index > -1) {
-    systemRoles.splice(index, 1)
-  }
+  if (index > -1) systemRoles.splice(index, 1)
 
   return wrapSuccessResponse('删除角色成功')
 }
@@ -150,17 +167,15 @@ export async function getMenuTree() {
   return wrapDetailResponse(menuTree)
 }
 
-function walkMenuTree(nodes: any[], callback: (node: any, index: number, parent: any[] | null) => boolean): boolean {
-  for (let index = 0; index < nodes.length; index += 1) {
-    const node = nodes[index]
-    if (callback(node, index, nodes)) {
-      return true
-    }
-    if (Array.isArray(node.children) && walkMenuTree(node.children, callback)) {
-      return true
-    }
-  }
-  return false
+export async function getMenuList(params: { pageNum: number; pageSize: number; keyword?: string; type?: string }) {
+  await simulateDelay()
+
+  let filtered = flattenMenuTree(menuTree)
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['name', 'path', 'permissionCode', 'parentName'])
+  if (params.type) filtered = filtered.filter((item) => item.type === params.type)
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function createMenu(data: any) {
@@ -184,9 +199,7 @@ export async function createMenu(data: any) {
   } else {
     walkMenuTree(menuTree, (node) => {
       if (node.id !== newMenu.parentId) return false
-      if (!Array.isArray(node.children)) {
-        node.children = []
-      }
+      if (!Array.isArray(node.children)) node.children = []
       node.children.push(newMenu)
       return true
     })
@@ -199,7 +212,6 @@ export async function updateMenu(id: string, data: any) {
   await simulateDelay()
 
   let updatedNode: any = null
-
   walkMenuTree(menuTree, (node) => {
     if (node.id !== id) return false
     Object.assign(node, data)
@@ -226,9 +238,7 @@ export async function getDictTypeList(params: { pageNum: number; pageSize: numbe
   await simulateDelay()
 
   let filtered = [...dictTypes]
-  if (params.keyword) {
-    filtered = searchItems(filtered, params.keyword, ['code', 'name', 'description'])
-  }
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['code', 'name', 'description'])
 
   const result = paginate(filtered, params.pageNum, params.pageSize)
   return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
@@ -252,6 +262,31 @@ export async function createDictType(data: any) {
 
   dictTypes.unshift(nextType)
   return wrapCreatedResponse(nextType, '创建字典类型成功')
+}
+
+export async function updateDictType(id: string, data: any) {
+  await simulateDelay()
+
+  const index = dictTypes.findIndex((item) => String(item.id) === id)
+  if (index > -1) {
+    dictTypes[index] = { ...dictTypes[index], ...data }
+    return wrapUpdatedResponse(dictTypes[index], '更新字典类型成功')
+  }
+
+  return wrapUpdatedResponse({ id, ...data }, '更新字典类型成功')
+}
+
+export async function deleteDictType(id: string) {
+  await simulateDelay()
+
+  const index = dictTypes.findIndex((item) => String(item.id) === id)
+  if (index > -1) {
+    const dictType = dictTypes[index]
+    delete dictItems[dictType.code]
+    dictTypes.splice(index, 1)
+  }
+
+  return wrapSuccessResponse('删除字典类型成功')
 }
 
 export async function createDictItem(data: any) {
@@ -280,7 +315,6 @@ export async function updateDictItem(id: string, data: any) {
   await simulateDelay()
 
   let updatedItem: any = null
-
   for (const list of Object.values(dictItems) as any[]) {
     const index = list.findIndex((item: any) => String(item.id) === id)
     if (index > -1) {
@@ -311,18 +345,9 @@ export async function getSystemParams(params?: { pageNum?: number; pageSize?: nu
   await simulateDelay()
 
   let filtered = [...systemParams]
-
-  if (params?.keyword) {
-    filtered = searchItems(filtered, params.keyword, ['code', 'name', 'description'])
-  }
-
-  if (params?.category) {
-    filtered = filtered.filter((item) => item.category === params.category)
-  }
-
-  if (params?.status) {
-    filtered = filtered.filter((item) => item.status === params.status)
-  }
+  if (params?.keyword) filtered = searchItems(filtered, params.keyword, ['code', 'name', 'description'])
+  if (params?.category) filtered = filtered.filter((item) => item.category === params.category)
+  if (params?.status) filtered = filtered.filter((item) => item.status === params.status)
 
   const pageNum = params?.pageNum || 1
   const pageSize = params?.pageSize || 20
@@ -340,6 +365,27 @@ export async function updateSystemParam(id: string, value: string) {
   }
 
   return wrapUpdatedResponse(item || { id, value }, '更新参数成功')
+}
+
+export async function createSystemParam(data: any) {
+  await simulateDelay()
+
+  const nextParam = {
+    id: generateId(),
+    code: data.code || '',
+    name: data.name || '',
+    value: data.value || '',
+    defaultValue: data.defaultValue || data.value || '',
+    description: data.description || '',
+    category: data.category || 'general',
+    valueType: data.valueType || 'string',
+    status: data.status || 'active',
+    updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    updatedBy: data.updatedBy || 'admin'
+  }
+
+  systemParams.unshift(nextParam)
+  return wrapCreatedResponse(nextParam, '创建参数成功')
 }
 
 export async function batchUpdateSystemParams(updates: { id: string; value: string }[]) {
@@ -368,6 +414,15 @@ export async function resetSystemParam(id: string) {
   return wrapUpdatedResponse(item || { id }, '重置参数成功')
 }
 
+export async function deleteSystemParam(id: string) {
+  await simulateDelay()
+
+  const index = systemParams.findIndex((param) => param.id === id)
+  if (index > -1) systemParams.splice(index, 1)
+
+  return wrapSuccessResponse('删除参数成功')
+}
+
 export async function getAuditLogs(params: {
   pageNum: number
   pageSize: number
@@ -380,34 +435,24 @@ export async function getAuditLogs(params: {
   await simulateDelay()
 
   let filtered = [...auditLogs]
-
-  if (params.userName) {
-    filtered = searchItems(filtered, params.userName, ['userName'])
-  }
-
-  if (params.module) {
-    filtered = filtered.filter((log) => log.module === params.module)
-  }
-
-  if (params.action) {
-    filtered = filtered.filter((log) => log.action === params.action)
-  }
-
-  if (params.startDate) {
-    filtered = filtered.filter((log) => log.createdAt >= params.startDate!)
-  }
-
-  if (params.endDate) {
-    filtered = filtered.filter((log) => log.createdAt <= params.endDate!)
-  }
+  if (params.userName) filtered = searchItems(filtered, params.userName, ['userName'])
+  if (params.module) filtered = filtered.filter((log) => log.module === params.module)
+  if (params.action) filtered = filtered.filter((log) => log.action === params.action)
+  if (params.startDate) filtered = filtered.filter((log) => log.createdAt >= params.startDate!)
+  if (params.endDate) filtered = filtered.filter((log) => log.createdAt <= params.endDate!)
 
   const result = paginate(filtered, params.pageNum, params.pageSize)
   return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
-export async function getCodeRules() {
+export async function getCodeRules(params: { pageNum: number; pageSize: number; keyword?: string }) {
   await simulateDelay()
-  return wrapDetailResponse(codeRules)
+
+  let filtered = [...codeRules]
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['code', 'name', 'prefix', 'example'])
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function createCodeRule(data: any) {
@@ -443,16 +488,21 @@ export async function deleteCodeRule(id: string) {
   await simulateDelay()
 
   const index = codeRules.findIndex((rule) => String(rule.id) === id)
-  if (index > -1) {
-    codeRules.splice(index, 1)
-  }
+  if (index > -1) codeRules.splice(index, 1)
 
   return wrapSuccessResponse('删除编码规则成功')
 }
 
-export async function getApprovalFlows() {
+export async function getApprovalFlows(params: { pageNum: number; pageSize: number; name?: string; businessType?: string; status?: 'active' | 'disabled' }) {
   await simulateDelay()
-  return wrapDetailResponse(approvalFlows)
+
+  let filtered = [...approvalFlows]
+  if (params.name) filtered = searchItems(filtered, params.name, ['name'])
+  if (params.businessType) filtered = filtered.filter((item) => item.businessType === params.businessType)
+  if (params.status) filtered = filtered.filter((item) => item.status === params.status)
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
 export async function createApprovalFlow(data: any) {
@@ -486,9 +536,186 @@ export async function deleteApprovalFlow(id: string) {
   await simulateDelay()
 
   const index = approvalFlows.findIndex((flow) => String(flow.id) === id)
-  if (index > -1) {
-    approvalFlows.splice(index, 1)
-  }
+  if (index > -1) approvalFlows.splice(index, 1)
 
   return wrapSuccessResponse('删除审批流成功')
+}
+
+export async function getSystemFiles(params: { pageNum: number; pageSize: number; keyword?: string }) {
+  await simulateDelay()
+
+  let filtered = [...systemFiles]
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['name', 'module', 'objectType'])
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function uploadSystemFile(data: any) {
+  await simulateDelay()
+
+  const nextFile = {
+    id: generateId(),
+    name: data.name || '未命名文件',
+    module: data.module || '系统管理',
+    objectType: data.objectType || '通用附件',
+    size: data.size ?? 0,
+    type: data.type || 'pdf',
+    url: data.url || '',
+    uploadedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+  }
+
+  systemFiles.unshift(nextFile)
+  return wrapCreatedResponse(nextFile, '上传文件成功')
+}
+
+export async function deleteSystemFile(id: string) {
+  await simulateDelay()
+
+  const index = systemFiles.findIndex((item) => String(item.id) === id)
+  if (index > -1) systemFiles.splice(index, 1)
+
+  return wrapSuccessResponse('删除文件成功')
+}
+
+export async function getNotificationRules(params: {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  channel?: 'wecom' | 'dingtalk' | 'internal'
+  status?: 'active' | 'disabled'
+}) {
+  await simulateDelay()
+
+  let filtered = [...notificationRules]
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['bizType', 'webhookUrl'])
+  if (params.channel) filtered = filtered.filter((item) => item.channel === params.channel)
+  if (params.status) filtered = filtered.filter((item) => item.status === params.status)
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function createNotificationRule(data: any) {
+  await simulateDelay()
+
+  const nextRule = {
+    id: generateId(),
+    bizType: data.bizType || '',
+    channel: data.channel || 'wecom',
+    webhookUrl: data.webhookUrl || '',
+    status: data.status || 'active'
+  }
+
+  notificationRules.unshift(nextRule)
+  return wrapCreatedResponse(nextRule, '创建通知规则成功')
+}
+
+export async function updateNotificationRule(id: string, data: any) {
+  await simulateDelay()
+
+  const index = notificationRules.findIndex((item) => String(item.id) === id)
+  if (index > -1) {
+    notificationRules[index] = { ...notificationRules[index], ...data }
+    return wrapUpdatedResponse(notificationRules[index], '更新通知规则成功')
+  }
+
+  return wrapUpdatedResponse({ id, ...data }, '更新通知规则成功')
+}
+
+export async function deleteNotificationRule(id: string) {
+  await simulateDelay()
+
+  const index = notificationRules.findIndex((item) => String(item.id) === id)
+  if (index > -1) notificationRules.splice(index, 1)
+
+  return wrapSuccessResponse('删除通知规则成功')
+}
+
+export async function testNotificationRule(id: string) {
+  await simulateDelay()
+
+  const item = notificationRules.find((rule) => String(rule.id) === id)
+  return wrapSuccessResponse(item ? `已发送测试消息：${item.bizType}` : '已发送测试消息')
+}
+
+export async function toggleNotificationRule(id: string) {
+  await simulateDelay()
+
+  const item = notificationRules.find((rule) => String(rule.id) === id)
+  if (item) item.status = item.status === 'active' ? 'disabled' : 'active'
+
+  return wrapUpdatedResponse(item || { id }, '切换通知规则状态成功')
+}
+
+export async function getSsoConfigs(params: {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  protocol?: 'oauth2' | 'oidc' | 'saml' | 'ldap'
+  enabled?: boolean
+}) {
+  await simulateDelay()
+
+  let filtered = [...ssoConfigs]
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['name', 'url', 'clientId', 'defaultRole'])
+  if (params.protocol) filtered = filtered.filter((item) => item.protocol === params.protocol)
+  if (params.enabled !== undefined) filtered = filtered.filter((item) => item.enabled === params.enabled)
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function createSsoConfig(data: any) {
+  await simulateDelay()
+
+  const nextConfig = {
+    id: generateId(),
+    name: data.name || '',
+    protocol: data.protocol || 'oauth2',
+    url: data.url || '',
+    clientId: data.clientId || '',
+    clientSecret: data.clientSecret || '',
+    redirectUri: data.redirectUri || '',
+    defaultRole: data.defaultRole || '',
+    enabled: data.enabled ?? false,
+    status: data.status || (data.enabled ? 'online' : 'offline'),
+    lastSyncAt: data.lastSyncAt || new Date().toISOString().slice(0, 19).replace('T', ' ')
+  }
+
+  ssoConfigs.unshift(nextConfig)
+  return wrapCreatedResponse(nextConfig, '创建单点登录配置成功')
+}
+
+export async function updateSsoConfig(id: string, data: any) {
+  await simulateDelay()
+
+  const index = ssoConfigs.findIndex((item) => String(item.id) === id)
+  if (index > -1) {
+    ssoConfigs[index] = { ...ssoConfigs[index], ...data }
+    return wrapUpdatedResponse(ssoConfigs[index], '更新单点登录配置成功')
+  }
+
+  return wrapUpdatedResponse({ id, ...data }, '更新单点登录配置成功')
+}
+
+export async function deleteSsoConfig(id: string) {
+  await simulateDelay()
+
+  const index = ssoConfigs.findIndex((item) => String(item.id) === id)
+  if (index > -1) ssoConfigs.splice(index, 1)
+
+  return wrapSuccessResponse('删除单点登录配置成功')
+}
+
+export async function testSsoConfig(id: string) {
+  await simulateDelay()
+
+  const item = ssoConfigs.find((config) => String(config.id) === id)
+  if (item) {
+    item.status = 'online'
+    item.lastSyncAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  }
+
+  return wrapSuccessResponse('连接测试成功')
 }

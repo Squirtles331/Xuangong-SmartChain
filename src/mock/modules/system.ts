@@ -54,6 +54,109 @@ export const systemRoles = [
   }
 ]
 
+export const systemFiles = [
+  {
+    id: 'file-1',
+    name: '离心泵装配图.pdf',
+    module: 'BOM管理',
+    objectType: '物料图纸',
+    size: 2.5 * 1024 * 1024,
+    type: 'pdf' as const,
+    url: '',
+    uploadedAt: '2026-06-15 09:00:00'
+  },
+  {
+    id: 'file-2',
+    name: '工单异常照片.jpg',
+    module: '工单管理',
+    objectType: '异常附件',
+    size: 1.2 * 1024 * 1024,
+    type: 'image' as const,
+    url: 'https://via.placeholder.com/800x600',
+    uploadedAt: '2026-06-16 10:30:00'
+  },
+  {
+    id: 'file-3',
+    name: '来料检验报告.xlsx',
+    module: '质检管理',
+    objectType: '检验报告',
+    size: 0.5 * 1024 * 1024,
+    type: 'excel' as const,
+    url: '',
+    uploadedAt: '2026-06-17 14:00:00'
+  },
+  {
+    id: 'file-4',
+    name: '作业指导书SOP.docx',
+    module: '工艺路线',
+    objectType: '操作指导',
+    size: 3.1 * 1024 * 1024,
+    type: 'word' as const,
+    url: '',
+    uploadedAt: '2026-06-18 11:00:00'
+  }
+]
+
+export const notificationRules = [
+  {
+    id: 'notice-1',
+    bizType: '工单审批',
+    channel: 'wecom' as const,
+    webhookUrl: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=prod-001',
+    status: 'active' as const
+  },
+  {
+    id: 'notice-2',
+    bizType: '工序派工',
+    channel: 'dingtalk' as const,
+    webhookUrl: 'https://oapi.dingtalk.com/robot/send?access_token=prod-002',
+    status: 'active' as const
+  },
+  {
+    id: 'notice-3',
+    bizType: '质检通知',
+    channel: 'internal' as const,
+    webhookUrl: '站内消息',
+    status: 'active' as const
+  },
+  {
+    id: 'notice-4',
+    bizType: '异常上报',
+    channel: 'wecom' as const,
+    webhookUrl: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=prod-004',
+    status: 'disabled' as const
+  }
+]
+
+export const ssoConfigs = [
+  {
+    id: 'sso-1',
+    name: '总部统一认证',
+    protocol: 'oauth2' as const,
+    url: 'https://sso.xuangong.local/auth',
+    clientId: 'xgzl-web',
+    clientSecret: 'secret-001',
+    redirectUri: 'https://mos.xuangong.local/auth/callback',
+    defaultRole: '操作工',
+    enabled: true,
+    status: 'online' as const,
+    lastSyncAt: '2026-06-29 10:30:00'
+  },
+  {
+    id: 'sso-2',
+    name: '制造中心OIDC',
+    protocol: 'oidc' as const,
+    url: 'https://oidc.xuangong.local/connect/authorize',
+    clientId: 'manufacture-app',
+    clientSecret: 'secret-002',
+    redirectUri: 'https://mes.xuangong.local/auth/callback',
+    defaultRole: '车间主任',
+    enabled: false,
+    status: 'offline' as const,
+    lastSyncAt: '2026-06-28 16:20:00'
+  }
+]
+
 export const systemUsers: SystemUserRecord[] = [
   {
     id: 'user-1',

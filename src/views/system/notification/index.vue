@@ -1,120 +1,230 @@
 <template>
   <gi-page-layout>
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    <template #header>
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
+      </SearchSetting>
     </template>
 
-    <gi-table :columns="cols" :data="rules" border stripe>
-      <template #channel="{ row }">
-        <el-tag :type="row.channel === 'wecom' ? 'success' : row.channel === 'dingtalk' ? 'primary' : 'warning'" size="small">
-          {{ row.channel === 'wecom' ? '企业微信' : row.channel === 'dingtalk' ? '钉钉' : '站内信' }}
-        </el-tag>
-      </template>
-      <template #status="{ row }">
-        <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag>
-      </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <el-button type="primary" link size="small" @click="testSend(row)">发送测试</el-button>
-        <el-button :type="row.status === 'active' ? 'warning' : 'success'" link size="small" @click="toggle(row)">
-          {{ row.status === 'active' ? '停用' : '启用' }}
-        </el-button>
-      </template>
-    </gi-table>
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    </template>
 
-    <NotificationRuleFormDialog v-model:visible="vis" v-model:form="formModel" :mode="mode" @submit="submit" />
+    <TableSetting title="通知规则" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #channel="{ row }">
+            <el-tag :type="channelTagMap[row.channel]">{{ channelLabelMap[row.channel] }}</el-tag>
+          </template>
+
+          <template #status="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag>
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <el-button type="primary" link size="small" @click="handleTest(row)">发送测试</el-button>
+            <el-button type="primary" link size="small" @click="handleToggle(row)">
+              {{ row.status === 'active' ? '停用' : '启用' }}
+            </el-button>
+            <gi-button type="delete" @click="onDelete(row)" />
+          </template>
+        </gi-table>
+      </template>
+    </TableSetting>
+
+    <NotificationRuleFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
+import {
+  createNotificationRule,
+  deleteNotificationRule,
+  getNotificationRules,
+  testNotificationRule,
+  toggleNotificationRule,
+  updateNotificationRule,
+  type NotificationRule,
+  type NotificationRuleQuery
+} from '@/api/system'
+import { useTable } from '@/hooks/useTable'
 import NotificationRuleFormDialog, { type NotificationRuleFormModel } from './NotificationRuleFormDialog.vue'
 
-interface NR {
-  id: string
-  biz_type: string
-  channel: string
-  webhook_url: string
-  status: string
-}
-
-const rules = ref<NR[]>([
-  { id: '1', biz_type: '工单审批', channel: 'wecom', webhook_url: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx', status: 'active' },
-  { id: '2', biz_type: '工序派工', channel: 'dingtalk', webhook_url: 'https://oapi.dingtalk.com/robot/send?access_token=xxx', status: 'active' },
-  { id: '3', biz_type: '质检通知', channel: 'internal', webhook_url: '-', status: 'active' },
-  { id: '4', biz_type: '异常上报', channel: 'wecom', webhook_url: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=yyy', status: 'disabled' }
-])
-
-const cols: TableColumnItem<NR>[] = [
-  { prop: 'biz_type', label: '业务类型', minWidth: 140 },
-  { label: '通知渠道', minWidth: 100, slotName: 'channel', align: 'center' },
-  { prop: 'webhook_url', label: 'Webhook 地址', minWidth: 320 },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+const channelOptions = [
+  { label: '企业微信', value: 'wecom' },
+  { label: '钉钉', value: 'dingtalk' },
+  { label: '站内信', value: 'internal' }
 ]
 
-const vis = ref(false)
-const mode = ref<'add' | 'edit'>('add')
-const editingId = ref('')
-const formModel = reactive<NotificationRuleFormModel>({
-  biz_type: '工单审批',
-  channel: 'wecom',
-  webhook_url: '',
-  status: 'active'
+const statusOptions = [
+  { label: '启用', value: 'active' },
+  { label: '停用', value: 'disabled' }
+]
+
+const channelLabelMap: Record<NotificationRule['channel'], string> = {
+  wecom: '企业微信',
+  dingtalk: '钉钉',
+  internal: '站内信'
+}
+
+const channelTagMap: Record<NotificationRule['channel'], 'success' | 'primary' | 'warning'> = {
+  wecom: 'success',
+  dingtalk: 'primary',
+  internal: 'warning'
+}
+
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '业务类型/Webhook 地址' } as any },
+  { type: 'select-v2', label: '通知渠道', field: 'channel', props: { options: channelOptions, clearable: true } as any },
+  { type: 'select-v2', label: '状态', field: 'status', props: { options: statusOptions, clearable: true } as any }
+]
+
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
+
+const columns: TableColumnItem<NotificationRule>[] = [
+  { type: 'index', label: '#', width: 60 },
+  { prop: 'bizType', label: '业务类型', minWidth: 140 },
+  { label: '通知渠道', minWidth: 100, slotName: 'channel', align: 'center' },
+  { prop: 'webhookUrl', label: 'Webhook 地址', minWidth: 320 },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const queryParams = reactive<{
+  keyword: string
+  channel: '' | NotificationRule['channel']
+  status: '' | NotificationRule['status']
+}>({
+  keyword: '',
+  channel: '',
+  status: ''
+})
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<NotificationRuleFormModel>(createDefaultFormModel())
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<NotificationRule>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: NotificationRuleQuery = {
+      pageNum: page,
+      pageSize: size,
+      keyword: queryParams.keyword || undefined,
+      channel: queryParams.channel || undefined,
+      status: queryParams.status || undefined
+    }
+
+    const response = await getNotificationRules(params)
+    return response.data
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteNotificationRule(id)))
 })
 
 function createDefaultFormModel(): NotificationRuleFormModel {
   return {
-    biz_type: '工单审批',
+    id: '',
+    bizType: '工单审批',
     channel: 'wecom',
-    webhook_url: '',
+    webhookUrl: '',
     status: 'active'
   }
 }
 
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+
+function handleReset() {
+  Object.assign(queryParams, {
+    keyword: '',
+    channel: '',
+    status: ''
+  })
+  search()
+}
+
 function openAdd() {
-  mode.value = 'add'
-  editingId.value = ''
-  Object.assign(formModel, createDefaultFormModel())
-  vis.value = true
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
 }
 
-function openEdit(row: NR) {
-  mode.value = 'edit'
-  editingId.value = row.id
-  Object.assign(formModel, row)
-  vis.value = true
+function openEdit(row: NotificationRule) {
+  dialogMode.value = 'edit'
+  formModel.value = {
+    id: row.id,
+    bizType: row.bizType,
+    channel: row.channel,
+    webhookUrl: row.webhookUrl,
+    status: row.status
+  }
+  dialogVisible.value = true
 }
 
-async function submit() {
-  if (!formModel.biz_type) {
-    ElMessage.warning('请填写必填项')
-    return false
+async function submitDialog() {
+  if (!formModel.value.bizType) {
+    ElMessage.warning('请填写业务类型')
+    return
   }
 
-  if (mode.value === 'add') {
-    rules.value.unshift({ id: Date.now().toString(), ...formModel })
+  const payload = {
+    bizType: formModel.value.bizType,
+    channel: formModel.value.channel,
+    webhookUrl: formModel.value.webhookUrl,
+    status: formModel.value.status
+  }
+
+  if (dialogMode.value === 'add') {
+    await createNotificationRule(payload)
   } else {
-    const index = rules.value.findIndex((item) => item.id === editingId.value)
-    if (index > -1) Object.assign(rules.value[index], formModel)
+    await updateNotificationRule(formModel.value.id, payload)
   }
 
-  vis.value = false
-  return true
+  dialogVisible.value = false
+  await refresh()
+  ElMessage.success(dialogMode.value === 'add' ? '新增成功' : '保存成功')
 }
 
-function toggle(row: NR) {
-  row.status = row.status === 'active' ? 'disabled' : 'active'
-  ElMessage.success(row.status === 'active' ? '已启用' : '已停用')
+async function handleTest(row: NotificationRule) {
+  await testNotificationRule(row.id)
+  ElMessage.success(`已发送测试消息：${row.bizType}`)
 }
 
-function testSend(row: NR) {
-  const channelName = row.channel === 'wecom' ? '企业微信' : row.channel === 'dingtalk' ? '钉钉' : '站内信'
-  ElMessage.success(`测试消息已通过 ${channelName} 发送到 ${row.webhook_url}`)
+async function handleToggle(row: NotificationRule) {
+  await toggleNotificationRule(row.id)
+  ElMessage.success(row.status === 'active' ? '已停用' : '已启用')
+  await refresh()
 }
-
-function refresh() {}
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

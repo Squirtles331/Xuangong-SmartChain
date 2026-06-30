@@ -2,115 +2,180 @@
   <gi-page-layout :size="320" style="height: calc(100vh - 120px)">
     <template #left>
       <div class="tree-wrapper">
+        <div class="tree-header">
+          <span class="tree-title">菜单树</span>
+          <el-button link type="primary" @click="loadTree">刷新</el-button>
+        </div>
+
         <el-tree
           :data="menuTree"
           :props="{ children: 'children', label: 'name' }"
           node-key="id"
-          default-expand-all
+          :expand-on-click-node="false"
           highlight-current
-          @node-click="onNodeClick"
+          @node-click="handleTreeNodeClick"
         >
           <template #default="{ data }">
             <span class="tree-node">
-              <el-icon v-if="data.type === 'directory'" style="margin-right: 4px"><Folder /></el-icon>
-              <el-icon v-else-if="data.type === 'menu'" style="margin-right: 4px"><Document /></el-icon>
-              <el-icon v-else style="margin-right: 4px"><Operation /></el-icon>
+              <el-icon v-if="data.type === 'directory'"><Folder /></el-icon>
+              <el-icon v-else-if="data.type === 'menu'"><Document /></el-icon>
+              <el-icon v-else><Operation /></el-icon>
               <span>{{ data.name }}</span>
-              <el-tag v-if="data.type === 'directory'" size="small" type="info" style="margin-left: 6px">目录</el-tag>
-              <el-tag v-else-if="data.type === 'menu'" size="small" type="primary" style="margin-left: 6px">菜单</el-tag>
-              <el-tag v-else size="small" type="warning" style="margin-left: 6px">按钮</el-tag>
             </span>
           </template>
         </el-tree>
+
         <div class="tree-toolbar">
-          <el-button type="primary" size="small" @click="addNode('directory')">+ 目录</el-button>
-          <el-button type="success" size="small" @click="addNode('menu')">+ 菜单</el-button>
-          <el-button type="warning" size="small" @click="addNode('button')">+ 按钮</el-button>
+          <el-button type="primary" size="small" @click="openAdd(null)">新增根节点</el-button>
+          <el-button size="small" @click="clearTreeFilter">查看全部</el-button>
         </div>
       </div>
     </template>
 
     <template #header>
-      <h3 style="margin: 0">{{ currentNode ? (currentNode.id ? '编辑' : '新增') + '菜单节点' : '请选择左侧节点' }}</h3>
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
+      </SearchSetting>
     </template>
 
-    <div v-if="!currentNode" class="empty-tip">
-      <el-empty description="选择左侧节点进行编辑，或点击下方按钮新增" />
-    </div>
+    <template #tool>
+      <gi-button type="add" @click="openAdd(currentTreeNode)" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    </template>
 
-    <div v-else class="form-wrapper">
-      <gi-form v-model="nodeForm" :columns="formColumns" :label-width="100">
-        <template #footer>
-          <el-button type="primary" @click="openDialog">打开编辑对话框</el-button>
-          <el-button v-if="currentNode.id" type="danger" @click="removeNode">删除</el-button>
-          <el-button @click="currentNode = null">取消</el-button>
-        </template>
-      </gi-form>
-    </div>
+    <TableSetting title="菜单列表" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #type="{ row }">
+            <el-tag :type="typeTagMap[row.type]">{{ typeLabelMap[row.type] }}</el-tag>
+          </template>
+
+          <template #visible="{ row }">
+            <el-tag :type="row.visible ? 'success' : 'info'">{{ row.visible ? '显示' : '隐藏' }}</el-tag>
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button type="delete" @click="onDelete(row)" />
+          </template>
+        </gi-table>
+      </template>
+    </TableSetting>
 
     <MenuFormDialog v-model:visible="dialogVisible" v-model:form="dialogFormModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Document, Folder, Operation } from '@element-plus/icons-vue'
-import type { FormColumnItem } from 'gi-component'
-import { createMenu, deleteMenu, getMenuTree, updateMenu, type SysMenu } from '@/api/system'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
+import { createMenu, deleteMenu, getMenuList, getMenuTree, updateMenu, type MenuQuery, type SysMenu } from '@/api/system'
+import { useTable } from '@/hooks/useTable'
 import MenuFormDialog, { type MenuFormModel } from './MenuFormDialog.vue'
 
-interface MenuNode extends SysMenu {}
+const typeOptions = [
+  { label: '目录', value: 'directory' },
+  { label: '菜单', value: 'menu' },
+  { label: '按钮', value: 'button' }
+]
 
-const menuTree = ref<MenuNode[]>([])
-const currentNode = ref<MenuNode | null>(null)
-
-onMounted(async () => {
-  await loadTree()
-})
-
-async function loadTree() {
-  const response = await getMenuTree()
-  menuTree.value = response.data
+const typeLabelMap: Record<SysMenu['type'], string> = {
+  directory: '目录',
+  menu: '菜单',
+  button: '按钮'
 }
 
-const nodeForm = reactive({
-  name: '',
-  type: 'menu' as MenuNode['type'],
-  path: '',
-  component: '',
-  permissionCode: '',
-  icon: '',
-  sortOrder: 1,
-  visible: true
-})
+const typeTagMap: Record<SysMenu['type'], 'info' | 'primary' | 'warning'> = {
+  directory: 'info',
+  menu: 'primary',
+  button: 'warning'
+}
 
-const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '名称', field: 'name', required: true },
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '菜单名称/路由/权限编码' } as any },
   {
     type: 'select-v2',
     label: '类型',
     field: 'type',
-    required: true,
-    props: {
-      options: [
-        { label: '目录', value: 'directory' },
-        { label: '菜单', value: 'menu' },
-        { label: '按钮', value: 'button' }
-      ]
-    } as any
-  },
-  { type: 'input', label: '路由路径', field: 'path' },
-  { type: 'input', label: '组件路径', field: 'component' },
-  { type: 'input', label: '权限编码', field: 'permissionCode', required: true },
-  { type: 'input', label: '图标', field: 'icon' },
-  { type: 'input-number', label: '排序', field: 'sortOrder', props: { min: 0 } as any },
-  { type: 'switch', label: '是否可见', field: 'visible' }
+    props: { options: typeOptions, clearable: true } as any
+  }
 ]
 
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
+
+const columns: TableColumnItem<SysMenu>[] = [
+  { type: 'index', label: '#', width: 60 },
+  { prop: 'name', label: '菜单名称', minWidth: 160 },
+  { prop: 'parentName', label: '上级节点', minWidth: 140 },
+  { prop: 'type', label: '类型', minWidth: 100, slotName: 'type', align: 'center' },
+  { prop: 'path', label: '路由路径', minWidth: 180 },
+  { prop: 'permissionCode', label: '权限编码', minWidth: 200 },
+  { prop: 'sortOrder', label: '排序', minWidth: 80, align: 'center' },
+  { prop: 'visible', label: '显示状态', minWidth: 100, slotName: 'visible', align: 'center' },
+  { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const queryParams = reactive<{
+  keyword: string
+  type: '' | SysMenu['type']
+}>({
+  keyword: '',
+  type: ''
+})
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const menuTree = ref<SysMenu[]>([])
+const currentTreeNode = ref<SysMenu | null>(null)
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const dialogFormModel = ref<MenuFormModel>(createDefaultFormModel())
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<SysMenu>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: MenuQuery = {
+      pageNum: page,
+      pageSize: size,
+      keyword: currentTreeNode.value?.id ? currentTreeNode.value.name : queryParams.keyword || undefined,
+      type: queryParams.type || undefined
+    }
+
+    const response = await getMenuList(params)
+    const list = currentTreeNode.value?.id ? response.data.list.filter((item) => item.parentId === currentTreeNode.value?.id || item.id === currentTreeNode.value?.id) : response.data.list
+
+    return {
+      list,
+      total: currentTreeNode.value?.id ? list.length : response.data.total
+    }
+  },
+  deleteAPI: async (ids) => {
+    await Promise.all(ids.map((id) => deleteMenu(id)))
+    await loadTree()
+  }
+})
+
+loadTree()
 
 function createDefaultFormModel(): MenuFormModel {
   return {
@@ -127,112 +192,113 @@ function createDefaultFormModel(): MenuFormModel {
   }
 }
 
-function onNodeClick(data: MenuNode) {
-  currentNode.value = data
-  nodeForm.name = data.name
-  nodeForm.type = data.type
-  nodeForm.path = data.path || ''
-  nodeForm.component = data.component || ''
-  nodeForm.permissionCode = data.permissionCode
-  nodeForm.icon = data.icon || ''
-  nodeForm.sortOrder = data.sortOrder
-  nodeForm.visible = data.visible
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
 
-function addNode(type: MenuNode['type']) {
-  const parent = currentNode.value
-  currentNode.value = {
-    id: '',
-    parentId: parent?.id || null,
-    name: '',
-    type,
-    path: '',
-    component: '',
-    permissionCode: '',
-    icon: '',
-    sortOrder: 1,
-    visible: true
-  }
-
-  nodeForm.name = ''
-  nodeForm.type = type
-  nodeForm.path = ''
-  nodeForm.component = ''
-  nodeForm.permissionCode = ''
-  nodeForm.icon = ''
-  nodeForm.sortOrder = 1
-  nodeForm.visible = true
+function handleReset() {
+  Object.assign(queryParams, {
+    keyword: '',
+    type: ''
+  })
+  currentTreeNode.value = null
+  search()
 }
 
-function openDialog() {
-  dialogMode.value = currentNode.value?.id ? 'edit' : 'add'
+async function loadTree() {
+  const response = await getMenuTree()
+  menuTree.value = response.data
+}
+
+function handleTreeNodeClick(node: SysMenu) {
+  currentTreeNode.value = node
+  search()
+}
+
+function clearTreeFilter() {
+  currentTreeNode.value = null
+  search()
+}
+
+function openAdd(parent: SysMenu | null) {
+  dialogMode.value = 'add'
   dialogFormModel.value = {
-    id: currentNode.value?.id || '',
-    parentId: currentNode.value?.parentId || null,
-    name: nodeForm.name,
-    type: nodeForm.type,
-    path: nodeForm.path,
-    component: nodeForm.component,
-    permissionCode: nodeForm.permissionCode,
-    icon: nodeForm.icon,
-    sortOrder: nodeForm.sortOrder,
-    visible: nodeForm.visible
+    ...createDefaultFormModel(),
+    parentId: parent?.id || null,
+    type: parent?.type === 'button' ? 'button' : 'menu'
+  }
+  dialogVisible.value = true
+}
+
+function openEdit(row: SysMenu) {
+  dialogMode.value = 'edit'
+  dialogFormModel.value = {
+    id: row.id,
+    parentId: row.parentId,
+    name: row.name,
+    type: row.type,
+    path: row.path || '',
+    component: row.component || '',
+    permissionCode: row.permissionCode,
+    icon: row.icon || '',
+    sortOrder: row.sortOrder,
+    visible: row.visible
   }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
   if (!dialogFormModel.value.name || !dialogFormModel.value.permissionCode) {
-    ElMessage.warning('请填写名称和权限编码')
+    ElMessage.warning('请填写菜单名称和权限编码')
     return
   }
 
-  if (dialogMode.value === 'edit') {
-    await updateMenu(dialogFormModel.value.id, {
-      name: dialogFormModel.value.name,
-      type: dialogFormModel.value.type,
-      path: dialogFormModel.value.path || undefined,
-      component: dialogFormModel.value.component || undefined,
-      permissionCode: dialogFormModel.value.permissionCode,
-      icon: dialogFormModel.value.icon || undefined,
-      sortOrder: dialogFormModel.value.sortOrder,
-      visible: dialogFormModel.value.visible
-    })
-    ElMessage.success('保存成功')
+  const payload = {
+    parentId: dialogFormModel.value.parentId,
+    name: dialogFormModel.value.name,
+    type: dialogFormModel.value.type,
+    path: dialogFormModel.value.path || undefined,
+    component: dialogFormModel.value.component || undefined,
+    permissionCode: dialogFormModel.value.permissionCode,
+    icon: dialogFormModel.value.icon || undefined,
+    sortOrder: dialogFormModel.value.sortOrder,
+    visible: dialogFormModel.value.visible
+  }
+
+  if (dialogMode.value === 'add') {
+    await createMenu(payload)
   } else {
-    await createMenu({
-      parentId: dialogFormModel.value.parentId || null,
-      name: dialogFormModel.value.name,
-      type: dialogFormModel.value.type,
-      path: dialogFormModel.value.path || undefined,
-      component: dialogFormModel.value.component || undefined,
-      permissionCode: dialogFormModel.value.permissionCode,
-      icon: dialogFormModel.value.icon || undefined,
-      sortOrder: dialogFormModel.value.sortOrder,
-      visible: dialogFormModel.value.visible
-    })
-    ElMessage.success('新增成功')
+    await updateMenu(dialogFormModel.value.id, payload)
   }
 
   dialogVisible.value = false
-  currentNode.value = null
   await loadTree()
-}
-
-async function removeNode() {
-  if (!currentNode.value?.id) return
-  await deleteMenu(currentNode.value.id)
-  currentNode.value = null
-  await loadTree()
-  ElMessage.success('删除成功')
+  await refresh()
+  ElMessage.success(dialogMode.value === 'add' ? '新增成功' : '保存成功')
 }
 </script>
 
 <style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+
 .tree-wrapper {
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tree-title {
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .tree-wrapper :deep(.el-tree) {
@@ -241,26 +307,15 @@ async function removeNode() {
 }
 
 .tree-toolbar {
-  padding: 8px 0;
-  border-top: 1px solid #ebeef5;
   display: flex;
   gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #ebeef5;
 }
 
 .tree-node {
   display: flex;
   align-items: center;
-  font-size: 13px;
-}
-
-.empty-tip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.form-wrapper {
-  padding: 16px;
+  gap: 6px;
 }
 </style>

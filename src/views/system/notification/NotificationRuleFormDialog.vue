@@ -15,10 +15,11 @@
 import type { FormColumnItem } from 'gi-component'
 
 export interface NotificationRuleFormModel {
-  biz_type: string
-  channel: string
-  webhook_url: string
-  status: string
+  id: string
+  bizType: string
+  channel: 'wecom' | 'dingtalk' | 'internal'
+  webhookUrl: string
+  status: 'active' | 'disabled'
 }
 
 interface Props {
@@ -38,7 +39,7 @@ const formColumns: FormColumnItem[] = [
   {
     type: 'select-v2',
     label: '业务类型',
-    field: 'biz_type',
+    field: 'bizType',
     required: true,
     props: {
       options: [
@@ -64,7 +65,18 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'input', label: 'Webhook地址', field: 'webhook_url', props: { placeholder: '企业微信/钉钉机器人 webhook' } as any }
+  { type: 'input', label: 'Webhook地址', field: 'webhookUrl', props: { placeholder: '企业微信/钉钉机器人 webhook' } as any },
+  {
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    props: {
+      options: [
+        { label: '启用', value: 'active' },
+        { label: '停用', value: 'disabled' }
+      ]
+    } as any
+  }
 ]
 
 async function handleSubmit() {

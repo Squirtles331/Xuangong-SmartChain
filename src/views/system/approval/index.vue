@@ -1,44 +1,113 @@
 <template>
   <gi-page-layout>
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    <template #header>
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
+      </SearchSetting>
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border style="height: 100%">
-      <template #status="{ row }">
-        <el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag>
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    </template>
+
+    <TableSetting title="表格工具栏" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #status="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+              {{ row.status === 'active' ? '启用' : '停用' }}
+            </el-tag>
+          </template>
+
+          <template #nodes="{ row }">
+            <el-steps :active="row.nodes.length" align-center style="max-width: 600px">
+              <el-step
+                v-for="(node, index) in row.nodes"
+                :key="index"
+                :title="node"
+                :description="index === 0 ? '发起' : index === row.nodes.length - 1 ? '终审' : `第 ${index + 1} 级`"
+              />
+            </el-steps>
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <el-button :type="row.status === 'active' ? 'warning' : 'success'" link size="small" @click="toggleStatus(row)">
+              {{ row.status === 'active' ? '停用' : '启用' }}
+            </el-button>
+            <gi-button type="delete" @click="onDelete(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #nodes="{ row }">
-        <el-steps :active="row.nodes.length" align-center style="max-width: 600px">
-          <el-step
-            v-for="(node, index) in row.nodes"
-            :key="index"
-            :title="node"
-            :description="index === 0 ? '发起' : index === row.nodes.length - 1 ? '终审' : `第 ${index + 1} 级`"
-          />
-        </el-steps>
-      </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <el-button :type="row.status === 'active' ? 'warning' : 'success'" link size="small" @click="toggleStatus(row)">
-          {{ row.status === 'active' ? '停用' : '启用' }}
-        </el-button>
-        <gi-button type="delete" @click="onDelete(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <ApprovalFlowFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { TableColumnItem } from 'gi-component'
-import { createApprovalFlow, deleteApprovalFlow, getApprovalFlows, updateApprovalFlow, type ApprovalFlow } from '@/api/system'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
+import { createApprovalFlow, deleteApprovalFlow, getApprovalFlows, updateApprovalFlow, type ApprovalFlow, type ApprovalFlowQuery } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import ApprovalFlowFormDialog, { type ApprovalFlowFormModel } from './ApprovalFlowFormDialog.vue'
+
+const businessTypeOptions = [
+  { label: '普通工单', value: 'workOrderNormal' },
+  { label: '紧急工单', value: 'workOrderUrgent' },
+  { label: 'BOM/工艺', value: 'bomRouting' },
+  { label: 'ECN 变更', value: 'ecn' },
+  { label: '销售订单', value: 'salesOrder' },
+  { label: '采购订单', value: 'purchaseOrder' }
+]
+
+const statusOptions: Array<{ label: string; value: ApprovalFlow['status'] }> = [
+  { label: '启用', value: 'active' },
+  { label: '停用', value: 'disabled' }
+]
+
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '审批流名称', field: 'name' },
+  {
+    type: 'select-v2',
+    label: '关联业务',
+    field: 'businessType',
+    props: {
+      options: businessTypeOptions
+    } as any
+  },
+  {
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    props: {
+      options: statusOptions
+    } as any
+  }
+]
+
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
 
 const columns: TableColumnItem<ApprovalFlow>[] = [
   { type: 'index', label: '#', width: 60 },
@@ -49,25 +118,53 @@ const columns: TableColumnItem<ApprovalFlow>[] = [
   { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, refresh, onDelete } = useTable<ApprovalFlow>({
-  rowKey: 'id',
-  listAPI: async ({ page, size }) => {
-    const response = await getApprovalFlows()
-    const start = (page - 1) * size
-    return {
-      list: response.data.slice(start, start + size),
-      total: response.data.length
-    }
-  },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteApprovalFlow(id)))
+const queryParams = reactive<{
+  name: string
+  businessType: string
+  status: '' | ApprovalFlow['status']
+}>({
+  name: '',
+  businessType: '',
+  status: ''
 })
 
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ApprovalFlowFormModel>(createDefaultFormModel())
 
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ApprovalFlow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: ApprovalFlowQuery = {
+      pageNum: page,
+      pageSize: size,
+      name: queryParams.name || undefined,
+      businessType: queryParams.businessType || undefined,
+      status: queryParams.status === '' ? undefined : queryParams.status
+    }
+
+    const response = await getApprovalFlows(params)
+    return response.data
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteApprovalFlow(id)))
+})
+
 function createDefaultFormModel(): ApprovalFlowFormModel {
   return { id: '', name: '', businessType: '', nodes: '' }
+}
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+
+function handleReset() {
+  Object.assign(queryParams, {
+    name: '',
+    businessType: '',
+    status: ''
+  })
+  search()
 }
 
 function openAdd() {
@@ -89,7 +186,7 @@ function openEdit(row: ApprovalFlow) {
 
 async function submitDialog() {
   if (!formModel.value.name || !formModel.value.businessType || !formModel.value.nodes) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('请填写审批流名称、关联业务和审批节点')
     return
   }
 
@@ -105,14 +202,12 @@ async function submitDialog() {
       nodes,
       status: 'active'
     })
-    ElMessage.success('新增成功')
   } else {
     await updateApprovalFlow(formModel.value.id, {
       name: formModel.value.name,
       businessType: formModel.value.businessType,
       nodes
     })
-    ElMessage.success('保存成功')
   }
 
   dialogVisible.value = false

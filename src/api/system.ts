@@ -147,6 +147,7 @@ export function deleteRole(id: string) {
 export interface SysMenu {
   id: string
   parentId: string | null
+  parentName?: string
   name: string
   type: 'directory' | 'menu' | 'button'
   path?: string
@@ -176,6 +177,18 @@ export function updateMenu(id: string, data: Partial<SysMenu>) {
 export function deleteMenu(id: string) {
   if (isMockMode) return mockService.deleteMenu(id)
   return apiDelete<null>(`/system/menus/${id}`)
+}
+
+export interface MenuQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  type?: SysMenu['type']
+}
+
+export function getMenuList(params: MenuQuery) {
+  if (isMockMode) return mockService.getMenuList(params) as Promise<ApiResponse<PaginatedData<SysMenu>>>
+  return apiGet<PaginatedData<SysMenu>>('/system/menus', { params })
 }
 
 export interface DictType {
@@ -216,6 +229,16 @@ export function getDictItems(dictTypeCode: string) {
 export function createDictType(data: Partial<DictType>) {
   if (isMockMode) return mockService.createDictType(data)
   return apiPost<DictType, Partial<DictType>>('/system/dict-types', data)
+}
+
+export function updateDictType(id: string, data: Partial<DictType>) {
+  if (isMockMode) return mockService.updateDictType(id, data)
+  return apiPut<DictType, Partial<DictType>>(`/system/dict-types/${id}`, data)
+}
+
+export function deleteDictType(id: string) {
+  if (isMockMode) return mockService.deleteDictType(id)
+  return apiDelete<null>(`/system/dict-types/${id}`)
 }
 
 export function createDictItem(data: Partial<DictItem>) {
@@ -311,9 +334,15 @@ export interface CodeRule {
   example: string
 }
 
-export function getCodeRules() {
-  if (isMockMode) return mockService.getCodeRules() as Promise<ApiResponse<CodeRule[]>>
-  return apiGet<CodeRule[]>('/system/code-rules')
+export interface CodeRuleQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+}
+
+export function getCodeRules(params: CodeRuleQuery) {
+  if (isMockMode) return mockService.getCodeRules(params) as Promise<ApiResponse<PaginatedData<CodeRule>>>
+  return apiGet<PaginatedData<CodeRule>>('/system/code-rules', { params })
 }
 
 export function createCodeRule(data: Partial<CodeRule>) {
@@ -339,9 +368,17 @@ export interface ApprovalFlow {
   status: 'active' | 'disabled'
 }
 
-export function getApprovalFlows() {
-  if (isMockMode) return mockService.getApprovalFlows() as Promise<ApiResponse<ApprovalFlow[]>>
-  return apiGet<ApprovalFlow[]>('/system/approval-flows')
+export interface ApprovalFlowQuery {
+  pageNum: number
+  pageSize: number
+  name?: string
+  businessType?: string
+  status?: ApprovalFlow['status']
+}
+
+export function getApprovalFlows(params: ApprovalFlowQuery) {
+  if (isMockMode) return mockService.getApprovalFlows(params) as Promise<ApiResponse<PaginatedData<ApprovalFlow>>>
+  return apiGet<PaginatedData<ApprovalFlow>>('/system/approval-flows', { params })
 }
 
 export function createApprovalFlow(data: Partial<ApprovalFlow>) {
@@ -357,4 +394,139 @@ export function updateApprovalFlow(id: string, data: Partial<ApprovalFlow>) {
 export function deleteApprovalFlow(id: string) {
   if (isMockMode) return mockService.deleteApprovalFlow(id)
   return apiDelete<null>(`/system/approval-flows/${id}`)
+}
+
+export interface SystemFile {
+  id: string
+  name: string
+  module: string
+  objectType: string
+  size: number
+  type: 'pdf' | 'word' | 'excel' | 'image' | 'video'
+  url: string
+  uploadedAt: string
+}
+
+export interface SystemFileQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+}
+
+export function getSystemFiles(params: SystemFileQuery) {
+  if (isMockMode) return mockService.getSystemFiles(params) as Promise<ApiResponse<PaginatedData<SystemFile>>>
+  return apiGet<PaginatedData<SystemFile>>('/system/files', { params })
+}
+
+export function uploadSystemFile(data: Partial<SystemFile>) {
+  if (isMockMode) return mockService.uploadSystemFile(data)
+  return apiPost<SystemFile, Partial<SystemFile>>('/system/files', data)
+}
+
+export function deleteSystemFile(id: string) {
+  if (isMockMode) return mockService.deleteSystemFile(id)
+  return apiDelete<null>(`/system/files/${id}`)
+}
+
+export interface NotificationRule {
+  id: string
+  bizType: string
+  channel: 'wecom' | 'dingtalk' | 'internal'
+  webhookUrl: string
+  status: 'active' | 'disabled'
+}
+
+export interface NotificationRuleQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  channel?: NotificationRule['channel']
+  status?: NotificationRule['status']
+}
+
+export function getNotificationRules(params: NotificationRuleQuery) {
+  if (isMockMode) return mockService.getNotificationRules(params) as Promise<ApiResponse<PaginatedData<NotificationRule>>>
+  return apiGet<PaginatedData<NotificationRule>>('/system/notification-rules', { params })
+}
+
+export function createNotificationRule(data: Partial<NotificationRule>) {
+  if (isMockMode) return mockService.createNotificationRule(data)
+  return apiPost<NotificationRule, Partial<NotificationRule>>('/system/notification-rules', data)
+}
+
+export function updateNotificationRule(id: string, data: Partial<NotificationRule>) {
+  if (isMockMode) return mockService.updateNotificationRule(id, data)
+  return apiPut<NotificationRule, Partial<NotificationRule>>(`/system/notification-rules/${id}`, data)
+}
+
+export function deleteNotificationRule(id: string) {
+  if (isMockMode) return mockService.deleteNotificationRule(id)
+  return apiDelete<null>(`/system/notification-rules/${id}`)
+}
+
+export function testNotificationRule(id: string) {
+  if (isMockMode) return mockService.testNotificationRule(id)
+  return apiPost<null>(`/system/notification-rules/${id}/test`)
+}
+
+export function toggleNotificationRule(id: string) {
+  if (isMockMode) return mockService.toggleNotificationRule(id)
+  return apiPut<NotificationRule>(`/system/notification-rules/${id}/toggle`)
+}
+
+export function createSystemParam(data: Partial<SystemParam>) {
+  if (isMockMode) return mockService.createSystemParam(data)
+  return apiPost<SystemParam, Partial<SystemParam>>('/system/params', data)
+}
+
+export function deleteSystemParam(id: string) {
+  if (isMockMode) return mockService.deleteSystemParam(id)
+  return apiDelete<null>(`/system/params/${id}`)
+}
+
+export interface SsoConfig {
+  id: string
+  name: string
+  protocol: 'oauth2' | 'oidc' | 'saml' | 'ldap'
+  url: string
+  clientId: string
+  clientSecret: string
+  redirectUri: string
+  defaultRole: string
+  enabled: boolean
+  status: 'online' | 'offline'
+  lastSyncAt: string
+}
+
+export interface SsoConfigQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  protocol?: SsoConfig['protocol']
+  enabled?: boolean
+}
+
+export function getSsoConfigs(params: SsoConfigQuery) {
+  if (isMockMode) return mockService.getSsoConfigs(params) as Promise<ApiResponse<PaginatedData<SsoConfig>>>
+  return apiGet<PaginatedData<SsoConfig>>('/system/sso-configs', { params })
+}
+
+export function createSsoConfig(data: Partial<SsoConfig>) {
+  if (isMockMode) return mockService.createSsoConfig(data)
+  return apiPost<SsoConfig, Partial<SsoConfig>>('/system/sso-configs', data)
+}
+
+export function updateSsoConfig(id: string, data: Partial<SsoConfig>) {
+  if (isMockMode) return mockService.updateSsoConfig(id, data)
+  return apiPut<SsoConfig, Partial<SsoConfig>>(`/system/sso-configs/${id}`, data)
+}
+
+export function deleteSsoConfig(id: string) {
+  if (isMockMode) return mockService.deleteSsoConfig(id)
+  return apiDelete<null>(`/system/sso-configs/${id}`)
+}
+
+export function testSsoConfig(id: string) {
+  if (isMockMode) return mockService.testSsoConfig(id)
+  return apiPost<null>(`/system/sso-configs/${id}/test`)
 }

@@ -1,61 +1,239 @@
 <template>
   <gi-page-layout>
-    <el-card header="单点登录配置">
-      <el-form :model="form" label-width="140px" style="max-width: 600px">
-        <el-form-item label="SSO协议"
-          ><el-select v-model="form.protocol" style="width: 100%"
-            ><el-option label="OAuth 2.0" value="oauth2" /><el-option label="OIDC" value="oidc" /><el-option
-              label="SAML 2.0"
-              value="saml" /><el-option label="LDAP/AD" value="ldap" /></el-select
-        ></el-form-item>
-        <el-form-item label="认证服务器URL"><el-input v-model="form.url" placeholder="https://sso.company.com/auth" /></el-form-item>
-        <el-form-item label="Client ID"><el-input v-model="form.client_id" /></el-form-item>
-        <el-form-item label="Client Secret"><el-input v-model="form.client_secret" type="password" show-password /></el-form-item>
-        <el-form-item label="回调地址"><el-input v-model="form.redirect_uri" placeholder="https://app.company.com/auth/callback" /></el-form-item>
-        <el-form-item label="默认角色"
-          ><el-select v-model="form.default_role" style="width: 100%"
-            ><el-option label="操作工" value="operator" /><el-option label="车间主任" value="workshop_manager" /><el-option
-              label="只读用户"
-              value="readonly" /></el-select
-        ></el-form-item>
-        <el-form-item label="启用"><el-switch v-model="form.enabled" /></el-form-item>
-        <el-form-item
-          ><el-button type="primary" @click="save">保存配置</el-button><el-button @click="test">测试连接</el-button
-          ><el-button @click="testStatus">连接状态检测</el-button></el-form-item
+    <template #header>
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    </template>
+
+    <TableSetting title="单点登录配置" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
         >
-      </el-form>
-    </el-card>
+          <template #protocol="{ row }">
+            {{ protocolLabelMap[row.protocol] }}
+          </template>
+
+          <template #enabled="{ row }">
+            <el-tag :type="row.enabled ? 'success' : 'info'">{{ row.enabled ? '启用' : '停用' }}</el-tag>
+          </template>
+
+          <template #status="{ row }">
+            <el-tag :type="row.status === 'online' ? 'success' : 'danger'">{{ row.status === 'online' ? '在线' : '离线' }}</el-tag>
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <el-button type="primary" link size="small" @click="handleTest(row)">测试连接</el-button>
+            <gi-button type="delete" @click="onDelete(row)" />
+          </template>
+        </gi-table>
+      </template>
+    </TableSetting>
+
+    <SsoFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
+
 <script lang="ts" setup>
-import { reactive } from 'vue'
-import { ElMessage, ElNotification } from 'element-plus'
-const form = reactive({
-  protocol: 'oauth2',
-  url: 'https://sso.company.com/auth',
-  client_id: 'xuanlian-app',
-  client_secret: '',
-  redirect_uri: 'https://app.company.com/auth/callback',
-  default_role: 'operator',
-  enabled: false
+import { reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
+import {
+  createSsoConfig,
+  deleteSsoConfig,
+  getSsoConfigs,
+  testSsoConfig,
+  updateSsoConfig,
+  type SsoConfig,
+  type SsoConfigQuery
+} from '@/api/system'
+import { useTable } from '@/hooks/useTable'
+import SsoFormDialog, { type SsoFormModel } from './SsoFormDialog.vue'
+
+const protocolOptions = [
+  { label: 'OAuth 2.0', value: 'oauth2' },
+  { label: 'OIDC', value: 'oidc' },
+  { label: 'SAML 2.0', value: 'saml' },
+  { label: 'LDAP/AD', value: 'ldap' }
+]
+
+const enabledOptions = [
+  { label: '启用', value: true },
+  { label: '停用', value: false }
+]
+
+const protocolLabelMap: Record<SsoConfig['protocol'], string> = {
+  oauth2: 'OAuth 2.0',
+  oidc: 'OIDC',
+  saml: 'SAML 2.0',
+  ldap: 'LDAP/AD'
+}
+
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '配置名称/认证地址/Client ID' } as any },
+  { type: 'select-v2', label: '协议', field: 'protocol', props: { options: protocolOptions, clearable: true } as any },
+  { type: 'select-v2', label: '启用状态', field: 'enabled', props: { options: enabledOptions, clearable: true } as any }
+]
+
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
+
+const columns: TableColumnItem<SsoConfig>[] = [
+  { type: 'index', label: '#', width: 60 },
+  { prop: 'name', label: '配置名称', minWidth: 160 },
+  { prop: 'protocol', label: '协议', minWidth: 120, slotName: 'protocol' },
+  { prop: 'url', label: '认证地址', minWidth: 240 },
+  { prop: 'defaultRole', label: '默认角色', minWidth: 120 },
+  { prop: 'enabled', label: '启用状态', minWidth: 100, slotName: 'enabled', align: 'center' },
+  { prop: 'status', label: '连接状态', minWidth: 100, slotName: 'status', align: 'center' },
+  { prop: 'lastSyncAt', label: '最后同步时间', minWidth: 180 },
+  { label: '操作', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const queryParams = reactive<{
+  keyword: string
+  protocol: '' | SsoConfig['protocol']
+  enabled: '' | boolean
+}>({
+  keyword: '',
+  protocol: '',
+  enabled: ''
 })
-function save() {
-  ElMessage.success('SSO配置已保存')
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<SsoFormModel>(createDefaultFormModel())
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<SsoConfig>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: SsoConfigQuery = {
+      pageNum: page,
+      pageSize: size,
+      keyword: queryParams.keyword || undefined,
+      protocol: queryParams.protocol || undefined,
+      enabled: queryParams.enabled === '' ? undefined : queryParams.enabled
+    }
+
+    const response = await getSsoConfigs(params)
+    return response.data
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteSsoConfig(id)))
+})
+
+function createDefaultFormModel(): SsoFormModel {
+  return {
+    id: '',
+    name: '',
+    protocol: 'oauth2',
+    url: '',
+    clientId: '',
+    clientSecret: '',
+    redirectUri: '',
+    defaultRole: '',
+    enabled: false
+  }
 }
-function test() {
-  ElMessage.success('连接测试成功')
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
-function testStatus() {
-  ElNotification({
-    title: '连接状态检测',
-    message: `SSO协议: ${form.protocol.toUpperCase()}
-认证地址: ${form.url}
-状态: 连接正常
-延迟: 32ms
-证书有效期: 2026-12-31
-最后同步: 2025-06-29 10:30:00`,
-    type: 'success',
-    duration: 8000
+
+function handleReset() {
+  Object.assign(queryParams, {
+    keyword: '',
+    protocol: '',
+    enabled: ''
   })
+  search()
+}
+
+function openAdd() {
+  dialogMode.value = 'add'
+  formModel.value = createDefaultFormModel()
+  dialogVisible.value = true
+}
+
+function openEdit(row: SsoConfig) {
+  dialogMode.value = 'edit'
+  formModel.value = {
+    id: row.id,
+    name: row.name,
+    protocol: row.protocol,
+    url: row.url,
+    clientId: row.clientId,
+    clientSecret: row.clientSecret,
+    redirectUri: row.redirectUri,
+    defaultRole: row.defaultRole,
+    enabled: row.enabled
+  }
+  dialogVisible.value = true
+}
+
+async function submitDialog() {
+  if (!formModel.value.name || !formModel.value.url || !formModel.value.clientId) {
+    ElMessage.warning('请填写配置名称、认证地址和 Client ID')
+    return
+  }
+
+  const status: SsoConfig['status'] = formModel.value.enabled ? 'online' : 'offline'
+
+  const payload = {
+    name: formModel.value.name,
+    protocol: formModel.value.protocol,
+    url: formModel.value.url,
+    clientId: formModel.value.clientId,
+    clientSecret: formModel.value.clientSecret,
+    redirectUri: formModel.value.redirectUri,
+    defaultRole: formModel.value.defaultRole,
+    enabled: formModel.value.enabled,
+    status
+  }
+
+  if (dialogMode.value === 'add') {
+    await createSsoConfig(payload)
+  } else {
+    await updateSsoConfig(formModel.value.id, payload)
+  }
+
+  dialogVisible.value = false
+  await refresh()
+  ElMessage.success(dialogMode.value === 'add' ? '新增成功' : '保存成功')
+}
+
+async function handleTest(row: SsoConfig) {
+  await testSsoConfig(row.id)
+  ElMessage.success(`连接测试成功：${row.name}`)
+  await refresh()
 }
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>
