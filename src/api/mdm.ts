@@ -5,6 +5,7 @@ import * as mockService from '@/mock/services/mdm'
 export interface OrgNode {
   id: string
   name: string
+  code?: string
   type: 'group' | 'company' | 'plant' | 'workshop' | 'line'
   children?: OrgNode[]
 }
@@ -12,6 +13,48 @@ export interface OrgNode {
 export function getOrgTree() {
   if (isMockMode) return mockService.getOrgTree()
   return apiGet<OrgNode[]>('/mdm/org-tree')
+}
+
+export interface OrgListItem {
+  id: string
+  name: string
+  code: string
+  type: OrgNode['type']
+  parentName: string
+  childCount: number
+}
+
+export interface OrgTreeQuery {
+  pageNum?: number
+  pageSize?: number
+  keyword?: string
+  type?: OrgNode['type'] | ''
+  nodeId?: string
+}
+
+export function getOrgNodeDetail(id: string) {
+  if (isMockMode) return mockService.getOrgNodeDetail(id)
+  return apiGet<OrgNode>(`/mdm/org-tree/${id}`)
+}
+
+export function getOrgTreeList(params?: OrgTreeQuery) {
+  if (isMockMode) return mockService.getOrgTreeList(params) as Promise<ApiResponse<PaginatedData<OrgListItem>>>
+  return apiGet<PaginatedData<OrgListItem>>('/mdm/org-tree/list', { params })
+}
+
+export function createOrgNode(data: Partial<OrgNode> & { parentId?: string }) {
+  if (isMockMode) return mockService.createOrgNode(data)
+  return apiPost<Record<string, never>, Partial<OrgNode> & { parentId?: string }>('/mdm/org-tree', data)
+}
+
+export function updateOrgNode(id: string, data: Partial<OrgNode>) {
+  if (isMockMode) return mockService.updateOrgNode(id, data)
+  return apiPut<Record<string, never>, Partial<OrgNode>>(`/mdm/org-tree/${id}`, data)
+}
+
+export function deleteOrgNode(id: string) {
+  if (isMockMode) return mockService.deleteOrgNode(id)
+  return apiDelete<Record<string, never>>(`/mdm/org-tree/${id}`)
 }
 
 export interface MaterialCategory {

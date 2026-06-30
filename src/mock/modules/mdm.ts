@@ -3,30 +3,34 @@ import Mock from 'mockjs'
 export const orgTree = [
   {
     id: '1',
-    name: 'XX Group Co., Ltd.',
+    name: '玄工智链集团',
+    code: 'ORG-GROUP-001',
     type: 'group',
     children: [
       {
         id: '2',
-        name: 'XX Heavy Industry Co., Ltd.',
+        name: '玄工重工有限公司',
+        code: 'ORG-COMP-001',
         type: 'company',
         children: [
           {
             id: '3',
-            name: 'Plant A',
+            name: '一号工厂',
+            code: 'ORG-PLANT-001',
             type: 'plant',
             children: [
               {
                 id: '4',
-                name: 'Machining Workshop 1',
+                name: '机加工一车间',
+                code: 'ORG-WS-001',
                 type: 'workshop',
                 children: [
-                  { id: '41', name: 'Line A', type: 'line' },
-                  { id: '42', name: 'Line B', type: 'line' }
+                  { id: '41', name: '产线 A', code: 'ORG-LINE-001', type: 'line' },
+                  { id: '42', name: '产线 B', code: 'ORG-LINE-002', type: 'line' }
                 ]
               },
-              { id: '5', name: 'Machining Workshop 2', type: 'workshop' },
-              { id: '6', name: 'Assembly Workshop', type: 'workshop' }
+              { id: '5', name: '机加工二车间', code: 'ORG-WS-002', type: 'workshop' },
+              { id: '6', name: '装配车间', code: 'ORG-WS-003', type: 'workshop' }
             ]
           }
         ]
@@ -132,13 +136,13 @@ export const equipments = [
 ]
 
 export const workCenters = [
-  { id: '1', code: 'WC00000001', name: 'CNC Group', workshop: 'Machining Workshop 1', capacity: '16h/day', cost: '150/hour' },
-  { id: '2', code: 'WC00000002', name: 'Drill Group', workshop: 'Machining Workshop 1', capacity: '8h/day', cost: '80/hour' },
-  { id: '3', code: 'WC00000003', name: 'Grind Group', workshop: 'Machining Workshop 1', capacity: '8h/day', cost: '120/hour' },
-  { id: '4', code: 'WC00000004', name: 'Assembly Group', workshop: 'Assembly Workshop', capacity: '8h/day', cost: '100/hour' }
+  { id: '1', code: 'WC00000001', name: '数控班组', workshop: '机加工一车间', capacity: '16h/天', cost: '150元/小时' },
+  { id: '2', code: 'WC00000002', name: '钻床班组', workshop: '机加工一车间', capacity: '8h/天', cost: '80元/小时' },
+  { id: '3', code: 'WC00000003', name: '磨削班组', workshop: '机加工一车间', capacity: '8h/天', cost: '120元/小时' },
+  { id: '4', code: 'WC00000004', name: '装配班组', workshop: '装配车间', capacity: '8h/天', cost: '100元/小时' }
 ]
 
 export const molds = [
-  { id: '1', code: 'MD0000000001', name: 'Pump Body Casting Mold', type: 'casting', life: '10000 cycles', used: '3500' },
-  { id: '2', code: 'MD0000000002', name: 'Impeller Forging Mold', type: 'forging', life: '5000 cycles', used: '1200' }
+  { id: '1', code: 'MD0000000001', name: '泵体铸造模具', type: 'casting', life: '10000 次', used: '3500' },
+  { id: '2', code: 'MD0000000002', name: '叶轮锻造模具', type: 'forging', life: '5000 次', used: '1200' }
 ]
