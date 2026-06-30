@@ -162,7 +162,9 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<S
     }
 
     const response = await getMenuList(params)
-    const list = currentTreeNode.value?.id ? response.data.list.filter((item) => item.parentId === currentTreeNode.value?.id || item.id === currentTreeNode.value?.id) : response.data.list
+    const list = currentTreeNode.value?.id
+      ? response.data.list.filter((item) => item.parentId === currentTreeNode.value?.id || item.id === currentTreeNode.value?.id)
+      : response.data.list
 
     return {
       list,

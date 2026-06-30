@@ -55,9 +55,7 @@ import { createSystemParam, deleteSystemParam, getSystemParams, updateSystemPara
 import { useTable } from '@/hooks/useTable'
 import ParamFormDialog, { type ParamFormModel } from './ParamFormDialog.vue'
 
-const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '参数编码/参数名称' } as any }
-]
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '参数编码/参数名称' } as any }]
 
 const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }

@@ -81,9 +81,7 @@ import { useTable } from '@/hooks/useTable'
 import DictItemsDialog from './DictItemsDialog.vue'
 import DictTypeDialog, { type DictTypeFormModel } from './DictTypeDialog.vue'
 
-const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '字典编码/字典名称' } as any }
-]
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '字典编码/字典名称' } as any }]
 
 const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }

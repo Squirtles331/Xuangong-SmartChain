@@ -493,7 +493,13 @@ export async function deleteCodeRule(id: string) {
   return wrapSuccessResponse('删除编码规则成功')
 }
 
-export async function getApprovalFlows(params: { pageNum: number; pageSize: number; name?: string; businessType?: string; status?: 'active' | 'disabled' }) {
+export async function getApprovalFlows(params: {
+  pageNum: number
+  pageSize: number
+  name?: string
+  businessType?: string
+  status?: 'active' | 'disabled'
+}) {
   await simulateDelay()
 
   let filtered = [...approvalFlows]

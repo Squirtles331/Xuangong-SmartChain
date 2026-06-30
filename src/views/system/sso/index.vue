@@ -60,15 +60,7 @@ import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import TableSetting from '@/components/TableSetting.vue'
-import {
-  createSsoConfig,
-  deleteSsoConfig,
-  getSsoConfigs,
-  testSsoConfig,
-  updateSsoConfig,
-  type SsoConfig,
-  type SsoConfigQuery
-} from '@/api/system'
+import { createSsoConfig, deleteSsoConfig, getSsoConfigs, testSsoConfig, updateSsoConfig, type SsoConfig, type SsoConfigQuery } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import SsoFormDialog, { type SsoFormModel } from './SsoFormDialog.vue'
 
