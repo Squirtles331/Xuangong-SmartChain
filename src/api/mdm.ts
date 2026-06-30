@@ -70,6 +70,7 @@ export interface Material {
   spec: string
   type: 'purchased' | 'manufactured' | 'outsourced'
   unit: string
+  category?: string
 }
 
 export interface MaterialQuery {
@@ -78,6 +79,7 @@ export interface MaterialQuery {
   code?: string
   name?: string
   type?: string
+  category?: string
 }
 
 export function getMaterialTree() {

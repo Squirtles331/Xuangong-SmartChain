@@ -159,12 +159,13 @@ export async function getMaterialTree() {
   return wrapDetailResponse(materialTree)
 }
 
-export async function getMaterialList(params: { pageNum: number; pageSize: number; code?: string; name?: string; type?: string }) {
+export async function getMaterialList(params: { pageNum: number; pageSize: number; code?: string; name?: string; type?: string; category?: string }) {
   await simulateDelay()
   let filtered = [...materialList]
   if (params.code) filtered = searchItems(filtered, params.code, ['code'])
   if (params.name) filtered = searchItems(filtered, params.name, ['name'])
   if (params.type) filtered = filtered.filter((m) => (m as any).type === params.type)
+  if (params.category) filtered = filtered.filter((m) => (m as any).category === params.category)
   const result = paginate(filtered, params.pageNum, params.pageSize)
   return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }

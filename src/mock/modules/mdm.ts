@@ -42,31 +42,31 @@ export const orgTree = [
 export const materialTree = [
   {
     id: '1',
-    name: 'Raw Material',
+    name: '原材料',
     children: [
       {
         id: '11',
-        name: 'Steel',
+        name: '钢材',
         children: [
-          { id: '111', name: 'Round Steel' },
-          { id: '112', name: 'Plate' }
+          { id: '111', name: '圆钢' },
+          { id: '112', name: '钢板' }
         ]
       }
     ]
   },
   {
     id: '2',
-    name: 'Purchased Part',
+    name: '外购件',
     children: [
-      { id: '21', name: 'Bearing' },
-      { id: '22', name: 'Fastener' },
-      { id: '23', name: 'Seal' }
+      { id: '21', name: '轴承' },
+      { id: '22', name: '紧固件' },
+      { id: '23', name: '密封件' }
     ]
   },
-  { id: '3', name: 'Semi-finished' },
-  { id: '4', name: 'Finished Product' },
-  { id: '5', name: 'Auxiliary Material' },
-  { id: '6', name: 'Packaging' }
+  { id: '3', name: '半成品' },
+  { id: '4', name: '成品' },
+  { id: '5', name: '辅料' },
+  { id: '6', name: '包装材料' }
 ]
 
 export const materialList = Mock.mock({
@@ -74,10 +74,11 @@ export const materialList = Mock.mock({
     {
       'id|+1': 1,
       code: /(01|02|03|04)\.\d{2}\.\d{3}-\d{5}/,
-      name: '@pick(["45# Round Steel","Bearing 6308","Bolt M16x60","Pump XJP-100","Drive Shaft DS-50","Pump Body","Wear Ring","Key 8x7x30","Impeller Casting","Bearing Housing","Hydraulic Oil Shell Tellus 46","Valve Assembly VL-300"])',
-      spec: '@pick(["D50","SKF","M16x60","Flow 100m3/h","D50x500","","","","","","","DN300"])',
+      name: '@pick(["45号圆钢","6308轴承","M16x60螺栓","XJP-100泵体","DS-50传动轴","泵壳","耐磨环","8x7x30键","叶轮铸件","轴承座","46号液压油","VL-300阀门组件"])',
+      spec: '@pick(["D50","SKF 6308","M16x60","100m³/h","D50x500","标准件","耐磨型","8x7x30","铸造件","标准型","46号","DN300"])',
       'type|1': ['purchased', 'purchased', 'manufactured', 'manufactured', 'outsourced'],
-      unit: '@pick(["kg","pcs","set","m","L"])'
+      unit: '@pick(["千克","件","套","米","升"])',
+      category: '@pick(["原材料","钢材","圆钢","钢板","外购件","轴承","紧固件","密封件","半成品","成品","辅料","包装材料"])'
     }
   ]
 }).list

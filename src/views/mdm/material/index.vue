@@ -2,146 +2,180 @@
   <gi-page-layout :size="220" style="height: calc(100vh - 120px)">
     <template #left>
       <el-tree
-        :data="catTree"
+        :data="categoryTree"
         :props="{ children: 'children', label: 'name' }"
         node-key="id"
         default-expand-all
+        :expand-on-click-node="false"
         highlight-current
-        @node-click="onCatClick"
+        @node-click="onCategoryClick"
       />
     </template>
+
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @reset="handleReset" @search="handleSearch" />
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
+
     <template #tool>
       <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #index="{ $index }">
-        {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
+    <TableSetting title="表格工具栏" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #index="{ $index }">
+            {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
+          </template>
+
+          <template #type="{ row }">
+            <el-tag size="small">
+              {{ getTypeLabel(row.type) }}
+            </el-tag>
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button type="delete" style="margin-left: 8px" @click="onDelete(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #type="{ row }">
-        <el-tag size="small">
-          {{ row.type === 'purchased' ? '外购' : row.type === 'manufactured' ? '自制' : '委外' }}
-        </el-tag>
-      </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <MaterialFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import { getMaterialList, getMaterialTree, createMaterial, updateMaterial, deleteMaterial } from '@/api/mdm'
+import TableSetting from '@/components/TableSetting.vue'
+import {
+  createMaterial,
+  deleteMaterial,
+  getMaterialList,
+  getMaterialTree,
+  updateMaterial,
+  type Material,
+  type MaterialCategory,
+  type MaterialQuery
+} from '@/api/mdm'
 import { useTable } from '@/hooks/useTable'
 import MaterialFormDialog, { type MaterialFormModel } from './MaterialFormDialog.vue'
 
-interface MaterialRow {
-  id: string
-  code: string
-  name: string
-  spec: string
-  type: string
-  unit: string
+type MaterialRow = Material
+
+const categoryTree = ref<MaterialCategory[]>([])
+
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '物料编码/物料名称' } as any },
+  { type: 'input', label: '分类', field: 'category', props: { disabled: true } as any }
+]
+
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
-const catTree = ref<any[]>([])
+const columns: TableColumnItem<MaterialRow>[] = [
+  { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
+  { prop: 'code', label: '物料编码', minWidth: 180 },
+  { prop: 'name', label: '物料名称', minWidth: 160 },
+  { prop: 'spec', label: '规格型号', minWidth: 140 },
+  { label: '物料类型', minWidth: 100, slotName: 'type', align: 'center' },
+  { prop: 'unit', label: '单位', minWidth: 80, align: 'center' },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+]
 
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({
+const queryParams = reactive<{
+  keyword: string
+  category: string
+}>({
   keyword: '',
   category: ''
 })
 
-const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '物料编码/名称', clearable: true } as any },
-  { type: 'input', label: '分类', field: 'category', props: { disabled: true } as any }
-]
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<MaterialFormModel>(createDefaultFormModel())
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<MaterialRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: MaterialQuery = {
+      pageNum: page,
+      pageSize: size,
+      name: queryParams.keyword || undefined,
+      category: queryParams.category || undefined
+    }
+
+    const response = await getMaterialList(params)
+    return response.data
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteMaterial(id)))
+})
+
+init()
+
+async function init() {
+  const response = await getMaterialTree()
+  categoryTree.value = response.data as MaterialCategory[]
+}
+
+function createDefaultFormModel(): MaterialFormModel {
+  return {
+    id: '',
+    code: '',
+    name: '',
+    spec: '',
+    type: 'purchased',
+    unit: ''
+  }
+}
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-const columns: TableColumnItem<MaterialRow>[] = [
-  { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
-  { prop: 'code', label: '物料编码', width: 180 },
-  { prop: 'name', label: '物料名称', minWidth: 140 },
-  { prop: 'spec', label: '规格型号', width: 120 },
-  { label: '物料类型', minWidth: 80, slotName: 'type', align: 'center' },
-  { prop: 'unit', label: '单位', minWidth: 60, align: 'center' },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
-]
-
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<MaterialRow>({
-  rowKey: 'id',
-  listAPI: async ({ page, size }) => {
-    const params: { pageNum: number; pageSize: number; code?: string; name?: string } = {
-      pageNum: page,
-      pageSize: size
-    }
-    if (searchForm.value.keyword) {
-      params.name = searchForm.value.keyword
-    }
-    const res = await getMaterialList(params)
-    return {
-      list: res.data.list.map((item) => ({
-        id: item.id,
-        code: item.code,
-        name: item.name,
-        spec: item.spec || '',
-        type: item.type,
-        unit: item.unit
-      })),
-      total: res.data.total
-    }
-  },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteMaterial(id)))
-})
-
-// Tree
-async function fetchTree() {
-  const res = await getMaterialTree()
-  catTree.value = res.data as any[]
-}
-fetchTree()
-
-function onCatClick(data: any) {
-  searchForm.value.category = data.name
-  search()
-}
-
-function handleSearch() {
+function onCategoryClick(data: MaterialCategory) {
+  queryParams.category = data.name
   search()
 }
 
 function handleReset() {
-  searchForm.value.keyword = ''
-  searchForm.value.category = ''
+  Object.assign(queryParams, {
+    keyword: '',
+    category: ''
+  })
   search()
 }
 
-// Dialog
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<MaterialFormModel>(createDefaultFormModel())
-
-function createDefaultFormModel(): MaterialFormModel {
-  return { id: '', code: '', name: '', spec: '', type: 'purchased', unit: '' }
+function getTypeLabel(type: Material['type']) {
+  const typeLabelMap: Record<Material['type'], string> = {
+    purchased: '外购',
+    manufactured: '自制',
+    outsourced: '委外'
+  }
+  return typeLabelMap[type]
 }
 
 function openAdd() {
@@ -152,22 +186,38 @@ function openAdd() {
 
 function openEdit(row: MaterialRow) {
   dialogMode.value = 'edit'
-  formModel.value = { ...row }
+  formModel.value = {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    spec: row.spec,
+    type: row.type,
+    unit: row.unit
+  }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
   if (!formModel.value.code || !formModel.value.name) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('请填写物料编码和物料名称')
     return
   }
-  const payload = { ...formModel.value }
+
+  const { id, ...payload } = formModel.value
+
   if (dialogMode.value === 'add') {
-    await createMaterial(payload as any)
+    await createMaterial(payload)
   } else {
-    await updateMaterial(formModel.value.id, payload as any)
+    await updateMaterial(id, payload)
   }
+
   dialogVisible.value = false
   await refresh()
 }
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

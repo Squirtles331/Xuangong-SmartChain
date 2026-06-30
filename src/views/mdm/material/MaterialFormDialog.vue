@@ -20,7 +20,7 @@ export interface MaterialFormModel {
   code: string
   name: string
   spec: string
-  type: string
+  type: 'purchased' | 'manufactured' | 'outsourced'
   unit: string
 }
 
