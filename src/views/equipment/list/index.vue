@@ -1,17 +1,14 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
+          v-model="queryParams"
           :columns="visibleSearchColumns"
-          :grid-item-props="{
-            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-          }"
+          :grid-item-props="searchGridItemProps"
           search
           @reset="handleReset"
-          @search="handleSearch"
+          @search="search"
         />
       </SearchSetting>
     </template>
@@ -40,56 +37,51 @@
       </el-card>
     </div>
 
-    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #status="{ row }">
-        <StatusTag :value="row.status" :options="EQUIPMENT_STATUS" />
+    <TableSetting title="设备台账" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #status="{ row }">
+            <StatusTag :value="row.status" :options="equipmentStatusOptions" />
+          </template>
+
+          <template #actions="{ row }">
+            <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button type="warning" link size="small" @click="openCheckPlan(row)">点检</el-button>
+            <el-button type="success" link size="small" @click="openMaintainPlan(row)">保养</el-button>
+            <gi-button type="delete" @click="onDelete(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #actions="{ row }">
-        <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
-        <el-button type="warning" link size="small" @click="$router.push(`/equipment/check-plan/${row.id}`)">点检</el-button>
-        <el-button type="success" link size="small" @click="$router.push(`/equipment/maintain-plan/${row.id}`)">保养</el-button>
-        <gi-button type="delete" @click="onDelete(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <EquipmentFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import { computed, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { EQUIPMENT_STATUS } from '@/common/status-maps'
-import { createEquipment, deleteEquipment, getEquipmentList, updateEquipment, type Equipment } from '@/api/mdm'
+import TableSetting from '@/components/TableSetting.vue'
+import { EQUIPMENT_STATUS as equipmentStatusOptions } from '@/common/status-maps'
+import { createEquipment, deleteEquipment, getEquipmentList, updateEquipment, type Equipment, type EquipmentQuery } from '@/api/mdm'
 import { useTable } from '@/hooks/useTable'
 import EquipmentFormDialog, { type EquipmentFormModel } from './EquipmentFormDialog.vue'
 
-interface EqRow {
-  id: string
-  code: string
-  name: string
-  model: string
-  workshop: string
-  status: 'running' | 'idle' | 'repair' | 'maintenance'
-  purchase_date: string
-  commission_date: string
-}
-
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({
-  keyword: '',
-  workshop: '',
-  status: ''
-})
-
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<EquipmentFormModel>(createDefaultFormModel())
+const router = useRouter()
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword' } as any,
+  { type: 'input', label: '关键字', field: 'keyword' },
   {
     type: 'select-v2',
     label: '车间',
@@ -98,10 +90,11 @@ const searchColumns: FormColumnItem[] = [
       options: [
         { label: '全部', value: '' },
         { label: '机加工一车间', value: '机加工一车间' },
-        { label: '机加工二车间', value: '机加工二车间' }
+        { label: '机加工二车间', value: '机加工二车间' },
+        { label: '装配车间', value: '装配车间' }
       ]
-    }
-  } as any,
+    } as any
+  },
   {
     type: 'select-v2',
     label: '状态',
@@ -109,55 +102,61 @@ const searchColumns: FormColumnItem[] = [
     props: {
       options: [
         { label: '全部', value: '' },
-        { label: '运行', value: 'running' },
+        { label: '运行中', value: 'running' },
         { label: '空闲', value: 'idle' },
-        { label: '保养', value: 'maintenance' },
-        { label: '维修', value: 'repair' }
+        { label: '保养中', value: 'maintenance' },
+        { label: '维修中', value: 'repair' }
       ]
-    }
-  } as any
+    } as any
+  }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
 
-const cols: TableColumnItem<EqRow>[] = [
-  { prop: 'code', label: '设备编码', width: 150 },
-  { prop: 'name', label: '设备名称', width: 120 },
-  { prop: 'model', label: '型号', width: 100 },
-  { prop: 'workshop', label: '所属车间', width: 140 },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { prop: 'purchase_date', label: '购置日期', width: 110 },
-  { prop: 'commission_date', label: '投产日期', width: 110 },
-  { label: '操作', minWidth: 280, fixed: 'right', slotName: 'actions', align: 'center' }
+const columns: TableColumnItem<Equipment>[] = [
+  { prop: 'code', label: '设备编码', minWidth: 150 },
+  { prop: 'name', label: '设备名称', minWidth: 140 },
+  { prop: 'model', label: '型号', minWidth: 120 },
+  { prop: 'workshop', label: '所属车间', minWidth: 160 },
+  { label: '状态', minWidth: 100, slotName: 'status', align: 'center' },
+  { prop: 'purchase_date', label: '购置日期', minWidth: 120 },
+  { prop: 'commission_date', label: '投产日期', minWidth: 120 },
+  { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<EqRow>({
+const queryParams = reactive({
+  keyword: '',
+  workshop: '',
+  status: ''
+})
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<EquipmentFormModel>(createDefaultFormModel())
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<Equipment>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getEquipmentList({
+    const params: EquipmentQuery = {
       pageNum: page,
       pageSize: size,
-      name: searchForm.value.keyword || undefined,
-      workshop: searchForm.value.workshop || undefined,
-      status: searchForm.value.status || undefined
-    })
-    return {
-      list: res.data.list.map((item) => ({
-        ...item,
-        purchase_date: item.purchase_date || '',
-        commission_date: item.commission_date || ''
-      })),
-      total: res.data.total
+      name: queryParams.keyword || undefined,
+      workshop: queryParams.workshop || undefined,
+      status: queryParams.status || undefined
     }
+    const response = await getEquipmentList(params)
+    return response.data
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteEquipment(id)))
 })
 
 const totalCount = computed(() => tableData.value.length)
-const runningCount = computed(() => tableData.value.filter((e) => e.status === 'running').length)
-const idleCount = computed(() => tableData.value.filter((e) => e.status === 'idle').length)
-const repairCount = computed(() => tableData.value.filter((e) => e.status === 'repair' || e.status === 'maintenance').length)
+const runningCount = computed(() => tableData.value.filter((item) => item.status === 'running').length)
+const idleCount = computed(() => tableData.value.filter((item) => item.status === 'idle').length)
+const repairCount = computed(() => tableData.value.filter((item) => item.status === 'repair' || item.status === 'maintenance').length)
 
 function createDefaultFormModel(): EquipmentFormModel {
   return {
@@ -176,12 +175,12 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value = { keyword: '', workshop: '', status: '' }
+  Object.assign(queryParams, {
+    keyword: '',
+    workshop: '',
+    status: ''
+  })
   search()
 }
 
@@ -191,7 +190,7 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: EqRow) {
+function openEdit(row: Equipment) {
   dialogMode.value = 'edit'
   formModel.value = {
     id: row.id,
@@ -200,34 +199,36 @@ function openEdit(row: EqRow) {
     model: row.model,
     workshop: row.workshop,
     status: row.status,
-    purchase_date: row.purchase_date,
-    commission_date: row.commission_date
+    purchase_date: row.purchase_date || '',
+    commission_date: row.commission_date || ''
   }
   dialogVisible.value = true
 }
 
-function buildEquipmentPayload(model: EquipmentFormModel): Partial<Equipment> {
-  return {
-    id: model.id,
-    code: model.code,
-    name: model.name,
-    model: model.model,
-    workshop: model.workshop,
-    status: model.status as Equipment['status'],
-    purchase_date: model.purchase_date,
-    commission_date: model.commission_date
-  }
+function openCheckPlan(_row: Equipment) {
+  router.push('/equipment/check')
+}
+
+function openMaintainPlan(_row: Equipment) {
+  router.push('/equipment/maintain')
 }
 
 async function submitDialog() {
-  if (!formModel.value.code || !formModel.value.name) {
-    return
+  const payload: Partial<Equipment> = {
+    id: formModel.value.id,
+    code: formModel.value.code,
+    name: formModel.value.name,
+    model: formModel.value.model,
+    workshop: formModel.value.workshop,
+    status: formModel.value.status as Equipment['status'],
+    purchase_date: formModel.value.purchase_date,
+    commission_date: formModel.value.commission_date
   }
 
   if (dialogMode.value === 'add') {
-    await createEquipment(buildEquipmentPayload(formModel.value))
+    await createEquipment(payload)
   } else {
-    await updateEquipment(formModel.value.id, buildEquipmentPayload(formModel.value))
+    await updateEquipment(formModel.value.id, payload)
   }
 
   dialogVisible.value = false
@@ -241,32 +242,43 @@ async function submitDialog() {
   gap: 16px;
   margin-bottom: 16px;
 }
+
 .stat-card {
   flex: 1;
   text-align: center;
   cursor: default;
 }
+
 .stat-card :deep(.el-card__body) {
   padding: 16px 12px;
 }
+
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #303133;
   line-height: 1.2;
+  color: #303133;
 }
+
 .stat-label {
+  margin-top: 4px;
   font-size: 13px;
   color: #909399;
-  margin-top: 4px;
 }
+
 .stat-running .stat-value {
   color: #67c23a;
 }
+
 .stat-idle .stat-value {
   color: #909399;
 }
+
 .stat-repair .stat-value {
   color: #e6a23c;
+}
+
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
 }
 </style>

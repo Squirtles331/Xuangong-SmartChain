@@ -2,25 +2,28 @@
   <gi-page-layout>
     <template #tool>
       <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="loadHistory" />
+      <gi-button type="reset" style="margin-left: 8px" @click="loadHistory" />
     </template>
 
     <el-tabs v-model="tab">
       <el-tab-pane label="预警规则" name="rules">
         <gi-table :columns="ruleColumns" :data="rules" border stripe>
           <template #metric="{ row }">
-            <el-tag size="small">{{ metricLabel[row.metric] || row.metric }}</el-tag>
+            <el-tag size="small">{{ metricLabel[row.metric] }}</el-tag>
           </template>
+
           <template #level="{ row }">
             <el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">
-              {{ levelLabel[row.level] || row.level }}
+              {{ levelLabel[row.level] }}
             </el-tag>
           </template>
+
           <template #status="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
               {{ row.status === 'active' ? '启用' : '停用' }}
             </el-tag>
           </template>
+
           <template #actions="{ row }">
             <gi-button type="edit" @click="openEdit(row)" />
             <el-button :type="row.status === 'active' ? 'warning' : 'success'" link size="small" @click="toggle(row)">
@@ -34,13 +37,15 @@
       <el-tab-pane label="告警历史" name="history">
         <gi-table :columns="historyColumns" :data="alertHistory" border stripe size="small">
           <template #metric="{ row }">
-            <el-tag size="small">{{ metricLabel[row.metric] || row.metric }}</el-tag>
+            <el-tag size="small">{{ metricLabel[row.metric] }}</el-tag>
           </template>
+
           <template #level="{ row }">
             <el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">
-              {{ levelLabel[row.level] || row.level }}
+              {{ levelLabel[row.level] }}
             </el-tag>
           </template>
+
           <template #status="{ row }">
             <el-tag :type="row.status === 'triggered' ? 'danger' : 'success'" size="small">
               {{ row.status === 'triggered' ? '已触发' : '已恢复' }}
@@ -64,27 +69,27 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
-import { createIoTAlertRule, deleteIoTAlertRule, getIoTAlertHistory, getIoTAlertRules, updateIoTAlertRule } from '@/api/wms'
+import {
+  createIoTAlertRule,
+  deleteIoTAlertRule,
+  getIoTAlertHistory,
+  getIoTAlertRuleList,
+  updateIoTAlertRule,
+  type IoTAlertHistoryItem,
+  type IoTAlertLevel,
+  type IoTAlertMetric,
+  type IoTAlertRule
+} from '@/api/iot'
 import AlertFormDialog, { type AlertRuleFormModel } from './AlertFormDialog.vue'
 
-interface Rule {
-  id: string
-  device: string
-  metric: string
-  operator: string
-  threshold: number
-  level: string
-  status: string
-}
-
-const metricLabel: Record<string, string> = {
+const metricLabel: Record<IoTAlertMetric, string> = {
   temp: '温度',
-  rpm: 'RPM',
+  rpm: '转速',
   vibration: '振动',
   current: '电流'
 }
 
-const levelLabel: Record<string, string> = {
+const levelLabel: Record<IoTAlertLevel, string> = {
   critical: '严重',
   warning: '预警',
   info: '提示'
@@ -97,34 +102,25 @@ const deviceOptions = [
 ]
 
 const tab = ref('rules')
-const rules = ref<Rule[]>([])
-const alertHistory = ref<any[]>([])
+const rules = ref<IoTAlertRule[]>([])
+const alertHistory = ref<IoTAlertHistoryItem[]>([])
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
-const editingId = ref('')
 
-const formModel = ref<AlertRuleFormModel>({
-  id: '',
-  device: '数控车床 CK6150',
-  metric: 'temp',
-  operator: '>',
-  threshold: 60,
-  level: 'warning',
-  status: 'active'
-})
+const formModel = ref<AlertRuleFormModel>(createDefaultFormModel())
 
-const historyColumns: TableColumnItem<any>[] = [
+const historyColumns: TableColumnItem<IoTAlertHistoryItem>[] = [
   { prop: 'device', label: '设备', minWidth: 160 },
   { label: '监测项', minWidth: 90, slotName: 'metric', align: 'center' },
-  { prop: 'actual_value', label: '实际值', minWidth: 80, align: 'center' },
-  { prop: 'threshold', label: '阈值', minWidth: 80, align: 'center' },
+  { prop: 'actual_value', label: '实际值', minWidth: 90, align: 'center' },
+  { prop: 'threshold', label: '阈值', minWidth: 90, align: 'center' },
   { label: '等级', minWidth: 80, slotName: 'level', align: 'center' },
   { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
   { prop: 'triggered_at', label: '触发时间', minWidth: 170 },
   { prop: 'recovered_at', label: '恢复时间', minWidth: 170 }
 ]
 
-const ruleColumns: TableColumnItem<Rule>[] = [
+const ruleColumns: TableColumnItem<IoTAlertRule>[] = [
   { prop: 'device', label: '设备', minWidth: 180 },
   { label: '监测项', minWidth: 90, slotName: 'metric', align: 'center' },
   { prop: 'operator', label: '运算符', minWidth: 80, align: 'center' },
@@ -134,36 +130,36 @@ const ruleColumns: TableColumnItem<Rule>[] = [
   { label: '操作', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
+function createDefaultFormModel(): AlertRuleFormModel {
+  return {
+    id: '',
+    device: '数控车床 CK6150',
+    metric: 'temp',
+    operator: '>',
+    threshold: 60,
+    level: 'warning',
+    status: 'active'
+  }
+}
+
 async function loadRules() {
-  const res = await getIoTAlertRules()
-  rules.value = (res.data || []).map((item: any) => ({ ...item, id: String(item.id) }))
+  const response = await getIoTAlertRuleList()
+  rules.value = response.data || []
 }
 
 async function loadHistory() {
-  const res = await getIoTAlertHistory({ pageNum: 1, pageSize: 100 })
-  alertHistory.value = res.data.list.map((item: any) => ({
-    id: String(item.id),
-    device: item.device,
-    metric: String(item.metric || 'current'),
-    actual_value: item.actual_value ?? item.value,
-    threshold: item.threshold,
-    level: item.level === 'danger' ? 'critical' : item.level,
-    status: item.recover_time ? 'recovered' : 'triggered',
-    triggered_at: item.triggered_at ?? item.trigger_time,
-    recovered_at: item.recovered_at ?? item.recover_time
-  }))
+  const response = await getIoTAlertHistory({ pageNum: 1, pageSize: 100 })
+  alertHistory.value = response.data.list || []
 }
 
 function openAdd() {
   dialogMode.value = 'add'
-  editingId.value = ''
-  formModel.value = { id: '', device: '数控车床 CK6150', metric: 'temp', operator: '>', threshold: 60, level: 'warning', status: 'active' }
+  formModel.value = createDefaultFormModel()
   dialogVisible.value = true
 }
 
-function openEdit(rule: Rule) {
+function openEdit(rule: IoTAlertRule) {
   dialogMode.value = 'edit'
-  editingId.value = rule.id
   formModel.value = { ...rule }
   dialogVisible.value = true
 }
@@ -175,16 +171,18 @@ async function submitDialog() {
   }
 
   if (dialogMode.value === 'add') {
-    await createIoTAlertRule({ ...formModel.value })
+    await createIoTAlertRule(formModel.value)
+    ElMessage.success('新增成功')
   } else {
-    await updateIoTAlertRule(editingId.value, { ...formModel.value })
+    await updateIoTAlertRule(formModel.value.id, formModel.value)
+    ElMessage.success('编辑成功')
   }
 
   dialogVisible.value = false
   await loadRules()
 }
 
-async function toggle(rule: Rule) {
+async function toggle(rule: IoTAlertRule) {
   const nextStatus = rule.status === 'active' ? 'disabled' : 'active'
   await updateIoTAlertRule(rule.id, { ...rule, status: nextStatus })
   await loadRules()

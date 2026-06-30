@@ -25,12 +25,12 @@
           </template>
           <template #diffRate="{ row }">
             <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '#909399' }">
-              {{ row.bom_qty > 0 ? ((Math.abs(row.diff) / row.bom_qty) * 100).toFixed(2) : '0.00' }}%
+              {{ row.bomQty > 0 ? ((Math.abs(row.diff) / row.bomQty) * 100).toFixed(2) : '0.00' }}%
             </span>
           </template>
           <template #actions="{ row }">
             <gi-button type="edit" @click="openEdit(row)" />
-            <el-button style="margin-left: 8px" type="primary" link size="small" @click="doBackflush(row)">倒冲</el-button>
+            <el-button style="margin-left: 8px" type="primary" link size="small" @click="doBackflush(row)">执行倒冲</el-button>
           </template>
         </gi-table>
       </template>
@@ -53,18 +53,29 @@ import BackflushFormDialog, { type BackflushFormModel } from './BackflushFormDia
 interface BackflushRow {
   id: string
   material: string
-  wo_code: string
-  bom_qty: number
-  actual_qty: number
+  woCode: string
+  bomQty: number
+  actualQty: number
   diff: number
   status: string
-  backflush_date: string
+  backflushDate: string
 }
 
-const queryParams = ref({ keyword: '', status: '' })
+const queryParams = ref({
+  keyword: '',
+  status: ''
+})
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '请输入工单号/物料名称', clearable: true } as any },
+  {
+    type: 'input',
+    label: '关键字',
+    field: 'keyword',
+    props: {
+      placeholder: '请输入工单号或物料名称',
+      clearable: true
+    } as any
+  },
   {
     type: 'select-v2',
     label: '状态',
@@ -83,29 +94,30 @@ const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
 const columns: TableColumnItem<BackflushRow>[] = [
   { prop: 'material', label: '物料名称', minWidth: 180 },
-  { prop: 'wo_code', label: '工单号', minWidth: 170 },
-  { prop: 'bom_qty', label: 'BOM用量', minWidth: 90, align: 'center' },
-  { prop: 'actual_qty', label: '实际用量', minWidth: 90, align: 'center' },
-  { prop: 'diff', label: '差异', minWidth: 80, align: 'center', slotName: 'diff' },
+  { prop: 'woCode', label: '工单号', minWidth: 170 },
+  { prop: 'bomQty', label: 'BOM 用量', minWidth: 100, align: 'center' },
+  { prop: 'actualQty', label: '实际用量', minWidth: 100, align: 'center' },
+  { prop: 'diff', label: '差异数量', minWidth: 90, align: 'center', slotName: 'diff' },
   { label: '差异率', minWidth: 90, slotName: 'diffRate', align: 'center' },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { prop: 'backflush_date', label: '倒冲日期', minWidth: 110 },
-  { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
+  { prop: 'backflushDate', label: '倒冲日期', minWidth: 110 },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const { tableData, pagination, loading, search, refresh } = useTable<BackflushRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getBackflushList({
+    const response = await getBackflushList({
       pageNum: page,
       pageSize: size,
       code: queryParams.value.keyword || undefined,
       material: queryParams.value.keyword || undefined,
       status: queryParams.value.status || undefined
     })
+
     return {
-      list: res.data.list.map(mapRow),
-      total: res.data.total
+      list: response.data.list.map(mapRow),
+      total: response.data.total
     }
   }
 })
@@ -114,12 +126,12 @@ function mapRow(item: any): BackflushRow {
   return {
     id: String(item.id),
     material: item.material || '',
-    wo_code: item.wo_code || '',
-    bom_qty: Number(item.bom_qty ?? 0),
-    actual_qty: Number(item.actual_qty ?? 0),
+    woCode: item.wo_code || '',
+    bomQty: Number(item.bom_qty ?? 0),
+    actualQty: Number(item.actual_qty ?? 0),
     diff: Number(item.diff ?? 0),
     status: item.status || '',
-    backflush_date: item.backflush_date || ''
+    backflushDate: item.backflush_date || ''
   }
 }
 
@@ -128,7 +140,10 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
 }
 
 function handleReset() {
-  queryParams.value = { keyword: '', status: '' }
+  queryParams.value = {
+    keyword: '',
+    status: ''
+  }
   search()
 }
 
@@ -137,7 +152,16 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<BackflushFormModel>(createDefaultForm())
 
 function createDefaultForm(): BackflushFormModel {
-  return { id: '', material: '', wo_code: '', bom_qty: 0, actual_qty: 0, diff: 0, status: 'pending', backflush_date: '' }
+  return {
+    id: '',
+    material: '',
+    woCode: '',
+    bomQty: 0,
+    actualQty: 0,
+    diff: 0,
+    status: 'pending',
+    backflushDate: ''
+  }
 }
 
 function openAdd() {
@@ -159,6 +183,6 @@ async function submitDialog() {
 
 function doBackflush(row: BackflushRow) {
   row.status = 'completed'
-  ElMessage.success('倒冲完成，库存已更新')
+  ElMessage.success('倒冲完成，库存已同步更新')
 }
 </script>

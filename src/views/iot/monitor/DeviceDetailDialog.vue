@@ -3,10 +3,14 @@
     <el-descriptions v-if="device" :column="2" border>
       <el-descriptions-item label="设备">{{ device.name }}</el-descriptions-item>
       <el-descriptions-item label="在线状态">
-        <el-tag :type="device.online ? 'success' : 'danger'" size="small">{{ device.online ? '在线' : '离线' }}</el-tag>
+        <el-tag :type="device.online ? 'success' : 'danger'" size="small">
+          {{ device.online ? '在线' : '离线' }}
+        </el-tag>
       </el-descriptions-item>
       <el-descriptions-item label="运行状态">
-        <el-tag :type="device.running ? 'success' : 'info'" size="small">{{ device.running ? '运行中' : '空闲' }}</el-tag>
+        <el-tag :type="device.running ? 'success' : 'info'" size="small">
+          {{ device.running ? '运行中' : '空闲' }}
+        </el-tag>
       </el-descriptions-item>
       <el-descriptions-item label="转速">{{ device.rpm }} rpm</el-descriptions-item>
       <el-descriptions-item label="温度">{{ device.temp.toFixed(1) }} °C</el-descriptions-item>

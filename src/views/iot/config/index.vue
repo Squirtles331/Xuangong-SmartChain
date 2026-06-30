@@ -1,75 +1,95 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
 
     <template #tool>
       <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe size="small">
-      <template #index="{ $index }">
-        {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
+    <TableSetting title="IoT 连接配置" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #index="{ $index }">
+            {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
+          </template>
+
+          <template #protocol="{ row }">
+            <el-tag :type="row.protocol === 'OPC UA' ? 'primary' : row.protocol === 'MQTT' ? 'success' : 'warning'">
+              {{ row.protocol }}
+            </el-tag>
+          </template>
+
+          <template #status="{ row }">
+            <el-tag :type="row.status === 'connected' ? 'success' : 'danger'">
+              {{ row.status === 'connected' ? '已连接' : '已断开' }}
+            </el-tag>
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button type="delete" style="margin-left: 8px" @click="onDelete(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #protocol="{ row }">
-        <el-tag :type="row.protocol === 'OPC UA' ? 'primary' : row.protocol === 'MQTT' ? 'success' : 'warning'" size="small">
-          {{ row.protocol }}
-        </el-tag>
-      </template>
-      <template #status="{ row }">
-        <el-tag :type="row.status === 'connected' ? 'success' : 'danger'" size="small">
-          {{ row.status === 'connected' ? '已连接' : '已断开' }}
-        </el-tag>
-      </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <IoTConfigFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import { createIoTConfig, deleteIoTConfig, getIoTConfigList, updateIoTConfig } from '@/api/iot'
+import TableSetting from '@/components/TableSetting.vue'
+import {
+  createIoTConfig,
+  deleteIoTConfig,
+  getIoTConfigList,
+  updateIoTConfig,
+  type IoTConfig,
+  type IoTConfigQuery,
+  type IoTConnectionStatus
+} from '@/api/iot'
 import { useTable } from '@/hooks/useTable'
 import IoTConfigFormDialog, { type IoTConfigFormModel } from './IoTConfigFormDialog.vue'
 
-interface IoTConfigRow {
-  id: string
-  name: string
-  protocol: string
-  address: string
-  port: number
-  interval: string
-  status: string
-}
-
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({ keyword: '', protocol: '', status: '' })
-
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<IoTConfigFormModel>(createDefaultFormModel())
+const statusOptions: Array<{ label: string; value: '' | IoTConnectionStatus }> = [
+  { label: '全部', value: '' },
+  { label: '已连接', value: 'connected' },
+  { label: '已断开', value: 'disconnected' }
+]
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword' } as any,
+  { type: 'input', label: '关键词', field: 'keyword' },
   {
     type: 'select-v2',
-    label: '协议',
+    label: '通信协议',
     field: 'protocol',
     props: {
-      clearable: true,
       options: [
+        { label: '全部', value: '' },
         { label: 'OPC UA', value: 'OPC UA' },
         { label: 'MQTT', value: 'MQTT' },
         { label: 'Modbus', value: 'Modbus' }
@@ -78,61 +98,83 @@ const searchColumns: FormColumnItem[] = [
   },
   {
     type: 'select-v2',
-    label: '状态',
+    label: '连接状态',
     field: 'status',
     props: {
-      clearable: true,
-      options: [
-        { label: '已连接', value: 'connected' },
-        { label: '已断开', value: 'disconnected' }
-      ]
+      options: statusOptions
     } as any
   }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
 
-const columns: TableColumnItem<IoTConfigRow>[] = [
+const columns: TableColumnItem<IoTConfig>[] = [
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
-  { prop: 'name', label: '设备名称', minWidth: 160 },
-  { label: '协议', minWidth: 80, slotName: 'protocol', align: 'center' },
+  { prop: 'name', label: '设备名称', minWidth: 180 },
+  { prop: 'protocol', label: '通信协议', minWidth: 100, align: 'center', slotName: 'protocol' },
   { prop: 'address', label: '连接地址', minWidth: 220 },
-  { prop: 'port', label: '端口', minWidth: 70, align: 'center' },
-  { prop: 'interval', label: '采集间隔', minWidth: 80, align: 'center' },
-  { prop: 'status', label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
+  { prop: 'port', label: '端口', minWidth: 80, align: 'center' },
+  { prop: 'interval', label: '采集间隔', minWidth: 100, align: 'center' },
+  { prop: 'status', label: '连接状态', minWidth: 100, align: 'center', slotName: 'status' },
+  { label: '操作', minWidth: 180, align: 'center', slotName: 'actions' }
 ]
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<IoTConfigRow>({
+const queryParams = reactive<{
+  keyword: string
+  protocol: string
+  status: '' | IoTConnectionStatus
+}>({
+  keyword: '',
+  protocol: '',
+  status: ''
+})
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<IoTConfigFormModel>(createDefaultFormModel())
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<IoTConfig>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getIoTConfigList({
+    const params: IoTConfigQuery = {
       pageNum: page,
       pageSize: size,
-      keyword: searchForm.value.keyword || undefined,
-      protocol: searchForm.value.protocol || undefined,
-      status: searchForm.value.status || undefined
-    })
-    return { list: res.data.list, total: res.data.total }
+      keyword: queryParams.keyword || undefined,
+      protocol: queryParams.protocol || undefined,
+      status: queryParams.status || undefined
+    }
+
+    const response = await getIoTConfigList(params)
+    return response.data
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteIoTConfig(id)))
 })
 
 function createDefaultFormModel(): IoTConfigFormModel {
-  return { id: '', name: '', protocol: 'OPC UA', address: '', port: 4840, interval: '1s', status: 'connected' }
+  return {
+    id: '',
+    name: '',
+    protocol: 'OPC UA',
+    address: '',
+    port: 4840,
+    interval: '1s',
+    status: 'connected'
+  }
 }
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value = { keyword: '', protocol: '', status: '' }
+  Object.assign(queryParams, {
+    keyword: '',
+    protocol: '',
+    status: ''
+  })
   search()
 }
 
@@ -142,7 +184,7 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: IoTConfigRow) {
+function openEdit(row: IoTConfig) {
   dialogMode.value = 'edit'
   formModel.value = { ...row }
   dialogVisible.value = true
@@ -155,12 +197,20 @@ async function submitDialog() {
   }
 
   if (dialogMode.value === 'add') {
-    await createIoTConfig({ ...formModel.value })
+    await createIoTConfig(formModel.value)
+    ElMessage.success('新增成功')
   } else {
-    await updateIoTConfig(formModel.value.id, { ...formModel.value })
+    await updateIoTConfig(formModel.value.id, formModel.value)
+    ElMessage.success('编辑成功')
   }
 
   dialogVisible.value = false
   await refresh()
 }
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

@@ -33,7 +33,7 @@
           <template #dueDate="{ row }">
             <span :style="isOverdue(row) ? 'color: #f56c6c; font-weight: 600' : ''">
               {{ row.due_date }}
-              <el-tag v-if="isOverdue(row)" type="danger" size="small" style="margin-left: 4px">超期</el-tag>
+              <el-tag v-if="isOverdue(row)" type="danger" size="small" style="margin-left: 4px">逾期</el-tag>
             </span>
           </template>
 
@@ -93,7 +93,12 @@ const statusTagMap: Record<OutsourceOrder['status'], 'warning' | 'primary' | 'su
 }
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '工单号/产品/供应商/工序' } as any },
+  {
+    type: 'input',
+    label: '关键字',
+    field: 'keyword',
+    props: { placeholder: '工单号、产品、供应商、工序', clearable: true } as any
+  },
   { type: 'select-v2', label: '状态', field: 'status', props: { options: statusOptions, clearable: true } as any }
 ]
 
@@ -143,7 +148,18 @@ const { tableData, pagination, loading, search, refresh } = useTable<OutsourceOr
 })
 
 function createDefaultFormModel(): OutsourceFormModel {
-  return { id: '', code: '', material: '', qty: 1, supplier: '', operation: '', send_date: '', due_date: '', price: 0, status: 'sent' }
+  return {
+    id: '',
+    code: '',
+    material: '',
+    qty: 1,
+    supplier: '',
+    operation: '',
+    send_date: '',
+    due_date: '',
+    price: 0,
+    status: 'sent'
+  }
 }
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {

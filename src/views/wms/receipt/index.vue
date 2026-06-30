@@ -15,10 +15,10 @@
       <template #default="{ settingColumns, tableProps }">
         <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
           <template #type="{ row }">
-            <StatusTag :value="row.type" :options="RECEIPT_TYPE" />
+            <StatusTag :value="row.type" :options="receiptTypeOptions" />
           </template>
           <template #status="{ row }">
-            <StatusTag :value="row.status" :options="RECEIPT_STATUS" />
+            <StatusTag :value="row.status" :options="receiptStatusOptions" />
           </template>
           <template #actions="{ row }">
             <gi-button type="edit" @click="openEdit(row)" />
@@ -43,13 +43,12 @@ import { getReceiptList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import ReceiptFormDialog, { type ReceiptFormModel } from './ReceiptFormDialog.vue'
 
-const RECEIPT_TYPE = [
+const receiptTypeOptions = [
   { value: 'purchase', label: '采购入库', type: 'primary' as const },
-  { value: 'production', label: '生产入库', type: 'success' as const },
-  { value: 'other', label: '其他', type: 'info' as const }
+  { value: 'production', label: '生产入库', type: 'success' as const }
 ]
 
-const RECEIPT_STATUS = [
+const receiptStatusOptions = [
   { value: 'pending', label: '待入库', type: 'warning' as const },
   { value: 'completed', label: '已入库', type: 'success' as const }
 ]
@@ -62,22 +61,30 @@ interface ReceiptRow {
   qty: number
   warehouse: string
   status: string
-  created_at: string
+  createdAt: string
 }
 
-const queryParams = ref({ code: '', type: '', status: '' })
+const warehouseOptions = [
+  { label: '原材料仓', value: '原材料仓' },
+  { label: '标准件仓', value: '标准件仓' },
+  { label: '半成品仓', value: '半成品仓' },
+  { label: '成品仓', value: '成品仓' }
+]
+
+const queryParams = ref({
+  code: '',
+  type: '',
+  status: ''
+})
 
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '入库单号', field: 'code', props: { clearable: true } as any },
   {
     type: 'select-v2',
-    label: '类型',
+    label: '入库类型',
     field: 'type',
     props: {
-      options: [
-        { label: '采购入库', value: 'purchase' },
-        { label: '生产入库', value: 'production' }
-      ],
+      options: receiptTypeOptions.map((item) => ({ label: item.label, value: item.value })),
       clearable: true
     } as any
   },
@@ -86,10 +93,7 @@ const searchColumns: FormColumnItem[] = [
     label: '状态',
     field: 'status',
     props: {
-      options: [
-        { label: '待入库', value: 'pending' },
-        { label: '已入库', value: 'completed' }
-      ],
+      options: receiptStatusOptions.map((item) => ({ label: item.label, value: item.value })),
       clearable: true
     } as any
   }
@@ -99,28 +103,29 @@ const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
 const columns: TableColumnItem<ReceiptRow>[] = [
   { prop: 'code', label: '入库单号', width: 160 },
-  { label: '类型', minWidth: 100, slotName: 'type', align: 'center' },
+  { label: '入库类型', minWidth: 110, slotName: 'type', align: 'center' },
   { prop: 'material', label: '物料名称', minWidth: 160 },
   { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
-  { prop: 'warehouse', label: '仓库', width: 100 },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { prop: 'created_at', label: '创建时间', minWidth: 160 },
+  { prop: 'warehouse', label: '仓库', width: 110 },
+  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
+  { prop: 'createdAt', label: '创建时间', minWidth: 160 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ReceiptRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getReceiptList({
+    const response = await getReceiptList({
       pageNum: page,
       pageSize: size,
       code: queryParams.value.code || undefined,
-      supplier: queryParams.value.type || undefined,
+      type: queryParams.value.type || undefined,
       status: queryParams.value.status || undefined
     })
+
     return {
-      list: res.data.list.map(mapRow),
-      total: res.data.total
+      list: response.data.list.map(mapRow),
+      total: response.data.total
     }
   }
 })
@@ -134,7 +139,7 @@ function mapRow(item: any): ReceiptRow {
     qty: Number(item.qty ?? 0),
     warehouse: item.warehouse || '',
     status: item.status || '',
-    created_at: item.created_at || ''
+    createdAt: item.created_at || ''
   }
 }
 
@@ -143,7 +148,11 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
 }
 
 function handleReset() {
-  queryParams.value = { code: '', type: '', status: '' }
+  queryParams.value = {
+    code: '',
+    type: '',
+    status: ''
+  }
   search()
 }
 
@@ -156,7 +165,15 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ReceiptFormModel>(createDefaultForm())
 
 function createDefaultForm(): ReceiptFormModel {
-  return { id: '', code: '', type: 'purchase', material: '', qty: 1, warehouse: '原材料仓', status: 'pending' }
+  return {
+    id: '',
+    code: '',
+    type: 'purchase',
+    material: '',
+    qty: 1,
+    warehouse: warehouseOptions[0].value,
+    status: 'pending'
+  }
 }
 
 function openAdd() {

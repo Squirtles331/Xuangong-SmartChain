@@ -25,7 +25,7 @@
             </div>
           </template>
           <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="trace(row)">追溯</el-button>
+            <el-button type="primary" link size="small" @click="trace(row)">批次追溯</el-button>
           </template>
         </gi-table>
       </template>
@@ -44,7 +44,7 @@ import { getInventoryList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import InventoryTraceDialog, { type InventoryTraceItem } from './InventoryTraceDialog.vue'
 
-interface InvRow {
+interface InventoryRow {
   id: string
   code: string
   name: string
@@ -59,21 +59,34 @@ interface InvRow {
   unit: string
 }
 
-const queryParams = ref({ keyword: '', warehouse: '' })
+const queryParams = ref({
+  keyword: '',
+  warehouse: ''
+})
+
+const warehouseOptions = [
+  { label: '原材料仓', value: '原材料仓' },
+  { label: '标准件仓', value: '标准件仓' },
+  { label: '半成品仓', value: '半成品仓' },
+  { label: '成品仓', value: '成品仓' }
+]
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '请输入物料编码/名称', clearable: true } as any },
+  {
+    type: 'input',
+    label: '关键字',
+    field: 'keyword',
+    props: {
+      placeholder: '请输入物料编码或物料名称',
+      clearable: true
+    } as any
+  },
   {
     type: 'select-v2',
     label: '仓库',
     field: 'warehouse',
     props: {
-      options: [
-        { label: '原材料仓', value: '原材料仓' },
-        { label: '标准件仓', value: '标准件仓' },
-        { label: '半成品仓', value: '半成品仓' },
-        { label: '成品仓', value: '成品仓' }
-      ],
+      options: warehouseOptions,
       clearable: true
     } as any
   }
@@ -81,38 +94,39 @@ const searchColumns: FormColumnItem[] = [
 
 const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
-const columns: TableColumnItem<InvRow>[] = [
+const columns: TableColumnItem<InventoryRow>[] = [
   { prop: 'code', label: '物料编码', width: 170 },
-  { prop: 'name', label: '物料名称', minWidth: 130 },
-  { prop: 'spec', label: '规格', width: 120 },
-  { prop: 'warehouse', label: '仓库', width: 100 },
-  { prop: 'location', label: '库位', width: 100 },
-  { prop: 'lot', label: '批号', width: 150 },
-  { label: '当前库存', minWidth: 100, slotName: 'qty', align: 'center' },
-  { prop: 'safety', label: '安全库存', minWidth: 90, align: 'center' },
-  { prop: 'reserved', label: '已预留', minWidth: 80, align: 'center' },
-  { prop: 'available', label: '可用库存', minWidth: 90, align: 'center' },
-  { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'name', label: '物料名称', minWidth: 140 },
+  { prop: 'spec', label: '规格型号', width: 140 },
+  { prop: 'warehouse', label: '仓库', width: 110 },
+  { prop: 'location', label: '库位', width: 110 },
+  { prop: 'lot', label: '批次号', width: 150 },
+  { label: '当前库存', minWidth: 120, slotName: 'qty', align: 'center' },
+  { prop: 'safety', label: '安全库存', minWidth: 100, align: 'center' },
+  { prop: 'reserved', label: '已预留', minWidth: 90, align: 'center' },
+  { prop: 'available', label: '可用库存', minWidth: 100, align: 'center' },
+  { label: '操作', minWidth: 100, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search } = useTable<InvRow>({
+const { tableData, pagination, loading, search } = useTable<InventoryRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getInventoryList({
+    const response = await getInventoryList({
       pageNum: page,
       pageSize: size,
       code: queryParams.value.keyword || undefined,
       name: queryParams.value.keyword || undefined,
       warehouse: queryParams.value.warehouse || undefined
     })
+
     return {
-      list: res.data.list.map(mapInvRow),
-      total: res.data.total
+      list: response.data.list.map(mapRow),
+      total: response.data.total
     }
   }
 })
 
-function mapInvRow(item: any): InvRow {
+function mapRow(item: any): InventoryRow {
   return {
     id: String(item.id),
     code: item.code || '',
@@ -134,18 +148,21 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
 }
 
 function handleReset() {
-  queryParams.value = { keyword: '', warehouse: '' }
+  queryParams.value = {
+    keyword: '',
+    warehouse: ''
+  }
   search()
 }
 
 const traceVisible = ref(false)
 const traceData = ref<InventoryTraceItem[]>([])
 
-function trace(row: InvRow) {
+function trace(row: InventoryRow) {
   traceData.value = [
-    { time: '2025-01-15 14:00', type: 'primary', desc: `成品入库：${row.name} 入库 ${row.qty}${row.unit}` },
-    { time: '2025-01-14 10:00', type: 'success', desc: '工序报工：工单 WO202501150001 完工' },
-    { time: '2025-01-05 08:00', type: 'warning', desc: `来料入库：批号 ${row.lot} 来源采购单 PO202501010005` }
+    { time: '2025-01-15 14:00', type: 'primary', desc: `${row.name} 入库 ${row.qty}${row.unit}` },
+    { time: '2025-01-14 10:00', type: 'success', desc: '工单 WO202501150001 完工入库' },
+    { time: '2025-01-05 08:00', type: 'warning', desc: `批次 ${row.lot} 来源采购单 PO202501010005` }
   ]
   traceVisible.value = true
 }

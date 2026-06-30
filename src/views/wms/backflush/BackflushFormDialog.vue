@@ -18,12 +18,12 @@ import type { FormColumnItem } from 'gi-component'
 export interface BackflushFormModel {
   id: string
   material: string
-  wo_code: string
-  bom_qty: number
-  actual_qty: number
+  woCode: string
+  bomQty: number
+  actualQty: number
   diff: number
   status: string
-  backflush_date: string
+  backflushDate: string
 }
 
 interface Props {
@@ -41,18 +41,19 @@ const emit = defineEmits<{
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '物料名称', field: 'material', required: true },
-  { type: 'input', label: '工单号', field: 'wo_code', required: true },
-  { type: 'input-number', label: 'BOM用量', field: 'bom_qty', required: true, props: { min: 0 } as any },
-  { type: 'input-number', label: '实际用量', field: 'actual_qty', required: true, props: { min: 0 } as any },
-  { type: 'date-picker', label: '倒冲日期', field: 'backflush_date', props: { valueFormat: 'YYYY-MM-DD' } as any }
+  { type: 'input', label: '工单号', field: 'woCode', required: true },
+  { type: 'input-number', label: 'BOM 用量', field: 'bomQty', required: true, props: { min: 0 } as any },
+  { type: 'input-number', label: '实际用量', field: 'actualQty', required: true, props: { min: 0 } as any },
+  { type: 'date-picker', label: '倒冲日期', field: 'backflushDate', props: { valueFormat: 'YYYY-MM-DD' } as any }
 ]
 
 async function handleSubmit() {
-  if (!formData.value.material || !formData.value.wo_code) {
+  if (!formData.value.material || !formData.value.woCode) {
     ElMessage.warning('请填写必填项')
     return false
   }
-  formData.value.diff = Number(formData.value.actual_qty || 0) - Number(formData.value.bom_qty || 0)
+
+  formData.value.diff = Number(formData.value.actualQty || 0) - Number(formData.value.bomQty || 0)
   emit('submit')
   return false
 }

@@ -12,7 +12,7 @@
     <el-divider />
     <div class="items-header">
       <strong>检验项目</strong>
-      <el-button type="primary" size="small" @click="addItem">+ 添加</el-button>
+      <el-button type="primary" size="small" @click="addItem">新增</el-button>
     </div>
     <el-table :data="items" border size="small" style="margin-top: 8px">
       <el-table-column label="项目" width="160">
@@ -23,9 +23,9 @@
       <el-table-column label="类型" width="120">
         <template #default="{ row }">
           <el-select v-model="row.type" size="small">
-            <el-option label="measure" value="measure" />
-            <el-option label="count" value="count" />
-            <el-option label="sensory" value="sensory" />
+            <el-option label="测量" value="measure" />
+            <el-option label="计数" value="count" />
+            <el-option label="感官" value="sensory" />
           </el-select>
         </template>
       </el-table-column>
@@ -69,16 +69,15 @@ interface Props {
   mode: 'add' | 'edit'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<TemplateFormModel>('form', { required: true })
+const items = defineModel<TemplateItem[]>('items', { required: true })
 
 const emit = defineEmits<{
   submit: []
 }>()
-
-const items = defineModel<TemplateItem[]>('items', { required: true })
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '模板名称', field: 'name', required: true },
@@ -89,10 +88,10 @@ const formColumns: FormColumnItem[] = [
     required: true,
     props: {
       options: [
-        { label: 'raw', value: 'raw' },
-        { label: 'purchased', value: 'purchased' },
-        { label: 'semi-finished', value: 'semi-finished' },
-        { label: 'finished', value: 'finished' }
+        { label: '原材料', value: 'raw' },
+        { label: '外购件', value: 'purchased' },
+        { label: '半成品', value: 'semi-finished' },
+        { label: '成品', value: 'finished' }
       ]
     } as any
   }

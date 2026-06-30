@@ -30,7 +30,7 @@ interface Props {
   mode: 'add' | 'edit'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<EquipmentFormModel>('form', { required: true })
@@ -62,10 +62,10 @@ const formColumns: FormColumnItem[] = [
     field: 'status',
     props: {
       options: [
-        { label: '运行', value: 'running' },
+        { label: '运行中', value: 'running' },
         { label: '空闲', value: 'idle' },
-        { label: '保养', value: 'maintenance' },
-        { label: '维修', value: 'repair' }
+        { label: '保养中', value: 'maintenance' },
+        { label: '维修中', value: 'repair' }
       ]
     } as any
   },

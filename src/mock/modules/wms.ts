@@ -11,7 +11,7 @@ export const inventory = [
     reserved: 60,
     available: 260,
     safety: 80,
-    unit: 'kg'
+    unit: '千克'
   },
   {
     id: '2',
@@ -45,7 +45,7 @@ export const inventory = [
     id: '4',
     code: '04.01.001-00001',
     name: '离心泵 XJP-100',
-    spec: '流量100m3/h',
+    spec: '流量 100m3/h',
     warehouse: '成品仓',
     location: 'F-01-01',
     lot: 'L20250004',
@@ -72,7 +72,7 @@ export const inventory = [
   {
     id: '6',
     code: '01.01.003-00001',
-    name: '叶轮 304不锈钢',
+    name: '叶轮 304 不锈钢',
     spec: 'D200',
     warehouse: '半成品仓',
     location: 'D-01-01',
@@ -118,12 +118,12 @@ export const wmsMaterials = [
   { id: '2', code: '04.01.001-00002', name: '离心泵 XJP-150', spec: 'DN150', unit: '台', stock: 68, safety: 15, location: 'A-01-02' },
   { id: '3', code: '04.02.001-00001', name: '齿轮泵 CBP-50', spec: 'DN50', unit: '台', stock: 42, safety: 10, location: 'A-02-01' },
   { id: '4', code: '01.01.001-00001', name: '泵体 HT200', spec: 'DN100', unit: '件', stock: 350, safety: 50, location: 'B-01-01' },
-  { id: '5', code: '01.01.002-00001', name: '叶轮 304不锈钢', spec: 'D200', unit: '件', stock: 180, safety: 30, location: 'B-01-02' },
+  { id: '5', code: '01.01.002-00001', name: '叶轮 304 不锈钢', spec: 'D200', unit: '件', stock: 180, safety: 30, location: 'B-01-02' },
   { id: '6', code: '01.01.003-00001', name: '泵轴 45#', spec: 'D50x500', unit: '件', stock: 95, safety: 20, location: 'B-02-01' },
   { id: '7', code: '02.01.001-00001', name: '轴承 6205', spec: '25x52x15', unit: '件', stock: 520, safety: 100, location: 'C-01-01' },
   { id: '8', code: '02.01.002-00001', name: '机械密封 M37G-55', spec: 'D55', unit: '件', stock: 230, safety: 40, location: 'C-01-02' },
   { id: '9', code: '03.01.001-00001', name: '碳钢法兰 DN100', spec: 'PN16', unit: '件', stock: 680, safety: 80, location: 'D-01-01' },
-  { id: '10', code: '03.01.002-00001', name: '螺栓 M16x80', spec: '304不锈钢', unit: '件', stock: 1200, safety: 200, location: 'D-02-01' }
+  { id: '10', code: '03.01.002-00001', name: '螺栓 M16x80', spec: '304 不锈钢', unit: '件', stock: 1200, safety: 200, location: 'D-02-01' }
 ]
 
 export const receiptOrders = [
@@ -145,7 +145,7 @@ export const receiptOrders = [
     material: '离心泵 XJP-100',
     qty: 12,
     warehouse: '成品仓',
-    supplier: '一号工厂',
+    supplier: '一号工厂总装车间',
     status: 'completed',
     created_at: '2025-01-14 16:30:00'
   },
@@ -187,7 +187,7 @@ export const deliveryOrders = [
     id: '3',
     code: 'CK20250113003',
     order_code: 'SO20250110006',
-    customer: '无锡精工自动化',
+    customer: '无锡精工自动化有限公司',
     material: '离心泵 XJP-150',
     qty: 6,
     status: 'completed',
@@ -229,7 +229,7 @@ export const transferOrders = [
     material: '泵体铸件',
     qty: 20,
     from_wh: '原材料仓',
-    to_wh: '机加工线边仓',
+    to_wh: '机加一车间线边仓',
     status: 'pending',
     out_time: ''
   },
@@ -239,7 +239,7 @@ export const transferOrders = [
     material: '轴承 6205',
     qty: 60,
     from_wh: '标准件仓',
-    to_wh: '装配线边仓',
+    to_wh: '装配车间线边仓',
     status: 'transit',
     out_time: '2025-01-14 08:00'
   },
@@ -261,7 +261,7 @@ export const returnOrders = [
     code: 'TH20250115001',
     type: 'return',
     source: 'WO202501150001',
-    material: '叶轮 304不锈钢',
+    material: '叶轮 304 不锈钢',
     qty: 2,
     reason: '多余退料',
     status: 'pending'
@@ -327,7 +327,7 @@ export const backflushOrders = [
   },
   {
     id: '2',
-    material: '叶轮 304不锈钢',
+    material: '叶轮 304 不锈钢',
     wo_code: 'WO202501150001',
     bom_qty: 50,
     actual_qty: 49,
@@ -350,65 +350,80 @@ export const backflushOrders = [
 export const stockCountExec = [
   {
     id: '1',
-    plan_code: 'PD-2025-001',
+    plan_code: 'PD202501001',
     warehouse: '原材料仓',
     location: 'B-01-01',
     material: '泵体 HT200',
     book_qty: 350,
     actual_qty: 348,
     diff: -2,
-    status: 'done'
+    status: 'completed',
+    type: 'full',
+    plan_date: '2025-01-15',
+    executor: '张三'
   },
   {
     id: '2',
-    plan_code: 'PD-2025-001',
+    plan_code: 'PD202501001',
     warehouse: '原材料仓',
     location: 'B-01-02',
-    material: '叶轮 304不锈钢',
+    material: '叶轮 304 不锈钢',
     book_qty: 180,
     actual_qty: 182,
     diff: 2,
-    status: 'done'
+    status: 'completed',
+    type: 'full',
+    plan_date: '2025-01-15',
+    executor: '张三'
   },
   {
     id: '3',
-    plan_code: 'PD-2025-001',
-    warehouse: '原材料仓',
-    location: 'B-02-01',
-    material: '泵轴 45#',
-    book_qty: 95,
-    actual_qty: 95,
-    diff: 0,
-    status: 'done'
-  },
-  {
-    id: '4',
-    plan_code: 'PD-2025-002',
+    plan_code: 'PD202501002',
     warehouse: '标准件仓',
     location: 'C-01-01',
     material: '轴承 6205',
     book_qty: 520,
     actual_qty: 515,
     diff: -5,
-    status: 'done'
+    status: 'counting',
+    type: 'cycle',
+    plan_date: '2025-01-18',
+    executor: '李四'
   },
   {
-    id: '5',
-    plan_code: 'PD-2025-002',
+    id: '4',
+    plan_code: 'PD202501002',
     warehouse: '标准件仓',
     location: 'C-01-02',
     material: '机械密封 M37G-55',
     book_qty: 230,
     actual_qty: 228,
     diff: -2,
-    status: 'done'
+    status: 'counting',
+    type: 'cycle',
+    plan_date: '2025-01-18',
+    executor: '李四'
+  },
+  {
+    id: '5',
+    plan_code: 'PD202501003',
+    warehouse: '成品仓',
+    location: 'F-01-01',
+    material: '离心泵 XJP-100',
+    book_qty: 18,
+    actual_qty: 18,
+    diff: 0,
+    status: 'pending',
+    type: 'full',
+    plan_date: '2025-01-22',
+    executor: '王五'
   }
 ]
 
 export const stockCountDiff = [
   {
     id: '1',
-    plan_code: 'PD-2025-001',
+    plan_code: 'PD202501001',
     material: '泵体 HT200',
     book_qty: 350,
     actual_qty: 348,
@@ -419,8 +434,8 @@ export const stockCountDiff = [
   },
   {
     id: '2',
-    plan_code: 'PD-2025-001',
-    material: '叶轮 304不锈钢',
+    plan_code: 'PD202501001',
+    material: '叶轮 304 不锈钢',
     book_qty: 180,
     actual_qty: 182,
     diff: 2,
@@ -430,7 +445,7 @@ export const stockCountDiff = [
   },
   {
     id: '3',
-    plan_code: 'PD-2025-002',
+    plan_code: 'PD202501002',
     material: '轴承 6205',
     book_qty: 520,
     actual_qty: 515,
@@ -441,7 +456,7 @@ export const stockCountDiff = [
   },
   {
     id: '4',
-    plan_code: 'PD-2025-002',
+    plan_code: 'PD202501002',
     material: '机械密封 M37G-55',
     book_qty: 230,
     actual_qty: 228,
@@ -457,7 +472,7 @@ export const iotDevices = [
   { id: '2', name: '钻床 Z3050', type: 'drill', status: 'running', temp: 35.2, rpm: 1200, power: 3.5, uptime: '96h' },
   { id: '3', name: '磨床 M1432', type: 'grind', status: 'idle', temp: 28.1, rpm: 0, power: 0.2, uptime: '72h' },
   { id: '4', name: '加工中心 VMC850', type: 'CNC', status: 'running', temp: 45.8, rpm: 2200, power: 12.5, uptime: '156h' },
-  { id: '5', name: '注塑机 HTF380', type: 'injection', status: 'maintenance', temp: 22.0, rpm: 0, power: 0, uptime: '0h' }
+  { id: '5', name: '注塑机 HTF380', type: 'injection', status: 'maintenance', temp: 22, rpm: 0, power: 0, uptime: '0h' }
 ]
 
 export const iotAlertHistory = [

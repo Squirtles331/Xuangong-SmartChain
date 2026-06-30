@@ -52,7 +52,7 @@ export function deleteIoTAlertRule(id: string) {
   return apiDelete<Record<string, never>>(`/wms/iot-alert-rules/${id}`)
 }
 
-export function getReceiptList(params: { pageNum: number; pageSize: number; code?: string; supplier?: string; status?: string }) {
+export function getReceiptList(params: { pageNum: number; pageSize: number; code?: string; type?: string; supplier?: string; status?: string }) {
   if (isMockMode) return mockService.getReceiptList(params)
   return apiGet<any>('/wms/receipts', { params })
 }

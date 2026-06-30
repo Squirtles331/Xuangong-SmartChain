@@ -65,7 +65,7 @@ const columns: TableColumnItem<TraceRecord>[] = [
   { prop: 'worker', label: '操作人', minWidth: 100 },
   { prop: 'qualified', label: '合格数', minWidth: 80, align: 'center' },
   { prop: 'defective', label: '不良数', minWidth: 80, align: 'center' },
-  { prop: 'hours', label: '工时(分)', minWidth: 90, align: 'center' },
+  { prop: 'hours', label: '工时(分钟)', minWidth: 100, align: 'center' },
   { prop: 'time', label: '时间', minWidth: 150 },
   { label: '操作', minWidth: 80, slotName: 'actions', align: 'center' }
 ]

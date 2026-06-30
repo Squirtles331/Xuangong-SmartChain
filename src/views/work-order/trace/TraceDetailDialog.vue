@@ -5,8 +5,8 @@
       <el-descriptions-item label="工序">{{ detail?.op_name }}</el-descriptions-item>
       <el-descriptions-item label="操作人">{{ detail?.worker }}</el-descriptions-item>
       <el-descriptions-item label="报工时间">{{ detail?.time }}</el-descriptions-item>
-      <el-descriptions-item label="合格数">{{ detail?.qualified }}</el-descriptions-item>
-      <el-descriptions-item label="不良数">{{ detail?.defective }}</el-descriptions-item>
+      <el-descriptions-item label="合格数量">{{ detail?.qualified }}</el-descriptions-item>
+      <el-descriptions-item label="不良数量">{{ detail?.defective }}</el-descriptions-item>
       <el-descriptions-item label="不良原因">{{ detail?.reasons || '-' }}</el-descriptions-item>
       <el-descriptions-item label="工时(分钟)">{{ detail?.hours }}</el-descriptions-item>
     </el-descriptions>

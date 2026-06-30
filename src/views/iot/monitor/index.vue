@@ -2,40 +2,42 @@
   <gi-page-layout>
     <div class="iot-grid">
       <el-card
-        v-for="device in devices"
-        :key="device.id"
+        v-for="item in devices"
+        :key="item.id"
         shadow="hover"
         class="iot-card"
-        :class="device.online ? 'online' : 'offline'"
-        @click="showDetail(device)"
+        :class="item.online ? 'online' : 'offline'"
+        @click="showDetail(item)"
       >
         <div class="iot-header">
-          <span class="iot-name">{{ device.name }}</span>
-          <el-tag :type="device.online ? 'success' : 'danger'" size="small">
-            {{ device.online ? '在线' : '离线' }}
+          <span class="iot-name">{{ item.name }}</span>
+          <el-tag :type="item.online ? 'success' : 'danger'" size="small">
+            {{ item.online ? '在线' : '离线' }}
           </el-tag>
         </div>
+
         <div class="iot-body">
           <div class="iot-row">
-            <span>状态</span>
-            <el-tag :type="device.running ? 'success' : 'info'" size="small">
-              {{ device.running ? '运行中' : '空闲' }}
+            <span>运行状态</span>
+            <el-tag :type="item.running ? 'success' : 'info'" size="small">
+              {{ item.running ? '运行中' : '空闲' }}
             </el-tag>
           </div>
           <div class="iot-row">
             <span>转速</span>
-            <strong>{{ device.rpm }} rpm</strong>
+            <strong>{{ item.rpm }} rpm</strong>
           </div>
           <div class="iot-row">
             <span>温度</span>
-            <strong :style="{ color: device.temp > 60 ? '#f56c6c' : '' }">{{ device.temp.toFixed(1) }} °C</strong>
+            <strong :style="{ color: item.temp > 60 ? '#f56c6c' : '' }">{{ item.temp.toFixed(1) }} °C</strong>
           </div>
           <div class="iot-row">
             <span>电流</span>
-            <strong>{{ device.current.toFixed(1) }} A</strong>
+            <strong>{{ item.current.toFixed(1) }} A</strong>
           </div>
         </div>
-        <div class="iot-footer">最近上报 {{ device.last_report }}</div>
+
+        <div class="iot-footer">最近上报 {{ item.last_report }}</div>
       </el-card>
     </div>
 
@@ -45,7 +47,7 @@
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref } from 'vue'
-import { getIoTDeviceList } from '@/api/wms'
+import { getIoTDeviceList } from '@/api/iot'
 import DeviceDetailDialog, { type DeviceDetailModel } from './DeviceDetailDialog.vue'
 
 type DeviceItem = DeviceDetailModel
@@ -62,10 +64,10 @@ function showDetail(device: DeviceItem) {
 }
 
 async function loadDevices() {
-  const res = await getIoTDeviceList({ pageNum: 1, pageSize: 100 })
-  const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
-  devices.value = res.data.list.map((item: any) => ({
-    id: String(item.id),
+  const response = await getIoTDeviceList({ pageNum: 1, pageSize: 100 })
+  const now = '2026-06-30 12:00:00'
+  devices.value = response.data.list.map((item) => ({
+    id: item.id,
     name: item.name,
     online: item.status !== 'maintenance',
     running: item.status === 'running',
@@ -78,20 +80,20 @@ async function loadDevices() {
 
 function startTimer() {
   timer = setInterval(() => {
-    const ts = new Date().toISOString().slice(0, 19).replace('T', ' ')
-    devices.value.forEach((device) => {
-      if (!device.online) return
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
+    devices.value.forEach((item) => {
+      if (!item.online) return
 
-      if (device.running) {
-        device.rpm = Math.max(0, Math.round(device.rpm + (Math.random() - 0.5) * 20))
-        device.temp = +(device.temp + (Math.random() - 0.5) * 0.8).toFixed(1)
-        device.current = Math.max(0, +(device.current + (Math.random() - 0.5) * 0.3).toFixed(1))
+      if (item.running) {
+        item.rpm = Math.max(0, Math.round(item.rpm + (Math.random() - 0.5) * 20))
+        item.temp = +(item.temp + (Math.random() - 0.5) * 0.8).toFixed(1)
+        item.current = Math.max(0, +(item.current + (Math.random() - 0.5) * 0.3).toFixed(1))
       } else {
-        device.temp = +(device.temp + (Math.random() - 0.5) * 0.3).toFixed(1)
-        device.current = +(0.3 + Math.random() * 0.4).toFixed(1)
+        item.temp = +(item.temp + (Math.random() - 0.5) * 0.3).toFixed(1)
+        item.current = +(0.3 + Math.random() * 0.4).toFixed(1)
       }
 
-      device.last_report = ts
+      item.last_report = now
     })
   }, 3000)
 }
@@ -135,8 +137,8 @@ onUnmounted(() => {
 }
 
 .iot-name {
-  font-weight: 600;
   font-size: 15px;
+  font-weight: 600;
 }
 
 .iot-row {
@@ -152,8 +154,8 @@ onUnmounted(() => {
 }
 
 .iot-footer {
+  margin-top: 8px;
   font-size: 11px;
   color: #c0c4cc;
-  margin-top: 8px;
 }
 </style>

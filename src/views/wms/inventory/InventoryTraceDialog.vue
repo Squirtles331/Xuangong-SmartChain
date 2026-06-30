@@ -13,7 +13,7 @@
 <script lang="ts" setup>
 export interface InventoryTraceItem {
   time: string
-  type: string
+  type: 'primary' | 'success' | 'warning' | 'info' | 'danger'
   desc: string
 }
 

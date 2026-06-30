@@ -61,13 +61,13 @@
           <el-table-column prop="work_center" label="工作中心" width="120" />
           <el-table-column label="状态" width="100">
             <template #default="{ row }">
-              <StatusTag :value="row.status" :options="OPERATION_STATUS" />
+              <StatusTag :value="row.status" :options="operationStatusOptions" />
             </template>
           </el-table-column>
           <el-table-column prop="worker" label="操作工" width="100" />
           <el-table-column prop="qualified_qty" label="合格数" width="80" align="center" />
           <el-table-column prop="defective_qty" label="不良数" width="80" align="center" />
-          <el-table-column prop="actual_hours" label="实际工时(小时)" width="110" align="center" />
+          <el-table-column prop="actual_hours" label="实际工时(小时)" width="120" align="center" />
           <el-table-column prop="planned_start" label="计划开工" width="140" />
           <el-table-column prop="planned_end" label="计划完工" width="140" />
           <el-table-column label="质检关口" width="80" align="center">
@@ -82,7 +82,7 @@
       <el-tab-pane label="物料领用" name="material">
         <el-table :data="materialUsage" border stripe>
           <el-table-column prop="material_code" label="物料编码" width="160" />
-          <el-table-column prop="material_name" label="物料名称" minWidth="140" />
+          <el-table-column prop="material_name" label="物料名称" min-width="140" />
           <el-table-column prop="spec" label="规格" width="120" />
           <el-table-column prop="unit" label="单位" width="60" align="center" />
           <el-table-column prop="planned_qty" label="计划用量" width="100" align="center" />
@@ -142,12 +142,12 @@ import { useRoute } from 'vue-router'
 import StatusTag from '@/components/StatusTag.vue'
 import { WORK_ORDER_PRIORITY, WORK_ORDER_STATUS } from '@/common/status-maps'
 import { approveWorkOrder, closeWorkOrder, getWorkOrderDetail, getWorkOrderOperations, releaseWorkOrder } from '@/api/work-order'
-import { getBOMList } from '@/api/bom'
+import { getBOMPreview } from '@/api/bom'
 import ApprovalDialog, { type ApprovalFormModel } from './ApprovalDialog.vue'
 
 const route = useRoute()
 
-const OPERATION_STATUS = [
+const operationStatusOptions = [
   { value: 'pending', label: '待开工', type: 'info' as const },
   { value: 'assigned', label: '已派工', type: 'primary' as const },
   { value: 'running', label: '生产中', type: 'warning' as const },
@@ -163,7 +163,7 @@ interface TransitionRule {
   needOpinion: boolean
 }
 
-const TRANSITION_RULES: TransitionRule[] = [
+const transitionRules: TransitionRule[] = [
   { from: 'draft', to: 'approved', label: '提交审核', type: 'primary', needOpinion: false },
   { from: 'approved', to: 'released', label: '下发到车间', type: 'warning', needOpinion: false },
   { from: 'released', to: 'in_progress', label: '开始生产', type: 'primary', needOpinion: false },
@@ -201,11 +201,13 @@ const workOrderTypeLabel = computed(() => {
 
 const availableActions = computed(() => {
   if (!order.status) return []
-  return TRANSITION_RULES.filter((item) => item.from === order.status).map((item) => ({
-    key: item.to === 'in_progress' ? 'report' : item.to,
-    label: item.label,
-    type: item.type
-  }))
+  return transitionRules
+    .filter((item) => item.from === order.status)
+    .map((item) => ({
+      key: item.to === 'in_progress' ? 'report' : item.to,
+      label: item.label,
+      type: item.type
+    }))
 })
 
 onMounted(() => {
@@ -231,18 +233,17 @@ async function loadOrder() {
   }
 
   try {
-    const response = await getBOMList({ pageNum: 1, pageSize: 100, status: 'active' })
-    materialUsage.value = (response.data.list || [])
-      .filter((item: any) => item.bom_type === 'EBOM')
-      .map((item: any, index: number) => ({
-        material_code: item.material_code,
-        material_name: item.material_name,
-        spec: item.material_spec || '-',
-        unit: item.unit || '件',
-        planned_qty: 10 + index * 5,
-        issued_qty: index === 0 ? 10 : 0,
-        available_qty: 50 + index * 10
-      }))
+    const response = await getBOMPreview(order.material_code || '')
+    const items = Array.isArray(response.data) ? response.data : response.data?.list || []
+    materialUsage.value = items.map((item: any, index: number) => ({
+      material_code: item.material_code || `${order.material_code || ''}-${index + 1}`,
+      material_name: item.material || item.material_name || '',
+      spec: item.spec || '-',
+      unit: item.unit || '件',
+      planned_qty: Number(item.total ?? item.qty ?? 0),
+      issued_qty: index === 0 ? Number(item.total ?? item.qty ?? 0) : 0,
+      available_qty: Number(item.available ?? 50 + index * 10)
+    }))
   } catch {
     materialUsage.value = []
   }
@@ -321,7 +322,7 @@ function getStatusInfo(status: string) {
 }
 
 function canTransition(from: string, to: string) {
-  return TRANSITION_RULES.find((item) => item.from === from && item.to === to) || null
+  return transitionRules.find((item) => item.from === from && item.to === to) || null
 }
 
 function handleTransition(targetStatus: string) {

@@ -15,7 +15,7 @@
       <template #default="{ settingColumns, tableProps }">
         <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
           <template #status="{ row }">
-            <StatusTag :value="row.status" :options="DELIVERY_STATUS" />
+            <StatusTag :value="row.status" :options="deliveryStatusOptions" />
           </template>
           <template #actions="{ row }">
             <gi-button type="edit" @click="openEdit(row)" />
@@ -40,7 +40,7 @@ import { getDeliveryList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import DeliveryFormDialog, { type DeliveryFormModel } from './DeliveryFormDialog.vue'
 
-const DELIVERY_STATUS = [
+const deliveryStatusOptions = [
   { value: 'pending', label: '待发货', type: 'warning' as const },
   { value: 'completed', label: '已发货', type: 'success' as const }
 ]
@@ -48,15 +48,18 @@ const DELIVERY_STATUS = [
 interface DeliveryRow {
   id: string
   code: string
-  order_code: string
+  orderCode: string
   customer: string
   material: string
   qty: number
   status: string
-  created_at: string
+  createdAt: string
 }
 
-const queryParams = ref({ code: '', status: '' })
+const queryParams = ref({
+  code: '',
+  status: ''
+})
 
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '发货单号', field: 'code', props: { clearable: true } as any },
@@ -65,10 +68,7 @@ const searchColumns: FormColumnItem[] = [
     label: '状态',
     field: 'status',
     props: {
-      options: [
-        { label: '待发货', value: 'pending' },
-        { label: '已发货', value: 'completed' }
-      ],
+      options: deliveryStatusOptions.map((item) => ({ label: item.label, value: item.value })),
       clearable: true
     } as any
   }
@@ -78,27 +78,28 @@ const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
 const columns: TableColumnItem<DeliveryRow>[] = [
   { prop: 'code', label: '发货单号', width: 160 },
-  { prop: 'order_code', label: '销售订单号', width: 160 },
-  { prop: 'customer', label: '客户名称', minWidth: 140 },
-  { prop: 'material', label: '产品名称', minWidth: 150 },
+  { prop: 'orderCode', label: '销售订单号', width: 160 },
+  { prop: 'customer', label: '客户名称', minWidth: 160 },
+  { prop: 'material', label: '产品名称', minWidth: 160 },
   { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { prop: 'created_at', label: '创建时间', minWidth: 160 },
+  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
+  { prop: 'createdAt', label: '创建时间', minWidth: 160 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<DeliveryRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getDeliveryList({
+    const response = await getDeliveryList({
       pageNum: page,
       pageSize: size,
       code: queryParams.value.code || undefined,
       status: queryParams.value.status || undefined
     })
+
     return {
-      list: res.data.list.map(mapRow),
-      total: res.data.total
+      list: response.data.list.map(mapRow),
+      total: response.data.total
     }
   }
 })
@@ -107,12 +108,12 @@ function mapRow(item: any): DeliveryRow {
   return {
     id: String(item.id),
     code: item.code || '',
-    order_code: item.order_code || '',
+    orderCode: item.order_code || '',
     customer: item.customer || '',
     material: item.material || '',
     qty: Number(item.qty ?? 0),
     status: item.status || '',
-    created_at: item.created_at || ''
+    createdAt: item.created_at || ''
   }
 }
 
@@ -121,7 +122,10 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
 }
 
 function handleReset() {
-  queryParams.value = { code: '', status: '' }
+  queryParams.value = {
+    code: '',
+    status: ''
+  }
   search()
 }
 
@@ -134,7 +138,15 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<DeliveryFormModel>(createDefaultForm())
 
 function createDefaultForm(): DeliveryFormModel {
-  return { id: '', code: '', order_code: '', customer: '', material: '', qty: 1, status: 'pending' }
+  return {
+    id: '',
+    code: '',
+    orderCode: '',
+    customer: '',
+    material: '',
+    qty: 1,
+    status: 'pending'
+  }
 }
 
 function openAdd() {
@@ -148,7 +160,7 @@ function openEdit(row: DeliveryRow) {
   formModel.value = {
     id: row.id,
     code: row.code,
-    order_code: row.order_code,
+    orderCode: row.orderCode,
     customer: row.customer,
     material: row.material,
     qty: row.qty,

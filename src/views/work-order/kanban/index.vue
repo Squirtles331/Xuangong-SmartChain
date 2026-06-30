@@ -24,9 +24,9 @@
             </div>
             <div class="card-body">
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
-              <div class="card-info">产品: {{ op.material_name }}</div>
-              <div class="card-info">工作中心: {{ op.work_center }}</div>
-              <div class="card-info">工时: {{ op.total_hours }} 小时</div>
+              <div class="card-info">产品：{{ op.material_name }}</div>
+              <div class="card-info">工作中心：{{ op.work_center }}</div>
+              <div class="card-info">工时：{{ op.total_hours }} 小时</div>
             </div>
             <div class="card-footer">
               <el-button type="primary" size="small" @click="openAssign(op)">派工</el-button>
@@ -49,9 +49,9 @@
             </div>
             <div class="card-body">
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
-              <div class="card-info">操作工: {{ op.worker || '未指定' }}</div>
-              <div class="card-info">工作中心: {{ op.work_center }}</div>
-              <div class="card-info">计划开工: {{ formatPlanTime(op.planned_start) }}</div>
+              <div class="card-info">操作工：{{ op.worker || '未指定' }}</div>
+              <div class="card-info">工作中心：{{ op.work_center }}</div>
+              <div class="card-info">计划开工：{{ formatPlanTime(op.planned_start) }}</div>
             </div>
           </div>
           <div v-if="assignedOps.length === 0" class="empty-hint">暂无已派工工序</div>
@@ -71,7 +71,7 @@
             </div>
             <div class="card-body">
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
-              <div class="card-info">操作工: {{ op.worker || '未指定' }}</div>
+              <div class="card-info">操作工：{{ op.worker || '未指定' }}</div>
               <div class="card-info">
                 <el-progress :percentage="op.progress || 0" :stroke-width="6" style="margin-top: 8px" />
               </div>
@@ -94,8 +94,8 @@
             </div>
             <div class="card-body">
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
-              <div class="card-info">操作工: {{ op.worker || '未指定' }}</div>
-              <div class="card-info">合格: {{ op.qualified_qty || 0 }} | 不良: {{ op.defective_qty || 0 }}</div>
+              <div class="card-info">操作工：{{ op.worker || '未指定' }}</div>
+              <div class="card-info">合格：{{ op.qualified_qty || 0 }} | 不良：{{ op.defective_qty || 0 }}</div>
             </div>
           </div>
           <div v-if="completedOps.length === 0" class="empty-hint">暂无已完工工序</div>
@@ -198,7 +198,7 @@ function priorityTagType(priority: string) {
 
 function formatPlanTime(value?: string) {
   if (!value) return '-'
-  return value.length > 5 ? value.slice(5) : value
+  return value.replace(/^\d{4}-/, '')
 }
 
 function onDragStart(event: DragEvent, op: KanbanOp) {

@@ -48,8 +48,8 @@ const formColumns: FormColumnItem[] = [
   { type: 'input-number', label: '数量', field: 'qty', required: true, props: { min: 1 } as any },
   { type: 'input', label: '委外供应商', field: 'supplier', required: true },
   { type: 'input', label: '委外工序', field: 'operation', required: true },
-  { type: 'date-picker', label: '发出日期', field: 'send_date' },
-  { type: 'date-picker', label: '交回日期', field: 'due_date' },
+  { type: 'date-picker', label: '发出日期', field: 'send_date', props: { valueFormat: 'YYYY-MM-DD' } as any },
+  { type: 'date-picker', label: '交回日期', field: 'due_date', props: { valueFormat: 'YYYY-MM-DD' } as any },
   { type: 'input-number', label: '加工费(元)', field: 'price', props: { min: 0 } as any }
 ]
 

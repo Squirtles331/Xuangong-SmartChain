@@ -106,7 +106,7 @@ const printColumns: TableColumnItem<any>[] = [
   { prop: 'code', label: '物料编码', minWidth: 170 },
   { prop: 'name', label: '物料名称', minWidth: 180 },
   { prop: 'lot', label: '批号', minWidth: 120 },
-  { prop: 'qty', label: '库存数', minWidth: 80, align: 'center' }
+  { prop: 'qty', label: '库存数量', minWidth: 90, align: 'center' }
 ]
 
 const scanInColumns: TableColumnItem<any>[] = [

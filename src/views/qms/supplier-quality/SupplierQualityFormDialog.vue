@@ -29,7 +29,7 @@ interface Props {
   mode: 'add' | 'edit'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<SupplierQualityFormModel>('form', { required: true })

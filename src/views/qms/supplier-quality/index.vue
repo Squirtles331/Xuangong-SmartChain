@@ -1,17 +1,14 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
+          v-model="queryParams"
           :columns="visibleSearchColumns"
-          :grid-item-props="{
-            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-          }"
+          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
           search
           @reset="handleReset"
-          @search="handleSearch"
+          @search="search"
         />
       </SearchSetting>
     </template>
@@ -19,94 +16,72 @@
     <template #tool>
       <gi-button type="add" @click="openAdd" />
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
-      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
     </template>
 
-    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #pass_rate="{ row }">
-        <el-progress
-          :percentage="row.pass_rate"
-          :stroke-width="8"
-          :color="row.pass_rate >= 95 ? '#67c23a' : row.pass_rate >= 80 ? '#e6a23c' : '#f56c6c'"
-        />
+    <TableSetting title="供应商质量" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
+          <template #pass_rate="{ row }">
+            <el-progress
+              :percentage="row.pass_rate"
+              :stroke-width="8"
+              :color="row.pass_rate >= 95 ? '#67c23a' : row.pass_rate >= 80 ? '#e6a23c' : '#f56c6c'"
+            />
+          </template>
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <SupplierQualityFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import { getSupplierQualityList } from '@/api/qms'
+import TableSetting from '@/components/TableSetting.vue'
+import { createSupplierQuality, deleteSupplierQuality, getSupplierQualityList, updateSupplierQuality, type SupplierQuality } from '@/api/qms'
 import { useTable } from '@/hooks/useTable'
 import SupplierQualityFormDialog, { type SupplierQualityFormModel } from './SupplierQualityFormDialog.vue'
 
-interface SupplierQualityRow {
-  id: string
-  supplier: string
-  total_batches: number
-  pass_batches: number
-  pass_rate: number
-  repeat_issues: number
-  last_inspection: string
-}
-
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({
-  supplier: '',
-  date_range: [] as string[]
+const queryParams = reactive({
+  supplier: ''
 })
 
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<SupplierQualityFormModel>(createDefaultFormModel())
 
-const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '供应商', field: 'supplier' } as any,
-  { type: 'date-picker', label: '时间范围', field: 'date_range', props: { type: 'daterange' } as any }
-]
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: '供应商', field: 'supplier' }]
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
-
-const cols: TableColumnItem<SupplierQualityRow>[] = [
+const columns: TableColumnItem<SupplierQuality>[] = [
   { prop: 'supplier', label: '供应商', minWidth: 180 },
   { prop: 'total_batches', label: '总批次数', minWidth: 100, align: 'center' },
   { prop: 'pass_batches', label: '合格批次', minWidth: 100, align: 'center' },
   { label: '合格率', minWidth: 180, slotName: 'pass_rate' },
   { prop: 'repeat_issues', label: '重复问题', minWidth: 90, align: 'center' },
-  { prop: 'last_inspection', label: '最近检验', width: 110 },
+  { prop: 'last_inspection', label: '最近检验', width: 120 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-function mapRow(raw: any): SupplierQualityRow {
-  return {
-    id: String(raw.id),
-    supplier: raw.supplier || '',
-    total_batches: Number(raw.total_batches) || 0,
-    pass_batches: Number(raw.pass_batches) || 0,
-    pass_rate: Number(raw.pass_rate) || 0,
-    repeat_issues: Number(raw.repeat_issues) || 0,
-    last_inspection: raw.last_inspection || ''
-  }
-}
-
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<SupplierQualityRow>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<SupplierQuality>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getSupplierQualityList({ pageNum: page, pageSize: size })
-    const items = res.data.list.map(mapRow)
-    return { list: items, total: res.data.total || items.length }
+    const response = await getSupplierQualityList({
+      pageNum: page,
+      pageSize: size,
+      supplier: queryParams.supplier || undefined
+    })
+    return response.data
   },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => Promise.resolve()))
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteSupplierQuality(id)))
 })
 
 function createDefaultFormModel(): SupplierQualityFormModel {
@@ -125,17 +100,9 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value = { supplier: '', date_range: [] }
+  Object.assign(queryParams, { supplier: '' })
   search()
-}
-
-function handleExport() {
-  ElMessage.success('导出成功')
 }
 
 function openAdd() {
@@ -144,21 +111,26 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: SupplierQualityRow) {
+function openEdit(row: SupplierQuality) {
   dialogMode.value = 'edit'
-  formModel.value = {
-    id: row.id,
-    supplier: row.supplier,
-    total_batches: row.total_batches,
-    pass_batches: row.pass_batches,
-    pass_rate: row.pass_rate,
-    repeat_issues: row.repeat_issues,
-    last_inspection: row.last_inspection
-  }
+  formModel.value = { ...row }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
+  const payload = {
+    ...formModel.value,
+    pass_rate: formModel.value.total_batches > 0 ? Number(((formModel.value.pass_batches / formModel.value.total_batches) * 100).toFixed(1)) : 0
+  }
+
+  if (dialogMode.value === 'add') {
+    await createSupplierQuality(payload)
+    ElMessage.success('新增成功')
+  } else {
+    await updateSupplierQuality(formModel.value.id, payload)
+    ElMessage.success('编辑成功')
+  }
+
   dialogVisible.value = false
   await refresh()
 }

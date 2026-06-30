@@ -16,7 +16,7 @@
         <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
           <template #status="{ row }">
             <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'picked' ? 'primary' : 'success'" size="small">
-              {{ row.status === 'pending' ? '待拣货' : row.status === 'picked' ? '已拣货' : '已出库' }}
+              {{ row.status === 'pending' ? '待拣料' : row.status === 'picked' ? '已拣料' : '已出库' }}
             </el-tag>
           </template>
           <template #actions="{ row }">
@@ -43,25 +43,35 @@ import PickingFormDialog, { type PickingFormModel } from './PickingFormDialog.vu
 
 interface PickingRow {
   id: string
-  wo_code: string
+  woCode: string
   material: string
   warehouse: string
   status: string
-  created_at: string
+  createdAt: string
 }
 
-const queryParams = ref({ wo_code: '', status: '' })
+const warehouseOptions = [
+  { label: '原材料仓', value: '原材料仓' },
+  { label: '标准件仓', value: '标准件仓' },
+  { label: '半成品仓', value: '半成品仓' },
+  { label: '成品仓', value: '成品仓' }
+]
+
+const queryParams = ref({
+  woCode: '',
+  status: ''
+})
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '工单号', field: 'wo_code', props: { clearable: true } as any },
+  { type: 'input', label: '工单号', field: 'woCode', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
     props: {
       options: [
-        { label: '待拣货', value: 'pending' },
-        { label: '已拣货', value: 'picked' },
+        { label: '待拣料', value: 'pending' },
+        { label: '已拣料', value: 'picked' },
         { label: '已出库', value: 'completed' }
       ],
       clearable: true
@@ -72,26 +82,27 @@ const searchColumns: FormColumnItem[] = [
 const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
 const columns: TableColumnItem<PickingRow>[] = [
-  { prop: 'wo_code', label: '工单号', width: 170 },
+  { prop: 'woCode', label: '工单号', width: 170 },
   { prop: 'material', label: '产品名称', minWidth: 160 },
-  { prop: 'warehouse', label: '仓库', width: 100 },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { prop: 'created_at', label: '创建时间', minWidth: 160 },
+  { prop: 'warehouse', label: '仓库', width: 110 },
+  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
+  { prop: 'createdAt', label: '创建时间', minWidth: 160 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<PickingRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getPickingList({
+    const response = await getPickingList({
       pageNum: page,
       pageSize: size,
-      code: queryParams.value.wo_code || undefined,
+      code: queryParams.value.woCode || undefined,
       status: queryParams.value.status || undefined
     })
+
     return {
-      list: res.data.list.map(mapRow),
-      total: res.data.total
+      list: response.data.list.map(mapRow),
+      total: response.data.total
     }
   }
 })
@@ -99,11 +110,11 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<P
 function mapRow(item: any): PickingRow {
   return {
     id: String(item.id),
-    wo_code: item.wo_code || '',
+    woCode: item.wo_code || '',
     material: item.material || '',
     warehouse: item.warehouse || '',
     status: item.status || '',
-    created_at: item.created_at || ''
+    createdAt: item.created_at || ''
   }
 }
 
@@ -112,7 +123,10 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
 }
 
 function handleReset() {
-  queryParams.value = { wo_code: '', status: '' }
+  queryParams.value = {
+    woCode: '',
+    status: ''
+  }
   search()
 }
 
@@ -125,7 +139,13 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<PickingFormModel>(createDefaultForm())
 
 function createDefaultForm(): PickingFormModel {
-  return { id: '', wo_code: '', material: '', status: 'pending' }
+  return {
+    id: '',
+    woCode: '',
+    material: '',
+    warehouse: warehouseOptions[0].value,
+    status: 'pending'
+  }
 }
 
 function openAdd() {
@@ -138,8 +158,9 @@ function openEdit(row: PickingRow) {
   dialogMode.value = 'edit'
   formModel.value = {
     id: row.id,
-    wo_code: row.wo_code,
+    woCode: row.woCode,
     material: row.material,
+    warehouse: row.warehouse,
     status: row.status
   }
   dialogVisible.value = true

@@ -104,7 +104,7 @@ function mapRow(item: any): ScanRecord {
 function parseBarcode(code: string): ScanResult | null {
   if (!code) return null
   const materialList: { code: string; name: string; location: string }[] = [
-    { code: '01.01.001-00001', name: '45#圆钢 D50', location: 'A-01-01' },
+    { code: '01.01.001-00001', name: '45号圆钢 D50', location: 'A-01-01' },
     { code: '02.04.001-00001', name: '轴承 6308', location: 'B-02-03' },
     { code: '04.01.001-00001', name: '离心泵 XJP-100', location: 'F-01-01' },
     { code: '01.01.002-00001', name: '螺栓 M16x60', location: 'C-02-01' },

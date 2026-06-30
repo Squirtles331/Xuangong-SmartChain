@@ -6,7 +6,7 @@ export const workOrders = [
     material_id: 'mat-1',
     material_code: '04.01.001-00001',
     material_name: '离心泵 XJP-100',
-    material_spec: '流量100m3/h',
+    material_spec: '流量 100m3/h',
     planned_qty: 100,
     completed_qty: 45,
     defective_qty: 3,
@@ -32,7 +32,7 @@ export const workOrders = [
     material_id: 'mat-2',
     material_code: '04.02.001-00001',
     material_name: '齿轮箱 GBX-200',
-    material_spec: '速比1:5',
+    material_spec: '速比 1:5',
     planned_qty: 50,
     completed_qty: 0,
     defective_qty: 0,
@@ -47,7 +47,7 @@ export const workOrders = [
     routing_version: '标准工艺 V1.0',
     customer_po: 'PO20250113007',
     remark: '待车间排产',
-    created_by: '计划员王雪',
+    created_by: '计划员王磊',
     created_at: '2025-01-14 10:20:00'
   },
   {
@@ -57,7 +57,7 @@ export const workOrders = [
     material_id: 'mat-3',
     material_code: '04.01.002-00001',
     material_name: '离心泵 XJP-200',
-    material_spec: '流量200m3/h',
+    material_spec: '流量 200m3/h',
     planned_qty: 30,
     completed_qty: 30,
     defective_qty: 0,
@@ -94,11 +94,12 @@ export const workOrders = [
     current_operation: '-',
     planned_start_date: '2025-01-18',
     planned_end_date: '2025-01-22',
+    actual_start_date: '',
     bom_version: '',
     routing_version: '',
     customer_po: '',
     remark: '等待研发确认',
-    created_by: '研发工程师周航',
+    created_by: '研发工程师周舟',
     created_at: '2025-01-13 14:50:00'
   }
 ]
@@ -243,7 +244,7 @@ export const reportHistory = [
     time: '2025-01-15 10:00',
     qualified_qty: 20,
     defective_qty: 2,
-    defect_reasons: '外观缺陷, 设备精度',
+    defect_reasons: '外观缺陷, 设备精度异常',
     actual_hours: 120,
     worker: '赵六'
   }
@@ -367,7 +368,7 @@ export const traceRecords = [
     worker: '赵六',
     qualified: 20,
     defective: 2,
-    reasons: '外观缺陷, 设备精度',
+    reasons: '外观缺陷, 设备精度异常',
     hours: 120,
     time: '2025-01-15 10:00'
   },

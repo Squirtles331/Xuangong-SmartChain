@@ -15,16 +15,9 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
+import type { IoTAutoReportRule, IoTRuleStatus, IoTTriggerType } from '@/api/iot'
 
-export interface AutoReportFormModel {
-  id: string
-  equipment: string
-  trigger: string
-  threshold: number
-  wo_field: string
-  default_qty: number
-  status: string
-}
+export interface AutoReportFormModel extends IoTAutoReportRule {}
 
 interface Props {
   mode: 'add' | 'edit'
@@ -39,6 +32,18 @@ const formData = defineModel<AutoReportFormModel>('form', { required: true })
 const emit = defineEmits<{
   submit: []
 }>()
+
+const triggerOptions: Array<{ label: string; value: IoTTriggerType }> = [
+  { label: '周期完成', value: 'cycle_complete' },
+  { label: '计数到达', value: 'count_reached' },
+  { label: '设备停机', value: 'power_off' },
+  { label: '连续运行', value: 'continuous' }
+]
+
+const statusOptions: Array<{ label: string; value: IoTRuleStatus }> = [
+  { label: '启用', value: 'active' },
+  { label: '停用', value: 'disabled' }
+]
 
 const title = computed(() => (props.mode === 'add' ? '新增规则' : '编辑规则'))
 
@@ -58,12 +63,7 @@ const formColumns = computed<FormColumnItem[]>(() => [
     field: 'trigger',
     required: true,
     props: {
-      options: [
-        { label: '周期完成', value: 'cycle_complete' },
-        { label: '计数到达', value: 'count_reached' },
-        { label: '设备停机', value: 'power_off' },
-        { label: '连续运行', value: 'continuous' }
-      ]
+      options: triggerOptions
     } as any
   },
   { type: 'input-number', label: '阈值', field: 'threshold', props: { min: 0 } as any },
@@ -73,13 +73,21 @@ const formColumns = computed<FormColumnItem[]>(() => [
     field: 'wo_field',
     props: {
       options: [
-        { label: '合格数', value: 'qualified_qty' },
-        { label: '不良数', value: 'defective_qty' },
+        { label: '合格数量', value: 'qualified_qty' },
+        { label: '不良数量', value: 'defective_qty' },
         { label: '总数量', value: 'total_qty' }
       ]
     } as any
   },
-  { type: 'input-number', label: '默认数量', field: 'default_qty', props: { min: 1 } as any }
+  { type: 'input-number', label: '默认数量', field: 'default_qty', props: { min: 1 } as any },
+  {
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    props: {
+      options: statusOptions
+    } as any
+  }
 ])
 
 function handleCancel() {

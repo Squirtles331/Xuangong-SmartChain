@@ -1,7 +1,21 @@
 <template>
   <gi-page-layout>
+    <template #header>
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
+      </SearchSetting>
+    </template>
+
     <template #tool>
       <gi-button type="add" @click="openAdd" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
     <el-card header="在途库存概览" shadow="never" style="margin-bottom: 16px">
@@ -44,10 +58,11 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import SearchSetting from '@/components/SearchSetting.vue'
 import TableSetting from '@/components/TableSetting.vue'
-import type { TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { getTransferList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import TransferFormDialog, { type TransferFormModel } from './TransferFormDialog.vue'
@@ -63,10 +78,52 @@ interface TransferRow {
   out_time?: string
 }
 
-const { tableData, pagination, loading, refresh } = useTable<TransferRow>({
+const queryParams = reactive({
+  code: '',
+  fromWarehouse: '',
+  toWarehouse: '',
+  status: ''
+})
+
+const warehouseOptions = ['原材料仓', '标准件仓', '半成品仓', '成品仓', '机加工线边仓', '装配线边仓', '发货暂存区'].map((item) => ({
+  label: item,
+  value: item
+}))
+
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '调拨单号', field: 'code', props: { clearable: true } as any },
+  { type: 'select-v2', label: '调出仓库', field: 'fromWarehouse', props: { options: warehouseOptions, clearable: true } as any },
+  { type: 'select-v2', label: '调入仓库', field: 'toWarehouse', props: { options: warehouseOptions, clearable: true } as any },
+  {
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    props: {
+      clearable: true,
+      options: [
+        { label: '待调出', value: 'pending' },
+        { label: '在途', value: 'transit' },
+        { label: '已完成', value: 'completed' }
+      ]
+    } as any
+  }
+]
+
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
+
+const { tableData, pagination, loading, search, refresh } = useTable<TransferRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getTransferList({ pageNum: page, pageSize: size })
+    const res = await getTransferList({
+      pageNum: page,
+      pageSize: size,
+      code: queryParams.code || undefined,
+      fromWarehouse: queryParams.fromWarehouse || undefined,
+      toWarehouse: queryParams.toWarehouse || undefined,
+      status: queryParams.status || undefined
+    })
     return {
       list: res.data.list.map(mapRow),
       total: res.data.total
@@ -99,11 +156,21 @@ const columns: TableColumnItem<TransferRow>[] = [
   { label: '操作', minWidth: 180, slotName: 'actions', align: 'center' }
 ]
 
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
 const formModel = ref<TransferFormModel>(createDefaultForm())
 
 function createDefaultForm(): TransferFormModel {
   return { material: '', qty: 1, from_wh: '原材料仓', to_wh: '机加工线边仓' }
+}
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+
+function handleReset() {
+  Object.assign(queryParams, { code: '', fromWarehouse: '', toWarehouse: '', status: '' })
+  search()
 }
 
 function openAdd() {
@@ -112,13 +179,23 @@ function openAdd() {
 }
 
 async function submitDialog() {
+  tableData.value.unshift({
+    id: `${Date.now()}`,
+    code: `DB${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${String(Date.now()).slice(-4)}`,
+    material: formModel.value.material,
+    qty: formModel.value.qty,
+    from_wh: formModel.value.from_wh,
+    to_wh: formModel.value.to_wh,
+    status: 'pending',
+    out_time: ''
+  })
   dialogVisible.value = false
-  await refresh()
+  ElMessage.success('调拨单已创建')
 }
 
 function confirmOut(row: TransferRow) {
   row.status = 'transit'
-  row.out_time = '2025-01-15 08:00'
+  row.out_time = new Date().toLocaleString('zh-CN')
   ElMessage.success('调出确认成功')
 }
 

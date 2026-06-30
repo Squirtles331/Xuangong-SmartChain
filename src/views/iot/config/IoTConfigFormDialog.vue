@@ -15,16 +15,9 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
+import type { IoTConfig, IoTConnectionStatus } from '@/api/iot'
 
-export interface IoTConfigFormModel {
-  id: string
-  name: string
-  protocol: string
-  address: string
-  port: number
-  interval: string
-  status: string
-}
+export interface IoTConfigFormModel extends IoTConfig {}
 
 interface Props {
   mode: 'add' | 'edit'
@@ -39,13 +32,18 @@ const emit = defineEmits<{
   submit: []
 }>()
 
+const statusOptions: Array<{ label: string; value: IoTConnectionStatus }> = [
+  { label: '已连接', value: 'connected' },
+  { label: '已断开', value: 'disconnected' }
+]
+
 const title = computed(() => (props.mode === 'add' ? '新增连接配置' : '编辑连接配置'))
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '设备名称', field: 'name', required: true },
   {
     type: 'select-v2',
-    label: '协议',
+    label: '通信协议',
     field: 'protocol',
     required: true,
     props: {
@@ -61,13 +59,10 @@ const formColumns: FormColumnItem[] = [
   { type: 'input', label: '采集间隔', field: 'interval' },
   {
     type: 'select-v2',
-    label: '状态',
+    label: '连接状态',
     field: 'status',
     props: {
-      options: [
-        { label: '已连接', value: 'connected' },
-        { label: '已断开', value: 'disconnected' }
-      ]
+      options: statusOptions
     } as any
   }
 ]

@@ -44,7 +44,7 @@ const formColumns: FormColumnItem[] = [
 
 async function handleSubmit() {
   if (!formData.value.source || !formData.value.material) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('请填写来源单号和物料名称')
     return false
   }
   emit('submit')

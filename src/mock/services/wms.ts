@@ -38,11 +38,19 @@ export async function getMaterialListForBarcode(params: { pageNum: number; pageS
   return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
-export async function getReceiptList(params: { pageNum: number; pageSize: number; code?: string; supplier?: string; status?: string }) {
+export async function getReceiptList(params: {
+  pageNum: number
+  pageSize: number
+  code?: string
+  type?: string
+  supplier?: string
+  status?: string
+}) {
   await simulateDelay()
   let filtered = [...receiptOrders]
   if (params.code) filtered = searchItems(filtered, params.code, ['code'])
-  if (params.supplier) filtered = searchItems(filtered, params.supplier, ['type', 'supplier'])
+  if (params.type) filtered = filtered.filter((item) => item.type === params.type)
+  if (params.supplier) filtered = searchItems(filtered, params.supplier, ['supplier'])
   if (params.status) filtered = filtered.filter((item) => item.status === params.status)
   const result = paginate(filtered, params.pageNum, params.pageSize)
   return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)

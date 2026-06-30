@@ -15,16 +15,9 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
+import type { IoTAlertLevel, IoTAlertMetric, IoTAlertRule } from '@/api/iot'
 
-export interface AlertRuleFormModel {
-  id: string
-  device: string
-  metric: string
-  operator: string
-  threshold: number
-  level: string
-  status: string
-}
+export interface AlertRuleFormModel extends IoTAlertRule {}
 
 interface Props {
   mode: 'add' | 'edit'
@@ -39,6 +32,19 @@ const formData = defineModel<AlertRuleFormModel>('form', { required: true })
 const emit = defineEmits<{
   submit: []
 }>()
+
+const metricOptions: Array<{ label: string; value: IoTAlertMetric }> = [
+  { label: '温度', value: 'temp' },
+  { label: '转速', value: 'rpm' },
+  { label: '振动', value: 'vibration' },
+  { label: '电流', value: 'current' }
+]
+
+const levelOptions: Array<{ label: string; value: IoTAlertLevel }> = [
+  { label: '严重', value: 'critical' },
+  { label: '预警', value: 'warning' },
+  { label: '提示', value: 'info' }
+]
 
 const title = computed(() => (props.mode === 'add' ? '新增规则' : '编辑规则'))
 
@@ -58,12 +64,7 @@ const formColumns = computed<FormColumnItem[]>(() => [
     field: 'metric',
     required: true,
     props: {
-      options: [
-        { label: '温度', value: 'temp' },
-        { label: 'RPM', value: 'rpm' },
-        { label: '振动', value: 'vibration' },
-        { label: '电流', value: 'current' }
-      ]
+      options: metricOptions
     } as any
   },
   {
@@ -87,11 +88,7 @@ const formColumns = computed<FormColumnItem[]>(() => [
     field: 'level',
     required: true,
     props: {
-      options: [
-        { label: '严重', value: 'critical' },
-        { label: '预警', value: 'warning' },
-        { label: '提示', value: 'info' }
-      ]
+      options: levelOptions
     } as any
   }
 ])

@@ -42,7 +42,7 @@ const formColumns: FormColumnItem[] = [
   { type: 'input', label: '入库单号', field: 'code', required: true },
   {
     type: 'select-v2',
-    label: '类型',
+    label: '入库类型',
     field: 'type',
     required: true,
     props: {
@@ -74,6 +74,7 @@ async function handleSubmit() {
     ElMessage.warning('请填写必填项')
     return false
   }
+
   emit('submit')
   return false
 }

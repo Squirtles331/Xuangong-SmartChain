@@ -39,7 +39,7 @@
               <el-checkbox label="尺寸超差" value="尺寸超差" />
               <el-checkbox label="外观缺陷" value="外观缺陷" />
               <el-checkbox label="材质问题" value="材质问题" />
-              <el-checkbox label="设备精度" value="设备精度" />
+              <el-checkbox label="设备精度异常" value="设备精度异常" />
               <el-checkbox label="操作失误" value="操作失误" />
               <el-checkbox label="其他" value="其他" />
             </el-checkbox-group>
@@ -160,7 +160,7 @@ const historyColumns: TableColumnItem<ReportRecord>[] = [
   { prop: 'qualified_qty', label: '合格数', width: 80, align: 'center' },
   { prop: 'defective_qty', label: '不良数', width: 80, align: 'center' },
   { prop: 'defect_reasons', label: '不良原因', minWidth: 150, slotName: 'defect_reasons' },
-  { prop: 'actual_hours', label: '工时(分)', width: 90, align: 'center' },
+  { prop: 'actual_hours', label: '工时(分钟)', width: 100, align: 'center' },
   { prop: 'worker', label: '操作人', width: 100 }
 ]
 

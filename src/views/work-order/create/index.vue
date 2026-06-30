@@ -3,7 +3,7 @@
     <template #header>
       <el-steps :active="activeStep" align-center style="margin-bottom: 24px">
         <el-step title="基本信息" />
-        <el-step title="选择BOM/工艺" />
+        <el-step title="选择BOM和工艺" />
         <el-step title="确认提交" />
       </el-steps>
     </template>
@@ -18,20 +18,20 @@
 
     <div v-show="activeStep === 1">
       <el-descriptions :column="2" border style="margin-bottom: 16px">
-        <el-descriptions-item label="产品名称">{{ step1Form.material_name || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="计划数量">{{ step1Form.planned_qty }}</el-descriptions-item>
+        <el-descriptions-item label="产品名称">{{ step1Form.materialName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="计划数量">{{ step1Form.plannedQty }}</el-descriptions-item>
         <el-descriptions-item label="生产产线">
           <el-select v-model="step1Form.line" filterable placeholder="请选择生产产线" style="width: 100%">
             <el-option v-for="item in lines" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-descriptions-item>
         <el-descriptions-item label="BOM版本">
-          <el-select v-model="step2Form.bom_version" filterable placeholder="请选择BOM版本" style="width: 100%" @change="onBomChange">
+          <el-select v-model="step2Form.bomVersion" filterable placeholder="请选择BOM版本" style="width: 100%" @change="onBomChange">
             <el-option v-for="item in bomVersionOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-descriptions-item>
         <el-descriptions-item label="工艺路线版本">
-          <el-select v-model="step2Form.routing_version" filterable placeholder="请选择工艺路线版本" style="width: 100%" @change="onRoutingChange">
+          <el-select v-model="step2Form.routingVersion" filterable placeholder="请选择工艺路线版本" style="width: 100%" @change="onRoutingChange">
             <el-option v-for="item in routingVersionOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-descriptions-item>
@@ -49,10 +49,10 @@
         style="margin-bottom: 16px"
       />
 
-      <el-card v-if="step2Form.bom_version" header="BOM 物料清单预览" shadow="never" style="margin-bottom: 16px">
+      <el-card v-if="step2Form.bomVersion" header="BOM 物料清单预览" shadow="never" style="margin-bottom: 16px">
         <el-table :data="bomPreviewData" border size="small">
           <el-table-column prop="level" label="层级" width="60" />
-          <el-table-column prop="material" label="物料名称" minWidth="160">
+          <el-table-column prop="material" label="物料名称" min-width="180">
             <template #default="{ row }">
               <span :style="{ paddingLeft: `${row.level * 16}px` }">{{ row.material }}</span>
             </template>
@@ -74,16 +74,16 @@
         </el-table>
       </el-card>
 
-      <el-card v-if="step2Form.routing_version" header="工艺路线预览" shadow="never">
+      <el-card v-if="step2Form.routingVersion" header="工艺路线预览" shadow="never">
         <el-table :data="routingPreviewData" border size="small">
-          <el-table-column prop="op_no" label="工序号" width="80" align="center" />
+          <el-table-column prop="opNo" label="工序号" width="80" align="center" />
           <el-table-column prop="name" label="工序名称" width="120" />
-          <el-table-column prop="work_center" label="工作中心" width="120" />
-          <el-table-column prop="setup" label="准备工时(分)" width="110" align="center" />
-          <el-table-column prop="run" label="单件工时(分)" width="110" align="center" />
-          <el-table-column label="总工时(小时)" width="100" align="center">
+          <el-table-column prop="workCenter" label="工作中心" width="120" />
+          <el-table-column prop="setup" label="准备工时(分钟)" width="120" align="center" />
+          <el-table-column prop="run" label="单件工时(分钟)" width="120" align="center" />
+          <el-table-column label="总工时(小时)" width="110" align="center">
             <template #default="{ row }">
-              {{ ((row.setup_val + row.run_val * step1Form.planned_qty) / 60).toFixed(1) }}
+              {{ ((row.setupVal + row.runVal * step1Form.plannedQty) / 60).toFixed(1) }}
             </template>
           </el-table-column>
           <el-table-column prop="qc" label="质检关口" width="90" align="center">
@@ -104,16 +104,16 @@
     <div v-show="activeStep === 2">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="工单类型">{{ workOrderTypeLabel }}</el-descriptions-item>
-        <el-descriptions-item label="产品名称">{{ step1Form.material_name }}</el-descriptions-item>
-        <el-descriptions-item label="计划数量">{{ step1Form.planned_qty }} {{ step1Form.unit }}</el-descriptions-item>
+        <el-descriptions-item label="产品名称">{{ step1Form.materialName }}</el-descriptions-item>
+        <el-descriptions-item label="计划数量">{{ step1Form.plannedQty }} {{ step1Form.unit }}</el-descriptions-item>
         <el-descriptions-item label="优先级">{{ priorityLabel }}</el-descriptions-item>
         <el-descriptions-item label="生产车间">{{ step1Form.workshop }}</el-descriptions-item>
         <el-descriptions-item label="生产产线">{{ step1Form.line || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="计划开工">{{ step1Form.planned_start }}</el-descriptions-item>
-        <el-descriptions-item label="计划完工">{{ step1Form.planned_end }}</el-descriptions-item>
-        <el-descriptions-item label="BOM版本">{{ step2Form.bom_version || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="工艺路线版本">{{ step2Form.routing_version || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="客户订单号">{{ step1Form.customer_po || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="计划开工">{{ step1Form.plannedStart }}</el-descriptions-item>
+        <el-descriptions-item label="计划完工">{{ step1Form.plannedEnd }}</el-descriptions-item>
+        <el-descriptions-item label="BOM版本">{{ step2Form.bomVersion || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="工艺路线版本">{{ step2Form.routingVersion || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="客户订单号">{{ step1Form.customerPo || '-' }}</el-descriptions-item>
         <el-descriptions-item label="备注">{{ step1Form.remark || '-' }}</el-descriptions-item>
       </el-descriptions>
 
@@ -138,18 +138,18 @@ const router = useRouter()
 const activeStep = ref(0)
 
 const step1Form = reactive({
-  wo_type: 'production',
-  material_code: '',
-  material_name: '',
-  material_spec: '',
+  woType: 'production',
+  materialCode: '',
+  materialName: '',
+  materialSpec: '',
   unit: '件',
-  planned_qty: 100,
+  plannedQty: 100,
   priority: 'normal',
   workshop: '机加工一车间',
   line: '',
-  planned_start: '2025-01-16',
-  planned_end: '2025-01-25',
-  customer_po: '',
+  plannedStart: '2025-01-16',
+  plannedEnd: '2025-01-25',
+  customerPo: '',
   remark: ''
 })
 
@@ -157,7 +157,7 @@ const step1Columns: FormColumnItem[] = [
   {
     type: 'select-v2',
     label: '工单类型',
-    field: 'wo_type',
+    field: 'woType',
     required: true,
     props: {
       options: [
@@ -170,17 +170,17 @@ const step1Columns: FormColumnItem[] = [
   {
     type: 'input',
     label: '产品物料编码',
-    field: 'material_code',
+    field: 'materialCode',
     required: true,
     props: { placeholder: '请输入产品物料编码', clearable: true } as any
   },
   {
     type: 'input',
     label: '产品名称',
-    field: 'material_name',
-    props: { disabled: true, placeholder: '选择物料后自动带出' } as any
+    field: 'materialName',
+    props: { disabled: true, placeholder: '输入编码后自动带出' } as any
   },
-  { type: 'input-number', label: '计划数量', field: 'planned_qty', required: true, props: { min: 1 } as any },
+  { type: 'input-number', label: '计划数量', field: 'plannedQty', required: true, props: { min: 1 } as any },
   {
     type: 'select-v2',
     label: '优先级',
@@ -208,15 +208,15 @@ const step1Columns: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'date-picker', label: '计划开工', field: 'planned_start', required: true, props: { valueFormat: 'YYYY-MM-DD' } as any },
-  { type: 'date-picker', label: '计划完工', field: 'planned_end', required: true, props: { valueFormat: 'YYYY-MM-DD' } as any },
-  { type: 'input', label: '客户订单号', field: 'customer_po', props: { clearable: true } as any },
+  { type: 'date-picker', label: '计划开工', field: 'plannedStart', required: true, props: { valueFormat: 'YYYY-MM-DD' } as any },
+  { type: 'date-picker', label: '计划完工', field: 'plannedEnd', required: true, props: { valueFormat: 'YYYY-MM-DD' } as any },
+  { type: 'input', label: '客户订单号', field: 'customerPo', props: { clearable: true } as any },
   { type: 'input', label: '备注', field: 'remark', props: { type: 'textarea', rows: 2 } as any }
 ]
 
 const step2Form = reactive({
-  bom_version: '',
-  routing_version: ''
+  bomVersion: '',
+  routingVersion: ''
 })
 
 const bomVersionOptions = ref<Array<{ label: string; value: string }>>([])
@@ -229,9 +229,9 @@ const routingVersionOptions = computed(() => [
 ])
 
 const lines = [
-  { label: '产线A（日产能20件）', value: '产线A' },
-  { label: '产线B（日产能15件）', value: '产线B' },
-  { label: '产线C（日产能10件）', value: '产线C' }
+  { label: '产线A（日产能 20 件）', value: '产线A' },
+  { label: '产线B（日产能 15 件）', value: '产线B' },
+  { label: '产线C（日产能 10 件）', value: '产线C' }
 ]
 
 const lineLoadMap: Record<string, number> = {
@@ -251,8 +251,8 @@ const lineCapacityStatus = computed(() => {
 })
 
 const workOrderTypeLabel = computed(() => {
-  if (step1Form.wo_type === 'production') return '生产工单'
-  if (step1Form.wo_type === 'rework') return '返工工单'
+  if (step1Form.woType === 'production') return '生产工单'
+  if (step1Form.woType === 'rework') return '返工工单'
   return '样品工单'
 })
 
@@ -265,12 +265,9 @@ const priorityLabel = computed(() => {
 
 async function fetchBOMVersions() {
   try {
-    const response = await getBOMList({ pageNum: 1, pageSize: 100 })
+    const response = await getBOMList({ pageNum: 1, pageSize: 100, materialCode: step1Form.materialCode || undefined })
     const items = response.data.list || []
-    const filtered = items.filter((item: any) => !step1Form.material_code || item.material_code === step1Form.material_code)
-    const source = filtered.length > 0 ? filtered : items
-
-    bomVersionOptions.value = source.map((item: any) => ({
+    bomVersionOptions.value = items.map((item: any) => ({
       label: `${item.bom_type} ${item.version}（${item.status === 'active' ? '生效中' : item.status === 'draft' ? '草稿' : '已归档'}）`,
       value: `${item.bom_type} ${item.version}`
     }))
@@ -286,10 +283,11 @@ async function onBomChange(version: string) {
   }
 
   try {
-    const response = await getBOMPreview(step1Form.material_code)
+    const response = await getBOMPreview(step1Form.materialCode)
     const items = Array.isArray(response.data) ? response.data : response.data?.list || []
     bomPreviewData.value = items.map((item: any, index: number) => ({
       ...item,
+      material: item.material || item.material_name || step1Form.materialName,
       available: item.available ?? Math.floor(Math.random() * 200) + index * 30
     }))
   } catch {
@@ -304,15 +302,15 @@ async function onRoutingChange(version: string) {
   }
 
   try {
-    const response = await getRoutingList({ pageNum: 1, pageSize: 100, materialCode: step1Form.material_code })
+    const response = await getRoutingList({ pageNum: 1, pageSize: 100, materialCode: step1Form.materialCode })
     routingPreviewData.value = (response.data.list || []).map((item: any) => ({
-      op_no: item.operation_no,
+      opNo: item.operation_no,
       name: item.name,
-      work_center: item.work_center,
-      setup: `${item.setup_hours}分`,
-      setup_val: item.setup_hours,
-      run: `${item.run_hours}分`,
-      run_val: item.run_hours,
+      workCenter: item.work_center,
+      setup: item.setup_hours,
+      setupVal: item.setup_hours,
+      run: item.run_hours,
+      runVal: item.run_hours,
       qc: item.is_qc_gate
     }))
   } catch {
@@ -321,33 +319,33 @@ async function onRoutingChange(version: string) {
 }
 
 async function nextStep() {
-  if (!step1Form.material_code) {
+  if (!step1Form.materialCode) {
     ElMessage.warning('请输入产品物料编码')
     return
   }
 
-  if (step1Form.planned_start && step1Form.planned_end && new Date(step1Form.planned_end) < new Date(step1Form.planned_start)) {
+  if (step1Form.plannedStart && step1Form.plannedEnd && new Date(step1Form.plannedEnd) < new Date(step1Form.plannedStart)) {
     ElMessage.warning('计划完工日期不能早于计划开工日期')
     return
   }
 
-  if (step1Form.material_code === '04.01.001-00001') {
-    step1Form.material_name = '离心泵 XJP-100'
-    step1Form.material_spec = '流量100m3/h'
-  } else if (!step1Form.material_name) {
-    step1Form.material_name = step1Form.material_code
+  if (step1Form.materialCode === '04.01.001-00001') {
+    step1Form.materialName = '离心泵 XJP-100'
+    step1Form.materialSpec = '流量 100m3/h'
+  } else if (!step1Form.materialName) {
+    step1Form.materialName = step1Form.materialCode
   }
 
   await fetchBOMVersions()
 
-  if (!step2Form.bom_version && bomVersionOptions.value.length > 0) {
-    step2Form.bom_version = bomVersionOptions.value[0].value
-    await onBomChange(step2Form.bom_version)
+  if (!step2Form.bomVersion && bomVersionOptions.value.length > 0) {
+    step2Form.bomVersion = bomVersionOptions.value[0].value
+    await onBomChange(step2Form.bomVersion)
   }
 
-  if (!step2Form.routing_version && routingVersionOptions.value.length > 0) {
-    step2Form.routing_version = routingVersionOptions.value[0].value
-    await onRoutingChange(step2Form.routing_version)
+  if (!step2Form.routingVersion && routingVersionOptions.value.length > 0) {
+    step2Form.routingVersion = routingVersionOptions.value[0].value
+    await onRoutingChange(step2Form.routingVersion)
   }
 
   activeStep.value = 1
@@ -361,19 +359,19 @@ async function submitOrder() {
 
   try {
     await createWorkOrder({
-      wo_type: step1Form.wo_type,
-      material_code: step1Form.material_code,
-      material_name: step1Form.material_name,
-      material_spec: step1Form.material_spec,
-      planned_qty: step1Form.planned_qty,
+      wo_type: step1Form.woType,
+      material_code: step1Form.materialCode,
+      material_name: step1Form.materialName,
+      material_spec: step1Form.materialSpec,
+      planned_qty: step1Form.plannedQty,
       priority: step1Form.priority,
       workshop_name: step1Form.workshop,
       line_name: step1Form.line,
-      planned_start_date: step1Form.planned_start,
-      planned_end_date: step1Form.planned_end,
-      bom_version: step2Form.bom_version,
-      routing_version: step2Form.routing_version,
-      customer_po: step1Form.customer_po,
+      planned_start_date: step1Form.plannedStart,
+      planned_end_date: step1Form.plannedEnd,
+      bom_version: step2Form.bomVersion,
+      routing_version: step2Form.routingVersion,
+      customer_po: step1Form.customerPo,
       remark: step1Form.remark,
       status: 'draft',
       completed_qty: 0,

@@ -1,50 +1,65 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
+          v-model="queryParams"
           :columns="visibleSearchColumns"
           :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
           search
           @reset="handleReset"
-          @search="handleSearch"
+          @search="search"
         />
       </SearchSetting>
     </template>
 
-    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #verdict="{ row }">
-        <StatusTag :value="row.verdict || ''" :options="INSPECTION_VERDICT" />
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    </template>
+
+    <TableSetting title="检验任务" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
+          <template #verdict="{ row }">
+            <StatusTag :value="row.verdict || ''" :options="inspectionVerdictOptions" />
+          </template>
+          <template #status="{ row }">
+            <StatusTag :value="row.status" :options="inspectionStatusOptions" />
+          </template>
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
+            <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="inspect(row)">检验</el-button>
+          </template>
+        </gi-table>
       </template>
-      <template #status="{ row }">
-        <StatusTag :value="row.status" :options="INSPECTION_STATUS" />
-      </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
-        <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="inspect(row)">检验</el-button>
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <InspectionFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-    <InspectionExecuteDialog v-model:visible="iv" v-model:items="items" v-model:result="ir" :task="ic" @submit="submitInspect" />
+    <InspectionExecuteDialog
+      v-model:visible="executeVisible"
+      v-model:items="items"
+      v-model:result="inspectResult"
+      :task="currentTask"
+      @submit="submitInspect"
+    />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { getInspectionTaskList, updateInspectionTask } from '@/api/qms'
+import TableSetting from '@/components/TableSetting.vue'
+import { createInspectionTask, deleteInspectionTask, getInspectionTaskList, updateInspectionTask, type InspectionTask } from '@/api/qms'
 import { useTable } from '@/hooks/useTable'
 import InspectionFormDialog, { type InspectionFormModel } from './InspectionFormDialog.vue'
 import InspectionExecuteDialog, { type InspectionExecuteItem, type InspectionExecuteTask } from './InspectionExecuteDialog.vue'
 
-const INSPECTION_VERDICT = [
+const inspectionVerdictOptions = [
   { value: '合格', label: '合格', type: 'success' as const },
   { value: '让步', label: '让步', type: 'warning' as const },
   { value: '返工', label: '返工', type: 'danger' as const },
@@ -52,27 +67,15 @@ const INSPECTION_VERDICT = [
   { value: '报废', label: '报废', type: 'info' as const }
 ]
 
-const INSPECTION_STATUS = [
+const inspectionStatusOptions = [
   { value: 'pending', label: '待检', type: 'warning' as const },
   { value: 'done', label: '已完成', type: 'success' as const }
 ]
 
-interface InspectionRow {
-  id: string
-  code: string
-  type: string
-  material: string
-  lot: string
-  qty: number
-  status: string
-  verdict?: string
-}
-
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({
+const queryParams = reactive({
   keyword: '',
   type: '',
-  verdict: ''
+  status: ''
 })
 
 const dialogVisible = ref(false)
@@ -80,7 +83,7 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<InspectionFormModel>(createDefaultFormModel())
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword' } as any,
+  { type: 'input', label: '关键词', field: 'keyword' },
   {
     type: 'select-v2',
     label: '检验类型',
@@ -96,25 +99,21 @@ const searchColumns: FormColumnItem[] = [
   },
   {
     type: 'select-v2',
-    label: '判定结果',
-    field: 'verdict',
+    label: '状态',
+    field: 'status',
     props: {
       options: [
         { label: '全部', value: '' },
-        { label: '合格', value: '合格' },
-        { label: '让步', value: '让步' },
-        { label: '返工', value: '返工' },
-        { label: '退货', value: '退货' },
-        { label: '报废', value: '报废' }
+        { label: '待检', value: 'pending' },
+        { label: '已完成', value: 'done' }
       ]
     } as any
   }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
-const cols: TableColumnItem<InspectionRow>[] = [
+const columns: TableColumnItem<InspectionTask>[] = [
   { prop: 'code', label: '任务编号', width: 170 },
   { prop: 'type', label: '类型', width: 100 },
   { prop: 'material', label: '物料', minWidth: 140 },
@@ -122,36 +121,23 @@ const cols: TableColumnItem<InspectionRow>[] = [
   { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { label: '判定', minWidth: 80, slotName: 'verdict', align: 'center' },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 180, slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 220, slotName: 'actions', align: 'center' }
 ]
 
-function mapRow(raw: any): InspectionRow {
-  return {
-    id: String(raw.id),
-    code: raw.code || '',
-    type: raw.type || '',
-    material: raw.material || '',
-    lot: raw.lot || '',
-    qty: Number(raw.qty) || 0,
-    status: raw.status || 'pending',
-    verdict: raw.verdict || ''
-  }
-}
-
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<InspectionRow>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<InspectionTask>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getInspectionTaskList({
+    const response = await getInspectionTaskList({
       pageNum: page,
       pageSize: size,
-      code: searchForm.value.keyword || undefined,
-      type: searchForm.value.type || undefined,
-      material: searchForm.value.keyword || undefined
+      code: queryParams.keyword || undefined,
+      type: queryParams.type || undefined,
+      material: queryParams.keyword || undefined,
+      status: queryParams.status || undefined
     })
-    const items = res.data.list.map(mapRow)
-    return { list: items, total: res.data.total || items.length }
+    return response.data
   },
-  deleteAPI: (ids) => Promise.all(ids.map(() => Promise.resolve()))
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteInspectionTask(id)))
 })
 
 function createDefaultFormModel(): InspectionFormModel {
@@ -162,7 +148,8 @@ function createDefaultFormModel(): InspectionFormModel {
     material: '',
     lot: '',
     qty: 1,
-    status: 'pending'
+    status: 'pending',
+    verdict: ''
   }
 }
 
@@ -170,12 +157,8 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value = { keyword: '', type: '', verdict: '' }
+  Object.assign(queryParams, { keyword: '', type: '', status: '' })
   search()
 }
 
@@ -185,35 +168,34 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: InspectionRow) {
+function openEdit(row: InspectionTask) {
   dialogMode.value = 'edit'
-  formModel.value = {
-    id: row.id,
-    code: row.code,
-    type: row.type,
-    material: row.material,
-    lot: row.lot,
-    qty: row.qty,
-    status: row.status,
-    verdict: row.verdict
-  }
+  formModel.value = { ...row }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
+  if (dialogMode.value === 'add') {
+    await createInspectionTask(formModel.value)
+    ElMessage.success('新增成功')
+  } else {
+    await updateInspectionTask(formModel.value.id, formModel.value)
+    ElMessage.success('编辑成功')
+  }
+
   dialogVisible.value = false
   await refresh()
 }
 
-const iv = ref(false)
-const ic = ref<InspectionExecuteTask | null>(null)
-const ir = ref('qualified')
+const executeVisible = ref(false)
+const currentTask = ref<InspectionExecuteTask | null>(null)
+const inspectResult = ref('qualified')
 const items = ref<InspectionExecuteItem[]>([])
 
-function inspect(row: InspectionRow) {
-  ic.value = { code: row.code, material: row.material }
-  iv.value = true
-  ir.value = 'qualified'
+function inspect(row: InspectionTask) {
+  currentTask.value = { code: row.code, material: row.material }
+  executeVisible.value = true
+  inspectResult.value = 'qualified'
   items.value = [
     { name: '尺寸', standard: '100.00', value: '' },
     { name: '硬度', standard: '45', value: '' },
@@ -222,28 +204,27 @@ function inspect(row: InspectionRow) {
 }
 
 async function submitInspect() {
-  if (ic.value) {
-    const verdictMap: Record<string, string> = {
-      qualified: '合格',
-      concession: '让步',
-      sorting: '返工',
-      return: '退货',
-      scrap: '报废'
-    }
-    try {
-      const target = tableData.value.find((row) => row.code === ic.value?.code)
-      if (!target) return
-      await updateInspectionTask(target.id, {
-        status: 'done',
-        verdict: verdictMap[ir.value] || ''
-      })
-      target.status = 'done'
-      target.verdict = verdictMap[ir.value] || ''
-      ElMessage.success(`检验完成: ${verdictMap[ir.value] || ''}`)
-    } catch {
-      ElMessage.error('提交检验结果失败')
-    }
+  if (!currentTask.value) return
+
+  const verdictMap: Record<string, string> = {
+    qualified: '合格',
+    concession: '让步',
+    sorting: '返工',
+    return: '退货',
+    scrap: '报废'
   }
-  iv.value = false
+
+  const target = tableData.value.find((row) => row.code === currentTask.value?.code)
+  if (!target) return
+
+  await updateInspectionTask(target.id, {
+    status: 'done',
+    verdict: verdictMap[inspectResult.value] || ''
+  })
+
+  target.status = 'done'
+  target.verdict = verdictMap[inspectResult.value] || ''
+  executeVisible.value = false
+  ElMessage.success(`检验完成：${verdictMap[inspectResult.value] || ''}`)
 }
 </script>

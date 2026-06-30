@@ -4,6 +4,7 @@
       <el-descriptions-item label="任务编号">{{ task?.code }}</el-descriptions-item>
       <el-descriptions-item label="物料">{{ task?.material }}</el-descriptions-item>
     </el-descriptions>
+
     <el-table :data="items" border style="margin-top: 16px">
       <el-table-column prop="name" label="检验项目" width="140" />
       <el-table-column prop="standard" label="标准值" width="140" />
@@ -20,6 +21,7 @@
         </template>
       </el-table-column>
     </el-table>
+
     <div style="margin-top: 16px">
       <el-radio-group v-model="result">
         <el-radio value="qualified">合格</el-radio>
@@ -29,6 +31,7 @@
         <el-radio value="scrap">报废</el-radio>
       </el-radio-group>
     </div>
+
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
       <el-button type="primary" @click="emit('submit')">提交</el-button>

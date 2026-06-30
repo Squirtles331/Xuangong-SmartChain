@@ -3,7 +3,7 @@
     <el-table :data="items" border size="small">
       <el-table-column prop="location" label="库位" width="120" />
       <el-table-column prop="material" label="物料名称" min-width="180" />
-      <el-table-column prop="book_qty" label="账面数量" width="90" align="center" />
+      <el-table-column prop="bookQty" label="账面数量" width="100" align="center" />
       <el-table-column label="实盘数量" width="130">
         <template #default="{ row }">
           <el-input-number v-model="row.actual" :min="0" size="small" />
@@ -12,7 +12,7 @@
     </el-table>
     <template #footer>
       <el-button @click="visible = false">保存草稿</el-button>
-      <el-button type="primary" @click="emit('submit')">提交</el-button>
+      <el-button type="primary" @click="emit('submit')">提交结果</el-button>
     </template>
   </el-dialog>
 </template>
@@ -21,7 +21,7 @@
 export interface StockCountExecuteItem {
   location: string
   material: string
-  book_qty: number
+  bookQty: number
   actual: number
 }
 

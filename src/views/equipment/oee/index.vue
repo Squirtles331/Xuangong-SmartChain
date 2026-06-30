@@ -11,13 +11,13 @@
             end-placeholder="结束月"
             format="YYYY-MM"
             value-format="YYYY-MM"
-            @change="handleDateChange"
+            @change="loadOverview"
           />
         </el-form-item>
       </el-form>
     </template>
     <el-row :gutter="16">
-      <el-col :span="6" v-for="card in cards" :key="card.title">
+      <el-col v-for="card in cards" :key="card.title" :span="6">
         <el-card shadow="hover">
           <div class="card-title">{{ card.title }}</div>
           <div class="card-value">{{ card.value }}<span class="card-unit">%</span></div>
@@ -27,10 +27,14 @@
     </el-row>
     <el-row :gutter="16" style="margin-top: 16px">
       <el-col :span="12">
-        <el-card header="OEE趋势"><div ref="chartRef" style="height: 300px"></div></el-card>
+        <el-card header="OEE 趋势">
+          <div ref="chartRef" style="height: 300px"></div>
+        </el-card>
       </el-col>
       <el-col :span="12">
-        <el-card header="设备OEE排行"><gi-table :columns="rankCols" :data="rankData" border stripe size="small" /></el-card>
+        <el-card header="设备 OEE 排行">
+          <gi-table :columns="rankCols" :data="rankData" border stripe size="small" />
+        </el-card>
       </el-col>
     </el-row>
   </gi-page-layout>
@@ -41,20 +45,20 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import * as echarts from 'echarts'
 import type { EChartsType } from 'echarts'
 import type { TableColumnItem } from 'gi-component'
-import { getEquipmentOeeOverview } from '@/api/equipment'
+import { getEquipmentOeeOverview, type EquipmentOeeOverviewData } from '@/api/equipment'
 
-const dateRange = ref<string[]>(['2025-01', '2025-06'])
+const dateRange = ref<string[]>(['2026-01', '2026-06'])
 const chartRef = ref<HTMLDivElement>()
 
-const cards = ref([
+const cards = ref<EquipmentOeeOverviewData['cards']>([
   { title: 'OEE综合', value: 0 },
   { title: '设备利用率', value: 0 },
   { title: '性能效率', value: 0 },
   { title: '合格品率', value: 0 }
 ])
 
-const rankData = ref<any[]>([])
-const trendData = ref({
+const rankData = ref<EquipmentOeeOverviewData['rankData']>([])
+const trendData = ref<EquipmentOeeOverviewData['trendData']>({
   months: ['1月', '2月', '3月', '4月', '5月', '6月'],
   oee: [75, 76, 78, 77, 79, 78.5],
   utilization: [82, 84, 85, 83, 86, 85.2],
@@ -63,7 +67,7 @@ const trendData = ref({
 })
 
 const rankCols: TableColumnItem<any>[] = [
-  { prop: 'equipment', label: '设备', minWidth: 160 },
+  { prop: 'equipment', label: '设备', minWidth: 180 },
   { prop: 'oee', label: 'OEE', minWidth: 80, align: 'center' },
   { prop: 'utilization', label: '利用率', minWidth: 80, align: 'center' },
   { prop: 'performance', label: '性能', minWidth: 80, align: 'center' },
@@ -91,19 +95,14 @@ function renderChart() {
 }
 
 async function loadOverview() {
-  const res = await getEquipmentOeeOverview({
+  const response = await getEquipmentOeeOverview({
     start_month: dateRange.value?.[0],
     end_month: dateRange.value?.[1]
   })
-
-  cards.value = res.data.cards || []
-  rankData.value = res.data.rankData || []
-  trendData.value = res.data.trendData || trendData.value
+  cards.value = response.data.cards
+  rankData.value = response.data.rankData
+  trendData.value = response.data.trendData
   renderChart()
-}
-
-function handleDateChange() {
-  loadOverview()
 }
 
 function handleResize() {
@@ -126,14 +125,16 @@ onBeforeUnmount(() => {
   font-size: 13px;
   color: #909399;
 }
+
 .card-value {
+  margin: 8px 0;
   font-size: 28px;
   font-weight: 700;
-  margin: 8px 0;
 }
+
 .card-unit {
+  margin-left: 4px;
   font-size: 14px;
   color: #909399;
-  margin-left: 4px;
 }
 </style>

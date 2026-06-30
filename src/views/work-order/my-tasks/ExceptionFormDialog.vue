@@ -5,7 +5,7 @@
         <el-select v-model="formData.type" style="width: 100%">
           <el-option label="设备故障" value="equipment" />
           <el-option label="来料不良" value="material" />
-          <el-option label="图纸/工艺错误" value="process" />
+          <el-option label="图纸或工艺错误" value="process" />
           <el-option label="其他" value="other" />
         </el-select>
       </el-form-item>
