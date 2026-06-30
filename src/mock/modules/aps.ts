@@ -65,3 +65,19 @@ export const apsScheduleData = {
     { op: '工序80:油漆', wc: '涂装组', qty: 100 }
   ]
 }
+
+export const apsConstraintData = {
+  molds: [
+    { id: 'mold-1', code: 'MD0000000001', name: '泵体铸造模具', applicable: '泵体铸件', life: '10000模次', available: true, utilization: 62 },
+    { id: 'mold-2', code: 'MD0000000002', name: '叶轮锻模', applicable: '叶轮锻件', life: '5000模次', available: true, utilization: 48 }
+  ],
+  tools: [
+    { id: 'tool-1', code: 'TL00001', name: '车刀 CNMG120408', applicable: '数控车组', life: '500件', available: true, utilization: 68 },
+    { id: 'tool-2', code: 'TL00002', name: '钻头 Φ10', applicable: '钻床组', life: '300件', available: true, utilization: 52 }
+  ],
+  skills: [
+    { id: 'skill-1', operation: '精车', skill: '数控车床操作', min_level: 3, workers_count: 4, utilization: 75 },
+    { id: 'skill-2', operation: '装配', skill: '装配钳工', min_level: 4, workers_count: 3, utilization: 67 }
+  ],
+  materialShortages: [{ id: 'mat-1', material: '轴承 6308', wo_code: 'WO202501150001', available_date: '2025-01-18', qty_short: 50 }]
+}

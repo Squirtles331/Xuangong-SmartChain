@@ -11,7 +11,7 @@
     <gi-table :columns="columns" :data="results" border stripe>
       <template #type="{ row }">
         <el-tag :type="row.type === 'transfer' ? 'warning' : row.type === 'purchase' ? 'primary' : 'success'" size="small">
-          {{ row.type }}
+          {{ row.type === 'transfer' ? '调拨' : row.type === 'purchase' ? '采购' : '生产' }}
         </el-tag>
       </template>
     </gi-table>
@@ -66,9 +66,9 @@ function renderChart() {
 }
 
 async function loadData() {
-  const res = await getMultiPlantMRP({ pageNum: 1, pageSize: 100 })
-  plantCapacity.value = res.data.plantCapacity || []
-  results.value = res.data.results || []
+  const response = await getMultiPlantMRP({ pageNum: 1, pageSize: 100 })
+  plantCapacity.value = response.data.plantCapacity || []
+  results.value = response.data.results || []
   await nextTick()
   renderChart()
 }

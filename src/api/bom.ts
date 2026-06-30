@@ -19,6 +19,7 @@ export interface BOMListQuery {
   pageSize: number
   materialCode?: string
   materialName?: string
+  bomType?: string
   status?: string
 }
 

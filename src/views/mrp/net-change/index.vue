@@ -4,6 +4,7 @@
       <h3>净变更 MRP</h3>
       <p style="color: #909399; margin: 4px 0">仅对发生变化的需求与供给信号重新计算。</p>
     </template>
+
     <template #tool>
       <el-button type="primary" @click="reload">执行净变更 MRP</el-button>
     </template>
@@ -16,9 +17,10 @@
       <gi-table :columns="resultColumns" :data="affected" border stripe size="small">
         <template #action="{ row }">
           <el-tag :type="row.action === 'increase' ? 'success' : row.action === 'decrease' ? 'danger' : 'warning'" size="small">
-            {{ row.action }}
+            {{ row.action === 'increase' ? '增加' : row.action === 'decrease' ? '减少' : '保持' }}
           </el-tag>
         </template>
+
         <template #expand="{ row }">
           <div style="padding: 8px 24px">
             <el-table :data="row.details || []" border size="small">
@@ -66,9 +68,9 @@ const resultColumns: TableColumnItem<any>[] = [
 ]
 
 async function loadData() {
-  const res = await getNetChangeMRP({ pageNum: 1, pageSize: 100 })
-  events.value = res.data.events || []
-  affected.value = res.data.affected || []
+  const response = await getNetChangeMRP({ pageNum: 1, pageSize: 100 })
+  events.value = response.data.events || []
+  affected.value = response.data.affected || []
 }
 
 async function reload() {

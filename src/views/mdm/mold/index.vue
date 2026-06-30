@@ -18,7 +18,7 @@
       <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <TableSetting title="表格工具栏" :columns="columns" @refresh="refresh">
+    <TableSetting title="模具列表" :columns="columns" @refresh="refresh">
       <template #default="{ settingColumns, tableProps }">
         <gi-table
           :columns="settingColumns"

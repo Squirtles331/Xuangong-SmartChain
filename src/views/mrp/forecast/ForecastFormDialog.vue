@@ -14,23 +14,15 @@
 
 <script lang="ts" setup>
 import type { FormColumnItem } from 'gi-component'
+import type { MRPForecast } from '@/api/mrp'
 
-export interface ForecastFormModel {
-  id: string
-  material_code: string
-  material_name: string
-  qty: number
-  need_date: string
-  type: string
-  probability: number
-  remark: string
-}
+export interface ForecastFormModel extends MRPForecast {}
 
 interface Props {
   mode: 'add' | 'edit'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<ForecastFormModel>('form', { required: true })
@@ -43,7 +35,7 @@ const formColumns: FormColumnItem[] = [
   { type: 'input', label: '产品编码', field: 'material_code', required: true },
   { type: 'input', label: '产品名称', field: 'material_name', required: true },
   { type: 'input-number', label: '预测数量', field: 'qty', required: true, props: { min: 1 } as any },
-  { type: 'date-picker', label: '需求日期', field: 'need_date', required: true },
+  { type: 'date-picker', label: '需求日期', field: 'need_date', required: true, props: { valueFormat: 'YYYY-MM-DD' } as any },
   {
     type: 'select-v2',
     label: '类型',

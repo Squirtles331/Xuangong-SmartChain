@@ -1,7 +1,16 @@
-import { mrpExceptions, mrpProductionList, mrpPurchaseList, multiPlantCapacity, multiPlantResults, netChangeAffected } from '../modules/mrp'
+import {
+  mrpExceptions,
+  mrpForecastList,
+  mrpProductionList,
+  mrpPurchaseList,
+  multiPlantCapacity,
+  multiPlantResults,
+  netChangeAffected
+} from '../modules/mrp'
 import { simulateDelay } from '../shared/delay'
-import { paginate } from '../shared/paginate'
-import { wrapDetailResponse, wrapListResponse, wrapSuccessResponse } from '../shared/response'
+import { paginate, searchItems } from '../shared/paginate'
+import { wrapCreatedResponse, wrapDetailResponse, wrapListResponse, wrapSuccessResponse, wrapUpdatedResponse } from '../shared/response'
+import { generateId } from '../shared/id'
 
 export async function runMRP(data?: { plantId?: string }) {
   await simulateDelay(800, 1500)
@@ -18,21 +27,10 @@ export async function runMRP(data?: { plantId?: string }) {
 export async function getMRPResults(runId: string, params: { type: 'purchase' | 'production' | 'exception'; pageNum: number; pageSize: number }) {
   await simulateDelay()
 
-  let sourceData: any[]
-
-  switch (params.type) {
-    case 'purchase':
-      sourceData = mrpPurchaseList
-      break
-    case 'production':
-      sourceData = mrpProductionList
-      break
-    case 'exception':
-      sourceData = mrpExceptions
-      break
-    default:
-      sourceData = []
-  }
+  let sourceData: any[] = []
+  if (params.type === 'purchase') sourceData = mrpPurchaseList
+  if (params.type === 'production') sourceData = mrpProductionList
+  if (params.type === 'exception') sourceData = mrpExceptions
 
   const result = paginate(sourceData, params.pageNum, params.pageSize)
   return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
@@ -40,31 +38,43 @@ export async function getMRPResults(runId: string, params: { type: 'purchase' | 
 
 export async function confirmMRPSuggestions(runId: string, ids: string[]) {
   await simulateDelay()
-  return wrapSuccessResponse(`Confirmed ${ids.length} suggestions for run ${runId}`)
+  return wrapSuccessResponse(`已确认 ${ids.length} 条建议，运算批次 ${runId}`)
 }
 
 const mrpHistoryStore: any[] = [
   {
-    id: 'MRP1704067200000',
-    plantId: 'PLANT-001',
-    startedAt: '2025-01-01 08:00:00',
-    finishedAt: '2025-01-01 08:02:30',
-    status: 'completed',
-    purchaseCount: 5,
-    productionCount: 4,
-    exceptionCount: 3,
-    triggeredBy: 'system'
+    id: 'MRP202606300001',
+    run_time: '2026-06-30 08:00:00',
+    operator: '系统',
+    scope: '一号工厂',
+    date_range: '2026-07-01 ~ 2026-07-31',
+    include_safety_stock: true,
+    include_in_transit: true,
+    lead_time_mode: '标准',
+    strategy: '全量重算',
+    orders: 12,
+    purchase_suggestions: 5,
+    transfer_suggestions: 2,
+    production_suggestions: 4,
+    suggestions: 11,
+    status: 'completed'
   },
   {
-    id: 'MRP1704153600000',
-    plantId: 'PLANT-001',
-    startedAt: '2025-01-02 08:00:00',
-    finishedAt: '2025-01-02 08:03:15',
-    status: 'completed',
-    purchaseCount: 3,
-    productionCount: 2,
-    exceptionCount: 1,
-    triggeredBy: 'user'
+    id: 'MRP202606290001',
+    run_time: '2026-06-29 08:10:00',
+    operator: '计划员',
+    scope: '一号工厂',
+    date_range: '2026-07-01 ~ 2026-07-31',
+    include_safety_stock: true,
+    include_in_transit: false,
+    lead_time_mode: '标准',
+    strategy: '净变更',
+    orders: 9,
+    purchase_suggestions: 3,
+    transfer_suggestions: 1,
+    production_suggestions: 2,
+    suggestions: 6,
+    status: 'completed'
   }
 ]
 
@@ -72,22 +82,46 @@ export async function getMRPHistory(params: { pageNum: number; pageSize: number;
   await simulateDelay()
 
   let filtered = [...mrpHistoryStore]
-
-  if (params.plantId) {
-    filtered = filtered.filter((item) => item.plantId === params.plantId)
-  }
-
-  if (params.status) {
-    filtered = filtered.filter((item) => item.status === params.status)
-  }
+  if (params.plantId) filtered = filtered.filter((item) => item.scope === params.plantId)
+  if (params.status) filtered = filtered.filter((item) => item.status === params.status)
 
   const result = paginate(filtered, params.pageNum, params.pageSize)
   return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
 }
 
-export async function getMRPForecast(params: { pageNum: number; pageSize: number; period?: string }) {
+export async function getMRPForecast(params: { pageNum: number; pageSize: number; keyword?: string; type?: string }) {
   await simulateDelay()
-  return wrapListResponse([], 0, params.pageNum, params.pageSize)
+
+  let filtered = [...mrpForecastList]
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['material_code', 'material_name'])
+  if (params.type) filtered = filtered.filter((item) => item.type === params.type)
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function createMRPForecast(data: any) {
+  await simulateDelay()
+  const next = { id: generateId(), ...data }
+  mrpForecastList.unshift(next)
+  return wrapCreatedResponse(next, '新增预测需求成功')
+}
+
+export async function updateMRPForecast(id: string, data: any) {
+  await simulateDelay()
+  const index = mrpForecastList.findIndex((item) => item.id === id)
+  if (index > -1) {
+    mrpForecastList[index] = { ...mrpForecastList[index], ...data }
+    return wrapUpdatedResponse(mrpForecastList[index], '编辑预测需求成功')
+  }
+  return wrapUpdatedResponse({ id, ...data }, '编辑预测需求成功')
+}
+
+export async function deleteMRPForecast(id: string) {
+  await simulateDelay()
+  const index = mrpForecastList.findIndex((item) => item.id === id)
+  if (index > -1) mrpForecastList.splice(index, 1)
+  return wrapSuccessResponse('删除预测需求成功')
 }
 
 export async function getMultiPlantMRP(params: { pageNum: number; pageSize: number; plantIds?: string[] }) {
@@ -108,14 +142,14 @@ export async function getMultiPlantMRP(params: { pageNum: number; pageSize: numb
 
 export async function getNetChangeMRP(params: { pageNum: number; pageSize: number; changeType?: string }) {
   await simulateDelay()
-  const events = params.changeType ? mrpExceptions.filter((item: any) => item.type === params.changeType) : mrpExceptions
+  const events = params.changeType ? mrpExceptions.filter((item) => item.type === params.changeType) : mrpExceptions
 
   return wrapDetailResponse({
-    events: paginate(events, params.pageNum, params.pageSize).list.map((item: any, index: number) => ({
+    events: paginate(events, params.pageNum, params.pageSize).list.map((item, index) => ({
       id: item.id,
       type: item.type,
       detail: item.detail,
-      time: `2025-01-${String(10 + index).padStart(2, '0')} 10:00:00`
+      time: `2026-06-${String(20 + index).padStart(2, '0')} 10:00:00`
     })),
     affected: netChangeAffected
   })

@@ -1,6 +1,24 @@
 import { isMockMode } from './_config'
-import { apiGet, apiPost, apiPut } from './_factory'
+import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
 import * as mockService from '@/mock/services/mrp'
+
+export interface MRPForecast {
+  id: string
+  material_code: string
+  material_name: string
+  qty: number
+  need_date: string
+  type: 'sales' | 'independent'
+  probability: number
+  remark: string
+}
+
+export interface MRPForecastQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  type?: MRPForecast['type']
+}
 
 export function runMRP(data?: { plantId?: string }) {
   if (isMockMode) return mockService.runMRP(data)
@@ -22,9 +40,24 @@ export function getMRPHistory(params: { pageNum: number; pageSize: number; plant
   return apiGet<any>('/mrp/history', { params })
 }
 
-export function getMRPForecast(params: { pageNum: number; pageSize: number; period?: string }) {
-  if (isMockMode) return mockService.getMRPForecast(params)
-  return apiGet<any>('/mrp/forecast', { params })
+export function getMRPForecast(params: MRPForecastQuery) {
+  if (isMockMode) return mockService.getMRPForecast(params) as Promise<ApiResponse<PaginatedData<MRPForecast>>>
+  return apiGet<PaginatedData<MRPForecast>>('/mrp/forecast', { params })
+}
+
+export function createMRPForecast(data: Partial<MRPForecast>) {
+  if (isMockMode) return mockService.createMRPForecast(data)
+  return apiPost<Record<string, never>, Partial<MRPForecast>>('/mrp/forecast', data)
+}
+
+export function updateMRPForecast(id: string, data: Partial<MRPForecast>) {
+  if (isMockMode) return mockService.updateMRPForecast(id, data)
+  return apiPut<Record<string, never>, Partial<MRPForecast>>(`/mrp/forecast/${id}`, data)
+}
+
+export function deleteMRPForecast(id: string) {
+  if (isMockMode) return mockService.deleteMRPForecast(id)
+  return apiDelete<Record<string, never>>(`/mrp/forecast/${id}`)
 }
 
 export function getMultiPlantMRP(params: { pageNum: number; pageSize: number; plantIds?: string[] }) {

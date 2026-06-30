@@ -4,28 +4,30 @@
       <div class="tree-wrapper">
         <div class="tree-header">
           <div class="tree-title">工厂组织架构</div>
-          <el-button text type="primary" @click="toggleTreeExpanded">
-            {{ treeExpanded ? '收起组织树' : '展开组织树' }}
-          </el-button>
         </div>
         <el-tree
-          v-show="treeExpanded"
           ref="treeRef"
           :data="orgTree"
           :props="{ children: 'children', label: 'name' }"
           node-key="id"
-          default-expand-all
           :expand-on-click-node="false"
           highlight-current
           @node-click="onNodeClick"
         >
-          <template #default="{ data }">
+          <template #default="{ node, data }">
             <span class="tree-node">
-              <el-icon v-if="data.type === 'group'" style="margin-right: 4px"><OfficeBuilding /></el-icon>
-              <el-icon v-else-if="data.type === 'company'" style="margin-right: 4px"><OfficeBuilding /></el-icon>
-              <el-icon v-else-if="data.type === 'plant'" style="margin-right: 4px"><HomeFilled /></el-icon>
-              <el-icon v-else-if="data.type === 'workshop'" style="margin-right: 4px"><Grid /></el-icon>
-              <el-icon v-else style="margin-right: 4px"><Location /></el-icon>
+              <span v-if="node.childNodes?.length" class="tree-toggle" @click.stop="node.expanded = !node.expanded">
+                <el-icon>
+                  <CaretRight v-if="!node.expanded" />
+                  <CaretBottom v-else />
+                </el-icon>
+              </span>
+              <span v-else class="tree-toggle tree-toggle--empty"></span>
+              <el-icon v-if="data.type === 'group'" class="tree-icon"><OfficeBuilding /></el-icon>
+              <el-icon v-else-if="data.type === 'company'" class="tree-icon"><OfficeBuilding /></el-icon>
+              <el-icon v-else-if="data.type === 'plant'" class="tree-icon"><HomeFilled /></el-icon>
+              <el-icon v-else-if="data.type === 'workshop'" class="tree-icon"><Grid /></el-icon>
+              <el-icon v-else class="tree-icon"><Location /></el-icon>
               <span>{{ data.name }}</span>
             </span>
           </template>
@@ -34,65 +36,61 @@
     </template>
 
     <template #header>
-      <div class="org-page-header">
-        <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-          <gi-form
-            v-model="queryParams"
-            :columns="visibleSearchColumns"
-            :grid-item-props="searchGridItemProps"
-            search
-            @search="handleSearch"
-            @reset="handleReset"
-          />
-        </SearchSetting>
-      </div>
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
+      </SearchSetting>
     </template>
 
     <template #tool>
       <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <div class="content-wrapper">
-      <TableSetting title="表格工具栏" :columns="tableColumns" @refresh="refresh">
-        <template #default="{ settingColumns, tableProps }">
-          <gi-table
-            :columns="settingColumns"
-            :data="tableData"
-            :pagination="pagination"
-            :loading="loading"
-            v-bind="tableProps"
-            @row-click="handleRowClick"
-            border
-            stripe
-            class="content-table"
-          >
-            <template #index="{ $index }">
-              {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
-            </template>
-            <template #type="{ row }">
-              <el-tag size="small" :type="getTypeTagType(row.type)">
-                {{ getTypeLabel(row.type) }}
-              </el-tag>
-            </template>
-            <template #actions="{ row }">
-              <gi-button type="edit" @click="openEditByRow(row)" />
-              <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
-            </template>
-          </gi-table>
-        </template>
-      </TableSetting>
-    </div>
+    <TableSetting title="组织列表" :columns="tableColumns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          class="content-table"
+        >
+          <template #index="{ $index }">
+            {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
+          </template>
+
+          <template #type="{ row }">
+            <el-tag size="small" :type="getTypeTagType(row.type)">
+              {{ getTypeLabel(row.type) }}
+            </el-tag>
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEditByRow(row)" />
+            <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
+          </template>
+        </gi-table>
+      </template>
+    </TableSetting>
 
     <OrganizationFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { ElTree } from 'element-plus'
-import { OfficeBuilding, HomeFilled, Grid, Location } from '@element-plus/icons-vue'
+import { CaretBottom, CaretRight, Grid, HomeFilled, Location, OfficeBuilding } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import TableSetting from '@/components/TableSetting.vue'
@@ -106,7 +104,8 @@ const treeRef = ref<InstanceType<typeof ElTree> | null>(null)
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<OrganizationFormModel>(createDefaultFormModel())
-const treeExpanded = ref(true)
+const selectedNodeId = ref('')
+
 const queryParams = reactive<{
   keyword: string
   type: '' | OrgType
@@ -114,17 +113,16 @@ const queryParams = reactive<{
   keyword: '',
   type: ''
 })
-const selectedNodeId = ref('')
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '组织名称/组织编码', clearable: true } as any },
+  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '组织名称/组织编码', clearable: true } as any },
   {
     type: 'select-v2',
     label: '组织类型',
     field: 'type',
     props: {
-      clearable: true,
       options: [
+        { label: '全部', value: '' },
         { label: '集团', value: 'group' },
         { label: '公司', value: 'company' },
         { label: '工厂', value: 'plant' },
@@ -135,8 +133,8 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
 const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+
 const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
@@ -175,8 +173,8 @@ async function init() {
 }
 
 async function fetchTree() {
-  const res = await getOrgTree()
-  orgTree.value = JSON.parse(JSON.stringify(res.data as OrgNode[]))
+  const response = await getOrgTree()
+  orgTree.value = JSON.parse(JSON.stringify(response.data as OrgNode[]))
 }
 
 function createDefaultFormModel(): OrganizationFormModel {
@@ -193,25 +191,11 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-function toggleTreeExpanded() {
-  treeExpanded.value = !treeExpanded.value
-}
-
-function handleSearch() {
-  currentNode.value = null
-  selectedNodeId.value = ''
-  treeRef.value?.setCurrentKey(undefined)
-  search()
-}
-
 function handleReset() {
   Object.assign(queryParams, {
     keyword: '',
     type: ''
   })
-  currentNode.value = null
-  selectedNodeId.value = ''
-  treeRef.value?.setCurrentKey(undefined)
   search()
 }
 
@@ -243,7 +227,7 @@ function getTypeTagType(type: OrgType) {
   return 'warning'
 }
 
-function addNode() {
+function openAdd() {
   const parent = currentNode.value
   const typeMap: Record<OrgType, OrgType> = {
     group: 'company',
@@ -266,10 +250,6 @@ function addNode() {
   dialogVisible.value = true
 }
 
-function openAdd() {
-  addNode()
-}
-
 function openEditByRow(row: OrgListItem) {
   dialogMode.value = 'edit'
   formModel.value = {
@@ -280,16 +260,6 @@ function openEditByRow(row: OrgListItem) {
     type: row.type
   }
   dialogVisible.value = true
-}
-
-async function handleRowClick(row: OrgListItem) {
-  const res = await getOrgNodeDetail(row.id)
-  const detail = res.data ? { ...res.data } : null
-  if (!detail) return
-  currentNode.value = detail
-  selectedNodeId.value = detail.id
-  treeRef.value?.setCurrentKey(detail.id)
-  search()
 }
 
 async function submitDialog() {
@@ -317,8 +287,8 @@ async function submitDialog() {
   await Promise.all([fetchTree(), refresh()])
 
   if (currentNode.value?.id) {
-    const res = await getOrgNodeDetail(currentNode.value.id)
-    currentNode.value = res.data ? { ...res.data } : null
+    const response = await getOrgNodeDetail(currentNode.value.id)
+    currentNode.value = response.data ? { ...response.data } : null
   }
 
   ElMessage.success(dialogMode.value === 'add' ? '新增成功' : '保存成功')
@@ -326,8 +296,8 @@ async function submitDialog() {
 
 async function syncCurrentNode() {
   if (!selectedNodeId.value) return
-  const res = await getOrgNodeDetail(selectedNodeId.value)
-  currentNode.value = res.data ? { ...res.data } : null
+  const response = await getOrgNodeDetail(selectedNodeId.value)
+  currentNode.value = response.data ? { ...response.data } : null
 }
 
 async function deleteOrgNodes(ids: string[]) {
@@ -344,10 +314,6 @@ async function deleteOrgNodes(ids: string[]) {
 </script>
 
 <style scoped>
-.org-page-header {
-  width: 100%;
-}
-
 .tree-wrapper {
   display: flex;
   flex-direction: column;
@@ -374,16 +340,32 @@ async function deleteOrgNodes(ids: string[]) {
 }
 
 .tree-node {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   font-size: 13px;
 }
 
-.content-wrapper {
-  padding: 0 16px 16px;
+.tree-toggle {
+  display: inline-flex;
+  width: 16px;
+  margin-right: 4px;
+  color: #606266;
+  cursor: pointer;
+}
+
+.tree-toggle--empty {
+  cursor: default;
+}
+
+.tree-icon {
+  margin-right: 4px;
 }
 
 .content-table {
   min-height: 420px;
+}
+
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
 }
 </style>

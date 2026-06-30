@@ -4,7 +4,7 @@
       <div class="mrp-header">
         <h2>MRP 运算结果</h2>
         <div>
-          <el-tag v-if="lastRunTime" type="success" style="margin-right: 8px">最近运行: {{ lastRunTime }}</el-tag>
+          <el-tag v-if="lastRunTime" type="success" style="margin-right: 8px">最近运行 {{ lastRunTime }}</el-tag>
           <el-button type="primary" @click="runMRP">运行 MRP</el-button>
           <el-button @click="$router.push('/mrp/history')">运行历史</el-button>
         </div>
@@ -55,18 +55,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useRouter } from 'vue-router'
 import type { TableColumnItem } from 'gi-component'
 import { runMRP as runMRPApi, getMRPResults, confirmMRPSuggestions } from '@/api/mrp'
 
 const tab = ref('purchase')
-const router = useRouter()
 const runId = ref('')
 const lastRunTime = ref('')
 
 const purchaseList = ref<any[]>([])
+const productionList = ref<any[]>([])
+const exceptions = ref<any[]>([])
+
 const purCols: TableColumnItem<any>[] = [
   { type: 'selection', width: 50 },
   { prop: 'code', label: '物料编码', width: 180 },
@@ -79,7 +80,6 @@ const purCols: TableColumnItem<any>[] = [
   { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
 
-const productionList = ref<any[]>([])
 const prodCols: TableColumnItem<any>[] = [
   { type: 'selection', width: 50 },
   { prop: 'code', label: '产品编码', width: 180 },
@@ -87,13 +87,12 @@ const prodCols: TableColumnItem<any>[] = [
   { prop: 'qty', label: '建议生产量', minWidth: 110, align: 'center' },
   { prop: 'start_date', label: '建议开工', width: 110 },
   { prop: 'end_date', label: '建议完工', width: 110 },
-  { prop: 'bom', label: 'BOM版本', width: 110 },
+  { prop: 'bom', label: 'BOM 版本', width: 110 },
   { prop: 'routing', label: '工艺版本', width: 130 },
   { prop: 'source', label: '来源需求', width: 150 },
   { label: '操作', minWidth: 100, slotName: 'actions', align: 'center' }
 ]
 
-const exceptions = ref<any[]>([])
 const excCols: TableColumnItem<any>[] = [
   { label: '类型', width: 100, slotName: 'type' },
   { prop: 'material', label: '物料', width: 150 },
@@ -122,22 +121,24 @@ function onPurSelect(rows: any[]) {
 
 async function fetchResults(type: string) {
   if (!runId.value) return
+
   try {
-    const res = await getMRPResults(runId.value, {
+    const response = await getMRPResults(runId.value, {
       type: type as 'purchase' | 'production' | 'exception',
       pageNum: 1,
       pageSize: 100
     })
-    if (type === 'purchase') purchaseList.value = res.data.list
-    else if (type === 'production') productionList.value = res.data.list
-    else if (type === 'exception') exceptions.value = res.data.list
+
+    if (type === 'purchase') purchaseList.value = response.data.list
+    else if (type === 'production') productionList.value = response.data.list
+    else exceptions.value = response.data.list
   } catch {
-    ElMessage.error('获取MRP结果失败')
+    ElMessage.error('获取 MRP 结果失败')
   }
 }
 
-function onTabChange(val: string) {
-  fetchResults(val)
+function onTabChange(value: string) {
+  fetchResults(value)
 }
 
 async function confirmOne(type: string, row: any) {
@@ -154,10 +155,11 @@ async function confirmAll(type: string) {
     ElMessage.warning('请先选择要生成的采购建议')
     return
   }
+
   try {
-    const ids = selectedPur.value.map((r: any) => r.id)
+    const ids = selectedPur.value.map((item: any) => item.id)
     await confirmMRPSuggestions(runId.value, ids)
-    ElMessage.success(type === 'purchase' ? `已批量生成 ${ids.length} 个采购申请` : `已批量生成工单`)
+    ElMessage.success(type === 'purchase' ? `已批量生成 ${ids.length} 个采购申请` : '已批量生成工单')
   } catch {
     ElMessage.error('批量确认失败')
   }
@@ -165,10 +167,10 @@ async function confirmAll(type: string) {
 
 async function runMRP() {
   try {
-    const res = await runMRPApi()
-    runId.value = res.data.runId
-    lastRunTime.value = new Date().toLocaleString()
-    ElMessage.success('MRP 运算已启动，请稍候查看结果')
+    const response = await runMRPApi()
+    runId.value = response.data.runId
+    lastRunTime.value = new Date().toLocaleString('zh-CN')
+    ElMessage.success('MRP 运算已启动，请稍后查看结果')
     fetchResults('purchase')
   } catch {
     ElMessage.error('MRP 运算启动失败')
@@ -177,12 +179,12 @@ async function runMRP() {
 
 onMounted(async () => {
   try {
-    const res = await runMRPApi()
-    runId.value = res.data.runId
-    lastRunTime.value = new Date().toLocaleString()
+    const response = await runMRPApi()
+    runId.value = response.data.runId
+    lastRunTime.value = new Date().toLocaleString('zh-CN')
     fetchResults('purchase')
   } catch {
-    // 静默失败，等待用户手动运行
+    // 忽略初始化失败，用户可手动执行
   }
 })
 </script>
@@ -193,6 +195,7 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
 }
+
 .mrp-header h2 {
   margin: 0;
   font-size: 18px;

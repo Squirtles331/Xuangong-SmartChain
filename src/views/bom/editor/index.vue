@@ -3,24 +3,24 @@
     <template #header>
       <div class="editor-header">
         <div class="header-left">
-          <h2>BOM 编辑器 — {{ bomTitle }}</h2>
+          <h2>{{ isCreateMode ? '新建 BOM' : `BOM 编辑 - ${bomTitle}` }}</h2>
+          <p class="header-desc">维护 BOM 树结构、用量、损耗率和替代策略。</p>
         </div>
         <div class="header-right">
-          <el-button @click="importExcel">📥 导入Excel</el-button>
-          <el-button @click="exportExcel">📤 导出Excel</el-button>
-          <el-button type="primary" @click="saveBom">💾 保存</el-button>
+          <el-button @click="importExcel">导入 Excel</el-button>
+          <el-button @click="exportExcel">导出 Excel</el-button>
+          <el-button type="primary" @click="saveBom">保存</el-button>
           <el-button @click="$router.back()">返回</el-button>
         </div>
       </div>
     </template>
 
     <div class="editor-container">
-      <!-- 左侧树 -->
       <div class="tree-panel">
         <div class="tree-toolbar">
-          <el-button type="primary" size="small" @click="addChild(null)">+ 添加根节点</el-button>
+          <el-button type="primary" size="small" @click="addChild(null)">新增根节点</el-button>
         </div>
-        <el-input v-model="treeFilter" placeholder="搜索节点..." clearable style="margin-top: 8px" />
+        <el-input v-model="treeFilter" placeholder="搜索节点名称或物料编码" clearable style="margin-top: 8px" />
         <el-tree
           ref="treeRef"
           :data="treeData"
@@ -44,40 +44,40 @@
         </el-tree>
       </div>
 
-      <!-- 右侧表单 -->
       <div class="form-panel">
         <div v-if="!currentNode" class="empty-tip">
-          <el-empty description="选择左侧节点编辑或添加子件" />
+          <el-empty description="点击左侧节点进行编辑，或新增子件节点。" />
         </div>
+
         <div v-else class="node-form">
           <h3>{{ currentNode.id ? '编辑子件' : '新增子件' }}</h3>
           <el-form :model="nodeForm" label-width="100px">
             <el-form-item label="物料编码" required>
-              <el-input v-model="nodeForm.material_code" placeholder="搜索选择物料" />
+              <el-input v-model="nodeForm.material_code" placeholder="请输入物料编码" />
             </el-form-item>
             <el-form-item label="物料名称">
-              <el-input v-model="nodeForm.material_name" disabled />
+              <el-input v-model="nodeForm.material_name" placeholder="请输入物料名称" />
             </el-form-item>
             <el-form-item label="单位用量" required>
-              <el-input-number v-model="nodeForm.qty" :min="0" :precision="4" style="width: 200px" />
+              <el-input-number v-model="nodeForm.qty" :min="0" :precision="4" style="width: 220px" />
             </el-form-item>
             <el-form-item label="损耗率(%)">
-              <el-input-number v-model="nodeForm.scrap_rate" :min="0" :max="100" :precision="1" style="width: 200px" />
+              <el-input-number v-model="nodeForm.scrap_rate" :min="0" :max="100" :precision="1" style="width: 220px" />
             </el-form-item>
             <el-form-item label="位号">
-              <el-input v-model="nodeForm.position_no" placeholder="装配位置标识" />
+              <el-input v-model="nodeForm.position_no" placeholder="例如 A1-2" />
             </el-form-item>
             <el-form-item label="物料类型">
-              <el-select v-model="nodeForm.material_type" style="width: 200px">
+              <el-select v-model="nodeForm.material_type" style="width: 220px">
                 <el-option label="普通件" value="normal" />
                 <el-option label="虚拟件" value="phantom" />
-                <el-option label="工艺辅料" value="auxiliary" />
+                <el-option label="辅料" value="auxiliary" />
               </el-select>
             </el-form-item>
             <el-form-item label="关键件">
               <el-switch v-model="nodeForm.is_critical" />
             </el-form-item>
-            <el-form-item label="允许替代料">
+            <el-form-item label="允许替代">
               <el-switch v-model="nodeForm.substitute_allowed" />
             </el-form-item>
             <el-form-item>
@@ -86,9 +86,9 @@
               <el-button @click="currentNode = null">取消</el-button>
             </el-form-item>
           </el-form>
-          <!-- 子件操作 -->
-          <div v-if="currentNode.id" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #ebeef5">
-            <el-button type="success" size="small" @click="addChild(currentNode.id)">+ 添加子件</el-button>
+
+          <div v-if="currentNode.id" class="child-action">
+            <el-button type="success" size="small" @click="addChild(currentNode.id)">新增子件</el-button>
           </div>
         </div>
       </div>
@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute } from 'vue-router'
 import { getBOMTree, saveBOM as saveBOMApi } from '@/api/bom'
@@ -117,19 +117,12 @@ interface TreeNode {
 }
 
 const route = useRoute()
+const isCreateMode = route.name === 'bomCreate'
 const bomTitle = ref('')
 const treeData = ref<TreeNode[]>([])
 const treeRef = ref()
 const treeFilter = ref('')
-
-function filterNode(value: string, data: TreeNode): boolean {
-  if (!value) return true
-  return data.label.toLowerCase().includes(value.toLowerCase()) || data.material_code.toLowerCase().includes(value.toLowerCase())
-}
-
-watch(treeFilter, (val) => {
-  treeRef.value?.filter(val)
-})
+const bomId = ref('')
 
 const currentNode = ref<TreeNode | null>(null)
 const nodeForm = reactive({
@@ -143,16 +136,40 @@ const nodeForm = reactive({
   substitute_allowed: false
 })
 
+function filterNode(value: string, data: TreeNode): boolean {
+  if (!value) return true
+  return data.label.toLowerCase().includes(value.toLowerCase()) || data.material_code.toLowerCase().includes(value.toLowerCase())
+}
+
+watch(treeFilter, (value) => {
+  treeRef.value?.filter(value)
+})
+
+function resetNodeForm() {
+  Object.assign(nodeForm, {
+    material_code: '',
+    material_name: '',
+    qty: 1,
+    scrap_rate: 0,
+    position_no: '',
+    material_type: 'normal',
+    is_critical: false,
+    substitute_allowed: false
+  })
+}
+
 function handleNodeClick(data: TreeNode) {
   currentNode.value = data
-  nodeForm.material_code = data.material_code
-  nodeForm.material_name = data.material_name
-  nodeForm.qty = data.qty
-  nodeForm.scrap_rate = data.scrap_rate
-  nodeForm.position_no = data.position_no
-  nodeForm.material_type = data.material_type
-  nodeForm.is_critical = data.is_critical
-  nodeForm.substitute_allowed = data.substitute_allowed
+  Object.assign(nodeForm, {
+    material_code: data.material_code,
+    material_name: data.material_name,
+    qty: data.qty,
+    scrap_rate: data.scrap_rate,
+    position_no: data.position_no,
+    material_type: data.material_type,
+    is_critical: data.is_critical,
+    substitute_allowed: data.substitute_allowed
+  })
 }
 
 function addChild(parentId: string | null) {
@@ -168,86 +185,87 @@ function addChild(parentId: string | null) {
     is_critical: false,
     substitute_allowed: false
   }
-  // 存储目标父节点 ID，在 saveNode 中使用
   ;(newNode as any)._parentId = parentId
   currentNode.value = newNode
-  nodeForm.material_code = ''
-  nodeForm.material_name = ''
-  nodeForm.qty = 1
-  nodeForm.scrap_rate = 0
-  nodeForm.position_no = ''
-  nodeForm.material_type = 'normal'
-  nodeForm.is_critical = false
-  nodeForm.substitute_allowed = false
+  resetNodeForm()
 }
 
 function saveNode() {
-  if (!nodeForm.material_code) {
-    ElMessage.warning('请填写物料编码')
+  if (!nodeForm.material_code || !nodeForm.material_name) {
+    ElMessage.warning('请填写物料编码和物料名称')
     return
   }
-  if (currentNode.value!.id) {
-    const node = currentNode.value!
-    node.material_code = nodeForm.material_code
-    node.material_name = nodeForm.material_name || nodeForm.material_code
-    node.qty = nodeForm.qty
-    node.scrap_rate = nodeForm.scrap_rate
-    node.position_no = nodeForm.position_no
-    node.material_type = nodeForm.material_type
-    node.is_critical = nodeForm.is_critical
-    node.substitute_allowed = nodeForm.substitute_allowed
-    node.label = `${nodeForm.material_name || nodeForm.material_code} ×${nodeForm.qty}`
-    ElMessage.success('保存成功')
+
+  if (currentNode.value?.id) {
+    Object.assign(currentNode.value, {
+      material_code: nodeForm.material_code,
+      material_name: nodeForm.material_name,
+      qty: nodeForm.qty,
+      scrap_rate: nodeForm.scrap_rate,
+      position_no: nodeForm.position_no,
+      material_type: nodeForm.material_type,
+      is_critical: nodeForm.is_critical,
+      substitute_allowed: nodeForm.substitute_allowed,
+      label: `${nodeForm.material_name} ×${nodeForm.qty}`
+    })
+    ElMessage.success('节点已更新')
   } else {
     const newNode: TreeNode = {
       id: Date.now().toString(),
-      label: `${nodeForm.material_name || nodeForm.material_code} ×${nodeForm.qty}`,
-      ...nodeForm,
+      label: `${nodeForm.material_name} ×${nodeForm.qty}`,
+      material_code: nodeForm.material_code,
+      material_name: nodeForm.material_name,
+      qty: nodeForm.qty,
+      scrap_rate: nodeForm.scrap_rate,
+      position_no: nodeForm.position_no,
+      material_type: nodeForm.material_type,
+      is_critical: nodeForm.is_critical,
+      substitute_allowed: nodeForm.substitute_allowed,
       children: []
     }
-    const parentId = (currentNode.value! as any)._parentId
+
+    const parentId = (currentNode.value as any)?._parentId
     if (parentId) {
-      // 在指定父节点下添加子节点
       const parentNode = findNode(treeData.value, parentId)
       if (parentNode) {
         if (!parentNode.children) parentNode.children = []
         parentNode.children.push(newNode)
       }
     } else {
-      // 添加为根节点
       treeData.value.push(newNode)
     }
-    ElMessage.success('添加成功')
+    ElMessage.success('节点已新增')
   }
+
   currentNode.value = null
 }
 
 function deleteNode() {
-  ElMessageBox.confirm('确定删除该节点及其所有子节点？', '警告', { type: 'warning' })
+  ElMessageBox.confirm('确认删除该节点及其所有子节点吗？', '删除确认', { type: 'warning' })
     .then(() => {
-      removeNode(treeData.value, currentNode.value!.id)
+      if (currentNode.value?.id) removeNode(treeData.value, currentNode.value.id)
       currentNode.value = null
-      ElMessage.success('删除成功')
+      ElMessage.success('节点已删除')
     })
     .catch(() => {})
 }
 
 function removeNode(nodes: TreeNode[], id: string): boolean {
-  for (let i = 0; i < nodes.length; i++) {
-    if (nodes[i].id === id) {
-      nodes.splice(i, 1)
+  for (let index = 0; index < nodes.length; index += 1) {
+    if (nodes[index].id === id) {
+      nodes.splice(index, 1)
       return true
     }
-    if (nodes[i].children && removeNode(nodes[i].children!, id)) return true
+    if (nodes[index].children && removeNode(nodes[index].children!, id)) return true
   }
   return false
 }
 
 function findNode(nodes: TreeNode[], id: string): TreeNode | null {
-  for (const n of nodes) {
-    if (n.id === id) return n
-    if (n.children) {
-      const found = findNode(n.children, id)
+  for (const node of nodes) {
+    if (node.id === id) return node
+    if (node.children) {
+      const found = findNode(node.children, id)
       if (found) return found
     }
   }
@@ -257,33 +275,39 @@ function findNode(nodes: TreeNode[], id: string): TreeNode | null {
 function importExcel() {
   ElMessage.success('导入成功')
 }
+
 function exportExcel() {
   ElMessage.success('导出成功')
 }
 
 async function saveBom() {
   try {
-    await saveBOMApi({ id: bomId.value, tree: treeData.value } as any)
-    ElMessage.success('BOM 已保存')
+    await saveBOMApi({ id: bomId.value || undefined, tree: treeData.value } as any)
+    ElMessage.success('BOM 保存成功')
   } catch {
-    ElMessage.error('保存失败')
+    ElMessage.error('BOM 保存失败')
   }
 }
 
-const bomId = ref('')
-
 async function fetchBOMTree() {
-  const id = route.params.id as string
+  if (isCreateMode) {
+    bomTitle.value = '新建 BOM'
+    treeData.value = []
+    return
+  }
+
+  const id = String(route.params.id || '')
   if (!id) return
   bomId.value = id
+
   try {
-    const res = await getBOMTree(id)
-    if (res.data) {
-      treeData.value = res.data.tree || res.data
-      bomTitle.value = res.data.material_name ? `${res.data.material_name} (${res.data.version || ''})` : ''
+    const response = await getBOMTree(id)
+    if (response.data) {
+      treeData.value = response.data.tree || response.data
+      bomTitle.value = response.data.material_name ? `${response.data.material_name}（${response.data.version || ''}）` : 'BOM 编辑'
     }
   } catch {
-    ElMessage.error('获取BOM树失败')
+    ElMessage.error('获取 BOM 树失败')
   }
 }
 
@@ -297,39 +321,69 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
-.editor-header h2 {
+
+.header-left h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
 }
+
+.header-desc {
+  margin: 6px 0 0;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+
+.header-right {
+  display: flex;
+  gap: 8px;
+}
+
 .editor-container {
   display: flex;
   gap: 0;
   height: calc(100vh - 180px);
 }
+
 .tree-panel {
   width: 420px;
   border-right: 1px solid #ebeef5;
   overflow: auto;
   padding: 12px;
 }
+
+.tree-toolbar {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .form-panel {
   flex: 1;
   overflow: auto;
   padding: 16px;
 }
+
 .empty-tip {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
 }
+
 .tree-node {
   font-size: 13px;
 }
+
 .phantom-node {
   border: 1px dashed #e6a23c;
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+.child-action {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
 }
 </style>

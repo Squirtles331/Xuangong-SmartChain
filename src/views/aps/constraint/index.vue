@@ -1,235 +1,226 @@
 <template>
   <gi-page-layout>
-    <template #header><h3>约束理论排程配置</h3></template>
+    <template #header>
+      <div class="page-title">APS 约束配置</div>
+    </template>
+
     <el-tabs v-model="tab">
-      <el-tab-pane label="模具约束" name="mold">
-        <template #tool><gi-button type="add" @click="openAdd('mold')" /></template>
-        <gi-table :columns="moldCols" :data="moldData" :pagination="moldPagination" :loading="moldLoading" border stripe size="small">
-          <template #available="{ row }">
-            <el-tag :type="row.available ? 'success' : 'danger'" size="small">{{ row.available ? '是' : '否' }}</el-tag>
-          </template>
-          <template #utilization="{ row }">
-            <el-progress :percentage="getMoldUtil(row)" :stroke-width="8" :color="utilColor(getMoldUtil(row))" />
-          </template>
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit('mold', row)" />
-            <gi-button type="delete" @click="delMold(row)" />
-          </template>
-        </gi-table>
-      </el-tab-pane>
-      <el-tab-pane label="刀具约束" name="tool">
-        <template #tool><gi-button type="add" @click="openAdd('tool')" /></template>
-        <gi-table :columns="toolCols" :data="toolData" :pagination="toolPagination" :loading="toolLoading" border stripe size="small">
-          <template #available="{ row }">
-            <el-tag :type="row.available ? 'success' : 'danger'" size="small">{{ row.available ? '是' : '否' }}</el-tag>
-          </template>
-          <template #utilization="{ row }">
-            <el-progress :percentage="getToolUtil(row)" :stroke-width="8" :color="utilColor(getToolUtil(row))" />
-          </template>
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit('tool', row)" />
-            <gi-button type="delete" @click="delTool(row)" />
-          </template>
-        </gi-table>
-      </el-tab-pane>
-      <el-tab-pane label="人员技能约束" name="skill">
-        <template #tool><gi-button type="add" @click="openAdd('skill')" /></template>
-        <gi-table :columns="skillCols" :data="skillData" :pagination="skillPagination" :loading="skillLoading" border stripe size="small">
-          <template #utilization="{ row }">
-            <el-progress :percentage="getSkillUtil(row)" :stroke-width="8" :color="utilColor(getSkillUtil(row))" />
-          </template>
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit('skill', row)" />
-            <gi-button type="delete" @click="delSkill(row)" />
-          </template>
-        </gi-table>
-      </el-tab-pane>
+      <el-tab-pane label="模具约束" name="mold" />
+      <el-tab-pane label="刀具约束" name="tool" />
+      <el-tab-pane label="人员技能约束" name="skill" />
     </el-tabs>
 
-    <ConstraintFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      :constraint-type="currentConstraintType"
-      @submit="submitDialog"
-    />
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refreshCurrent" />
+    </template>
+
+    <gi-table
+      :columns="currentColumns"
+      :data="currentData"
+      :pagination="currentPagination"
+      :loading="currentLoading"
+      border
+      stripe
+      style="height: 100%"
+    >
+      <template #available="{ row }">
+        <el-tag :type="row.available ? 'success' : 'danger'" size="small">
+          {{ row.available ? '是' : '否' }}
+        </el-tag>
+      </template>
+
+      <template #utilization="{ row }">
+        <el-progress :percentage="row.utilization || 0" :stroke-width="8" :color="utilColor(row.utilization || 0)" />
+      </template>
+
+      <template #actions="{ row }">
+        <gi-button type="edit" @click="openEdit(row)" />
+        <gi-button type="delete" style="margin-left: 8px" @click="remove(row)" />
+      </template>
+    </gi-table>
+
+    <ConstraintFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" :constraint-type="tab" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { TableColumnItem } from 'gi-component'
-import { useConstraintStore } from '@/stores/constraint'
+import { deleteConstraint, getConstraintList, saveConstraint, type MoldConstraint, type SkillConstraint, type ToolConstraint } from '@/api/aps'
 import { useTable } from '@/hooks/useTable'
 import ConstraintFormDialog, { type ConstraintFormModel } from './ConstraintFormDialog.vue'
 
-const store = useConstraintStore()
-const tab = ref('mold')
+const tab = ref<'mold' | 'tool' | 'skill'>('mold')
 
-const moldCols: TableColumnItem<any>[] = [
+const moldColumns: TableColumnItem<MoldConstraint>[] = [
   { prop: 'code', label: '模具编码', minWidth: 150 },
   { prop: 'name', label: '名称', minWidth: 140 },
-  { prop: 'applicable', label: '适用物料', minWidth: 120 },
-  { prop: 'life', label: '设计寿命', minWidth: 100 },
-  { label: '可用', minWidth: 70, slotName: 'available', align: 'center' },
-  { label: '利用率', minWidth: 140, slotName: 'utilization' },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'applicable', label: '适用物料', minWidth: 140 },
+  { prop: 'life', label: '设计寿命', minWidth: 120 },
+  { label: '是否可用', minWidth: 100, align: 'center', slotName: 'available' },
+  { label: '利用率', minWidth: 160, slotName: 'utilization' },
+  { label: '操作', minWidth: 160, align: 'center', fixed: 'right', slotName: 'actions' }
 ]
 
-const toolCols: TableColumnItem<any>[] = [
-  { prop: 'code', label: '刀具编码', minWidth: 130 },
+const toolColumns: TableColumnItem<ToolConstraint>[] = [
+  { prop: 'code', label: '刀具编码', minWidth: 140 },
   { prop: 'name', label: '名称', minWidth: 160 },
   { prop: 'applicable', label: '适用设备', minWidth: 140 },
-  { prop: 'life', label: '寿命', minWidth: 80 },
-  { label: '可用', minWidth: 70, slotName: 'available', align: 'center' },
-  { label: '利用率', minWidth: 140, slotName: 'utilization' },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'life', label: '寿命', minWidth: 100 },
+  { label: '是否可用', minWidth: 100, align: 'center', slotName: 'available' },
+  { label: '利用率', minWidth: 160, slotName: 'utilization' },
+  { label: '操作', minWidth: 160, align: 'center', fixed: 'right', slotName: 'actions' }
 ]
 
-const skillCols: TableColumnItem<any>[] = [
-  { prop: 'operation', label: '工序', minWidth: 100 },
-  { prop: 'skill', label: '技能要求', minWidth: 160 },
-  { prop: 'min_level', label: '最低等级', minWidth: 80, align: 'center' },
-  { prop: 'workers_count', label: '具备人数', minWidth: 80, align: 'center' },
-  { label: '利用率', minWidth: 140, slotName: 'utilization' },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+const skillColumns: TableColumnItem<SkillConstraint>[] = [
+  { prop: 'operation', label: '工序', minWidth: 120 },
+  { prop: 'skill', label: '技能要求', minWidth: 180 },
+  { prop: 'min_level', label: '最低等级', minWidth: 90, align: 'center' },
+  { prop: 'workers_count', label: '具备人数', minWidth: 90, align: 'center' },
+  { label: '利用率', minWidth: 160, slotName: 'utilization' },
+  { label: '操作', minWidth: 160, align: 'center', fixed: 'right', slotName: 'actions' }
 ]
 
-// ==================== useTable ====================
 const {
   tableData: moldData,
   pagination: moldPagination,
   loading: moldLoading,
-  refresh: refreshMolds
-} = useTable<any>({
+  refresh: refreshMolds,
+  onDelete: onDeleteMold
+} = useTable<MoldConstraint>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const start = (page - 1) * size
-    return {
-      list: store.molds.slice(start, start + size),
-      total: store.molds.length
-    }
-  }
+    const response = await getConstraintList<MoldConstraint>({ type: 'mold', pageNum: page, pageSize: size })
+    return response.data
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteConstraint('mold', id)))
 })
 
 const {
   tableData: toolData,
   pagination: toolPagination,
   loading: toolLoading,
-  refresh: refreshTools
-} = useTable<any>({
+  refresh: refreshTools,
+  onDelete: onDeleteTool
+} = useTable<ToolConstraint>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const start = (page - 1) * size
-    return {
-      list: store.tools.slice(start, start + size),
-      total: store.tools.length
-    }
-  }
+    const response = await getConstraintList<ToolConstraint>({ type: 'tool', pageNum: page, pageSize: size })
+    return response.data
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteConstraint('tool', id)))
 })
 
 const {
   tableData: skillData,
   pagination: skillPagination,
   loading: skillLoading,
-  refresh: refreshSkills
-} = useTable<any>({
+  refresh: refreshSkills,
+  onDelete: onDeleteSkill
+} = useTable<SkillConstraint>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const start = (page - 1) * size
-    return {
-      list: store.skills.slice(start, start + size),
-      total: store.skills.length
-    }
-  }
+    const response = await getConstraintList<SkillConstraint>({ type: 'skill', pageNum: page, pageSize: size })
+    return response.data
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteConstraint('skill', id)))
 })
 
-// ==================== 利用率计算 ====================
-function getMoldUtil(row: any): number {
-  const lifeNum = parseInt(row.life) || 100
-  const used = Math.floor(Math.random() * lifeNum * 0.8)
-  return Math.round((used / lifeNum) * 100)
+const currentColumns = computed(() => {
+  if (tab.value === 'mold') return moldColumns
+  if (tab.value === 'tool') return toolColumns
+  return skillColumns
+})
+
+const currentData = computed(() => {
+  if (tab.value === 'mold') return moldData.value
+  if (tab.value === 'tool') return toolData.value
+  return skillData.value
+})
+
+const currentPagination = computed(() => {
+  if (tab.value === 'mold') return moldPagination
+  if (tab.value === 'tool') return toolPagination
+  return skillPagination
+})
+
+const currentLoading = computed(() => {
+  if (tab.value === 'mold') return moldLoading.value
+  if (tab.value === 'tool') return toolLoading.value
+  return skillLoading.value
+})
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<ConstraintFormModel>(createDefaultFormModel())
+
+function createDefaultFormModel(): ConstraintFormModel {
+  return {
+    id: '',
+    code: '',
+    name: '',
+    applicable: '',
+    life: '',
+    available: true,
+    utilization: 0,
+    operation: '',
+    skill: '',
+    min_level: 1,
+    workers_count: 1
+  }
 }
-function getToolUtil(row: any): number {
-  const lifeNum = parseInt(row.life) || 100
-  const used = Math.floor(Math.random() * lifeNum * 0.7)
-  return Math.round((used / lifeNum) * 100)
-}
-function getSkillUtil(row: any): number {
-  const assigned = Math.max(1, row.workers_count - Math.floor(Math.random() * 2))
-  return Math.round((assigned / row.workers_count) * 100)
-}
-function utilColor(pct: number): string {
+
+function utilColor(pct: number) {
   if (pct >= 80) return '#f56c6c'
   if (pct >= 60) return '#e6a23c'
   return '#67c23a'
 }
 
-// ==================== 对话框 ====================
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const currentConstraintType = ref<'mold' | 'tool' | 'skill'>('mold')
-const editingId = ref('')
-const formModel = ref<ConstraintFormModel>(createDefaultFormModel())
-
-function createDefaultFormModel(): ConstraintFormModel {
-  return { id: '', code: '', name: '', applicable: '', life: '' }
+function refreshCurrent() {
+  if (tab.value === 'mold') return refreshMolds()
+  if (tab.value === 'tool') return refreshTools()
+  return refreshSkills()
 }
 
-function openAdd(type: 'mold' | 'tool' | 'skill') {
-  currentConstraintType.value = type
+function openAdd() {
   dialogMode.value = 'add'
-  editingId.value = ''
   formModel.value = createDefaultFormModel()
   dialogVisible.value = true
 }
 
-function openEdit(type: 'mold' | 'tool' | 'skill', row: any) {
-  currentConstraintType.value = type
+function openEdit(row: any) {
   dialogMode.value = 'edit'
-  editingId.value = row.id
-  formModel.value = { ...row }
+  formModel.value = {
+    ...createDefaultFormModel(),
+    ...row
+  }
   dialogVisible.value = true
 }
 
-function submitDialog() {
-  const listMap: Record<string, any[]> = {
-    mold: store.molds,
-    tool: store.tools,
-    skill: store.skills
-  }
-  const list = listMap[currentConstraintType.value]
-  if (!list) return
-
-  if (dialogMode.value === 'add') {
-    list.unshift({ id: Date.now().toString(), ...formModel.value })
-  } else {
-    const idx = list.findIndex((e: any) => e.id === editingId.value)
-    if (idx > -1) Object.assign(list[idx], formModel.value)
-  }
+async function submitDialog() {
+  await saveConstraint({
+    ...formModel.value,
+    type: tab.value
+  })
   dialogVisible.value = false
-  refreshAll()
+  await refreshCurrent()
 }
 
-function refreshAll() {
-  refreshMolds()
-  refreshTools()
-  refreshSkills()
-}
-
-function delMold(row: any) {
-  const idx = store.molds.findIndex((e: any) => e.id === row.id)
-  if (idx > -1) store.molds.splice(idx, 1)
-  refreshMolds()
-}
-function delTool(row: any) {
-  const idx = store.tools.findIndex((e: any) => e.id === row.id)
-  if (idx > -1) store.tools.splice(idx, 1)
-  refreshTools()
-}
-function delSkill(row: any) {
-  const idx = store.skills.findIndex((e: any) => e.id === row.id)
-  if (idx > -1) store.skills.splice(idx, 1)
-  refreshSkills()
+function remove(row: any) {
+  if (tab.value === 'mold') return onDeleteMold(row)
+  if (tab.value === 'tool') return onDeleteTool(row)
+  return onDeleteSkill(row)
 }
 </script>
+
+<style scoped>
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

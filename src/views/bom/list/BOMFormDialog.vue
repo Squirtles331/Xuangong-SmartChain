@@ -5,7 +5,7 @@
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? '新建BOM' : '编辑BOM'"
+    :title="mode === 'add' ? '新建 BOM' : '编辑 BOM'"
     width="600px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
@@ -13,6 +13,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
 export interface BOMFormModel {
@@ -43,7 +44,7 @@ const formColumns: FormColumnItem[] = [
   { type: 'input', label: '物料名称', field: 'material_name', required: true },
   {
     type: 'select-v2',
-    label: 'BOM类型',
+    label: 'BOM 类型',
     field: 'bom_type',
     required: true,
     props: {
@@ -68,7 +69,7 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'date-picker', label: '生效日期', field: 'effective_date' }
+  { type: 'date-picker', label: '生效日期', field: 'effective_date', props: { valueFormat: 'YYYY-MM-DD' } as any }
 ]
 
 function handleCancel() {
@@ -76,6 +77,10 @@ function handleCancel() {
 }
 
 async function handleSubmit() {
+  if (!formData.value.material_code || !formData.value.material_name || !formData.value.version) {
+    ElMessage.warning('请填写完整的 BOM 信息')
+    return false
+  }
   emit('submit')
   return false
 }

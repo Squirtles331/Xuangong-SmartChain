@@ -18,7 +18,7 @@
       <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <TableSetting title="表格工具栏" :columns="columns" @refresh="refresh">
+    <TableSetting title="工作中心列表" :columns="columns" @refresh="refresh">
       <template #default="{ settingColumns, tableProps }">
         <gi-table
           :columns="settingColumns"
@@ -61,8 +61,6 @@ import { createWorkCenter, deleteWorkCenter, getWorkCenterList, updateWorkCenter
 import { useTable } from '@/hooks/useTable'
 import WorkCenterFormDialog, { type WorkCenterFormModel } from './WorkCenterFormDialog.vue'
 
-type WorkCenterRow = WorkCenter
-
 const workshopOptions = [
   { label: '机加工一车间', value: '机加工一车间' },
   { label: '机加工二车间', value: '机加工二车间' },
@@ -70,13 +68,13 @@ const workshopOptions = [
 ]
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '工作中心编码/名称/车间' } as any },
+  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '工作中心编码/名称/车间' } as any },
   {
     type: 'select-v2',
     label: '车间',
     field: 'workshop',
     props: {
-      options: workshopOptions
+      options: [{ label: '全部', value: '' }, ...workshopOptions]
     } as any
   }
 ]
@@ -85,7 +83,7 @@ const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
-const columns: TableColumnItem<WorkCenterRow>[] = [
+const columns: TableColumnItem<WorkCenter>[] = [
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
   { prop: 'code', label: '工作中心编码', minWidth: 140 },
   { prop: 'name', label: '工作中心名称', minWidth: 140 },
@@ -111,7 +109,7 @@ const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<WorkCenterFormModel>(createDefaultFormModel())
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<WorkCenterRow>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<WorkCenter>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: WorkCenterQuery = {
@@ -168,19 +166,9 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: WorkCenterRow) {
+function openEdit(row: WorkCenter) {
   dialogMode.value = 'edit'
-  formModel.value = {
-    id: row.id,
-    code: row.code,
-    name: row.name,
-    workshop: row.workshop,
-    shift: row.shift,
-    people: row.people,
-    efficiency: row.efficiency,
-    costPerHour: row.costPerHour,
-    status: row.status
-  }
+  formModel.value = { ...row }
   dialogVisible.value = true
 }
 
@@ -194,8 +182,10 @@ async function submitDialog() {
 
   if (dialogMode.value === 'add') {
     await createWorkCenter(payload)
+    ElMessage.success('新增成功')
   } else {
     await updateWorkCenter(id, payload)
+    ElMessage.success('编辑成功')
   }
 
   dialogVisible.value = false

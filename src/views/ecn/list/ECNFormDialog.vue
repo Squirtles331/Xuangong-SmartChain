@@ -65,7 +65,7 @@ const formColumns: FormColumnItem[] = [
       options: [
         { label: '紧急', value: 'urgent' },
         { label: '普通', value: 'normal' },
-        { label: '计划性', value: 'planned' }
+        { label: '计划', value: 'planned' }
       ]
     } as any
   },

@@ -241,7 +241,7 @@ export const bomTree = [
 ]
 
 // ==================== 工艺路线 ====================
-export const routingOperations = [
+const legacyRoutingOperations = [
   {
     id: '1',
     operation_no: 10,

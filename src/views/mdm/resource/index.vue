@@ -18,7 +18,7 @@
       <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <TableSetting title="表格工具栏" :columns="columns" @refresh="refresh">
+    <TableSetting title="资源列表" :columns="columns" @refresh="refresh">
       <template #default="{ settingColumns, tableProps }">
         <gi-table
           :columns="settingColumns"
@@ -61,8 +61,6 @@ import { createResource, deleteResource, getResourceList, updateResource, type R
 import { useTable } from '@/hooks/useTable'
 import ResourceFormDialog, { type ResourceFormModel } from './ResourceFormDialog.vue'
 
-type ResourceRow = Resource
-
 const statusOptions: Array<{ label: string; value: Resource['status'] }> = [
   { label: '运行', value: 'running' },
   { label: '空闲', value: 'idle' },
@@ -70,13 +68,13 @@ const statusOptions: Array<{ label: string; value: Resource['status'] }> = [
 ]
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '资源编码/资源名称' } as any },
+  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '资源编码/资源名称' } as any },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
     props: {
-      options: statusOptions
+      options: [{ label: '全部', value: '' }, ...statusOptions]
     } as any
   }
 ]
@@ -85,7 +83,7 @@ const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
-const columns: TableColumnItem<ResourceRow>[] = [
+const columns: TableColumnItem<Resource>[] = [
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
   { prop: 'code', label: '资源编码', minWidth: 160 },
   { prop: 'name', label: '资源名称', minWidth: 140 },
@@ -109,7 +107,7 @@ const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ResourceFormModel>(createDefaultFormModel())
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ResourceRow>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<Resource>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: ResourceQuery = {
@@ -164,17 +162,9 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: ResourceRow) {
+function openEdit(row: Resource) {
   dialogMode.value = 'edit'
-  formModel.value = {
-    id: row.id,
-    code: row.code,
-    name: row.name,
-    type: row.type,
-    model: row.model,
-    status: row.status,
-    workCenter: row.workCenter
-  }
+  formModel.value = { ...row }
   dialogVisible.value = true
 }
 
@@ -188,8 +178,10 @@ async function submitDialog() {
 
   if (dialogMode.value === 'add') {
     await createResource(payload)
+    ElMessage.success('新增成功')
   } else {
     await updateResource(id, payload)
+    ElMessage.success('编辑成功')
   }
 
   dialogVisible.value = false
