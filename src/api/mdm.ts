@@ -186,13 +186,38 @@ export interface WorkCenter {
   code: string
   name: string
   workshop: string
-  capacity: string
-  cost: string
+  shift: string
+  people: number
+  efficiency: number
+  costPerHour: number
+  status: 'running' | 'idle' | 'repair'
 }
 
-export function getWorkCenterList() {
-  if (isMockMode) return mockService.getWorkCenterList()
-  return apiGet<WorkCenter[]>('/mdm/work-centers')
+export interface WorkCenterQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  workshop?: string
+}
+
+export function getWorkCenterList(params: WorkCenterQuery) {
+  if (isMockMode) return mockService.getWorkCenterList(params) as Promise<ApiResponse<PaginatedData<WorkCenter>>>
+  return apiGet<PaginatedData<WorkCenter>>('/mdm/work-centers', { params })
+}
+
+export function createWorkCenter(data: Partial<WorkCenter>) {
+  if (isMockMode) return mockService.createWorkCenter(data)
+  return apiPost<Record<string, never>, Partial<WorkCenter>>('/mdm/work-centers', data)
+}
+
+export function updateWorkCenter(id: string, data: Partial<WorkCenter>) {
+  if (isMockMode) return mockService.updateWorkCenter(id, data)
+  return apiPut<Record<string, never>, Partial<WorkCenter>>(`/mdm/work-centers/${id}`, data)
+}
+
+export function deleteWorkCenter(id: string) {
+  if (isMockMode) return mockService.deleteWorkCenter(id)
+  return apiDelete<Record<string, never>>(`/mdm/work-centers/${id}`)
 }
 
 export interface Mold {

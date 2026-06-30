@@ -223,9 +223,34 @@ export async function deleteEquipment(id: string) {
 }
 
 // ==================== 工作中心 ====================
-export async function getWorkCenterList() {
+export async function getWorkCenterList(params: { pageNum: number; pageSize: number; keyword?: string; workshop?: string }) {
   await simulateDelay()
-  return wrapDetailResponse(workCenters)
+  let filtered = [...workCenters]
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['code', 'name', 'workshop'])
+  if (params.workshop) filtered = filtered.filter((item) => (item as any).workshop === params.workshop)
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function createWorkCenter(data: any) {
+  await simulateDelay()
+  const newWorkCenter = { id: generateId(), ...data }
+  ;(workCenters as any[]).unshift(newWorkCenter)
+  return wrapSuccessResponse('工作中心创建成功')
+}
+
+export async function updateWorkCenter(id: string, data: any) {
+  await simulateDelay()
+  const idx = (workCenters as any[]).findIndex((item: any) => String(item.id) === id)
+  if (idx > -1) Object.assign((workCenters as any[])[idx], data)
+  return wrapSuccessResponse('工作中心更新成功')
+}
+
+export async function deleteWorkCenter(id: string) {
+  await simulateDelay()
+  const idx = (workCenters as any[]).findIndex((item: any) => String(item.id) === id)
+  if (idx > -1) (workCenters as any[]).splice(idx, 1)
+  return wrapSuccessResponse('工作中心删除成功')
 }
 
 // ==================== 资源管理 ====================

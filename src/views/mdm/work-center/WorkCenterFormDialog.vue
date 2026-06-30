@@ -24,7 +24,7 @@ export interface WorkCenterFormModel {
   people: number
   efficiency: number
   costPerHour: number
-  status: string
+  status: 'running' | 'idle' | 'repair'
 }
 
 interface Props {

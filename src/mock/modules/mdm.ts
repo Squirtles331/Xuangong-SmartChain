@@ -175,10 +175,50 @@ export const resources = [
 ]
 
 export const workCenters = [
-  { id: '1', code: 'WC00000001', name: '数控班组', workshop: '机加工一车间', capacity: '16h/天', cost: '150元/小时' },
-  { id: '2', code: 'WC00000002', name: '钻床班组', workshop: '机加工一车间', capacity: '8h/天', cost: '80元/小时' },
-  { id: '3', code: 'WC00000003', name: '磨削班组', workshop: '机加工一车间', capacity: '8h/天', cost: '120元/小时' },
-  { id: '4', code: 'WC00000004', name: '装配班组', workshop: '装配车间', capacity: '8h/天', cost: '100元/小时' }
+  {
+    id: '1',
+    code: 'WC00000001',
+    name: '数控班组',
+    workshop: '机加工一车间',
+    shift: '白班',
+    people: 12,
+    efficiency: 92,
+    costPerHour: 150,
+    status: 'running'
+  },
+  {
+    id: '2',
+    code: 'WC00000002',
+    name: '钻床班组',
+    workshop: '机加工一车间',
+    shift: '两班倒',
+    people: 8,
+    efficiency: 85,
+    costPerHour: 80,
+    status: 'idle'
+  },
+  {
+    id: '3',
+    code: 'WC00000003',
+    name: '磨削班组',
+    workshop: '机加工一车间',
+    shift: '白班',
+    people: 6,
+    efficiency: 88,
+    costPerHour: 120,
+    status: 'repair'
+  },
+  {
+    id: '4',
+    code: 'WC00000004',
+    name: '装配班组',
+    workshop: '装配车间',
+    shift: '白班',
+    people: 10,
+    efficiency: 90,
+    costPerHour: 100,
+    status: 'running'
+  }
 ]
 
 export const molds = [
