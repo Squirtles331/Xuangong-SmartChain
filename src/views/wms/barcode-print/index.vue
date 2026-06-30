@@ -44,7 +44,6 @@ interface Material {
   code: string
   name: string
   spec: string
-  type: string
   unit: string
 }
 
@@ -101,6 +100,7 @@ onMounted(() => {
   gap: 16px;
   justify-content: flex-start;
 }
+
 .barcode-item {
   border: 1px solid #e0e0e0;
   padding: 16px 24px;
@@ -109,6 +109,7 @@ onMounted(() => {
   min-width: 200px;
   background: #fff;
 }
+
 .barcode-lines {
   display: flex;
   justify-content: center;
@@ -117,16 +118,19 @@ onMounted(() => {
   height: 60px;
   margin-bottom: 8px;
 }
+
 .barcode-bar {
   background: #000;
   height: 100%;
 }
+
 .barcode-text {
   font-family: monospace;
   font-size: 14px;
   letter-spacing: 2px;
   margin-bottom: 4px;
 }
+
 .barcode-info {
   font-size: 12px;
   color: #666;

@@ -3,8 +3,8 @@
     <el-descriptions :column="1" border>
       <el-descriptions-item label="采购订单">{{ currentOrder?.code }}</el-descriptions-item>
       <el-descriptions-item label="供应商">{{ currentOrder?.supplier }}</el-descriptions-item>
-      <el-descriptions-item label="物料">{{ currentOrder?.material }}</el-descriptions-item>
-      <el-descriptions-item label="订购数量">{{ currentOrder?.qty }}</el-descriptions-item>
+      <el-descriptions-item label="物料名称">{{ currentOrder?.material }}</el-descriptions-item>
+      <el-descriptions-item label="采购数量">{{ currentOrder?.qty }}</el-descriptions-item>
     </el-descriptions>
     <el-form label-width="100px" style="margin-top: 16px">
       <el-form-item label="实收数量">

@@ -1,8 +1,8 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form v-model="queryParams" :columns="visibleSearchColumns" search @search="search" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -11,29 +11,34 @@
       <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
     </template>
 
-    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #type="{ row }">
-        <StatusTag :value="row.type" :options="RECEIPT_TYPE" />
+    <TableSetting title="入库单列表" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
+          <template #type="{ row }">
+            <StatusTag :value="row.type" :options="RECEIPT_TYPE" />
+          </template>
+          <template #status="{ row }">
+            <StatusTag :value="row.status" :options="RECEIPT_STATUS" />
+          </template>
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button type="delete" @click="remove(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #status="{ row }">
-        <StatusTag :value="row.status" :options="RECEIPT_STATUS" />
-      </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button type="delete" @click="remove(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <ReceiptFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { getReceiptList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import ReceiptFormDialog, { type ReceiptFormModel } from './ReceiptFormDialog.vue'
@@ -60,51 +65,46 @@ interface ReceiptRow {
   created_at: string
 }
 
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({ code: '', type: '', status: '' })
+const queryParams = ref({ code: '', type: '', status: '' })
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '入库单号', field: 'code' } as any,
+  { type: 'input', label: '入库单号', field: 'code', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '类型',
     field: 'type',
     props: {
       options: [
-        { label: '全部', value: '' },
         { label: '采购入库', value: 'purchase' },
         { label: '生产入库', value: 'production' }
-      ]
-    }
-  } as any,
+      ],
+      clearable: true
+    } as any
+  },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
     props: {
       options: [
-        { label: '全部', value: '' },
         { label: '待入库', value: 'pending' },
         { label: '已入库', value: 'completed' }
-      ]
-    }
-  } as any
+      ],
+      clearable: true
+    } as any
+  }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
-const cols: TableColumnItem<ReceiptRow>[] = [
+const columns: TableColumnItem<ReceiptRow>[] = [
   { prop: 'code', label: '入库单号', width: 160 },
   { label: '类型', minWidth: 100, slotName: 'type', align: 'center' },
-  { prop: 'material', label: '物料', minWidth: 160 },
+  { prop: 'material', label: '物料名称', minWidth: 160 },
   { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { prop: 'warehouse', label: '仓库', width: 100 },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { prop: 'created_at', label: '创建时间', minWidth: 160 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
@@ -114,9 +114,9 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<R
     const res = await getReceiptList({
       pageNum: page,
       pageSize: size,
-      code: searchForm.value.code || undefined,
-      supplier: searchForm.value.type || undefined,
-      status: searchForm.value.status || undefined
+      code: queryParams.value.code || undefined,
+      supplier: queryParams.value.type || undefined,
+      status: queryParams.value.status || undefined
     })
     return {
       list: res.data.list.map(mapRow),
@@ -138,25 +138,25 @@ function mapRow(item: any): ReceiptRow {
   }
 }
 
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+
+function handleReset() {
+  queryParams.value = { code: '', type: '', status: '' }
+  search()
+}
+
+function handleExport() {
+  ElMessage.success('导出成功')
+}
+
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ReceiptFormModel>(createDefaultForm())
 
 function createDefaultForm(): ReceiptFormModel {
   return { id: '', code: '', type: 'purchase', material: '', qty: 1, warehouse: '原材料仓', status: 'pending' }
-}
-
-function handleSearch() {
-  search()
-}
-
-function handleReset() {
-  searchForm.value = { code: '', type: '', status: '' }
-  search()
-}
-
-function handleExport() {
-  ElMessage.success('导出成功')
 }
 
 function openAdd() {

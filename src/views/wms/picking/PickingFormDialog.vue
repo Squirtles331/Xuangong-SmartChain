@@ -37,7 +37,7 @@ const emit = defineEmits<{
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '工单号', field: 'wo_code', required: true },
-  { type: 'input', label: '产品', field: 'material', required: true },
+  { type: 'input', label: '产品名称', field: 'material', required: true },
   {
     type: 'select-v2',
     label: '状态',
@@ -53,7 +53,7 @@ const formColumns: FormColumnItem[] = [
 ]
 
 async function handleSubmit() {
-  if (!formData.value.wo_code) {
+  if (!formData.value.wo_code || !formData.value.material) {
     ElMessage.warning('请填写必填项')
     return false
   }

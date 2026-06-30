@@ -1,27 +1,27 @@
 <template>
-  <el-dialog v-model="visible" title="Count Diff" width="700px" :lock-scroll="false">
+  <el-dialog v-model="visible" title="盘点差异处理" width="700px" :lock-scroll="false">
     <el-table :data="items" border size="small">
-      <el-table-column prop="material" label="Material" min-width="180" />
-      <el-table-column prop="book_qty" label="Book Qty" width="90" align="center" />
-      <el-table-column prop="actual_qty" label="Actual Qty" width="90" align="center" />
-      <el-table-column label="Diff" width="90" align="center">
+      <el-table-column prop="material" label="物料名称" min-width="180" />
+      <el-table-column prop="book_qty" label="账面数量" width="90" align="center" />
+      <el-table-column prop="actual_qty" label="实盘数量" width="90" align="center" />
+      <el-table-column label="差异" width="90" align="center">
         <template #default="{ row }">
           <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '' }">{{ row.diff > 0 ? '+' : '' }}{{ row.diff }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Disposition" width="140">
+      <el-table-column label="处理方式" width="140">
         <template #default="{ row }">
           <el-select v-model="row.disposition" size="small">
-            <el-option label="profit" value="profit" />
-            <el-option label="loss" value="loss" />
-            <el-option label="ignore" value="ignore" />
+            <el-option label="盘盈入账" value="profit" />
+            <el-option label="盘亏出账" value="loss" />
+            <el-option label="忽略" value="ignore" />
           </el-select>
         </template>
       </el-table-column>
     </el-table>
     <template #footer>
-      <el-button @click="visible = false">Cancel</el-button>
-      <el-button type="primary" @click="emit('submit')">Confirm</el-button>
+      <el-button @click="visible = false">取消</el-button>
+      <el-button type="primary" @click="emit('submit')">确认</el-button>
     </template>
   </el-dialog>
 </template>

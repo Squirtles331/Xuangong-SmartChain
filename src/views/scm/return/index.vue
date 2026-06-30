@@ -1,16 +1,13 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
-          ref="sf"
-          v-model="searchForm"
+          v-model="queryParams"
           :columns="visibleSearchColumns"
-          :grid-item-props="{
-            span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-          }"
+          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
           search
-          @search="handleSearch"
+          @search="search"
           @reset="handleReset"
         />
       </SearchSetting>
@@ -21,66 +18,39 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #status="{ row }">
-        <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'done' ? 'success' : 'info'" size="small">
-          {{ row.status === 'pending' ? '待退货' : row.status === 'done' ? '已退货' : '已取消' }}
-        </el-tag>
+    <TableSetting title="采购退货单" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
+          <template #status="{ row }">
+            <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'done' ? 'success' : 'info'" size="small">
+              {{ row.status === 'pending' ? '待退货' : row.status === 'done' ? '已退货' : '已取消' }}
+            </el-tag>
+          </template>
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="confirmReturn(row)">确认退货</el-button>
+          </template>
+        </gi-table>
       </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="confirmReturn(row)">确认退货</el-button>
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <ReturnFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
+import { createPurchaseReturn, getPurchaseReturnList, type PurchaseReturn, type PurchaseReturnQuery, updatePurchaseReturn } from '@/api/scm'
 import { useTable } from '@/hooks/useTable'
 import ReturnFormDialog, { type ReturnFormModel } from './ReturnFormDialog.vue'
 
-interface ReturnRow {
-  id: string
-  code: string
-  po_code: string
-  supplier: string
-  material: string
-  qty: number
-  reason: string
-  status: string
-}
+interface ReturnRow extends PurchaseReturn {}
 
-const localData = ref<ReturnRow[]>([
-  {
-    id: '1',
-    code: 'PRT20250115001',
-    po_code: 'PO202501100002',
-    supplier: 'YY轴承制造厂',
-    material: '轴承 6308',
-    qty: 20,
-    reason: '尺寸超差',
-    status: 'pending'
-  },
-  {
-    id: '2',
-    code: 'PRT20250110002',
-    po_code: 'PO202501050001',
-    supplier: 'XX钢材有限公司',
-    material: '45#圆钢 φ50',
-    qty: 100,
-    reason: '材质不合格',
-    status: 'done'
-  }
-])
-
-const sf = ref<FormInstance | null>()
-const searchForm = ref({
+const queryParams = ref({
   code: '',
   status: ''
 })
@@ -90,23 +60,22 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ReturnFormModel>(createDefaultFormModel())
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '退货单号', field: 'code' } as any,
+  { type: 'input', label: '退货单号', field: 'code', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
     props: {
       options: [
-        { label: '全部', value: '' },
         { label: '待退货', value: 'pending' },
         { label: '已退货', value: 'done' }
-      ]
-    }
-  } as any
+      ],
+      clearable: true
+    } as any
+  }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
@@ -116,7 +85,7 @@ const columns: TableColumnItem<ReturnRow>[] = [
   { prop: 'code', label: '退货单号', width: 170 },
   { prop: 'po_code', label: '采购订单', width: 170 },
   { prop: 'supplier', label: '供应商', minWidth: 150 },
-  { prop: 'material', label: '物料', minWidth: 140 },
+  { prop: 'material', label: '物料名称', minWidth: 140 },
   { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { prop: 'reason', label: '原因', width: 120 },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
@@ -126,16 +95,14 @@ const columns: TableColumnItem<ReturnRow>[] = [
 const { tableData, pagination, loading, search, refresh } = useTable<ReturnRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    let filtered = [...localData.value]
-    const s = searchForm.value
-    if (s.code) filtered = filtered.filter((r) => r.code.includes(s.code))
-    if (s.status) filtered = filtered.filter((r) => r.status === s.status)
-    const total = filtered.length
-    const start = (page - 1) * size
-    return {
-      list: filtered.slice(start, start + size),
-      total
+    const params: PurchaseReturnQuery = {
+      pageNum: page,
+      pageSize: size,
+      code: queryParams.value.code || undefined,
+      status: queryParams.value.status || undefined
     }
+    const res = await getPurchaseReturnList(params)
+    return res.data
   }
 })
 
@@ -152,12 +119,8 @@ function createDefaultFormModel(): ReturnFormModel {
   }
 }
 
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value = { code: '', status: '' }
+  queryParams.value = { code: '', status: '' }
   search()
 }
 
@@ -174,30 +137,29 @@ function openEdit(row: ReturnRow) {
 }
 
 async function submitDialog() {
-  if (!formModel.value.material) {
-    ElMessage.warning('请填写必填项')
-    return
+  const payload = {
+    code: formModel.value.code,
+    po_code: formModel.value.po_code,
+    supplier: formModel.value.supplier,
+    material: formModel.value.material,
+    qty: formModel.value.qty,
+    reason: formModel.value.reason,
+    status: formModel.value.status as 'pending' | 'done'
   }
 
   if (dialogMode.value === 'add') {
-    localData.value.unshift({
-      id: Date.now().toString(),
-      code: 'PRT' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(localData.value.length + 1).padStart(4, '0'),
-      ...formModel.value
-    } as ReturnRow)
+    await createPurchaseReturn(payload)
   } else {
-    const idx = localData.value.findIndex((r) => r.id === formModel.value.id)
-    if (idx > -1) {
-      localData.value[idx] = { ...formModel.value }
-    }
+    await updatePurchaseReturn(formModel.value.id, payload)
   }
 
   dialogVisible.value = false
   await refresh()
 }
 
-function confirmReturn(row: ReturnRow) {
+async function confirmReturn(row: ReturnRow) {
   row.status = 'done'
+  await updatePurchaseReturn(row.id, { status: 'done' })
   ElMessage.success('退货完成')
 }
 </script>

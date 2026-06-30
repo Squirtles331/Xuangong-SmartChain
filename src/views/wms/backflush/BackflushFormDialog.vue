@@ -4,7 +4,7 @@
     :footer="true"
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
-    :title="mode === 'add' ? '新增倒冲规则' : '编辑倒冲规则'"
+    :title="mode === 'add' ? '新增倒冲记录' : '编辑倒冲记录'"
     width="600px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
@@ -40,19 +40,19 @@ const emit = defineEmits<{
 }>()
 
 const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '物料', field: 'material', required: true },
+  { type: 'input', label: '物料名称', field: 'material', required: true },
   { type: 'input', label: '工单号', field: 'wo_code', required: true },
-  { type: 'input-number', label: 'BOM用量', field: 'bom_qty', required: true },
-  { type: 'input-number', label: '实际用量', field: 'actual_qty', required: true },
-  { type: 'date-picker', label: '冲销日期', field: 'backflush_date' }
+  { type: 'input-number', label: 'BOM用量', field: 'bom_qty', required: true, props: { min: 0 } as any },
+  { type: 'input-number', label: '实际用量', field: 'actual_qty', required: true, props: { min: 0 } as any },
+  { type: 'date-picker', label: '倒冲日期', field: 'backflush_date', props: { valueFormat: 'YYYY-MM-DD' } as any }
 ]
 
 async function handleSubmit() {
-  if (!formData.value.material) {
+  if (!formData.value.material || !formData.value.wo_code) {
     ElMessage.warning('请填写必填项')
     return false
   }
-  formData.value.diff = formData.value.actual_qty - formData.value.bom_qty
+  formData.value.diff = Number(formData.value.actual_qty || 0) - Number(formData.value.bom_qty || 0)
   emit('submit')
   return false
 }

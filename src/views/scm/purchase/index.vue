@@ -1,14 +1,13 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
-          ref="sf"
-          v-model="searchForm"
+          v-model="queryParams"
           :columns="visibleSearchColumns"
           :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
           search
-          @search="handleSearch"
+          @search="search"
           @reset="handleReset"
         />
       </SearchSetting>
@@ -19,40 +18,54 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
-      <template #progress="{ row }">
-        <div class="progress-cell">
-          <el-progress
-            :percentage="row.qty > 0 ? Math.round((row.received / row.qty) * 100) : 0"
-            :stroke-width="6"
-            :color="row.qty > 0 && row.received >= row.qty ? '#67c23a' : '#409eff'"
-          />
-          <span class="progress-text">{{ row.received }}/{{ row.qty }}</span>
-        </div>
+    <TableSetting title="采购订单" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          stripe
+          style="height: 100%"
+        >
+          <template #progress="{ row }">
+            <div class="progress-cell">
+              <el-progress
+                :percentage="row.qty > 0 ? Math.round((row.received / row.qty) * 100) : 0"
+                :stroke-width="6"
+                :color="row.qty > 0 && row.received >= row.qty ? '#67c23a' : '#409eff'"
+              />
+              <span class="progress-text">{{ row.received }}/{{ row.qty }}</span>
+            </div>
+          </template>
+          <template #delivery="{ row }">
+            <span :class="{ 'overdue-text': isOverdue(row) }">{{ row.delivery }}</span>
+            <el-tag v-if="isOverdue(row)" type="danger" size="small" class="overdue-tag">已逾期</el-tag>
+          </template>
+          <template #status="{ row }">
+            <StatusTag :value="row.status" :options="PO_STATUS" />
+          </template>
+          <template #actions="{ row }">
+            <el-button type="primary" link size="small" @click="receive(row)">收货</el-button>
+            <el-button v-if="row.status === 'sent'" type="danger" link size="small" @click="closePO(row)">关闭</el-button>
+          </template>
+        </gi-table>
       </template>
-      <template #delivery="{ row }">
-        <span :class="{ 'overdue-text': isOverdue(row) }">{{ row.delivery }}</span>
-        <el-tag v-if="isOverdue(row)" type="danger" size="small" class="overdue-tag">已逾期</el-tag>
-      </template>
-      <template #status="{ row }">
-        <StatusTag :value="row.status" :options="PO_STATUS" />
-      </template>
-      <template #actions="{ row }">
-        <el-button type="primary" link size="small" @click="receive(row)">收货</el-button>
-        <el-button v-if="row.status === 'sent'" type="danger" link size="small" @click="closePO(row)">关闭</el-button>
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <PurchaseReceiveDialog v-model:visible="receiveVisible" v-model:form="receiveForm" :current-order="receiveCurrent" @submit="confirmReceive" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
+import TableSetting from '@/components/TableSetting.vue'
 import { getPurchaseOrderList, updatePurchaseOrder, type PurchaseOrder, type PurchaseOrderQuery } from '@/api/scm'
 import { useTable } from '@/hooks/useTable'
 import PurchaseReceiveDialog, { type PurchaseReceiveFormModel } from './PurchaseReceiveDialog.vue'
@@ -76,33 +89,32 @@ interface PORow {
   status: string
 }
 
-const sf = ref<FormInstance | null>()
-const searchForm = ref({
+const queryParams = ref({
   code: '',
   supplier: '',
   status: ''
 })
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '订单编号', field: 'code' } as any,
-  { type: 'input', label: '供应商', field: 'supplier' } as any,
+  { type: 'input', label: '订单编号', field: 'code', props: { clearable: true } as any },
+  { type: 'input', label: '供应商', field: 'supplier', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
     props: {
       options: [
-        { label: '全部', value: '' },
         { label: '已发送', value: 'sent' },
         { label: '部分收货', value: 'partial' },
-        { label: '已收货', value: 'received' }
-      ]
-    }
-  } as any
+        { label: '已收货', value: 'received' },
+        { label: '已关闭', value: 'closed' }
+      ],
+      clearable: true
+    } as any
+  }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
@@ -111,8 +123,8 @@ function onSearchFieldsChange(fields: FormColumnItem[]) {
 const columns: TableColumnItem<PORow>[] = [
   { prop: 'code', label: '订单编号', width: 160 },
   { prop: 'supplier', label: '供应商', minWidth: 150 },
-  { prop: 'material', label: '物料', minWidth: 140 },
-  { prop: 'qty', label: '订购数量', minWidth: 100, align: 'center' },
+  { prop: 'material', label: '物料名称', minWidth: 140 },
+  { prop: 'qty', label: '采购数量', minWidth: 100, align: 'center' },
   { label: '收货进度', minWidth: 160, slotName: 'progress' },
   { label: '交期', width: 130, slotName: 'delivery' },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
@@ -125,9 +137,9 @@ const { tableData, pagination, loading, search, refresh } = useTable<PORow>({
     const params: PurchaseOrderQuery = {
       pageNum: page,
       pageSize: size,
-      code: searchForm.value.code || undefined,
-      supplier: searchForm.value.supplier || undefined,
-      status: searchForm.value.status || undefined
+      code: queryParams.value.code || undefined,
+      supplier: queryParams.value.supplier || undefined,
+      status: queryParams.value.status || undefined
     }
     const res = await getPurchaseOrderList(params)
     return {
@@ -151,12 +163,8 @@ function mapPORow(po: PurchaseOrder): PORow {
   }
 }
 
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value = { code: '', supplier: '', status: '' }
+  queryParams.value = { code: '', supplier: '', status: '' }
   search()
 }
 
@@ -194,7 +202,7 @@ async function closePO(row: PORow) {
 
 function isOverdue(row: PORow) {
   if (row.status === 'received' || row.status === 'closed') return false
-  return new Date(row.delivery) < new Date()
+  return new Date(row.delivery).getTime() < Date.now()
 }
 </script>
 

@@ -1,14 +1,13 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
-          ref="sf"
-          v-model="searchForm"
+          v-model="queryParams"
           :columns="visibleSearchColumns"
           :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
           search
-          @search="handleSearch"
+          @search="search"
           @reset="handleReset"
         />
       </SearchSetting>
@@ -20,24 +19,28 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #status="{ row }">
-        <StatusTag :value="row.status" :options="PR_STATUS" />
+    <TableSetting title="采购申请" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
+          <template #status="{ row }">
+            <StatusTag :value="row.status" :options="PR_STATUS" />
+          </template>
+          <template #source="{ row }">
+            <el-tag :type="row.source === 'mrp' ? 'primary' : 'info'" size="small">
+              {{ row.source === 'mrp' ? 'MRP' : '手动' }}
+            </el-tag>
+          </template>
+          <template #actions="{ row }">
+            <el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="submitApprove(row)">提交审核</el-button>
+            <el-button v-if="row.status === 'approved'" type="success" link size="small" @click="convertToPO(row)">转采购订单</el-button>
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button v-if="row.status === 'draft'" type="delete" @click="remove(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #source="{ row }">
-        <el-tag :type="row.source === 'mrp' ? 'primary' : 'info'" size="small">
-          {{ row.source === 'mrp' ? 'MRP' : '手动' }}
-        </el-tag>
-      </template>
-      <template #actions="{ row }">
-        <el-button v-if="row.status === 'draft'" type="primary" link size="small" @click="submitApprove(row)">提交审批</el-button>
-        <el-button v-if="row.status === 'approved'" type="success" link size="small" @click="convertToPO(row)">转采购订单</el-button>
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button v-if="row.status === 'draft'" type="delete" @click="remove(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
-    <PurchaseRequestFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    <PurchaseRequestFormDialog v-model:visible="dialogVisible" v-model:form="formModel" @submit="submitDialog" :mode="dialogMode" />
     <PurchaseRequestConvertDialog
       v-model:visible="poVisible"
       v-model:form="poForm"
@@ -49,68 +52,34 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
+import TableSetting from '@/components/TableSetting.vue'
+import {
+  createPurchaseRequest,
+  deletePurchaseRequest,
+  getPurchaseRequestList,
+  type PurchaseRequest,
+  type PurchaseRequestQuery,
+  updatePurchaseRequest
+} from '@/api/scm'
 import { useTable } from '@/hooks/useTable'
 import PurchaseRequestConvertDialog, { type PurchaseRequestConvertFormModel } from './PurchaseRequestConvertDialog.vue'
 import PurchaseRequestFormDialog, { type PurchaseRequestFormModel, type PurchaseRequestLine } from './PurchaseRequestFormDialog.vue'
 
 const PR_STATUS = [
   { value: 'draft', label: '草稿', type: 'info' as const },
-  { value: 'approved', label: '已审批', type: 'primary' as const },
+  { value: 'approved', label: '已审核', type: 'primary' as const },
   { value: 'ordered', label: '已转订单', type: 'success' as const },
   { value: 'rejected', label: '已驳回', type: 'warning' as const }
 ]
 
-interface PRRow {
-  id: string
-  code: string
-  dept: string
-  reason: string
-  need_date: string
-  status: string
-  source: string
-  created_at: string
-}
+interface PRRow extends PurchaseRequest {}
 
-const localData = ref<PRRow[]>([
-  {
-    id: '1',
-    code: 'PR202501150001',
-    dept: '生产部',
-    reason: '生产需求',
-    need_date: '2025-01-20',
-    status: 'draft',
-    source: 'manual',
-    created_at: '2025-01-15'
-  },
-  {
-    id: '2',
-    code: 'PR202501150002',
-    dept: '生产部',
-    reason: '安全库存补货',
-    need_date: '2025-01-22',
-    status: 'approved',
-    source: 'mrp',
-    created_at: '2025-01-15'
-  },
-  {
-    id: '3',
-    code: 'PR202501100003',
-    dept: '设备部',
-    reason: '设备维修',
-    need_date: '2025-01-18',
-    status: 'ordered',
-    source: 'manual',
-    created_at: '2025-01-10'
-  }
-])
-
-const sf = ref<FormInstance | null>()
-const searchForm = ref({
+const queryParams = ref({
   code: '',
   status: '',
   source: ''
@@ -121,37 +90,36 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<PurchaseRequestFormModel>(createDefaultFormModel())
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '申请编号', field: 'code' } as any,
+  { type: 'input', label: '申请编号', field: 'code', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
     props: {
       options: [
-        { label: '全部', value: '' },
         { label: '草稿', value: 'draft' },
-        { label: '已审批', value: 'approved' },
+        { label: '已审核', value: 'approved' },
         { label: '已转订单', value: 'ordered' },
         { label: '已驳回', value: 'rejected' }
-      ]
-    }
-  } as any,
+      ],
+      clearable: true
+    } as any
+  },
   {
     type: 'select-v2',
     label: '来源',
     field: 'source',
     props: {
       options: [
-        { label: '全部', value: '' },
         { label: 'MRP', value: 'mrp' },
         { label: '手动', value: 'manual' }
-      ]
-    }
-  } as any
+      ],
+      clearable: true
+    } as any
+  }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
@@ -168,21 +136,20 @@ const columns: TableColumnItem<PRRow>[] = [
   { label: '操作', minWidth: 250, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh } = useTable<PRRow>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<PRRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    let filtered = [...localData.value]
-    const filters = searchForm.value
-    if (filters.code) filtered = filtered.filter((row) => row.code.includes(filters.code))
-    if (filters.status) filtered = filtered.filter((row) => row.status === filters.status)
-    if (filters.source) filtered = filtered.filter((row) => row.source === filters.source)
-    const total = filtered.length
-    const start = (page - 1) * size
-    return {
-      list: filtered.slice(start, start + size),
-      total
+    const params: PurchaseRequestQuery = {
+      pageNum: page,
+      pageSize: size,
+      code: queryParams.value.code || undefined,
+      status: queryParams.value.status || undefined,
+      source: queryParams.value.source || undefined
     }
-  }
+    const res = await getPurchaseRequestList(params)
+    return res.data
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deletePurchaseRequest(id)))
 })
 
 function createDefaultFormModel(): PurchaseRequestFormModel {
@@ -195,12 +162,8 @@ function createDefaultFormModel(): PurchaseRequestFormModel {
   }
 }
 
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value = { code: '', status: '', source: '' }
+  queryParams.value = { code: '', status: '', source: '' }
   search()
 }
 
@@ -222,21 +185,28 @@ function openEdit(row: PRRow) {
   dialogVisible.value = true
 }
 
-async function submitDialog(lines: PurchaseRequestLine[]) {
+async function submitDialog(_lines: PurchaseRequestLine[]) {
   if (!formModel.value.need_date) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('请填写需求日期')
     return
   }
 
+  const payload = {
+    dept: formModel.value.dept,
+    reason: formModel.value.reason,
+    need_date: formModel.value.need_date,
+    status: 'draft' as const,
+    source: 'manual' as const,
+    created_at: new Date().toISOString().slice(0, 10)
+  }
+
   if (dialogMode.value === 'add') {
-    localData.value.unshift({
-      id: Date.now().toString(),
-      code: 'PR' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + String(localData.value.length + 1).padStart(4, '0'),
-      ...formModel.value,
-      status: 'draft',
-      source: 'manual',
-      created_at: new Date().toISOString().slice(0, 10)
-    } as PRRow)
+    await createPurchaseRequest({
+      code: `PR${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${String(Date.now()).slice(-4)}`,
+      ...payload
+    })
+  } else {
+    await updatePurchaseRequest(formModel.value.id, payload)
   }
 
   dialogVisible.value = false
@@ -244,33 +214,36 @@ async function submitDialog(lines: PurchaseRequestLine[]) {
 }
 
 function remove(row: PRRow) {
-  localData.value = localData.value.filter((item) => item.id !== row.id)
-  refresh()
+  onDelete(row)
 }
 
-function submitApprove(row: PRRow) {
+async function submitApprove(row: PRRow) {
   row.status = 'approved'
-  ElMessage.success('已提交审批')
+  await updatePurchaseRequest(row.id, { status: 'approved' })
+  ElMessage.success('已提交审核')
 }
 
 const poVisible = ref(false)
 const currentPR = ref<PRRow | null>(null)
 const poForm = ref<PurchaseRequestConvertFormModel>({
-  supplier: 'XX钢材有限公司',
+  supplier: '苏州钢材有限公司',
   delivery: '',
   terms: '30'
 })
-const suppliers = ['XX钢材有限公司', 'YY轴承制造厂', 'ZZ标准件有限公司', 'AA铸件有限公司']
+const suppliers = ['苏州钢材有限公司', '常州轴承制造厂', '无锡标准件有限公司', '南通铸造供应商']
 
 function convertToPO(row: PRRow) {
   currentPR.value = row
   poVisible.value = true
 }
 
-function confirmPO() {
-  if (currentPR.value) currentPR.value.status = 'ordered'
+async function confirmPO() {
+  if (currentPR.value) {
+    currentPR.value.status = 'ordered'
+    await updatePurchaseRequest(currentPR.value.id, { status: 'ordered' })
+  }
   poVisible.value = false
-  ElMessage.success('已生成采购订单 PO' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '001')
+  ElMessage.success(`已生成采购订单 PO${new Date().toISOString().slice(0, 10).replace(/-/g, '')}001`)
 }
 </script>
 

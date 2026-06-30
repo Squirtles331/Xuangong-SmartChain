@@ -37,13 +37,13 @@ const formColumns: FormColumnItem[] = [
     } as any
   },
   { type: 'input', label: '来源单号', field: 'source', required: true },
-  { type: 'input', label: '物料', field: 'material', required: true },
+  { type: 'input', label: '物料名称', field: 'material', required: true },
   { type: 'input-number', label: '数量', field: 'qty', required: true, props: { min: 1 } as any },
   { type: 'input', label: '原因', field: 'reason' }
 ]
 
 async function handleSubmit() {
-  if (!formData.value.source) {
+  if (!formData.value.source || !formData.value.material) {
     ElMessage.warning('请填写必填项')
     return false
   }

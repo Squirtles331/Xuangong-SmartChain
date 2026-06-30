@@ -15,7 +15,7 @@
         </gi-table>
       </el-tab-pane>
       <el-tab-pane label="发货通知" name="delivery">
-        <gi-table :columns="delCols" :data="deliveries" border stripe size="small">
+        <gi-table :columns="deliveryCols" :data="deliveries" border stripe size="small">
           <template #actions="{ row }">
             <el-button type="primary" link size="small" @click="confirmDel(row.id)">确认发货</el-button>
           </template>
@@ -38,7 +38,7 @@
         </el-card>
       </el-tab-pane>
       <el-tab-pane label="对账明细" name="reconciliation">
-        <gi-table :columns="recCols" :data="recData" border stripe size="small">
+        <gi-table :columns="reconciliationCols" :data="recData" border stripe size="small">
           <template #rec_status="{ row }">
             <el-tag :type="row.rec_status === 'confirmed' ? 'success' : 'warning'" size="small">
               {{ row.rec_status === 'confirmed' ? '已对账' : '待对账' }}
@@ -64,26 +64,26 @@ const recData = ref<any[]>([])
 
 const portalCols: TableColumnItem<any>[] = [
   { prop: 'code', label: '订单号', minWidth: 170 },
-  { prop: 'material', label: '物料', minWidth: 150 },
+  { prop: 'material', label: '物料名称', minWidth: 150 },
   { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { prop: 'delivery_date', label: '交期', minWidth: 110 },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 140, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const delCols: TableColumnItem<any>[] = [
+const deliveryCols: TableColumnItem<any>[] = [
   { prop: 'code', label: '发货单号', minWidth: 170 },
-  { prop: 'material', label: '物料', minWidth: 150 },
+  { prop: 'material', label: '物料名称', minWidth: 150 },
   { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { prop: 'carrier', label: '物流公司', minWidth: 120 },
   { prop: 'tracking_no', label: '运单号', minWidth: 160 },
   { label: '操作', minWidth: 100, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const recCols: TableColumnItem<any>[] = [
+const reconciliationCols: TableColumnItem<any>[] = [
   { prop: 'period', label: '对账周期', minWidth: 160 },
   { prop: 'order_code', label: '订单号', minWidth: 170 },
-  { prop: 'material', label: '物料', minWidth: 150 },
+  { prop: 'material', label: '物料名称', minWidth: 150 },
   { prop: 'order_qty', label: '订单数量', minWidth: 80, align: 'center' },
   { prop: 'delivered_qty', label: '已发货', minWidth: 80, align: 'center' },
   { prop: 'accepted_qty', label: '已验收', minWidth: 80, align: 'center' },

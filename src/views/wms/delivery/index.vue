@@ -1,8 +1,8 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form v-model="queryParams" :columns="visibleSearchColumns" search @search="search" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -11,26 +11,31 @@
       <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
     </template>
 
-    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #status="{ row }">
-        <StatusTag :value="row.status" :options="DELIVERY_STATUS" />
+    <TableSetting title="发货单列表" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
+          <template #status="{ row }">
+            <StatusTag :value="row.status" :options="DELIVERY_STATUS" />
+          </template>
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button type="delete" @click="remove(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button type="delete" @click="remove(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <DeliveryFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import TableSetting from '@/components/TableSetting.vue'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { getDeliveryList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import DeliveryFormDialog, { type DeliveryFormModel } from './DeliveryFormDialog.vue'
@@ -51,39 +56,34 @@ interface DeliveryRow {
   created_at: string
 }
 
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({ code: '', status: '' })
+const queryParams = ref({ code: '', status: '' })
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '发货单号', field: 'code' } as any,
+  { type: 'input', label: '发货单号', field: 'code', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
     props: {
       options: [
-        { label: '全部', value: '' },
         { label: '待发货', value: 'pending' },
         { label: '已发货', value: 'completed' }
-      ]
-    }
-  } as any
+      ],
+      clearable: true
+    } as any
+  }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
-const cols: TableColumnItem<DeliveryRow>[] = [
+const columns: TableColumnItem<DeliveryRow>[] = [
   { prop: 'code', label: '发货单号', width: 160 },
-  { prop: 'order_code', label: '销售订单', width: 160 },
-  { prop: 'customer', label: '客户', minWidth: 140 },
-  { prop: 'material', label: '产品', minWidth: 150 },
+  { prop: 'order_code', label: '销售订单号', width: 160 },
+  { prop: 'customer', label: '客户名称', minWidth: 140 },
+  { prop: 'material', label: '产品名称', minWidth: 150 },
   { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
   { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { prop: 'created_at', label: '创建时间', minWidth: 160 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
@@ -93,9 +93,8 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<D
     const res = await getDeliveryList({
       pageNum: page,
       pageSize: size,
-      code: searchForm.value.code || undefined,
-      customer: undefined,
-      status: searchForm.value.status || undefined
+      code: queryParams.value.code || undefined,
+      status: queryParams.value.status || undefined
     })
     return {
       list: res.data.list.map(mapRow),
@@ -117,25 +116,25 @@ function mapRow(item: any): DeliveryRow {
   }
 }
 
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+
+function handleReset() {
+  queryParams.value = { code: '', status: '' }
+  search()
+}
+
+function handleExport() {
+  ElMessage.success('导出成功')
+}
+
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<DeliveryFormModel>(createDefaultForm())
 
 function createDefaultForm(): DeliveryFormModel {
   return { id: '', code: '', order_code: '', customer: '', material: '', qty: 1, status: 'pending' }
-}
-
-function handleSearch() {
-  search()
-}
-
-function handleReset() {
-  searchForm.value = { code: '', status: '' }
-  search()
-}
-
-function handleExport() {
-  ElMessage.success('导出成功')
 }
 
 function openAdd() {

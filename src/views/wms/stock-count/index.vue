@@ -1,8 +1,8 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form v-model="queryParams" :columns="visibleSearchColumns" search @search="search" @reset="handleReset" />
       </SearchSetting>
     </template>
     <template #tool>
@@ -10,7 +10,7 @@
     </template>
 
     <el-row :gutter="16" style="margin-bottom: 16px">
-      <el-col :span="6" v-for="item in diffSummary" :key="item.label">
+      <el-col v-for="item in diffSummary" :key="item.label" :span="6">
         <el-card shadow="hover" class="diff-card">
           <div class="diff-label">{{ item.label }}</div>
           <div class="diff-value" :style="{ color: item.color }">{{ item.value }}</div>
@@ -18,20 +18,24 @@
       </el-col>
     </el-row>
 
-    <gi-table :columns="planColumns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #type="{ row }">
-        <el-tag :type="row.type === 'full' ? 'danger' : 'warning'" size="small">{{ row.type }}</el-tag>
+    <TableSetting title="盘点计划" :columns="planColumns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
+          <template #type="{ row }">
+            <el-tag :type="row.type === '全盘' ? 'danger' : 'warning'" size="small">{{ row.type }}</el-tag>
+          </template>
+          <template #status="{ row }">
+            <el-tag :type="row.status === '待执行' ? 'warning' : row.status === '执行中' ? 'primary' : 'success'" size="small">
+              {{ row.status }}
+            </el-tag>
+          </template>
+          <template #actions="{ row }">
+            <el-button v-if="row.status === '待执行'" type="primary" link size="small" @click="startCount(row)">开始盘点</el-button>
+            <el-button v-if="row.status !== '待执行'" type="success" link size="small" @click="viewDiff(row)">查看差异</el-button>
+          </template>
+        </gi-table>
       </template>
-      <template #status="{ row }">
-        <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'running' ? 'primary' : 'success'" size="small">
-          {{ row.status }}
-        </el-tag>
-      </template>
-      <template #actions="{ row }">
-        <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="startCount(row)">Start</el-button>
-        <el-button v-if="row.status !== 'pending'" type="success" link size="small" @click="viewDiff(row)">View Diff</el-button>
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <StockCountExecuteDialog v-model:visible="execVisible" v-model:items="execItems" @submit="submitCount" />
     <StockCountDiffDialog v-model:visible="diffVisible" v-model:items="diffItems" @submit="confirmDiff" />
@@ -41,8 +45,9 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
 import { getStockCountDiff, getStockCountList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import StockCountExecuteDialog, { type StockCountExecuteItem } from './StockCountExecuteDialog.vue'
@@ -58,13 +63,11 @@ interface PlanRow {
   status: string
 }
 
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({ keyword: '' })
-
-const searchColumns: FormColumnItem[] = [{ type: 'input', label: 'Keyword', field: 'keyword' } as any]
-
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const queryParams = ref({ keyword: '' })
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '请输入计划号/仓库', clearable: true } as any }
+]
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
 const rawExecLines = ref<any[]>([])
 const rawDiffLines = ref<any[]>([])
@@ -75,13 +78,13 @@ const diffVisible = ref(false)
 const currentPlanCode = ref('')
 
 const planColumns: TableColumnItem<PlanRow>[] = [
-  { prop: 'code', label: 'Plan Code', width: 160 },
-  { prop: 'warehouse', label: 'Warehouse', width: 140 },
-  { label: 'Type', minWidth: 80, slotName: 'type', align: 'center' },
-  { prop: 'plan_date', label: 'Plan Date', width: 110 },
-  { prop: 'executor', label: 'Executor', width: 100 },
-  { label: 'Status', minWidth: 90, slotName: 'status', align: 'center' },
-  { label: 'Actions', minWidth: 160, slotName: 'actions', align: 'center' }
+  { prop: 'code', label: '计划号', width: 160 },
+  { prop: 'warehouse', label: '仓库', width: 140 },
+  { label: '盘点类型', minWidth: 90, slotName: 'type', align: 'center' },
+  { prop: 'plan_date', label: '计划日期', width: 110 },
+  { prop: 'executor', label: '执行人', width: 100 },
+  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
 ]
 
 const diffSummary = computed(() => {
@@ -92,10 +95,10 @@ const diffSummary = computed(() => {
   const diffRate = totalBookQty > 0 ? `${((totalDiff / totalBookQty) * 100).toFixed(2)}%` : '0.00%'
 
   return [
-    { label: 'Count Items', value: String(totalItems), color: '#409eff' },
-    { label: 'Diff Items', value: String(changedItems), color: '#e6a23c' },
-    { label: 'Diff Rate', value: diffRate, color: '#f56c6c' },
-    { label: 'Total Diff', value: String(totalDiff), color: '#67c23a' }
+    { label: '盘点项数', value: String(totalItems), color: '#409eff' },
+    { label: '差异项数', value: String(changedItems), color: '#e6a23c' },
+    { label: '差异率', value: diffRate, color: '#f56c6c' },
+    { label: '总差异数', value: String(totalDiff), color: '#67c23a' }
   ]
 })
 
@@ -114,15 +117,15 @@ function buildPlans(lines: any[]) {
         id: code,
         code,
         warehouse: line.warehouse,
-        type: index % 2 === 0 ? 'full' : 'cycle',
+        type: index % 2 === 0 ? '全盘' : '循环盘点',
         plan_date: `2025-01-${String(10 + index).padStart(2, '0')}`,
-        executor: `User ${index + 1}`,
-        status: hasDone ? 'completed' : 'pending'
+        executor: ['张三', '李四', '王五', '赵六'][index % 4],
+        status: hasDone ? '已完成' : '待执行'
       })
     }
   })
 
-  const keyword = searchForm.value.keyword.trim().toLowerCase()
+  const keyword = queryParams.value.keyword.trim().toLowerCase()
   const result = Array.from(map.values())
   return keyword ? result.filter((item) => item.code.toLowerCase().includes(keyword) || item.warehouse.toLowerCase().includes(keyword)) : result
 }
@@ -148,22 +151,18 @@ const { tableData, pagination, loading, search, refresh } = useTable<PlanRow>({
   }
 })
 
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value.keyword = ''
+  queryParams.value.keyword = ''
   search()
 }
 
 function openCreate() {
-  ElMessage.info('Create flow is not implemented in mock mode yet')
+  ElMessage.info('Mock 数据模式下暂未实现新建流程')
 }
 
 function startCount(plan: PlanRow) {
   currentPlanCode.value = plan.code
-  plan.status = 'running'
+  plan.status = '执行中'
   execItems.value = rawExecLines.value
     .filter((item) => item.plan_code === plan.code)
     .map((item) => ({ ...item, actual: Number(item.actual_qty ?? item.book_qty ?? 0) }))
@@ -172,9 +171,9 @@ function startCount(plan: PlanRow) {
 
 function submitCount() {
   const plan = tableData.value.find((item) => item.code === currentPlanCode.value)
-  if (plan) plan.status = 'completed'
+  if (plan) plan.status = '已完成'
   execVisible.value = false
-  ElMessage.success('Count submitted')
+  ElMessage.success('盘点结果已提交')
 }
 
 function viewDiff(plan: PlanRow) {
@@ -184,7 +183,7 @@ function viewDiff(plan: PlanRow) {
 
 function confirmDiff() {
   diffVisible.value = false
-  ElMessage.success('Diff confirmed')
+  ElMessage.success('差异处理已确认')
 }
 </script>
 

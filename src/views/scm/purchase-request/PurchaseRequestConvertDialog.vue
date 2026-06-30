@@ -11,7 +11,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="交货日期" required>
-        <el-date-picker v-model="formData.delivery" style="width: 100%" />
+        <el-date-picker v-model="formData.delivery" style="width: 100%" value-format="YYYY-MM-DD" />
       </el-form-item>
       <el-form-item label="付款条款">
         <el-select v-model="formData.terms" style="width: 100%">

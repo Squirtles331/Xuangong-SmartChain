@@ -53,14 +53,17 @@ export function deleteIoTAlertRule(id: string) {
 }
 
 export function getReceiptList(params: { pageNum: number; pageSize: number; code?: string; supplier?: string; status?: string }) {
+  if (isMockMode) return mockService.getReceiptList(params)
   return apiGet<any>('/wms/receipts', { params })
 }
 
 export function getDeliveryList(params: { pageNum: number; pageSize: number; code?: string; customer?: string; status?: string }) {
+  if (isMockMode) return mockService.getDeliveryList(params)
   return apiGet<any>('/wms/deliveries', { params })
 }
 
 export function getPickingList(params: { pageNum: number; pageSize: number; code?: string; warehouse?: string; status?: string }) {
+  if (isMockMode) return mockService.getPickingList(params)
   return apiGet<any>('/wms/picking', { params })
 }
 
@@ -72,14 +75,17 @@ export function getTransferList(params: {
   toWarehouse?: string
   status?: string
 }) {
+  if (isMockMode) return mockService.getTransferList(params)
   return apiGet<any>('/wms/transfers', { params })
 }
 
 export function getReturnList(params: { pageNum: number; pageSize: number; code?: string; reason?: string; status?: string }) {
+  if (isMockMode) return mockService.getReturnList(params)
   return apiGet<any>('/wms/returns', { params })
 }
 
 export function getBackflushList(params: { pageNum: number; pageSize: number; code?: string; material?: string; status?: string }) {
+  if (isMockMode) return mockService.getBackflushList(params)
   return apiGet<any>('/wms/backflush', { params })
 }
 
@@ -95,5 +101,6 @@ export function getBarcodeScanList(params: {
   startDate?: string
   endDate?: string
 }) {
+  if (isMockMode) return mockService.getBarcodeScanList(params)
   return apiGet<any>('/wms/barcode-scans', { params })
 }

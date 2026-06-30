@@ -21,18 +21,23 @@
       </el-descriptions>
     </el-card>
 
-    <gi-table :columns="cols" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #type="{ row }">
-        <el-tag :type="row.type === '入库' ? 'success' : 'warning'" size="small">{{ row.type }}</el-tag>
+    <TableSetting title="扫码记录" :columns="columns" @refresh="search">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
+          <template #type="{ row }">
+            <el-tag :type="row.type === '入库' ? 'success' : 'warning'" size="small">{{ row.type }}</el-tag>
+          </template>
+        </gi-table>
       </template>
-    </gi-table>
+    </TableSetting>
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { ref, nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
+import TableSetting from '@/components/TableSetting.vue'
 import { getBarcodeScanList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 
@@ -59,7 +64,7 @@ const scanCode = ref('')
 const scanInputRef = ref<any>(null)
 const currentResult = ref<ScanResult | null>(null)
 
-const cols: TableColumnItem<ScanRecord>[] = [
+const columns: TableColumnItem<ScanRecord>[] = [
   { prop: 'barcode', label: '条码', minWidth: 180 },
   { label: '类型', minWidth: 80, slotName: 'type', align: 'center' },
   { prop: 'materialCode', label: '物料编码', minWidth: 160 },
@@ -74,9 +79,7 @@ const { tableData, pagination, loading, search } = useTable<ScanRecord>({
   listAPI: async ({ page, size }) => {
     const res = await getBarcodeScanList({
       pageNum: page,
-      pageSize: size,
-      barcode: undefined,
-      operator: undefined
+      pageSize: size
     })
     return {
       list: res.data.list.map(mapRow),
@@ -101,13 +104,13 @@ function mapRow(item: any): ScanRecord {
 function parseBarcode(code: string): ScanResult | null {
   if (!code) return null
   const materialList: { code: string; name: string; location: string }[] = [
-    { code: '01.01.001-00001', name: '45#圆钢 φ50', location: 'A-01-01' },
+    { code: '01.01.001-00001', name: '45#圆钢 D50', location: 'A-01-01' },
     { code: '02.04.001-00001', name: '轴承 6308', location: 'B-02-03' },
-    { code: '04.01.001-00001', name: '离心泵 XJP-100', location: 'C-03-05' },
-    { code: '01.01.001-00002', name: '螺栓 M16×60', location: 'A-02-01' },
-    { code: '02.04.001-00002', name: '传动轴 DS-50', location: 'B-01-02' }
+    { code: '04.01.001-00001', name: '离心泵 XJP-100', location: 'F-01-01' },
+    { code: '01.01.002-00001', name: '螺栓 M16x60', location: 'C-02-01' },
+    { code: '02.04.001-00002', name: '传动轴 DS-50', location: 'D-01-02' }
   ]
-  const matched = materialList.find((m) => m.code === code) || materialList[Math.floor(Math.random() * materialList.length)]
+  const matched = materialList.find((item) => code.includes(item.code.replace(/\W/g, '').slice(-6))) || materialList[0]
   return {
     barcode: code,
     materialCode: matched.code,
@@ -134,12 +137,11 @@ function addRecord(type: string) {
     ElMessage.warning('请先扫描条码')
     return
   }
-  // Prepend to tableData and refresh
   tableData.value.unshift({
     id: Date.now().toString(),
     ...currentResult.value,
     type,
-    time: new Date().toLocaleString()
+    time: new Date().toLocaleString('zh-CN')
   })
   currentResult.value = null
   pagination.currentPage = 1

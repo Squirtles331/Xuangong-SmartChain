@@ -13,6 +13,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
 export interface ReturnFormModel {
@@ -43,7 +44,7 @@ const formColumns: FormColumnItem[] = [
   { type: 'input', label: '退货单号', field: 'code', required: true },
   { type: 'input', label: '采购订单', field: 'po_code', required: true },
   { type: 'input', label: '供应商', field: 'supplier' },
-  { type: 'input', label: '物料', field: 'material', required: true },
+  { type: 'input', label: '物料名称', field: 'material', required: true },
   { type: 'input-number', label: '数量', field: 'qty', required: true, props: { min: 1 } as any },
   { type: 'input', label: '原因', field: 'reason' }
 ]
@@ -53,6 +54,10 @@ function handleCancel() {
 }
 
 async function handleSubmit() {
+  if (!formData.value.code || !formData.value.material) {
+    ElMessage.warning('请填写必填项')
+    return false
+  }
   emit('submit')
   return false
 }

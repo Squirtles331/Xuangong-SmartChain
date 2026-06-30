@@ -1,17 +1,16 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <gi-form
-        ref="searchFormRef"
-        v-model="searchForm"
-        :columns="searchColumns"
-        :grid-item-props="{
-          span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-        }"
-        search
-        @reset="handleReset"
-        @search="handleSearch"
-      />
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
+          search
+          @reset="handleReset"
+          @search="search"
+        />
+      </SearchSetting>
     </template>
 
     <template #tool>
@@ -19,24 +18,37 @@
       <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
-      <template #score="{ row }">
-        <div class="score-cell">
-          <el-progress :percentage="row.score || 0" :stroke-width="8" :color="scoreColor(row.score || 0)" />
-          <span class="score-text" :class="scoreClass(row.score || 0)">{{ row.score || 0 }}分</span>
-        </div>
+    <TableSetting title="供应商列表" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          stripe
+          style="height: 100%"
+        >
+          <template #score="{ row }">
+            <div class="score-cell">
+              <el-progress :percentage="row.score || 0" :stroke-width="8" :color="scoreColor(row.score || 0)" />
+              <span class="score-text" :class="scoreClass(row.score || 0)">{{ row.score || 0 }}分</span>
+            </div>
+          </template>
+          <template #status="{ row }">
+            <StatusTag :value="row.status" :options="SUPPLIER_STATUS" />
+          </template>
+          <template #qualified="{ row }">
+            <el-tag :type="row.qualified ? 'success' : 'info'" size="small">{{ row.qualified ? '合格' : '待审核' }}</el-tag>
+          </template>
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button style="margin-left: 8px" type="delete" @click="remove(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #status="{ row }">
-        <StatusTag :value="row.status" :options="SUPPLIER_STATUS" />
-      </template>
-      <template #qualified="{ row }">
-        <el-tag :type="row.qualified ? 'success' : 'info'" size="small">{{ row.qualified ? '合格' : '待审核' }}</el-tag>
-      </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button style="margin-left: 8px" type="delete" @click="remove(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <SupplierFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
@@ -45,8 +57,10 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
+import TableSetting from '@/components/TableSetting.vue'
 import { createSupplier, deleteSupplier, getSupplierList, updateSupplier, type Supplier, type SupplierQuery } from '@/api/scm'
 import { useTable } from '@/hooks/useTable'
 import SupplierFormDialog, { type SupplierFormModel } from './SupplierFormDialog.vue'
@@ -69,8 +83,7 @@ interface SupplierRow {
   score?: number
 }
 
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({
+const queryParams = ref({
   name: '',
   status: ''
 })
@@ -80,21 +93,23 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<SupplierFormModel>(createDefaultFormModel())
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '供应商名称', field: 'name' },
+  { type: 'input', label: '供应商名称', field: 'name', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
     props: {
       options: [
-        { label: '全部', value: '' },
         { label: '正常', value: 'active' },
         { label: '冻结', value: 'frozen' },
         { label: '淘汰', value: 'eliminated' }
-      ]
+      ],
+      clearable: true
     } as any
   }
 ]
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
 const columns: TableColumnItem<SupplierRow>[] = [
   { prop: 'code', label: '编码', width: 150 },
@@ -108,7 +123,6 @@ const columns: TableColumnItem<SupplierRow>[] = [
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-// Score presets for demo data
 const scorePresets = [95, 88, 72, 60, 91, 85]
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<SupplierRow>({
@@ -117,17 +131,21 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<S
     const params: SupplierQuery = {
       pageNum: page,
       pageSize: size,
-      name: searchForm.value.name || undefined,
-      status: searchForm.value.status || undefined
+      name: queryParams.value.name || undefined,
+      status: queryParams.value.status || undefined
     }
     const res = await getSupplierList(params)
     return {
-      list: res.data.list.map((s: any, i: number) => mapSupplierRow(s, (page - 1) * size + i)),
+      list: res.data.list.map((supplier: any, index: number) => mapSupplierRow(supplier, (page - 1) * size + index)),
       total: res.data.total
     }
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteSupplier(id)))
 })
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
 
 function createDefaultFormModel(): SupplierFormModel {
   return {
@@ -149,18 +167,14 @@ function mapSupplierRow(supplier: Supplier, index: number): SupplierRow {
     contact: supplier.contact || '-',
     phone: supplier.phone || '-',
     terms: supplier.terms || '-',
-    status: supplier.status,
+    status: supplier.status as SupplierRow['status'],
     qualified: supplier.qualified,
     score: scorePresets[index % scorePresets.length]
   }
 }
 
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value = { name: '', status: '' }
+  queryParams.value = { name: '', status: '' }
   search()
 }
 
@@ -185,11 +199,6 @@ function openEdit(row: SupplierRow) {
 }
 
 async function submitDialog() {
-  if (!formModel.value.code || !formModel.value.name) {
-    ElMessage.warning('请填写编码和名称')
-    return
-  }
-
   const payload = {
     code: formModel.value.code,
     name: formModel.value.name,
@@ -197,6 +206,11 @@ async function submitDialog() {
     phone: formModel.value.phone,
     terms: formModel.value.terms,
     status: formModel.value.status as 'active' | 'frozen'
+  }
+
+  if (!payload.code || !payload.name) {
+    ElMessage.warning('请填写编码和名称')
+    return
   }
 
   if (dialogMode.value === 'add') {

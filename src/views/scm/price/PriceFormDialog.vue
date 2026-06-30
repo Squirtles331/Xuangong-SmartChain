@@ -13,6 +13,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
 export interface PriceFormModel {
@@ -40,20 +41,20 @@ const emit = defineEmits<{
 }>()
 
 const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '物料', field: 'material', required: true },
+  { type: 'input', label: '物料名称', field: 'material', required: true },
   { type: 'input', label: '供应商', field: 'supplier', required: true },
   { type: 'input-number', label: '单价', field: 'price', required: true, props: { min: 0, precision: 2 } as any },
   { type: 'input', label: '币种', field: 'currency' },
-  { type: 'date-picker', label: '生效日期', field: 'valid_from' },
-  { type: 'date-picker', label: '失效日期', field: 'valid_to' },
+  { type: 'date-picker', label: '生效日期', field: 'valid_from', props: { valueFormat: 'YYYY-MM-DD' } as any },
+  { type: 'date-picker', label: '失效日期', field: 'valid_to', props: { valueFormat: 'YYYY-MM-DD' } as any },
   {
     type: 'select-v2',
     label: '来源',
     field: 'source',
     props: {
       options: [
-        { label: '询价', value: '询价' },
-        { label: '比价', value: '比价' },
+        { label: '报价单', value: '报价单' },
+        { label: '比价结果', value: '比价结果' },
         { label: '年度合同', value: '年度合同' },
         { label: '历史价格', value: '历史价格' }
       ]
@@ -66,6 +67,10 @@ function handleCancel() {
 }
 
 async function handleSubmit() {
+  if (!formData.value.material || !formData.value.supplier) {
+    ElMessage.warning('请填写必填项')
+    return false
+  }
   emit('submit')
   return false
 }

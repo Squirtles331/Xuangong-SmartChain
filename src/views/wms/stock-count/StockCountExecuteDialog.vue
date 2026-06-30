@@ -1,18 +1,18 @@
 <template>
-  <el-dialog v-model="visible" title="Count Execution" width="700px" :lock-scroll="false">
+  <el-dialog v-model="visible" title="盘点执行" width="700px" :lock-scroll="false">
     <el-table :data="items" border size="small">
-      <el-table-column prop="location" label="Location" width="120" />
-      <el-table-column prop="material" label="Material" min-width="180" />
-      <el-table-column prop="book_qty" label="Book Qty" width="90" align="center" />
-      <el-table-column label="Actual Qty" width="130">
+      <el-table-column prop="location" label="库位" width="120" />
+      <el-table-column prop="material" label="物料名称" min-width="180" />
+      <el-table-column prop="book_qty" label="账面数量" width="90" align="center" />
+      <el-table-column label="实盘数量" width="130">
         <template #default="{ row }">
           <el-input-number v-model="row.actual" :min="0" size="small" />
         </template>
       </el-table-column>
     </el-table>
     <template #footer>
-      <el-button @click="visible = false">Save Draft</el-button>
-      <el-button type="primary" @click="emit('submit')">Submit</el-button>
+      <el-button @click="visible = false">保存草稿</el-button>
+      <el-button type="primary" @click="emit('submit')">提交</el-button>
     </template>
   </el-dialog>
 </template>

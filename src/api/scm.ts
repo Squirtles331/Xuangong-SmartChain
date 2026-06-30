@@ -99,3 +99,113 @@ export function confirmPortalDelivery(id: string) {
   if (isMockMode) return mockService.confirmPortalDelivery(id)
   return apiPut<Record<string, never>>(`/scm/portal/deliveries/${id}/confirm`)
 }
+
+export interface PriceRecord {
+  id: string
+  material: string
+  supplier: string
+  price: number
+  currency: string
+  valid_from: string
+  valid_to: string
+  source: string
+}
+
+export interface PriceQuery {
+  pageNum: number
+  pageSize: number
+  material?: string
+  supplier?: string
+}
+
+export function getPriceList(params: PriceQuery) {
+  if (isMockMode) return mockService.getPriceList(params) as Promise<ApiResponse<PaginatedData<PriceRecord>>>
+  return apiGet<PaginatedData<PriceRecord>>('/scm/prices', { params })
+}
+
+export function createPrice(data: Partial<PriceRecord>) {
+  if (isMockMode) return mockService.createPrice(data)
+  return apiPost<Record<string, never>, Partial<PriceRecord>>('/scm/prices', data)
+}
+
+export function updatePrice(id: string, data: Partial<PriceRecord>) {
+  if (isMockMode) return mockService.updatePrice(id, data)
+  return apiPut<Record<string, never>, Partial<PriceRecord>>(`/scm/prices/${id}`, data)
+}
+
+export function deletePrice(id: string) {
+  if (isMockMode) return mockService.deletePrice(id)
+  return apiDelete<Record<string, never>>(`/scm/prices/${id}`)
+}
+
+export interface PurchaseRequest {
+  id: string
+  code: string
+  dept: string
+  reason: string
+  need_date: string
+  status: 'draft' | 'approved' | 'ordered' | 'rejected'
+  source: 'mrp' | 'manual'
+  created_at: string
+}
+
+export interface PurchaseRequestQuery {
+  pageNum: number
+  pageSize: number
+  code?: string
+  status?: string
+  source?: string
+}
+
+export function getPurchaseRequestList(params: PurchaseRequestQuery) {
+  if (isMockMode) return mockService.getPurchaseRequestList(params) as Promise<ApiResponse<PaginatedData<PurchaseRequest>>>
+  return apiGet<PaginatedData<PurchaseRequest>>('/scm/purchase-requests', { params })
+}
+
+export function createPurchaseRequest(data: Partial<PurchaseRequest>) {
+  if (isMockMode) return mockService.createPurchaseRequest(data)
+  return apiPost<Record<string, never>, Partial<PurchaseRequest>>('/scm/purchase-requests', data)
+}
+
+export function updatePurchaseRequest(id: string, data: Partial<PurchaseRequest>) {
+  if (isMockMode) return mockService.updatePurchaseRequest(id, data)
+  return apiPut<Record<string, never>, Partial<PurchaseRequest>>(`/scm/purchase-requests/${id}`, data)
+}
+
+export function deletePurchaseRequest(id: string) {
+  if (isMockMode) return mockService.deletePurchaseRequest(id)
+  return apiDelete<Record<string, never>>(`/scm/purchase-requests/${id}`)
+}
+
+export interface PurchaseReturn {
+  id: string
+  code: string
+  po_code: string
+  supplier: string
+  material: string
+  qty: number
+  reason: string
+  status: 'pending' | 'done'
+}
+
+export interface PurchaseReturnQuery {
+  pageNum: number
+  pageSize: number
+  code?: string
+  status?: string
+}
+
+export function getPurchaseReturnList(params: PurchaseReturnQuery) {
+  if (isMockMode) return mockService.getPurchaseReturnList(params) as Promise<ApiResponse<PaginatedData<PurchaseReturn>>>
+  return apiGet<PaginatedData<PurchaseReturn>>('/scm/purchase-returns', { params })
+}
+
+export function createPurchaseReturn(data: Partial<PurchaseReturn>) {
+  if (isMockMode) return mockService.createPurchaseReturn(data)
+  return apiPost<Record<string, never>, Partial<PurchaseReturn>>('/scm/purchase-returns', data)
+}
+
+export function updatePurchaseReturn(id: string, data: Partial<PurchaseReturn>) {
+  if (isMockMode) return mockService.updatePurchaseReturn(id, data)
+  return apiPut<Record<string, never>, Partial<PurchaseReturn>>(`/scm/purchase-returns/${id}`, data)
+}

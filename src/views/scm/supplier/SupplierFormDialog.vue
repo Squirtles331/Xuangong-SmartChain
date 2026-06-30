@@ -13,6 +13,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
 export interface SupplierFormModel {
@@ -51,6 +52,10 @@ function handleCancel() {
 }
 
 async function handleSubmit() {
+  if (!formData.value.code || !formData.value.name) {
+    ElMessage.warning('请填写编码和名称')
+    return false
+  }
   emit('submit')
   return false
 }

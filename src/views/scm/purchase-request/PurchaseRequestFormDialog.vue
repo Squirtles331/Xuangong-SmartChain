@@ -17,7 +17,7 @@
     <el-table :data="lines" border size="small" style="margin-top: 8px">
       <el-table-column prop="material" label="物料编码/名称" minWidth="200">
         <template #default="{ row }">
-          <el-input v-model="row.material" size="small" placeholder="搜索选择物料" />
+          <el-input v-model="row.material" size="small" placeholder="请输入物料编码或名称" />
         </template>
       </el-table-column>
       <el-table-column prop="qty" label="数量" width="100">
@@ -25,10 +25,14 @@
           <el-input-number v-model="row.qty" :min="1" size="small" />
         </template>
       </el-table-column>
-      <el-table-column prop="unit" label="单位" width="80" />
+      <el-table-column prop="unit" label="单位" width="80">
+        <template #default="{ row }">
+          <el-input v-model="row.unit" size="small" />
+        </template>
+      </el-table-column>
       <el-table-column prop="need_date" label="需求日期" width="130">
         <template #default="{ row }">
-          <el-date-picker v-model="row.need_date" size="small" type="date" />
+          <el-date-picker v-model="row.need_date" size="small" type="date" value-format="YYYY-MM-DD" />
         </template>
       </el-table-column>
       <el-table-column label="操作" width="60">
@@ -42,6 +46,7 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
 export interface PurchaseRequestFormModel {
@@ -72,7 +77,7 @@ const emit = defineEmits<{
   submit: [lines: PurchaseRequestLine[]]
 }>()
 
-const lines = ref<PurchaseRequestLine[]>([{ material: '', qty: 1, unit: '', need_date: '' }])
+const lines = ref<PurchaseRequestLine[]>([{ material: '', qty: 1, unit: '件', need_date: '' }])
 
 const formColumns: FormColumnItem[] = [
   {
@@ -103,12 +108,12 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'date-picker', label: '需求日期', field: 'need_date', required: true },
+  { type: 'date-picker', label: '需求日期', field: 'need_date', required: true, props: { valueFormat: 'YYYY-MM-DD' } as any },
   { type: 'input', label: '备注', field: 'remark', props: { type: 'textarea', rows: 2 } as any }
 ]
 
 function addLine() {
-  lines.value.push({ material: '', qty: 1, unit: '', need_date: '' })
+  lines.value.push({ material: '', qty: 1, unit: '件', need_date: '' })
 }
 
 function handleCancel() {
@@ -116,6 +121,10 @@ function handleCancel() {
 }
 
 async function handleSubmit() {
+  if (!formData.value.need_date) {
+    ElMessage.warning('请填写需求日期')
+    return false
+  }
   emit('submit', [...lines.value])
   return false
 }

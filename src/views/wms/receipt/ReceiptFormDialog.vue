@@ -52,7 +52,7 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'input', label: '物料', field: 'material', required: true },
+  { type: 'input', label: '物料名称', field: 'material', required: true },
   { type: 'input-number', label: '数量', field: 'qty', required: true, props: { min: 1 } as any },
   {
     type: 'select-v2',
@@ -61,15 +61,16 @@ const formColumns: FormColumnItem[] = [
     props: {
       options: [
         { label: '原材料仓', value: '原材料仓' },
-        { label: '成品仓', value: '成品仓' },
-        { label: '备件仓', value: '备件仓' }
+        { label: '标准件仓', value: '标准件仓' },
+        { label: '半成品仓', value: '半成品仓' },
+        { label: '成品仓', value: '成品仓' }
       ]
     } as any
   }
 ]
 
 async function handleSubmit() {
-  if (!formData.value.material) {
+  if (!formData.value.code || !formData.value.material) {
     ElMessage.warning('请填写必填项')
     return false
   }

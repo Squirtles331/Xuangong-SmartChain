@@ -40,14 +40,14 @@ const emit = defineEmits<{
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '发货单号', field: 'code', required: true },
-  { type: 'input', label: '销售订单', field: 'order_code', required: true },
-  { type: 'input', label: '客户', field: 'customer' },
-  { type: 'input', label: '产品', field: 'material', required: true },
+  { type: 'input', label: '销售订单号', field: 'order_code', required: true },
+  { type: 'input', label: '客户名称', field: 'customer', required: true },
+  { type: 'input', label: '产品名称', field: 'material', required: true },
   { type: 'input-number', label: '数量', field: 'qty', required: true, props: { min: 1 } as any }
 ]
 
 async function handleSubmit() {
-  if (!formData.value.material) {
+  if (!formData.value.code || !formData.value.order_code || !formData.value.material) {
     ElMessage.warning('请填写必填项')
     return false
   }
