@@ -143,6 +143,8 @@ export const workCenters = [
 ]
 
 export const molds = [
-  { id: '1', code: 'MD0000000001', name: '泵体铸造模具', type: 'casting', life: '10000 次', used: '3500' },
-  { id: '2', code: 'MD0000000002', name: '叶轮锻造模具', type: 'forging', life: '5000 次', used: '1200' }
+  { id: '1', code: 'MD0000000001', name: '泵体铸模', type: '铸模', lifeDesign: 10000, used: 3500, status: 'using' },
+  { id: '2', code: 'MD0000000002', name: '叶轮锻模', type: '锻模', lifeDesign: 5000, used: 1200, status: 'idle' },
+  { id: '3', code: 'MD0000000003', name: '支架冲模', type: '冲模', lifeDesign: 8000, used: 5200, status: 'maintain' },
+  { id: '4', code: 'MD0000000004', name: '接线盒注塑模', type: '注塑模', lifeDesign: 20000, used: 8600, status: 'using' }
 ]

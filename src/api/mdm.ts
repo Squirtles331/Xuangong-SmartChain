@@ -163,11 +163,35 @@ export interface Mold {
   code: string
   name: string
   type: string
-  life: string
-  used: string
+  lifeDesign: number
+  used: number
+  status: 'using' | 'idle' | 'maintain'
 }
 
-export function getMoldList() {
-  if (isMockMode) return mockService.getMoldList()
-  return apiGet<Mold[]>('/mdm/molds')
+export interface MoldQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  type?: string
+  status?: Mold['status']
+}
+
+export function getMoldList(params: MoldQuery) {
+  if (isMockMode) return mockService.getMoldList(params) as Promise<ApiResponse<PaginatedData<Mold>>>
+  return apiGet<PaginatedData<Mold>>('/mdm/molds', { params })
+}
+
+export function createMold(data: Partial<Mold>) {
+  if (isMockMode) return mockService.createMold(data)
+  return apiPost<Record<string, never>, Partial<Mold>>('/mdm/molds', data)
+}
+
+export function updateMold(id: string, data: Partial<Mold>) {
+  if (isMockMode) return mockService.updateMold(id, data)
+  return apiPut<Record<string, never>, Partial<Mold>>(`/mdm/molds/${id}`, data)
+}
+
+export function deleteMold(id: string) {
+  if (isMockMode) return mockService.deleteMold(id)
+  return apiDelete<Record<string, never>>(`/mdm/molds/${id}`)
 }

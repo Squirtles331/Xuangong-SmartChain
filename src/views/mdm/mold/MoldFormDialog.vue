@@ -22,7 +22,7 @@ export interface MoldFormModel {
   type: string
   lifeDesign: number
   used: number
-  status: string
+  status: 'using' | 'idle' | 'maintain'
 }
 
 interface Props {

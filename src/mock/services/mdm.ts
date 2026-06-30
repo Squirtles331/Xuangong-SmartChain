@@ -229,7 +229,33 @@ export async function getWorkCenterList() {
 }
 
 // ==================== 模具管理 ====================
-export async function getMoldList() {
+export async function getMoldList(params: { pageNum: number; pageSize: number; keyword?: string; type?: string; status?: string }) {
   await simulateDelay()
-  return wrapDetailResponse(molds)
+  let filtered = [...molds]
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['code', 'name'])
+  if (params.type) filtered = filtered.filter((item) => (item as any).type === params.type)
+  if (params.status) filtered = filtered.filter((item) => (item as any).status === params.status)
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function createMold(data: any) {
+  await simulateDelay()
+  const newMold = { id: generateId(), ...data }
+  ;(molds as any[]).unshift(newMold)
+  return wrapSuccessResponse('模具创建成功')
+}
+
+export async function updateMold(id: string, data: any) {
+  await simulateDelay()
+  const idx = (molds as any[]).findIndex((item: any) => String(item.id) === id)
+  if (idx > -1) Object.assign((molds as any[])[idx], data)
+  return wrapSuccessResponse('模具更新成功')
+}
+
+export async function deleteMold(id: string) {
+  await simulateDelay()
+  const idx = (molds as any[]).findIndex((item: any) => String(item.id) === id)
+  if (idx > -1) (molds as any[]).splice(idx, 1)
+  return wrapSuccessResponse('模具删除成功')
 }
