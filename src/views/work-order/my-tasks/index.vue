@@ -11,39 +11,27 @@
             <el-option label="低" value="low" />
           </el-select>
         </div>
-        <el-empty v-if="pagedAssigned.length === 0" description="暂无待开工任务" />
+        <el-empty v-if="filteredAssigned.length === 0" description="暂无待开工任务" />
         <div v-else class="task-list">
-          <el-card v-for="task in pagedAssigned" :key="task.id" shadow="hover" class="task-card">
+          <el-card v-for="task in filteredAssigned" :key="task.id" shadow="hover" class="task-card">
             <div class="task-header">
               <span class="task-code">{{ task.wo_code }}</span>
-              <el-tag :type="task.wo_priority === 'urgent' ? 'danger' : 'info'" size="small">{{
-                task.wo_priority === 'urgent' ? '紧急' : '普通'
-              }}</el-tag>
+              <el-tag :type="priorityTag(task.wo_priority)" size="small">{{ priorityLabel(task.wo_priority) }}</el-tag>
             </div>
             <div class="task-body">
               <p>
-                <strong>工序{{ task.operation_no }}:</strong> {{ task.operation_name }}
+                <strong>工序{{ task.operation_no }}：</strong>{{ task.operation_name }}
               </p>
-              <p>产品: {{ task.material_name }}</p>
-              <p>工作中心: {{ task.work_center }}</p>
-              <p>计划数量: {{ task.planned_qty }} 台</p>
-              <p>计划时间: {{ task.planned_start }} ~ {{ task.planned_end }}</p>
+              <p>产品：{{ task.material_name }}</p>
+              <p>工作中心：{{ task.work_center }}</p>
+              <p>计划数量：{{ task.planned_qty }} 件</p>
+              <p>计划时间：{{ task.planned_start }} ~ {{ task.planned_end }}</p>
             </div>
             <div class="task-footer">
               <el-button type="primary" @click="startWork(task)">开工</el-button>
             </div>
           </el-card>
         </div>
-        <el-pagination
-          v-if="filteredAssigned.length > assignedPageSize"
-          v-model:current-page="assignedPage"
-          v-model:page-size="assignedPageSize"
-          :total="filteredAssigned.length"
-          :page-sizes="[6, 12, 18]"
-          layout="total, sizes, prev, pager, next"
-          small
-          style="margin-top: 16px; justify-content: center"
-        />
       </el-tab-pane>
 
       <el-tab-pane label="生产中" name="running">
@@ -56,19 +44,19 @@
             <el-option label="低" value="low" />
           </el-select>
         </div>
-        <el-empty v-if="pagedRunning.length === 0" description="暂无生产中任务" />
+        <el-empty v-if="filteredRunning.length === 0" description="暂无生产中任务" />
         <div v-else class="task-list">
-          <el-card v-for="task in pagedRunning" :key="task.id" shadow="hover" class="task-card">
+          <el-card v-for="task in filteredRunning" :key="task.id" shadow="hover" class="task-card">
             <div class="task-header">
               <span class="task-code">{{ task.wo_code }}</span>
               <el-tag type="warning" size="small">进行中</el-tag>
             </div>
             <div class="task-body">
               <p>
-                <strong>工序{{ task.operation_no }}:</strong> {{ task.operation_name }}
+                <strong>工序{{ task.operation_no }}：</strong>{{ task.operation_name }}
               </p>
-              <p>产品: {{ task.material_name }}</p>
-              <p>已报工: {{ task.reported_qty }} / {{ task.planned_qty }} 台</p>
+              <p>产品：{{ task.material_name }}</p>
+              <p>已报工：{{ task.reported_qty }} / {{ task.planned_qty }} 件</p>
               <el-progress :percentage="Math.round((task.reported_qty / task.planned_qty) * 100)" :stroke-width="8" />
             </div>
             <div class="task-footer">
@@ -77,25 +65,19 @@
             </div>
           </el-card>
         </div>
-        <el-pagination
-          v-if="filteredRunning.length > runningPageSize"
-          v-model:current-page="runningPage"
-          v-model:page-size="runningPageSize"
-          :total="filteredRunning.length"
-          :page-sizes="[6, 12, 18]"
-          layout="total, sizes, prev, pager, next"
-          small
-          style="margin-top: 16px; justify-content: center"
-        />
       </el-tab-pane>
 
       <el-tab-pane label="已完工" name="completed">
-        <gi-table :columns="completedColumns" :data="completedTasks" border size="small">
-          <template #status="{ row }">
-            <el-tag v-if="row.qc_required && !row.inspected" type="warning" size="small">待质检</el-tag>
-            <el-tag v-else type="success" size="small">已完工</el-tag>
+        <TableSetting title="已完工任务" :columns="completedColumns">
+          <template #default="{ settingColumns, tableProps }">
+            <gi-table :columns="settingColumns" :data="completedTasks" v-bind="tableProps" border size="small">
+              <template #status="{ row }">
+                <el-tag v-if="row.qc_required && !row.inspected" type="warning" size="small">待质检</el-tag>
+                <el-tag v-else type="success" size="small">已完工</el-tag>
+              </template>
+            </gi-table>
           </template>
-        </gi-table>
+        </TableSetting>
       </el-tab-pane>
     </el-tabs>
 
@@ -104,43 +86,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getMyTasks } from '@/api/work-order'
 import type { TableColumnItem } from 'gi-component'
+import TableSetting from '@/components/TableSetting.vue'
+import { getMyTasks, startOperation, type MyTask } from '@/api/work-order'
 import ExceptionFormDialog, { type ExceptionFormModel } from './ExceptionFormDialog.vue'
 
-interface Task {
-  id: string
-  wo_id: string
-  wo_code: string
-  wo_priority: string
-  material_name: string
-  operation_no: number
-  operation_name: string
-  work_center: string
-  planned_qty: number
-  reported_qty: number
-  planned_start: string
-  planned_end: string
-  status: string
-  qc_required?: boolean
-  inspected?: boolean
-}
+type Task = MyTask
 
 const activeTab = ref('assigned')
-
 const assignedTasks = ref<Task[]>([])
 const runningTasks = ref<Task[]>([])
 const completedTasks = ref<Task[]>([])
 
+const assignedSearch = reactive({ keyword: '', priority: '' })
+const runningSearch = reactive({ keyword: '', priority: '' })
+
+const exceptionVisible = ref(false)
+const exceptionForm = ref<ExceptionFormModel>({ type: 'equipment', description: '' })
+
+const completedColumns: TableColumnItem<Task>[] = [
+  { prop: 'wo_code', label: '工单号', width: 150 },
+  { prop: 'material_name', label: '产品名称', minWidth: 140 },
+  { prop: 'operation_name', label: '工序', width: 100 },
+  { prop: 'reported_qty', label: '报工数', minWidth: 80, align: 'center' },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' }
+]
+
+onMounted(() => {
+  fetchMyTasks()
+})
+
 async function fetchMyTasks() {
   try {
-    const res = await getMyTasks()
-    const data = res.data as any
-    assignedTasks.value = (data?.assigned || []) as Task[]
-    runningTasks.value = (data?.running || []) as Task[]
-    completedTasks.value = (data?.completed || []) as Task[]
+    const response = await getMyTasks()
+    assignedTasks.value = response.data.assigned || []
+    runningTasks.value = response.data.running || []
+    completedTasks.value = response.data.completed || []
   } catch {
     assignedTasks.value = []
     runningTasks.value = []
@@ -148,62 +131,47 @@ async function fetchMyTasks() {
   }
 }
 
-onMounted(() => {
-  fetchMyTasks()
-})
-
-// 搜索+筛选
-const assignedSearch = reactive({ keyword: '', priority: '' })
-const runningSearch = reactive({ keyword: '', priority: '' })
-
-const assignedPage = ref(1)
-const assignedPageSize = ref(6)
-const runningPage = ref(1)
-const runningPageSize = ref(6)
-
-const filteredAssigned = computed(() => {
-  return assignedTasks.value.filter((t) => {
-    if (assignedSearch.keyword && !t.wo_code.includes(assignedSearch.keyword)) return false
-    if (assignedSearch.priority && t.wo_priority !== assignedSearch.priority) return false
+const filteredAssigned = computed(() =>
+  assignedTasks.value.filter((task) => {
+    if (assignedSearch.keyword && !task.wo_code.includes(assignedSearch.keyword)) return false
+    if (assignedSearch.priority && task.wo_priority !== assignedSearch.priority) return false
     return true
   })
-})
+)
 
-const filteredRunning = computed(() => {
-  return runningTasks.value.filter((t) => {
-    if (runningSearch.keyword && !t.wo_code.includes(runningSearch.keyword)) return false
-    if (runningSearch.priority && t.wo_priority !== runningSearch.priority) return false
+const filteredRunning = computed(() =>
+  runningTasks.value.filter((task) => {
+    if (runningSearch.keyword && !task.wo_code.includes(runningSearch.keyword)) return false
+    if (runningSearch.priority && task.wo_priority !== runningSearch.priority) return false
     return true
   })
-})
+)
 
-const pagedAssigned = computed(() => {
-  const s = (assignedPage.value - 1) * assignedPageSize.value
-  return filteredAssigned.value.slice(s, s + assignedPageSize.value)
-})
-
-const pagedRunning = computed(() => {
-  const s = (runningPage.value - 1) * runningPageSize.value
-  return filteredRunning.value.slice(s, s + runningPageSize.value)
-})
-
-const completedColumns: TableColumnItem<Task>[] = [
-  { prop: 'wo_code', label: '工单', width: 150 },
-  { prop: 'material_name', label: '产品', minWidth: 140 },
-  { prop: 'operation_name', label: '工序', width: 100 },
-  { prop: 'reported_qty', label: '报工数', minWidth: 80, align: 'center' },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' }
-]
-
-function startWork(task: Task) {
-  task.status = 'running'
-  runningTasks.value.unshift(task)
-  assignedTasks.value = assignedTasks.value.filter((t) => t.id !== task.id)
-  ElMessage.success('已开工')
+function priorityLabel(priority: string) {
+  const map: Record<string, string> = {
+    urgent: '紧急',
+    high: '高',
+    normal: '普通',
+    low: '低'
+  }
+  return map[priority] || priority
 }
 
-const exceptionVisible = ref(false)
-const exceptionForm = ref<ExceptionFormModel>({ type: 'equipment', description: '' })
+function priorityTag(priority: string) {
+  if (priority === 'urgent') return 'danger'
+  if (priority === 'high') return 'warning'
+  return 'info'
+}
+
+async function startWork(task: Task) {
+  await startOperation(task.id)
+  assignedTasks.value = assignedTasks.value.filter((item) => item.id !== task.id)
+  runningTasks.value.unshift({
+    ...task,
+    status: 'running'
+  })
+  ElMessage.success('已开工')
+}
 
 function reportException(_task: Task) {
   exceptionForm.value = { type: 'equipment', description: '' }
@@ -222,28 +190,34 @@ function submitException() {
   align-items: center;
   margin-bottom: 16px;
 }
+
 .task-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
+
 .task-card {
   cursor: pointer;
 }
+
 .task-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
+
 .task-code {
   font-weight: 600;
 }
+
 .task-body p {
   margin: 4px 0;
   font-size: 13px;
   color: #606266;
 }
+
 .task-footer {
   margin-top: 12px;
   text-align: right;

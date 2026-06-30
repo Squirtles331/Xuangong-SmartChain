@@ -1,35 +1,32 @@
 <template>
   <div class="kanban-container">
     <div class="kanban-header">
-      <h2>车间看板 — {{ currentWorkshop }}</h2>
+      <h2>车间看板 - {{ currentWorkshop }}</h2>
       <div class="kanban-actions">
         <el-select v-model="currentWorkshop" style="width: 180px" @change="onWorkshopChange">
-          <el-option v-for="w in workshops" :key="w" :label="w" :value="w" />
+          <el-option v-for="item in workshops" :key="item" :label="item" :value="item" />
         </el-select>
         <el-button type="primary" style="margin-left: 12px" @click="refreshData">刷新</el-button>
       </div>
     </div>
 
     <div class="kanban-columns">
-      <!-- 待派工 -->
-      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(e) => onDrop(e, 'pending')">
-        <div class="column-header" style="background: #909399">
+      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(event) => onDrop(event, 'pending')">
+        <div class="column-header header-pending">
           <span>待派工</span>
           <el-tag type="info" size="small">{{ pendingOps.length }} 单</el-tag>
         </div>
         <div class="column-body">
-          <div v-for="op in pendingOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(e) => onDragStart(e, op)">
+          <div v-for="op in pendingOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(event) => onDragStart(event, op)">
             <div class="card-header">
               <span class="card-wo-code">{{ op.wo_code }}</span>
-              <el-tag :type="op.wo_priority === 'urgent' ? 'danger' : 'info'" size="small">{{
-                op.wo_priority === 'urgent' ? '紧急' : '普通'
-              }}</el-tag>
+              <el-tag :type="priorityTagType(op.wo_priority)" size="small">{{ priorityLabel(op.wo_priority) }}</el-tag>
             </div>
             <div class="card-body">
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
               <div class="card-info">产品: {{ op.material_name }}</div>
               <div class="card-info">工作中心: {{ op.work_center }}</div>
-              <div class="card-info">工时: {{ op.total_hours }}h</div>
+              <div class="card-info">工时: {{ op.total_hours }} 小时</div>
             </div>
             <div class="card-footer">
               <el-button type="primary" size="small" @click="openAssign(op)">派工</el-button>
@@ -39,14 +36,13 @@
         </div>
       </div>
 
-      <!-- 已派工 -->
-      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(e) => onDrop(e, 'assigned')">
-        <div class="column-header" style="background: #409eff">
+      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(event) => onDrop(event, 'assigned')">
+        <div class="column-header header-assigned">
           <span>已派工</span>
           <el-tag type="primary" size="small">{{ assignedOps.length }} 单</el-tag>
         </div>
         <div class="column-body">
-          <div v-for="op in assignedOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(e) => onDragStart(e, op)">
+          <div v-for="op in assignedOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(event) => onDragStart(event, op)">
             <div class="card-header">
               <span class="card-wo-code">{{ op.wo_code }}</span>
               <el-tag type="warning" size="small">待开工</el-tag>
@@ -55,30 +51,29 @@
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
               <div class="card-info">操作工: {{ op.worker || '未指定' }}</div>
               <div class="card-info">工作中心: {{ op.work_center }}</div>
-              <div class="card-info">计划: {{ op.planned_start?.slice(5) }}</div>
+              <div class="card-info">计划开工: {{ formatPlanTime(op.planned_start) }}</div>
             </div>
           </div>
           <div v-if="assignedOps.length === 0" class="empty-hint">暂无已派工工序</div>
         </div>
       </div>
 
-      <!-- 生产中 -->
-      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(e) => onDrop(e, 'running')">
-        <div class="column-header" style="background: #e6a23c">
+      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(event) => onDrop(event, 'running')">
+        <div class="column-header header-running">
           <span>生产中</span>
           <el-tag type="warning" size="small">{{ runningOps.length }} 单</el-tag>
         </div>
         <div class="column-body">
-          <div v-for="op in runningOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(e) => onDragStart(e, op)">
+          <div v-for="op in runningOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(event) => onDragStart(event, op)">
             <div class="card-header">
               <span class="card-wo-code">{{ op.wo_code }}</span>
               <el-tag type="danger" size="small">进行中</el-tag>
             </div>
             <div class="card-body">
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
-              <div class="card-info">操作工: {{ op.worker }}</div>
+              <div class="card-info">操作工: {{ op.worker || '未指定' }}</div>
               <div class="card-info">
-                <el-progress :percentage="op.progress || 50" :stroke-width="6" style="margin-top: 8px" />
+                <el-progress :percentage="op.progress || 0" :stroke-width="6" style="margin-top: 8px" />
               </div>
             </div>
           </div>
@@ -86,22 +81,21 @@
         </div>
       </div>
 
-      <!-- 已完工 -->
-      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(e) => onDrop(e, 'completed')">
-        <div class="column-header" style="background: #67c23a">
+      <div class="kanban-column" @dragover.prevent="onDragOver" @drop="(event) => onDrop(event, 'completed')">
+        <div class="column-header header-completed">
           <span>已完工</span>
           <el-tag type="success" size="small">{{ completedOps.length }} 单</el-tag>
         </div>
         <div class="column-body">
-          <div v-for="op in completedOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(e) => onDragStart(e, op)">
+          <div v-for="op in completedOps" :key="op.id" class="kanban-card" draggable="true" @dragstart="(event) => onDragStart(event, op)">
             <div class="card-header">
               <span class="card-wo-code">{{ op.wo_code }}</span>
               <el-tag type="success" size="small">已完工</el-tag>
             </div>
             <div class="card-body">
               <div class="card-op">{{ op.operation_no }}: {{ op.name }}</div>
-              <div class="card-info">操作工: {{ op.worker }}</div>
-              <div class="card-info">合格: {{ op.qualified_qty }} | 不良: {{ op.defective_qty }}</div>
+              <div class="card-info">操作工: {{ op.worker || '未指定' }}</div>
+              <div class="card-info">合格: {{ op.qualified_qty || 0 }} | 不良: {{ op.defective_qty || 0 }}</div>
             </div>
           </div>
           <div v-if="completedOps.length === 0" class="empty-hint">暂无已完工工序</div>
@@ -122,9 +116,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getKanbanData, assignOperation } from '@/api/work-order'
+import { assignOperation, getKanbanData } from '@/api/work-order'
 import AssignFormDialog, { type AssignFormModel } from './AssignFormDialog.vue'
 
 interface KanbanOp {
@@ -146,21 +140,35 @@ interface KanbanOp {
 
 const currentWorkshop = ref('机加工一车间')
 const workshops = ['机加工一车间', '机加工二车间', '装配车间']
+const operations = ref<KanbanOp[]>([])
 
-const ops = ref<KanbanOp[]>([])
+const assignVisible = ref(false)
+const currentAssignOp = ref<KanbanOp | null>(null)
+const assignForm = ref<AssignFormModel>({ team: '甲班', worker: '', equipment: '' })
 
-async function loadWorkshopData() {
-  try {
-    const res = await getKanbanData()
-    ops.value = (res.data as KanbanOp[]) || []
-  } catch {
-    ops.value = []
-  }
-}
+const teams = ['甲班', '乙班', '丙班']
+const workers = ['李四', '王五', '赵六', '孙八']
+const equipment = ['数控车床-01', '数控车床-02', '钻床-01', '磨床-01']
+
+const draggedOpId = ref<string | null>(null)
 
 onMounted(() => {
   loadWorkshopData()
 })
+
+const pendingOps = computed(() => operations.value.filter((item) => item.status === 'pending'))
+const assignedOps = computed(() => operations.value.filter((item) => item.status === 'assigned'))
+const runningOps = computed(() => operations.value.filter((item) => item.status === 'running'))
+const completedOps = computed(() => operations.value.filter((item) => item.status === 'completed'))
+
+async function loadWorkshopData() {
+  try {
+    const response = await getKanbanData()
+    operations.value = (response.data as KanbanOp[]) || []
+  } catch {
+    operations.value = []
+  }
+}
 
 function onWorkshopChange() {
   loadWorkshopData()
@@ -172,88 +180,92 @@ function refreshData() {
   ElMessage.success('数据已刷新')
 }
 
-const pendingOps = computed(() => ops.value.filter((o) => o.status === 'pending'))
-const assignedOps = computed(() => ops.value.filter((o) => o.status === 'assigned'))
-const runningOps = computed(() => ops.value.filter((o) => o.status === 'running'))
-const completedOps = computed(() => ops.value.filter((o) => o.status === 'completed'))
+function priorityLabel(priority: string) {
+  const map: Record<string, string> = {
+    urgent: '紧急',
+    high: '高',
+    normal: '普通',
+    low: '低'
+  }
+  return map[priority] || priority
+}
 
-// ==================== 拖拽处理 ====================
-const draggedOpId = ref<string | null>(null)
+function priorityTagType(priority: string) {
+  if (priority === 'urgent') return 'danger'
+  if (priority === 'high') return 'warning'
+  return 'info'
+}
 
-function onDragStart(e: DragEvent, op: KanbanOp) {
+function formatPlanTime(value?: string) {
+  if (!value) return '-'
+  return value.length > 5 ? value.slice(5) : value
+}
+
+function onDragStart(event: DragEvent, op: KanbanOp) {
   draggedOpId.value = op.id
-  e.dataTransfer!.setData('text/plain', op.id)
-  if (e.dataTransfer!.effectAllowed !== undefined) {
-    e.dataTransfer!.effectAllowed = 'move'
+  event.dataTransfer?.setData('text/plain', op.id)
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
   }
-  const el = e.target as HTMLElement
-  setTimeout(() => {
-    el.style.opacity = '0.5'
-  }, 0)
+  const element = event.target as HTMLElement
+  requestAnimationFrame(() => {
+    element.style.opacity = '0.5'
+  })
 }
 
-function onDragOver(e: DragEvent) {
-  e.preventDefault()
-  if (e.dataTransfer) {
-    e.dataTransfer.dropEffect = 'move'
+function onDragOver(event: DragEvent) {
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
   }
 }
 
-function onDrop(e: DragEvent, targetStatus: string) {
-  e.preventDefault()
-  const opId = e.dataTransfer!.getData('text/plain') || draggedOpId.value
+function onDrop(event: DragEvent, targetStatus: string) {
+  event.preventDefault()
+  const opId = event.dataTransfer?.getData('text/plain') || draggedOpId.value
   if (!opId) return
 
-  const op = ops.value.find((o) => o.id === opId)
+  const op = operations.value.find((item) => item.id === opId)
   if (!op) return
 
   const allowedTransitions: Record<string, string[]> = {
-    'pending': ['assigned'],
-    'assigned': ['running', 'pending'],
-    'running': ['completed', 'assigned'],
-    'completed': ['running']
+    pending: ['assigned'],
+    assigned: ['running', 'pending'],
+    running: ['completed', 'assigned'],
+    completed: ['running']
   }
 
   const allowed = allowedTransitions[op.status]
   if (!allowed || !allowed.includes(targetStatus)) {
-    ElMessage.warning(`不允许从「${statusLabel(op.status)}」拖拽到「${statusLabel(targetStatus)}」`)
+    ElMessage.warning(`不允许从“${statusLabel(op.status)}”拖拽到“${statusLabel(targetStatus)}”`)
+    resetDragStyles()
     return
   }
 
   op.status = targetStatus
+  if (targetStatus === 'running' && !op.progress) op.progress = 0
+  if (targetStatus === 'completed') op.progress = 100
 
-  if (targetStatus === 'running' && !op.progress) {
-    op.progress = 0
-  }
-  if (targetStatus === 'completed') {
-    op.progress = 100
-  }
+  ElMessage.success(`${op.wo_code} 工序${op.operation_no} 已移动到“${statusLabel(targetStatus)}”`)
+  resetDragStyles()
+}
 
-  ElMessage.success(`${op.wo_code} 工序${op.operation_no} 已移至「${statusLabel(targetStatus)}」`)
-
-  const cards = document.querySelectorAll('.kanban-card')
-  cards.forEach((c) => ((c as HTMLElement).style.opacity = '1'))
-
+function resetDragStyles() {
+  document.querySelectorAll('.kanban-card').forEach((card) => {
+    ;(card as HTMLElement).style.opacity = '1'
+  })
   draggedOpId.value = null
 }
 
-function statusLabel(status: string): string {
+function statusLabel(status: string) {
   const map: Record<string, string> = {
-    'pending': '待派工',
-    'assigned': '已派工',
-    'running': '生产中',
-    'completed': '已完工'
+    pending: '待派工',
+    assigned: '已派工',
+    running: '生产中',
+    completed: '已完工'
   }
   return map[status] || status
 }
-
-// ==================== 派工 ====================
-const assignVisible = ref(false)
-const currentAssignOp = ref<KanbanOp | null>(null)
-const assignForm = ref<AssignFormModel>({ team: '甲班', worker: '', equipment: '' })
-const teams = ['甲班', '乙班', '丙班']
-const workers = ['李四', '王五', '赵六', '孙八']
-const equipment = ['数控车床-01', '数控车床-02', '钻床-01', '磨床-01']
 
 function openAssign(op: KanbanOp) {
   currentAssignOp.value = { ...op }
@@ -262,19 +274,25 @@ function openAssign(op: KanbanOp) {
 }
 
 async function confirmAssign() {
-  if (currentAssignOp.value) {
-    try {
-      await assignOperation(currentAssignOp.value.id, {
-        team_id: assignForm.value.team,
-        worker_id: assignForm.value.worker || undefined,
-        equipment_id: assignForm.value.equipment || undefined
-      })
-      currentAssignOp.value.status = 'assigned'
-      currentAssignOp.value.worker = assignForm.value.worker || '未指定'
-      ElMessage.success('派工成功')
-    } catch {
-      ElMessage.error('派工失败')
+  if (!currentAssignOp.value) return
+
+  try {
+    await assignOperation(currentAssignOp.value.id, {
+      team_id: assignForm.value.team,
+      worker_id: assignForm.value.worker || undefined,
+      equipment_id: assignForm.value.equipment || undefined
+    })
+
+    const target = operations.value.find((item) => item.id === currentAssignOp.value?.id)
+    if (target) {
+      target.status = 'assigned'
+      target.worker = assignForm.value.worker || '未指定'
     }
+
+    assignVisible.value = false
+    ElMessage.success('派工成功')
+  } catch {
+    ElMessage.error('派工失败')
   }
 }
 </script>
@@ -286,22 +304,26 @@ async function confirmAssign() {
   display: flex;
   flex-direction: column;
 }
+
 .kanban-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
+
 .kanban-header h2 {
   margin: 0;
   font-size: 18px;
 }
+
 .kanban-columns {
   display: flex;
   gap: 12px;
   flex: 1;
   overflow: hidden;
 }
+
 .kanban-column {
   flex: 1;
   display: flex;
@@ -310,22 +332,40 @@ async function confirmAssign() {
   background: #fafafa;
   overflow: hidden;
 }
+
 .column-header {
   padding: 10px 16px;
-  color: white;
+  color: #fff;
   font-weight: 600;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-radius: 8px 8px 0 0;
 }
+
+.header-pending {
+  background: #909399;
+}
+
+.header-assigned {
+  background: #409eff;
+}
+
+.header-running {
+  background: #e6a23c;
+}
+
+.header-completed {
+  background: #67c23a;
+}
+
 .column-body {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
 }
+
 .kanban-card {
-  background: white;
+  background: #fff;
   border-radius: 6px;
   padding: 12px;
   margin-bottom: 8px;
@@ -335,37 +375,41 @@ async function confirmAssign() {
     box-shadow 0.2s,
     opacity 0.2s;
 }
-.kanban-card:active {
-  cursor: grabbing;
-}
+
 .kanban-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
+
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
+
 .card-wo-code {
   font-weight: 600;
   font-size: 13px;
   color: #303133;
 }
+
 .card-op {
   font-weight: 500;
   font-size: 14px;
   margin-bottom: 4px;
 }
+
 .card-info {
   font-size: 12px;
   color: #909399;
   line-height: 1.6;
 }
+
 .card-footer {
   margin-top: 8px;
   text-align: right;
 }
+
 .empty-hint {
   text-align: center;
   color: #c0c4cc;

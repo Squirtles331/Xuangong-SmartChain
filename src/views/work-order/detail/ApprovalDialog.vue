@@ -8,7 +8,7 @@
         <el-tag :type="targetStatusTagType">{{ targetStatusLabel }}</el-tag>
       </el-form-item>
       <el-form-item label="审批意见" required>
-        <el-input v-model="formData.opinion" type="textarea" :rows="3" placeholder="请输入审批意见（通过/拒绝时必填）" />
+        <el-input v-model="formData.opinion" type="textarea" :rows="3" placeholder="请输入审批意见" />
       </el-form-item>
     </el-form>
     <template #footer>
@@ -34,7 +34,7 @@ interface Props {
   targetStatusTagType: 'success' | 'danger' | 'warning' | 'info' | 'primary'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<ApprovalFormModel>('form', { required: true })

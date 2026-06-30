@@ -4,7 +4,6 @@
     :footer="true"
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
-    :on-cancel="handleCancel"
     :title="mode === 'add' ? '新增委外工单' : '编辑委外工单'"
     width="600px"
   >
@@ -13,8 +12,9 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormColumnItem } from 'gi-component'
 import { ElMessage } from 'element-plus'
+import type { FormColumnItem } from 'gi-component'
+import type { OutsourceOrder } from '@/api/work-order'
 
 export interface OutsourceFormModel {
   id: string
@@ -26,14 +26,14 @@ export interface OutsourceFormModel {
   send_date: string
   due_date: string
   price: number
-  status: string
+  status: OutsourceOrder['status']
 }
 
 interface Props {
   mode: 'add' | 'edit'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<OutsourceFormModel>('form', { required: true })
@@ -52,10 +52,6 @@ const formColumns: FormColumnItem[] = [
   { type: 'date-picker', label: '交回日期', field: 'due_date' },
   { type: 'input-number', label: '加工费(元)', field: 'price', props: { min: 0 } as any }
 ]
-
-function handleCancel() {
-  visible.value = false
-}
 
 async function handleSubmit() {
   if (!formData.value.material) {

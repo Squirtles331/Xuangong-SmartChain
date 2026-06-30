@@ -26,7 +26,7 @@ interface Props {
   mode: 'add' | 'edit'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<WorkOrderFormModel>('form', { required: true })
@@ -35,7 +35,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [{ type: 'input', label: '名称', field: 'name', required: true }]
+const formColumns: FormColumnItem[] = [{ type: 'input', label: '工单名称', field: 'name', required: true }]
 
 function handleCancel() {
   visible.value = false

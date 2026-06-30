@@ -162,7 +162,83 @@ export interface ReportRecord {
   worker: string
 }
 
-export function getReportHistory() {
-  if (isMockMode) return mockService.getReportHistory()
-  return apiGet<ReportRecord[]>('/work-orders/report-history')
+export interface ReportHistoryQuery {
+  pageNum: number
+  pageSize: number
+  workOrderCode?: string
+  worker?: string
+  startDate?: string
+  endDate?: string
+}
+
+export function getReportHistory(params: ReportHistoryQuery) {
+  if (isMockMode) return mockService.getReportHistory(params) as Promise<ApiResponse<PaginatedData<ReportRecord>>>
+  return apiGet<PaginatedData<ReportRecord>>('/work-orders/report-history', { params })
+}
+
+export interface OutsourceOrder {
+  id: string
+  code: string
+  material: string
+  qty: number
+  supplier: string
+  operation: string
+  send_date: string
+  due_date: string
+  price: number
+  status: 'sent' | 'processing' | 'received' | 'settled'
+}
+
+export interface OutsourceOrderQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  status?: OutsourceOrder['status']
+  supplier?: string
+}
+
+export function getOutsourceOrders(params: OutsourceOrderQuery) {
+  if (isMockMode) return mockService.getOutsourceOrders(params) as Promise<ApiResponse<PaginatedData<OutsourceOrder>>>
+  return apiGet<PaginatedData<OutsourceOrder>>('/work-orders/outsource', { params })
+}
+
+export function createOutsourceOrder(data: Partial<OutsourceOrder>) {
+  if (isMockMode) return mockService.createOutsourceOrder(data)
+  return apiPost<OutsourceOrder, Partial<OutsourceOrder>>('/work-orders/outsource', data)
+}
+
+export function updateOutsourceOrder(id: string, data: Partial<OutsourceOrder>) {
+  if (isMockMode) return mockService.updateOutsourceOrder(id, data)
+  return apiPut<OutsourceOrder, Partial<OutsourceOrder>>(`/work-orders/outsource/${id}`, data)
+}
+
+export function updateOutsourceOrderStatus(id: string, status: OutsourceOrder['status']) {
+  if (isMockMode) return mockService.updateOutsourceOrderStatus(id, status)
+  return apiPut<OutsourceOrder, { status: OutsourceOrder['status'] }>(`/work-orders/outsource/${id}/status`, { status })
+}
+
+export interface TraceRecord {
+  id: string
+  wo_code: string
+  op_name: string
+  worker: string
+  qualified: number
+  defective: number
+  reasons: string
+  hours: number
+  time: string
+}
+
+export interface TraceRecordQuery {
+  pageNum: number
+  pageSize: number
+  wo_code?: string
+  worker?: string
+  startDate?: string
+  endDate?: string
+}
+
+export function getTraceRecords(params: TraceRecordQuery) {
+  if (isMockMode) return mockService.getTraceRecords(params) as Promise<ApiResponse<PaginatedData<TraceRecord>>>
+  return apiGet<PaginatedData<TraceRecord>>('/work-orders/trace-records', { params })
 }

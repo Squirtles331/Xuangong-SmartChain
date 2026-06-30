@@ -5,17 +5,17 @@
       <el-form-item label="工序">{{ opInfo?.operation_no }}: {{ opInfo?.name }}</el-form-item>
       <el-form-item label="执行班组" required>
         <el-select v-model="formData.team" style="width: 100%">
-          <el-option v-for="t in teams" :key="t" :label="t" :value="t" />
+          <el-option v-for="item in teams" :key="item" :label="item" :value="item" />
         </el-select>
       </el-form-item>
       <el-form-item label="操作工">
         <el-select v-model="formData.worker" style="width: 100%">
-          <el-option v-for="w in workers" :key="w" :label="w" :value="w" />
+          <el-option v-for="item in workers" :key="item" :label="item" :value="item" />
         </el-select>
       </el-form-item>
       <el-form-item label="执行设备">
         <el-select v-model="formData.equipment" style="width: 100%">
-          <el-option v-for="e in equipment" :key="e" :label="e" :value="e" />
+          <el-option v-for="item in equipment" :key="item" :label="item" :value="item" />
         </el-select>
       </el-form-item>
     </el-form>
@@ -46,7 +46,7 @@ interface Props {
   equipment: string[]
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<AssignFormModel>('form', { required: true })

@@ -1,166 +1,121 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #actions="{ row }">
-        <el-button type="primary" link size="small" @click="viewDetail(row)">详情</el-button>
+    <TableSetting title="生产追溯记录" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #actions="{ row }">
+            <el-button type="primary" link size="small" @click="viewDetail(row)">详情</el-button>
+          </template>
+        </gi-table>
       </template>
-    </gi-table>
+    </TableSetting>
 
     <TraceDetailDialog v-model:visible="detailVisible" :detail="currentDetail" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed } from 'vue'
+import { reactive, ref } from 'vue'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import TableSetting from '@/components/TableSetting.vue'
+import { getTraceRecords, type TraceRecord, type TraceRecordQuery } from '@/api/work-order'
 import { useTable } from '@/hooks/useTable'
 import TraceDetailDialog, { type TraceDetail } from './TraceDetailDialog.vue'
 
-interface TraceRow {
-  id: string
-  wo_code: string
-  op_name: string
-  worker: string
-  qualified: number
-  defective: number
-  reasons: string
-  hours: number
-  time: string
-}
-
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = reactive({ wo_code: '', worker: '', date_range: [] as string[] })
-
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '工单号', field: 'wo_code' } as any,
-  { type: 'input', label: '操作人', field: 'worker' } as any,
+  { type: 'input', label: '工单号', field: 'wo_code' },
+  { type: 'input', label: '操作人', field: 'worker' },
   {
     type: 'date-picker',
     label: '日期范围',
     field: 'date_range',
-    props: {
-      type: 'daterange',
-      'range-separator': '至',
-      'start-placeholder': '开始日期',
-      'end-placeholder': '结束日期',
-      'value-format': 'YYYY-MM-DD'
-    } as any
-  } as any
+    props: { type: 'daterange', startPlaceholder: '开始日期', endPlaceholder: '结束日期', valueFormat: 'YYYY-MM-DD' } as any
+  }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
+
+const columns: TableColumnItem<TraceRecord>[] = [
+  { prop: 'wo_code', label: '工单号', minWidth: 170 },
+  { prop: 'op_name', label: '工序', minWidth: 130 },
+  { prop: 'worker', label: '操作人', minWidth: 100 },
+  { prop: 'qualified', label: '合格数', minWidth: 80, align: 'center' },
+  { prop: 'defective', label: '不良数', minWidth: 80, align: 'center' },
+  { prop: 'hours', label: '工时(分)', minWidth: 90, align: 'center' },
+  { prop: 'time', label: '时间', minWidth: 150 },
+  { label: '操作', minWidth: 80, slotName: 'actions', align: 'center' }
+]
+
+const queryParams = reactive<{
+  wo_code: string
+  worker: string
+  date_range: string[]
+}>({
+  wo_code: '',
+  worker: '',
+  date_range: []
+})
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const detailVisible = ref(false)
+const currentDetail = ref<TraceDetail | null>(null)
+
+const { tableData, pagination, loading, search, refresh } = useTable<TraceRecord>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: TraceRecordQuery = {
+      pageNum: page,
+      pageSize: size,
+      wo_code: queryParams.wo_code || undefined,
+      worker: queryParams.worker || undefined,
+      startDate: queryParams.date_range[0] || undefined,
+      endDate: queryParams.date_range[1] || undefined
+    }
+
+    const response = await getTraceRecords(params)
+    return response.data
+  }
+})
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-const columns: TableColumnItem<TraceRow>[] = [
-  { prop: 'wo_code', label: '工单号', width: 170 },
-  { prop: 'op_name', label: '工序', width: 130 },
-  { prop: 'worker', label: '操作人', width: 80 },
-  { prop: 'qualified', label: '合格数', minWidth: 80, align: 'center' },
-  { prop: 'defective', label: '不良数', minWidth: 80, align: 'center' },
-  { prop: 'hours', label: '工时(分)', minWidth: 90, align: 'center' },
-  { prop: 'time', label: '时间', width: 150 },
-  { label: '操作', minWidth: 80, slotName: 'actions', align: 'center' }
-]
-
-// Local data for trace (no real API for this module)
-const localData = ref<TraceRow[]>([
-  {
-    id: '1',
-    wo_code: 'WO202501150001',
-    op_name: '工序10:下料',
-    worker: '李四',
-    qualified: 100,
-    defective: 2,
-    reasons: '尺寸超差',
-    hours: 510,
-    time: '2025-01-11 17:00'
-  },
-  {
-    id: '2',
-    wo_code: 'WO202501150001',
-    op_name: '工序20:粗车',
-    worker: '王五',
-    qualified: 98,
-    defective: 1,
-    reasons: '外观缺陷',
-    hours: 960,
-    time: '2025-01-14 12:00'
-  },
-  {
-    id: '3',
-    wo_code: 'WO202501150001',
-    op_name: '工序30:精车',
-    worker: '赵六',
-    qualified: 45,
-    defective: 3,
-    reasons: '尺寸超差,设备精度',
-    hours: 720,
-    time: '2025-01-15 14:00'
-  },
-  {
-    id: '4',
-    wo_code: 'WO202501150005',
-    op_name: '工序20:车削',
-    worker: '孙八',
-    qualified: 120,
-    defective: 0,
-    reasons: '',
-    hours: 1440,
-    time: '2025-01-15 10:00'
-  }
-])
-
-function filterDateRange(time: string): boolean {
-  if (!searchForm.date_range || searchForm.date_range.length < 2) return true
-  const [start, end] = searchForm.date_range
-  const t = time.substring(0, 10)
-  return t >= start && t <= end
-}
-
-const { tableData, pagination, loading, search, refresh } = useTable<TraceRow>({
-  rowKey: 'id',
-  listAPI: async ({ page, size }) => {
-    const filtered = localData.value.filter(
-      (r) =>
-        (!searchForm.wo_code || r.wo_code.includes(searchForm.wo_code)) &&
-        (!searchForm.worker || r.worker.includes(searchForm.worker)) &&
-        (!searchForm.date_range || searchForm.date_range.length < 2 || filterDateRange(r.time))
-    )
-    const start = (page - 1) * size
-    return {
-      list: filtered.slice(start, start + size),
-      total: filtered.length
-    }
-  }
-})
-
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.wo_code = ''
-  searchForm.worker = ''
-  searchForm.date_range = []
+  Object.assign(queryParams, {
+    wo_code: '',
+    worker: '',
+    date_range: []
+  })
   search()
 }
 
-const detailVisible = ref(false)
-const currentDetail = ref<TraceDetail | null>(null)
-
-function viewDetail(row: TraceRow) {
-  currentDetail.value = row
+function viewDetail(row: TraceRecord) {
+  currentDetail.value = row as TraceDetail
   detailVisible.value = true
 }
 </script>

@@ -4,36 +4,36 @@
       <div class="report-header">
         <h2>工序报工</h2>
         <div class="report-info">
-          <el-tag type="warning" size="large">生产中</el-tag>
+          <el-tag type="warning" size="large">{{ statusText }}</el-tag>
         </div>
       </div>
 
-      <!-- 工单+工序信息 -->
       <el-descriptions :column="2" border style="margin-bottom: 20px">
-        <el-descriptions-item label="工单编号">{{ report.wo_code }}</el-descriptions-item>
-        <el-descriptions-item label="产品">{{ report.material_name }}</el-descriptions-item>
-        <el-descriptions-item label="工序">{{ report.operation_no }}: {{ report.operation_name }}</el-descriptions-item>
-        <el-descriptions-item label="工作中心">{{ report.work_center }}</el-descriptions-item>
-        <el-descriptions-item label="开工时间">{{ report.start_time }}</el-descriptions-item>
+        <el-descriptions-item label="工单编号">{{ report.wo_code || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="产品名称">{{ report.material_name || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="工序">{{ report.operation_no ? `${report.operation_no}：${report.operation_name}` : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="工作中心">{{ report.work_center || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="开工时间">{{ report.start_time || '-' }}</el-descriptions-item>
         <el-descriptions-item label="已用时长">{{ elapsedDisplay }}</el-descriptions-item>
-        <el-descriptions-item label="计划数量">{{ report.planned_qty }} 台</el-descriptions-item>
-        <el-descriptions-item label="已报工数量">{{ report.reported_qty }} 台</el-descriptions-item>
-        <el-descriptions-item label="剩余数量">{{ maxReportQty }} 台</el-descriptions-item>
+        <el-descriptions-item label="计划数量">{{ report.planned_qty }} 件</el-descriptions-item>
+        <el-descriptions-item label="已报工数量">{{ report.reported_qty }} 件</el-descriptions-item>
+        <el-descriptions-item label="剩余数量">{{ maxReportQty }} 件</el-descriptions-item>
         <el-descriptions-item label="完成进度">
           <el-progress :percentage="completionProgress" :stroke-width="8" :color="progressColor" style="width: 200px" />
         </el-descriptions-item>
       </el-descriptions>
 
-      <!-- 报工表单 -->
       <el-card header="本次报工" shadow="never">
         <el-form :model="form" label-width="120px" style="max-width: 600px">
           <el-form-item label="合格数量" required>
             <el-input-number v-model="form.qualified_qty" :min="0" :max="maxReportQty" style="width: 200px" />
-            <span style="margin-left: 8px; color: #909399; font-size: 12px">最大可报: {{ maxReportQty }} 台</span>
+            <span class="field-tip">最大可报 {{ maxReportQty }} 件</span>
           </el-form-item>
+
           <el-form-item label="不良数量" required>
             <el-input-number v-model="form.defective_qty" :min="0" :max="maxReportQty" style="width: 200px" />
           </el-form-item>
+
           <el-form-item v-if="form.defective_qty > 0" label="不良原因" required>
             <el-checkbox-group v-model="form.defect_reasons">
               <el-checkbox label="尺寸超差" value="尺寸超差" />
@@ -44,32 +44,35 @@
               <el-checkbox label="其他" value="其他" />
             </el-checkbox-group>
           </el-form-item>
+
           <el-form-item label="实际工时(分钟)">
             <el-input-number v-model="form.actual_hours" :min="1" style="width: 200px" />
-            <span style="margin-left: 8px; color: #909399; font-size: 12px">自动计时: {{ elapsedDisplay }}</span>
+            <span class="field-tip">自动计时：{{ elapsedDisplay }}</span>
           </el-form-item>
+
           <el-form-item label="备注">
             <el-input v-model="form.remark" type="textarea" :rows="2" />
           </el-form-item>
+
           <el-form-item>
-            <el-button type="primary" size="large" @click="submitReport" :disabled="form.qualified_qty + form.defective_qty === 0">
-              提交报工
-            </el-button>
+            <el-button type="primary" size="large" :disabled="submitDisabled" @click="submitReport">提交报工</el-button>
             <el-button size="large" @click="$router.back()">返回</el-button>
           </el-form-item>
         </el-form>
       </el-card>
 
-      <!-- 报工历史 -->
       <el-card header="报工记录" shadow="never" style="margin-top: 16px">
-        <gi-table :columns="historyColumns" :data="tableData" :pagination="pagination" :loading="loading" border size="small">
-          <template #defect_reasons="{ row }">
-            <span>{{ row.defect_reasons }}</span>
+        <TableSetting title="报工历史" :columns="historyColumns" @refresh="refresh">
+          <template #default="{ settingColumns, tableProps }">
+            <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border size="small">
+              <template #defect_reasons="{ row }">
+                <span>{{ row.defect_reasons || '-' }}</span>
+              </template>
+            </gi-table>
           </template>
-        </gi-table>
+        </TableSetting>
       </el-card>
 
-      <!-- 不良原因 Pareto 图 -->
       <el-card header="不良原因 Pareto 分析" shadow="never" style="margin-top: 16px">
         <div ref="paretoChartRef" style="width: 100%; height: 400px"></div>
       </el-card>
@@ -78,41 +81,59 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getReportHistory, reportOperation } from '@/api/work-order'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import type { TableColumnItem } from 'gi-component'
 import * as echarts from 'echarts'
+import TableSetting from '@/components/TableSetting.vue'
+import {
+  getReportHistory,
+  getWorkOrderDetail,
+  getWorkOrderOperations,
+  reportOperation,
+  type ReportHistoryQuery,
+  type ReportRecord
+} from '@/api/work-order'
 import { useTable } from '@/hooks/useTable'
 
+const route = useRoute()
 const router = useRouter()
 
 const report = reactive({
-  wo_code: 'WO202501150001',
-  material_name: '离心泵 XJP-100',
-  operation_no: 30,
-  operation_name: '精车',
-  work_center: '数控车组',
-  start_time: '2025-01-15 08:00:00',
-  planned_qty: 100,
-  reported_qty: 45
+  workOrderId: '',
+  operationId: '',
+  wo_code: '',
+  material_name: '',
+  operation_no: 0,
+  operation_name: '',
+  work_center: '',
+  start_time: '',
+  planned_qty: 0,
+  reported_qty: 0,
+  status: 'in_progress'
 })
 
-// ==================== 计时器 ====================
-const elapsed = ref(65)
-let timer: ReturnType<typeof setInterval>
+const elapsed = ref(0)
+let timer: ReturnType<typeof setInterval> | undefined
 
-onMounted(() => {
-  timer = setInterval(() => elapsed.value++, 60000)
-  refresh()
-  nextTick(() => initParetoChart())
+const form = reactive({
+  qualified_qty: 0,
+  defective_qty: 0,
+  defect_reasons: [] as string[],
+  actual_hours: 1,
+  remark: ''
 })
 
-onBeforeUnmount(() => {
-  clearInterval(timer)
-  window.removeEventListener('resize', handleParetoResize)
-  if (paretoChart) paretoChart.dispose()
+const statusText = computed(() => {
+  const map: Record<string, string> = {
+    pending: '待开工',
+    assigned: '已派工',
+    running: '生产中',
+    completed: '已完工',
+    in_progress: '生产中'
+  }
+  return map[report.status] || '生产中'
 })
 
 const elapsedDisplay = computed(() => {
@@ -121,34 +142,20 @@ const elapsedDisplay = computed(() => {
   return h > 0 ? `${h}小时${m}分钟` : `${m}分钟`
 })
 
-const maxReportQty = computed(() => report.planned_qty - report.reported_qty)
-
-const completionProgress = computed(() => {
-  if (report.planned_qty === 0) return 0
-  return Math.round((report.reported_qty / report.planned_qty) * 100)
-})
-
+const maxReportQty = computed(() => Math.max(report.planned_qty - report.reported_qty, 0))
+const completionProgress = computed(() => (report.planned_qty === 0 ? 0 : Math.round((report.reported_qty / report.planned_qty) * 100)))
+const submitDisabled = computed(() => !report.operationId || form.qualified_qty + form.defective_qty === 0)
 const progressColor = computed(() => {
-  const p = completionProgress.value
-  if (p >= 100) return '#67c23a'
-  if (p >= 60) return '#409eff'
+  if (completionProgress.value >= 100) return '#67c23a'
+  if (completionProgress.value >= 60) return '#409eff'
   return '#e6a23c'
 })
 
-// ==================== 报工表单 ====================
-const form = reactive({
-  qualified_qty: 55,
-  defective_qty: 0,
-  defect_reasons: [] as string[],
-  actual_hours: elapsed.value,
-  remark: ''
+watch(elapsed, (value) => {
+  form.actual_hours = Math.max(value, 1)
 })
 
-watch(elapsed, (val) => {
-  form.actual_hours = val
-})
-
-const historyColumns: TableColumnItem<any>[] = [
+const historyColumns: TableColumnItem<ReportRecord>[] = [
   { prop: 'time', label: '时间', width: 160 },
   { prop: 'qualified_qty', label: '合格数', width: 80, align: 'center' },
   { prop: 'defective_qty', label: '不良数', width: 80, align: 'center' },
@@ -157,21 +164,73 @@ const historyColumns: TableColumnItem<any>[] = [
   { prop: 'worker', label: '操作人', width: 100 }
 ]
 
-const { tableData, pagination, loading, refresh } = useTable<any>({
+const { tableData, pagination, loading, refresh } = useTable<ReportRecord>({
   rowKey: 'time',
   listAPI: async ({ page, size }) => {
-    const res = await getReportHistory()
-    const all = (res.data as any[]) || []
-    const start = (page - 1) * size
-    return {
-      list: all.slice(start, start + size),
-      total: all.length
+    const params: ReportHistoryQuery = {
+      pageNum: page,
+      pageSize: size,
+      workOrderCode: report.wo_code || undefined
     }
+    const response = await getReportHistory(params)
+    return response.data
   }
 })
 
-// ==================== 提交报工 ====================
+onMounted(async () => {
+  await loadReportData()
+  timer = setInterval(() => {
+    elapsed.value += 1
+  }, 60000)
+  await refresh()
+  nextTick(() => initParetoChart())
+})
+
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+  window.removeEventListener('resize', handleParetoResize)
+  paretoChart?.dispose()
+})
+
+async function loadReportData() {
+  const workOrderId = route.params.id as string
+  report.workOrderId = workOrderId
+
+  try {
+    const [detailResponse, operationsResponse] = await Promise.all([getWorkOrderDetail(workOrderId), getWorkOrderOperations(workOrderId)])
+    const detail = detailResponse.data as any
+    const operations = (operationsResponse.data || []) as any[]
+    const currentOperation =
+      operations.find((item) => item.status === 'running') || operations.find((item) => item.status === 'assigned') || operations[0]
+
+    Object.assign(report, {
+      wo_code: detail?.code || '',
+      material_name: detail?.material_name || '',
+      planned_qty: detail?.planned_qty || 0,
+      reported_qty: detail?.completed_qty || 0,
+      operationId: currentOperation?.id || '',
+      operation_no: currentOperation?.operation_no || 0,
+      operation_name: currentOperation?.name || '',
+      work_center: currentOperation?.work_center || currentOperation?.work_center_name || '',
+      start_time: currentOperation?.actual_start_time || currentOperation?.planned_start || currentOperation?.planned_start_time || '',
+      status: currentOperation?.status || detail?.status || 'in_progress'
+    })
+
+    const startTime = report.start_time ? new Date(report.start_time.replace(/-/g, '/')).getTime() : Date.now()
+    const diffMinutes = Math.max(Math.floor((Date.now() - startTime) / 60000), 1)
+    elapsed.value = Number.isFinite(diffMinutes) ? diffMinutes : 1
+    form.qualified_qty = maxReportQty.value
+    form.actual_hours = elapsed.value
+  } catch {
+    ElMessage.error('报工数据加载失败')
+  }
+}
+
 async function submitReport() {
+  if (!report.operationId) {
+    ElMessage.warning('未找到可报工工序')
+    return
+  }
   if (form.qualified_qty + form.defective_qty === 0) {
     ElMessage.warning('请填写报工数量')
     return
@@ -188,27 +247,26 @@ async function submitReport() {
   ElMessageBox.confirm(`确认报工：合格 ${form.qualified_qty} 件，不良 ${form.defective_qty} 件？`, '确认报工', { type: 'warning' })
     .then(async () => {
       try {
-        await reportOperation('mock-op-id', {
+        await reportOperation(report.operationId, {
           qualified_qty: form.qualified_qty,
           defective_qty: form.defective_qty,
           defect_reasons: form.defect_reasons,
           actual_hours: form.actual_hours
         })
 
+        report.reported_qty += form.qualified_qty + form.defective_qty
         await refresh()
 
-        const totalReported = form.qualified_qty + form.defective_qty
-        report.reported_qty += totalReported
-
         if (report.reported_qty >= report.planned_qty) {
-          ElMessage.success('全部完工！')
-          setTimeout(() => router.push('/work-order/list'), 1500)
-        } else {
-          ElMessage.success(`报工成功！当前进度 ${completionProgress.value}% (${report.reported_qty}/${report.planned_qty})`)
-          form.qualified_qty = maxReportQty.value
-          form.defective_qty = 0
-          form.defect_reasons = []
+          ElMessage.success('当前工单已全部完工')
+          router.push('/work-order/list')
+          return
         }
+
+        ElMessage.success(`报工成功，当前进度 ${completionProgress.value}%`)
+        form.qualified_qty = maxReportQty.value
+        form.defective_qty = 0
+        form.defect_reasons = []
       } catch {
         ElMessage.error('报工失败')
       }
@@ -216,38 +274,37 @@ async function submitReport() {
     .catch(() => {})
 }
 
-// ==================== Pareto 图 ====================
+const paretoChartRef = ref<HTMLDivElement>()
+let paretoChart: echarts.ECharts | null = null
+
 function handleParetoResize() {
   paretoChart?.resize()
 }
 
-const paretoChartRef = ref<HTMLDivElement>()
-let paretoChart: echarts.ECharts | null = null
-
 function initParetoChart() {
   if (!paretoChartRef.value) return
-  if (paretoChart) paretoChart.dispose()
+  paretoChart?.dispose()
   paretoChart = echarts.init(paretoChartRef.value)
 
   const reasonMap: Record<string, number> = {}
-  ;(tableData.value || []).forEach((r: any) => {
-    const reasons = (r.defect_reasons || '')
+  ;(tableData.value || []).forEach((row) => {
+    const reasons = (row.defect_reasons || '')
       .split(',')
-      .map((s: string) => s.trim())
+      .map((item) => item.trim())
       .filter(Boolean)
-    reasons.forEach((reason: string) => {
+    reasons.forEach((reason) => {
       reasonMap[reason] = (reasonMap[reason] || 0) + 1
     })
   })
 
   const sorted = Object.entries(reasonMap).sort((a, b) => b[1] - a[1])
-  const names = sorted.map(([k]) => k)
-  const values = sorted.map(([, v]) => v)
-  const total = values.reduce((a, b) => a + b, 0)
-  let cum = 0
-  const cumPct = values.map((v) => {
-    cum += v
-    return total > 0 ? Math.round((cum / total) * 100) : 0
+  const names = sorted.map(([name]) => name)
+  const values = sorted.map(([, value]) => value)
+  const total = values.reduce((sum, value) => sum + value, 0)
+  let cumulative = 0
+  const cumulativePercentages = values.map((value) => {
+    cumulative += value
+    return total > 0 ? Math.round((cumulative / total) * 100) : 0
   })
 
   window.addEventListener('resize', handleParetoResize)
@@ -255,12 +312,7 @@ function initParetoChart() {
     title: { text: '不良原因 Pareto 图', left: 'center' },
     tooltip: {
       trigger: 'axis',
-      axisPointer: { type: 'cross' },
-      formatter: (params: any) => {
-        const bar = params[0]
-        const line = params[1]
-        return `${bar.name}<br/>${bar.marker}频次: ${bar.value}<br/>${line.marker}累计占比: ${line.value}%`
-      }
+      axisPointer: { type: 'cross' }
     },
     grid: { left: 60, right: 60, bottom: 40, top: 60 },
     xAxis: { type: 'category', data: names, axisLabel: { rotate: 30 } },
@@ -274,12 +326,10 @@ function initParetoChart() {
         name: '累计占比',
         type: 'line',
         yAxisIndex: 1,
-        data: cumPct,
+        data: cumulativePercentages,
         smooth: true,
         lineStyle: { color: '#f56c6c', width: 2 },
-        itemStyle: { color: '#f56c6c' },
-        symbol: 'circle',
-        symbolSize: 6
+        itemStyle: { color: '#f56c6c' }
       }
     ]
   })
@@ -294,13 +344,21 @@ watch(tableData, () => {
 .report-container {
   max-width: 900px;
 }
+
 .report-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
+
 .report-header h2 {
   margin: 0;
+}
+
+.field-tip {
+  margin-left: 8px;
+  color: #909399;
+  font-size: 12px;
 }
 </style>

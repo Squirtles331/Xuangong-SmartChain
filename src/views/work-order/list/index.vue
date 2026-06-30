@@ -1,14 +1,13 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
-          ref="searchFormRef"
-          v-model="searchForm"
+          v-model="queryParams"
           :columns="visibleSearchColumns"
-          :grid-item-props="{ span: { xs: 24, sm: 12, md: 8, lg: 8, xl: 6, xxl: 6 } }"
+          :grid-item-props="searchGridItemProps"
           search
-          @search="handleSearch"
+          @search="search"
           @reset="handleReset"
         />
       </SearchSetting>
@@ -16,264 +15,226 @@
 
     <template #tool>
       <gi-button type="add" @click="$router.push('/work-order/create')">新建工单</gi-button>
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
-      <template #priority="{ row }">
-        <StatusTag :value="row.priority" :options="WORK_ORDER_PRIORITY" />
-      </template>
-      <template #progress="{ row }">
-        <div class="progress-cell">
-          <el-progress :percentage="row.progress" :stroke-width="6" :color="row.progress === 100 ? '#67c23a' : '#409eff'" />
-        </div>
-      </template>
-      <template #status="{ row }">
-        <StatusTag :value="row.status" :options="WORK_ORDER_STATUS" />
-      </template>
-      <template #planned_end_date="{ row }">
-        <span :style="{ color: isOverdue(row) ? '#f56c6c' : '' }">{{ row.planned_end_date }}</span>
-      </template>
-      <template #actions="{ row }">
-        <el-button type="primary" link size="small" @click="$router.push(`/work-order/${row.id}`)">详情</el-button>
-        <el-dropdown trigger="click">
-          <el-button type="primary" link size="small">
-            更多<el-icon class="el-icon--right"><arrow-down /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item v-if="row.status === 'draft'" @click="submitApproval(row)">提交审批</el-dropdown-item>
-              <el-dropdown-item v-if="row.status === 'approved'" @click="releaseOrder(row)">下发</el-dropdown-item>
-              <el-dropdown-item v-if="row.status === 'completed'" @click="closeOrder(row)">关闭</el-dropdown-item>
-              <el-dropdown-item v-if="row.status === 'in_progress'" @click="$router.push(`/work-order/report/${row.id}`)">报工</el-dropdown-item>
-              <el-dropdown-item v-if="['draft', 'approved'].includes(row.status)" @click="deleteOrder(row.id)" divided>删除</el-dropdown-item>
-            </el-dropdown-menu>
+    <TableSetting title="工单列表" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #priority="{ row }">
+            <StatusTag :value="row.priority" :options="WORK_ORDER_PRIORITY" />
           </template>
-        </el-dropdown>
-      </template>
-    </gi-table>
 
-    <WorkOrderFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+          <template #progress="{ row }">
+            <div class="progress-cell">
+              <el-progress :percentage="row.progress" :stroke-width="6" :color="row.progress === 100 ? '#67c23a' : '#409eff'" />
+            </div>
+          </template>
+
+          <template #status="{ row }">
+            <StatusTag :value="row.status" :options="WORK_ORDER_STATUS" />
+          </template>
+
+          <template #plannedEnd="{ row }">
+            <span :style="{ color: isOverdue(row) ? '#f56c6c' : '' }">{{ row.planned_end_date || '-' }}</span>
+          </template>
+
+          <template #actions="{ row }">
+            <el-button type="primary" link size="small" @click="$router.push(`/work-order/${row.id}`)">详情</el-button>
+            <el-dropdown trigger="click">
+              <el-button type="primary" link size="small">
+                更多
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="row.status === 'draft'" @click="submitApproval(row)">提交审核</el-dropdown-item>
+                  <el-dropdown-item v-if="row.status === 'approved'" @click="releaseOrder(row)">下发</el-dropdown-item>
+                  <el-dropdown-item v-if="row.status === 'completed'" @click="closeOrder(row)">关闭</el-dropdown-item>
+                  <el-dropdown-item v-if="row.status === 'in_progress'" @click="$router.push(`/work-order/report/${row.id}`)">报工</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+        </gi-table>
+      </template>
+    </TableSetting>
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { WORK_ORDER_STATUS, WORK_ORDER_PRIORITY } from '@/common/status-maps'
-import { getWorkOrderList, approveWorkOrder, releaseWorkOrder, closeWorkOrder } from '@/api/work-order'
+import { WORK_ORDER_PRIORITY, WORK_ORDER_STATUS } from '@/common/status-maps'
+import { approveWorkOrder, closeWorkOrder, getWorkOrderList, releaseWorkOrder, type WorkOrder, type WorkOrderQuery } from '@/api/work-order'
 import { useTable } from '@/hooks/useTable'
-import WorkOrderFormDialog, { type WorkOrderFormModel } from './WorkOrderFormDialog.vue'
 
-interface WorkOrderRow {
-  id: string
-  code: string
-  wo_type: string
-  material_code: string
-  material_name: string
-  material_spec: string
-  planned_qty: number
-  completed_qty: number
+interface WorkOrderRow extends WorkOrder {
+  material_spec?: string
+  current_operation?: string
   progress: number
-  status: string
-  priority: string
-  workshop_name: string
-  current_operation: string
-  planned_start_date: string
-  planned_end_date: string
 }
 
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({
-  code: '',
-  status: '',
-  priority: '',
-  date_range: [] as string[]
-})
+const statusOptions = [
+  { label: '草稿', value: 'draft' },
+  { label: '已审核', value: 'approved' },
+  { label: '已下发', value: 'released' },
+  { label: '生产中', value: 'in_progress' },
+  { label: '已完工', value: 'completed' },
+  { label: '已关闭', value: 'closed' }
+]
 
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<WorkOrderFormModel>({ id: '', code: '', name: '' })
+const priorityOptions = [
+  { label: '紧急', value: 'urgent' },
+  { label: '高', value: 'high' },
+  { label: '普通', value: 'normal' },
+  { label: '低', value: 'low' }
+]
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '工单编号', field: 'code', props: { placeholder: 'WO...' } as any },
+  {
+    type: 'input',
+    label: '工单编号',
+    field: 'code',
+    props: { placeholder: '请输入工单编号', clearable: true } as any
+  },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
-    props: {
-      options: [
-        { label: '全部', value: '' },
-        { label: '草稿', value: 'draft' },
-        { label: '已审批', value: 'approved' },
-        { label: '已下发', value: 'released' },
-        { label: '生产中', value: 'in_progress' },
-        { label: '已完工', value: 'completed' },
-        { label: '已关闭', value: 'closed' }
-      ]
-    } as any
+    props: { options: statusOptions, clearable: true } as any
   },
   {
     type: 'select-v2',
     label: '优先级',
     field: 'priority',
-    props: {
-      options: [
-        { label: '全部', value: '' },
-        { label: '紧急', value: 'urgent' },
-        { label: '高', value: 'high' },
-        { label: '普通', value: 'normal' },
-        { label: '低', value: 'low' }
-      ]
-    } as any
+    props: { options: priorityOptions, clearable: true } as any
   },
   {
     type: 'date-picker',
     label: '计划完工',
-    field: 'date_range',
-    props: { type: 'daterange', startPlaceholder: '开始', endPlaceholder: '结束' } as any
+    field: 'dateRange',
+    props: {
+      type: 'daterange',
+      startPlaceholder: '开始日期',
+      endPlaceholder: '结束日期',
+      valueFormat: 'YYYY-MM-DD'
+    } as any
   }
 ]
 
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
+
+const columns: TableColumnItem<WorkOrderRow>[] = [
+  { prop: 'code', label: '工单编号', minWidth: 160 },
+  { prop: 'material_name', label: '产品名称', minWidth: 140 },
+  { prop: 'planned_qty', label: '计划数量', minWidth: 100, align: 'center' },
+  { label: '进度', minWidth: 140, slotName: 'progress' },
+  { prop: 'current_operation', label: '当前工序', minWidth: 140 },
+  { label: '状态', minWidth: 100, slotName: 'status', align: 'center' },
+  { label: '优先级', minWidth: 100, slotName: 'priority', align: 'center' },
+  { prop: 'workshop_name', label: '生产车间', minWidth: 130 },
+  { label: '计划完工', minWidth: 120, slotName: 'plannedEnd' },
+  { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const queryParams = reactive<{
+  code: string
+  status: string
+  priority: string
+  dateRange: string[]
+}>({
+  code: '',
+  status: '',
+  priority: '',
+  dateRange: []
+})
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+
+const { tableData, pagination, loading, search, refresh } = useTable<WorkOrderRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: WorkOrderQuery = {
+      pageNum: page,
+      pageSize: size,
+      code: queryParams.code || undefined,
+      status: queryParams.status || undefined,
+      priority: queryParams.priority || undefined,
+      startDate: queryParams.dateRange[0] || undefined,
+      endDate: queryParams.dateRange[1] || undefined
+    }
+    const response = await getWorkOrderList(params)
+    return {
+      list: response.data.list.map(mapWorkOrderRow),
+      total: response.data.total
+    }
+  }
+})
+
+function mapWorkOrderRow(item: WorkOrderRow): WorkOrderRow {
+  return {
+    ...item,
+    material_spec: item.material_spec || '',
+    current_operation: item.current_operation || '待排产',
+    progress: item.planned_qty > 0 ? Math.round(((item.completed_qty || 0) / item.planned_qty) * 100) : 0
+  }
+}
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-const columns: TableColumnItem<WorkOrderRow>[] = [
-  { prop: 'code', label: '工单编号', width: 160 },
-  { prop: 'material_name', label: '产品', minWidth: 140 },
-  { prop: 'planned_qty', label: '计划数量', minWidth: 100, align: 'center' },
-  { label: '进度', minWidth: 140, slotName: 'progress' },
-  { prop: 'current_operation', label: '当前工序', width: 140 },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '优先级', minWidth: 70, slotName: 'priority', align: 'center' },
-  { prop: 'workshop_name', label: '车间', width: 130 },
-  { label: '计划完工', minWidth: 110, slotName: 'planned_end_date' },
-  { label: '操作', minWidth: 140, fixed: 'right', slotName: 'actions', align: 'center' }
-]
-
-const {
-  tableData,
-  pagination,
-  loading,
-  search,
-  refresh: refreshTable
-} = useTable<WorkOrderRow>({
-  rowKey: 'id',
-  listAPI: async ({ page, size }) => {
-    const params: any = {
-      pageNum: page,
-      pageSize: size
-    }
-    if (searchForm.value.code) params.code = searchForm.value.code
-    if (searchForm.value.status) params.status = searchForm.value.status
-    if (searchForm.value.priority) params.priority = searchForm.value.priority
-    if (searchForm.value.date_range && searchForm.value.date_range.length === 2) {
-      const start = searchForm.value.date_range[0]
-      const end = searchForm.value.date_range[1]
-      if (start) params.start_date = start
-      if (end) params.end_date = end
-    }
-    const res = await getWorkOrderList(params)
-    return {
-      list: res.data.list.map(mapWorkOrderRow),
-      total: res.data.total
-    }
-  }
-})
-
-function deleteOrder(id: string) {
-  ElMessageBox.confirm('确定删除该工单？', '警告', { type: 'warning' })
-    .then(() => {
-      ElMessage.success('删除成功')
-      refreshTable()
-    })
-    .catch(() => {})
-}
-
-function mapWorkOrderRow(item: any): WorkOrderRow {
-  return {
-    id: item.id,
-    code: item.code,
-    wo_type: item.wo_type,
-    material_code: item.material_code,
-    material_name: item.material_name,
-    material_spec: item.material_spec || '',
-    planned_qty: item.planned_qty,
-    completed_qty: item.completed_qty || 0,
-    progress: item.planned_qty > 0 ? Math.round(((item.completed_qty || 0) / item.planned_qty) * 100) : 0,
-    status: item.status,
-    priority: item.priority,
-    workshop_name: item.workshop_name || '',
-    current_operation: item.current_operation || '',
-    planned_start_date: item.planned_start_date || '',
-    planned_end_date: item.planned_end_date || ''
-  }
-}
-
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value = { code: '', status: '', priority: '', date_range: [] }
+  Object.assign(queryParams, {
+    code: '',
+    status: '',
+    priority: '',
+    dateRange: []
+  })
   search()
-}
-
-function refresh() {
-  handleReset()
 }
 
 function isOverdue(row: WorkOrderRow) {
-  if (row.status === 'completed' || row.status === 'closed') return false
-  if (!row.planned_end_date) return false
-  return new Date(row.planned_end_date) < new Date()
+  if (row.status === 'completed' || row.status === 'closed' || !row.planned_end_date) return false
+  return new Date(row.planned_end_date).getTime() < Date.now()
 }
 
 async function submitApproval(row: WorkOrderRow) {
-  const res = await approveWorkOrder(row.id, true)
-  ElMessage.success(res.msg || `工单 ${row.code} 已提交审批`)
-  refreshTable()
+  const response = await approveWorkOrder(row.id, true)
+  ElMessage.success(response.msg || `工单 ${row.code} 已提交审核`)
+  await refresh()
 }
 
 async function releaseOrder(row: WorkOrderRow) {
-  const res = await releaseWorkOrder(row.id)
-  ElMessage.success(res.msg || `工单 ${row.code} 已下发到车间`)
-  refreshTable()
+  const response = await releaseWorkOrder(row.id)
+  ElMessage.success(response.msg || `工单 ${row.code} 已下发`)
+  await refresh()
 }
 
-async function closeOrder(row: WorkOrderRow) {
-  ElMessageBox.confirm('确认关闭该工单？', '确认', { type: 'warning' })
+function closeOrder(row: WorkOrderRow) {
+  ElMessageBox.confirm(`确认关闭工单 ${row.code} 吗？`, '关闭工单', { type: 'warning' })
     .then(async () => {
-      const res = await closeWorkOrder(row.id, { close_type: 'normal' })
-      ElMessage.success(res.msg || '工单已关闭')
-      refreshTable()
+      const response = await closeWorkOrder(row.id, { close_type: 'normal' })
+      ElMessage.success(response.msg || '工单已关闭')
+      await refresh()
     })
     .catch(() => {})
-}
-
-function openAdd() {
-  dialogMode.value = 'add'
-  formModel.value = { id: '', code: '', name: '' }
-  dialogVisible.value = true
-}
-
-function openEdit(row: WorkOrderRow) {
-  dialogMode.value = 'edit'
-  formModel.value = { id: row.id, code: row.code, name: row.material_name }
-  dialogVisible.value = true
-}
-
-async function submitDialog() {
-  dialogVisible.value = false
-  await refreshTable()
 }
 </script>
 
@@ -281,6 +242,7 @@ async function submitDialog() {
 .progress-cell {
   min-width: 120px;
 }
+
 :deep(.gi-page-layout__tool) {
   gap: 8px;
 }
