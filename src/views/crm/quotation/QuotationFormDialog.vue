@@ -1,12 +1,12 @@
 <template>
   <gi-dialog
     v-model="visible"
+    :title="mode === 'add' ? '新增报价单' : '编辑报价单'"
     :footer="true"
     :lock-scroll="false"
+    width="600px"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? '新增报价单' : '编辑报价单'"
-    width="600px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
   </gi-dialog>
@@ -42,8 +42,8 @@ const emit = defineEmits<{
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '报价单号', field: 'code', required: true },
-  { type: 'input', label: '客户', field: 'customer', required: true },
-  { type: 'input', label: '产品', field: 'product', required: true },
+  { type: 'input', label: '客户名称', field: 'customer', required: true },
+  { type: 'input', label: '产品名称', field: 'product', required: true },
   { type: 'input-number', label: '数量', field: 'qty', required: true, props: { min: 1 } as any },
   { type: 'input-number', label: '单价(元)', field: 'price', required: true, props: { min: 0 } as any },
   { type: 'input-number', label: '总价(元)', field: 'amount', props: { disabled: true } as any },
@@ -55,7 +55,7 @@ const formColumns: FormColumnItem[] = [
     props: {
       options: [
         { label: '草稿', value: 'draft' },
-        { label: '已发出', value: 'sent' },
+        { label: '已发送', value: 'sent' },
         { label: '已中标', value: 'approved' },
         { label: '已丢单', value: 'lost' }
       ]

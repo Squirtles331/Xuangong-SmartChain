@@ -8,22 +8,16 @@
     :title="title"
     width="600px"
   >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
+    <gi-form v-model="formData" :columns="formColumns" :label-width="110" />
   </gi-dialog>
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
+import type { HrPieceworkRule } from '@/api/hr'
 
-export interface PieceworkFormModel {
-  id: string
-  operation: string
-  unit_price: number
-  unit: string
-  qualified_bonus: number
-  defective_penalty: number
-}
+export interface PieceworkFormModel extends HrPieceworkRule {}
 
 interface Props {
   mode: 'add' | 'edit'

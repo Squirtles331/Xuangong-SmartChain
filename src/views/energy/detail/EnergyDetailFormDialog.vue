@@ -5,7 +5,7 @@
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="title"
+    :title="mode === 'add' ? '新增明细' : '编辑明细'"
     width="600px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
@@ -13,23 +13,25 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { watch } from 'vue'
 import type { FormColumnItem } from 'gi-component'
 
 export interface EnergyDetailFormModel {
   id: string
-  date: string
-  type: string
+  period: string
+  type: 'electricity' | 'water' | 'gas'
   workshop: string
-  qty: number
+  usage: number
   unit: string
+  rate: number
+  cost: number
 }
 
 interface Props {
   mode: 'add' | 'edit'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<EnergyDetailFormModel>('form', { required: true })
@@ -38,27 +40,44 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const title = computed(() => (props.mode === 'add' ? 'Add Record' : 'Edit Record'))
-
 const formColumns: FormColumnItem[] = [
-  { type: 'input', label: 'Period', field: 'date', required: true },
+  { type: 'input', label: '期间', field: 'period', required: true, props: { placeholder: '例如 2026-01' } as any },
   {
     type: 'select-v2',
-    label: 'Type',
+    label: '能源类型',
     field: 'type',
     required: true,
     props: {
       options: [
-        { label: 'electricity', value: 'electricity' },
-        { label: 'water', value: 'water' },
-        { label: 'gas', value: 'gas' }
+        { label: '电', value: 'electricity' },
+        { label: '水', value: 'water' },
+        { label: '气', value: 'gas' }
       ]
     } as any
   },
-  { type: 'input', label: 'Workshop', field: 'workshop' },
-  { type: 'input-number', label: 'Usage', field: 'qty', required: true, props: { min: 0 } as any },
-  { type: 'input', label: 'Unit', field: 'unit' }
+  { type: 'input', label: '车间', field: 'workshop', required: true },
+  { type: 'input-number', label: '用量', field: 'usage', required: true, props: { min: 0 } as any },
+  { type: 'input', label: '单位', field: 'unit' },
+  { type: 'input-number', label: '单价', field: 'rate', props: { min: 0, precision: 2, step: 0.1 } as any },
+  { type: 'input-number', label: '成本', field: 'cost', props: { disabled: true, precision: 2 } as any }
 ]
+
+watch(
+  () => [formData.value.usage, formData.value.rate],
+  () => {
+    formData.value.cost = Number((formData.value.usage * formData.value.rate).toFixed(2))
+  }
+)
+
+watch(
+  () => formData.value.type,
+  (type) => {
+    if (type === 'electricity') formData.value.unit = 'kWh'
+    if (type === 'water') formData.value.unit = '吨'
+    if (type === 'gas') formData.value.unit = 'm3'
+  },
+  { immediate: true }
+)
 
 function handleCancel() {
   visible.value = false

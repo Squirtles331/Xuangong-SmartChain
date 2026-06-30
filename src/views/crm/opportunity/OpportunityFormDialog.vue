@@ -1,12 +1,12 @@
 <template>
   <gi-dialog
     v-model="visible"
+    :title="mode === 'add' ? '新增商机' : '编辑商机'"
     :footer="true"
     :lock-scroll="false"
+    width="600px"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? '新增商机' : '编辑商机'"
-    width="600px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
   </gi-dialog>
@@ -40,7 +40,7 @@ const emit = defineEmits<{
 }>()
 
 const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '客户', field: 'customer', required: true },
+  { type: 'input', label: '客户名称', field: 'customer', required: true },
   { type: 'input', label: '商机描述', field: 'product', required: true },
   { type: 'input-number', label: '预计金额', field: 'amount', props: { min: 0, step: 10000 } as any },
   {
@@ -52,13 +52,13 @@ const formColumns: FormColumnItem[] = [
         { label: '初步接触', value: 'initial' },
         { label: '方案制定', value: 'solution' },
         { label: '报价中', value: 'quotation' },
-        { label: '成交', value: 'won' }
+        { label: '已成交', value: 'won' }
       ]
     } as any
   },
   { type: 'input-number', label: '赢单率(%)', field: 'probability', props: { min: 0, max: 100 } as any },
   { type: 'input', label: '负责人', field: 'owner' },
-  { type: 'date-picker', label: '预计成交', field: 'close_date' }
+  { type: 'date-picker', label: '预计成交日期', field: 'close_date' }
 ]
 
 function handleCancel() {

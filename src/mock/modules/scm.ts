@@ -2,7 +2,7 @@ export const suppliers = [
   {
     id: '1',
     code: 'SUP20250001',
-    name: '苏州钢材有限公司',
+    name: '苏州精工钢材有限公司',
     contact: '张建国',
     phone: '13812345678',
     terms: '月结30天',
@@ -45,8 +45,8 @@ export const purchaseOrders = [
   {
     id: '1',
     code: 'PO202501150001',
-    supplier: '苏州钢材有限公司',
-    material: '45#圆钢 D50',
+    supplier: '苏州精工钢材有限公司',
+    material: '45号圆钢 D50',
     qty: 500,
     received: 200,
     remain: 300,
@@ -91,20 +91,20 @@ export const purchaseOrders = [
 export const priceRecords = [
   {
     id: '1',
-    material: '45#圆钢 D50',
-    supplier: '苏州钢材有限公司',
+    material: '45号圆钢 D50',
+    supplier: '苏州精工钢材有限公司',
     price: 5.8,
-    currency: 'CNY',
+    currency: '元',
     valid_from: '2025-01-01',
     valid_to: '2025-06-30',
     source: '年度合同'
   },
   {
     id: '2',
-    material: '45#圆钢 D50',
+    material: '45号圆钢 D50',
     supplier: '南通钢材贸易公司',
     price: 6.1,
-    currency: 'CNY',
+    currency: '元',
     valid_from: '2025-01-01',
     valid_to: '2025-03-31',
     source: '报价单'
@@ -114,7 +114,7 @@ export const priceRecords = [
     material: '轴承 6308',
     supplier: '常州轴承制造厂',
     price: 85,
-    currency: 'CNY',
+    currency: '元',
     valid_from: '2025-01-01',
     valid_to: '2025-12-31',
     source: '年度合同'
@@ -124,10 +124,20 @@ export const priceRecords = [
     material: '螺栓 M16x60',
     supplier: '无锡标准件有限公司',
     price: 2.4,
-    currency: 'CNY',
+    currency: '元',
     valid_from: '2024-07-01',
     valid_to: '2025-06-30',
     source: '比价结果'
+  },
+  {
+    id: '5',
+    material: '泵体铸件',
+    supplier: '南通铸造供应商',
+    price: 168,
+    currency: '元',
+    valid_from: '2025-02-01',
+    valid_to: '2025-08-31',
+    source: '报价单'
   }
 ]
 
@@ -161,6 +171,16 @@ export const purchaseRequests = [
     status: 'ordered',
     source: 'manual',
     created_at: '2025-01-10'
+  },
+  {
+    id: '4',
+    code: 'PR202501080004',
+    dept: '研发部',
+    reason: '研发试制',
+    need_date: '2025-01-25',
+    status: 'rejected',
+    source: 'manual',
+    created_at: '2025-01-08'
   }
 ]
 
@@ -179,36 +199,64 @@ export const purchaseReturns = [
     id: '2',
     code: 'PRT20250110002',
     po_code: 'PO202501150001',
-    supplier: '苏州钢材有限公司',
-    material: '45#圆钢 D50',
+    supplier: '苏州精工钢材有限公司',
+    material: '45号圆钢 D50',
     qty: 100,
     reason: '材质不合格',
     status: 'done'
+  },
+  {
+    id: '3',
+    code: 'PRT20250108003',
+    po_code: 'PO202501120004',
+    supplier: '南通铸造供应商',
+    material: '泵体铸件',
+    qty: 10,
+    reason: '外观缺陷',
+    status: 'pending'
   }
 ]
 
 export const portalOrders = [
-  { id: '1', code: 'PO202501150001', material: '45#圆钢 D50', qty: 500, delivery_date: '2025-01-20', status: 'pending' },
-  { id: '2', code: 'PO202501100002', material: '轴承 6308', qty: 200, delivery_date: '2025-01-18', status: 'confirmed' }
+  { id: '1', code: 'PO202501150001', material: '45号圆钢 D50', qty: 500, delivery_date: '2025-01-20', status: 'pending' },
+  { id: '2', code: 'PO202501100002', material: '轴承 6308', qty: 200, delivery_date: '2025-01-18', status: 'confirmed' },
+  { id: '3', code: 'PO202501080003', material: '螺栓 M16x60', qty: 1500, delivery_date: '2025-01-21', status: 'rejected' }
 ]
 
 export const portalDeliveries = [
-  { id: '1', code: 'FH20250115001', material: '45#圆钢 D50', qty: 500, carrier: '顺丰物流', tracking_no: 'SF1234567890' }
+  {
+    id: '1',
+    code: 'FH20250115001',
+    material: '45号圆钢 D50',
+    qty: 500,
+    carrier: '顺丰物流',
+    tracking_no: 'SF1234567890',
+    confirmed: false
+  },
+  {
+    id: '2',
+    code: 'FH20250113002',
+    material: '轴承 6308',
+    qty: 200,
+    carrier: '德邦快运',
+    tracking_no: 'DB9876543210',
+    confirmed: true
+  }
 ]
 
 export const portalTimeline = [
   { timestamp: '2025-01-15 09:30', content: '订单 PO202501150001 已创建', color: '#0bbd87', type: 'primary', hollow: false },
   { timestamp: '2025-01-15 10:15', content: '供应商已确认订单并计划发货', color: '#0bbd87', type: 'success', hollow: false },
   { timestamp: '2025-01-18 14:00', content: '货物已备齐，等待提货', color: '#0bbd87', type: 'primary', hollow: false },
-  { timestamp: '2025-01-19 08:30', content: '承运商已揽件，运单号 SF1234567890', color: '#0bbd87', type: 'warning', hollow: false },
-  { timestamp: '2025-01-20', content: '预计到货并完成收货', color: '#909399', type: 'info', hollow: true }
+  { timestamp: '2025-01-19 08:30', content: '承运商已揽件，运单号 SF1234567890', color: '#e6a23c', type: 'warning', hollow: false },
+  { timestamp: '2025-01-20 18:00', content: '预计到货并完成收货', color: '#909399', type: 'info', hollow: true }
 ]
 
 export const portalReconciliation = [
   {
     period: '2025-01',
     order_code: 'PO202501150001',
-    material: '45#圆钢 D50',
+    material: '45号圆钢 D50',
     order_qty: 500,
     delivered_qty: 500,
     accepted_qty: 480,

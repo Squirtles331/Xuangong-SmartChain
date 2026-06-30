@@ -15,14 +15,9 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
+import type { HrScheduleRecord, HrShiftType } from '@/api/hr'
 
-export interface ScheduleFormModel {
-  id: string
-  team: string
-  shift: string
-  members: string
-  leader: string
-}
+export interface ScheduleFormModel extends HrScheduleRecord {}
 
 interface Props {
   mode: 'add' | 'edit'
@@ -37,6 +32,12 @@ const emit = defineEmits<{
   submit: []
 }>()
 
+const shiftOptions: Array<{ label: string; value: HrShiftType }> = [
+  { label: '白班', value: 'day' },
+  { label: '夜班', value: 'night' },
+  { label: '中班', value: 'middle' }
+]
+
 const title = computed(() => (props.mode === 'add' ? '新增排班' : '编辑排班'))
 
 const formColumns: FormColumnItem[] = [
@@ -46,14 +47,10 @@ const formColumns: FormColumnItem[] = [
     label: '班次',
     field: 'shift',
     props: {
-      options: [
-        { label: '白班', value: 'day' },
-        { label: '夜班', value: 'night' },
-        { label: '中班', value: 'middle' }
-      ]
+      options: shiftOptions
     } as any
   },
-  { type: 'input', label: '成员', field: 'members', props: { placeholder: '多人用逗号分隔' } as any },
+  { type: 'input', label: '成员', field: 'members', props: { placeholder: '多人请用顿号分隔' } as any },
   { type: 'input', label: '班组长', field: 'leader' }
 ]
 

@@ -5,17 +5,17 @@
         <gi-form
           v-model="queryParams"
           :columns="visibleSearchColumns"
-          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
+          :grid-item-props="searchGridItemProps"
           search
-          @reset="handleReset"
           @search="search"
+          @reset="handleReset"
         />
       </SearchSetting>
     </template>
 
     <template #tool>
       <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
     <TableSetting title="供应商列表" :columns="columns" @refresh="refresh">
@@ -30,21 +30,26 @@
           stripe
           style="height: 100%"
         >
+          <template #status="{ row }">
+            <StatusTag :value="row.status" :options="supplierStatusOptions" />
+          </template>
+
+          <template #qualified="{ row }">
+            <el-tag :type="row.qualified ? 'success' : 'warning'" size="small">
+              {{ row.qualified ? '已合格' : '待复审' }}
+            </el-tag>
+          </template>
+
           <template #score="{ row }">
             <div class="score-cell">
-              <el-progress :percentage="row.score || 0" :stroke-width="8" :color="scoreColor(row.score || 0)" />
-              <span class="score-text" :class="scoreClass(row.score || 0)">{{ row.score || 0 }}分</span>
+              <el-progress :percentage="row.score" :stroke-width="8" :color="getScoreColor(row.score)" />
+              <span class="score-text" :style="{ color: getScoreColor(row.score) }">{{ row.score }}分</span>
             </div>
           </template>
-          <template #status="{ row }">
-            <StatusTag :value="row.status" :options="SUPPLIER_STATUS" />
-          </template>
-          <template #qualified="{ row }">
-            <el-tag :type="row.qualified ? 'success' : 'info'" size="small">{{ row.qualified ? '合格' : '待审核' }}</el-tag>
-          </template>
+
           <template #actions="{ row }">
             <gi-button type="edit" @click="openEdit(row)" />
-            <gi-button style="margin-left: 8px" type="delete" @click="remove(row)" />
+            <gi-button type="delete" style="margin-left: 8px" @click="onDelete(row)" />
           </template>
         </gi-table>
       </template>
@@ -55,7 +60,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
@@ -65,32 +70,14 @@ import { createSupplier, deleteSupplier, getSupplierList, updateSupplier, type S
 import { useTable } from '@/hooks/useTable'
 import SupplierFormDialog, { type SupplierFormModel } from './SupplierFormDialog.vue'
 
-const SUPPLIER_STATUS = [
-  { value: 'active', label: '正常', type: 'success' as const },
-  { value: 'frozen', label: '冻结', type: 'warning' as const },
-  { value: 'eliminated', label: '淘汰', type: 'danger' as const }
-]
-
-interface SupplierRow {
-  id: string
-  code: string
-  name: string
-  contact: string
-  phone: string
-  terms: string
-  status: 'active' | 'frozen' | 'eliminated'
-  qualified: boolean
-  score?: number
+interface SupplierRow extends Supplier {
+  score: number
 }
 
-const queryParams = ref({
-  name: '',
-  status: ''
-})
-
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<SupplierFormModel>(createDefaultFormModel())
+const supplierStatusOptions = [
+  { value: 'active', label: '正常', type: 'success' as const },
+  { value: 'frozen', label: '冻结', type: 'warning' as const }
+]
 
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '供应商名称', field: 'name', props: { clearable: true } as any },
@@ -99,31 +86,39 @@ const searchColumns: FormColumnItem[] = [
     label: '状态',
     field: 'status',
     props: {
-      options: [
-        { label: '正常', value: 'active' },
-        { label: '冻结', value: 'frozen' },
-        { label: '淘汰', value: 'eliminated' }
-      ],
-      clearable: true
+      clearable: true,
+      options: supplierStatusOptions.map((item) => ({ label: item.label, value: item.value }))
     } as any
   }
 ]
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
 
 const columns: TableColumnItem<SupplierRow>[] = [
-  { prop: 'code', label: '编码', width: 150 },
-  { prop: 'name', label: '名称', minWidth: 180 },
-  { prop: 'contact', label: '联系人', width: 100 },
-  { prop: 'phone', label: '电话', width: 130 },
-  { prop: 'terms', label: '付款条款', width: 110 },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '评分', minWidth: 140, slotName: 'score', align: 'center' },
-  { label: '资质', minWidth: 80, slotName: 'qualified', align: 'center' },
+  { prop: 'code', label: '供应商编码', minWidth: 150 },
+  { prop: 'name', label: '供应商名称', minWidth: 180 },
+  { prop: 'contact', label: '联系人', minWidth: 100 },
+  { prop: 'phone', label: '联系电话', minWidth: 130 },
+  { prop: 'terms', label: '付款条件', minWidth: 120 },
+  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
+  { label: '评分', minWidth: 160, slotName: 'score', align: 'center' },
+  { label: '资质', minWidth: 90, slotName: 'qualified', align: 'center' },
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const scorePresets = [95, 88, 72, 60, 91, 85]
+const scorePresets = [96, 92, 88, 75, 90, 84]
+
+const queryParams = reactive({
+  name: '',
+  status: ''
+})
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<SupplierFormModel>(createDefaultFormModel())
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<SupplierRow>({
   rowKey: 'id',
@@ -131,21 +126,17 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<S
     const params: SupplierQuery = {
       pageNum: page,
       pageSize: size,
-      name: queryParams.value.name || undefined,
-      status: queryParams.value.status || undefined
+      name: queryParams.name || undefined,
+      status: queryParams.status || undefined
     }
-    const res = await getSupplierList(params)
+    const response = await getSupplierList(params)
     return {
-      list: res.data.list.map((supplier: any, index: number) => mapSupplierRow(supplier, (page - 1) * size + index)),
-      total: res.data.total
+      list: response.data.list.map((item, index) => mapSupplierRow(item, (page - 1) * size + index)),
+      total: response.data.total
     }
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteSupplier(id)))
 })
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
 
 function createDefaultFormModel(): SupplierFormModel {
   return {
@@ -159,22 +150,23 @@ function createDefaultFormModel(): SupplierFormModel {
   }
 }
 
-function mapSupplierRow(supplier: Supplier, index: number): SupplierRow {
+function mapSupplierRow(item: Supplier, index: number): SupplierRow {
   return {
-    id: String(supplier.id),
-    code: supplier.code,
-    name: supplier.name,
-    contact: supplier.contact || '-',
-    phone: supplier.phone || '-',
-    terms: supplier.terms || '-',
-    status: supplier.status as SupplierRow['status'],
-    qualified: supplier.qualified,
+    ...item,
+    id: String(item.id),
     score: scorePresets[index % scorePresets.length]
   }
 }
 
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+
 function handleReset() {
-  queryParams.value = { name: '', status: '' }
+  Object.assign(queryParams, {
+    name: '',
+    status: ''
+  })
   search()
 }
 
@@ -190,27 +182,27 @@ function openEdit(row: SupplierRow) {
     id: row.id,
     code: row.code,
     name: row.name,
-    contact: row.contact === '-' ? '' : row.contact,
-    phone: row.phone === '-' ? '' : row.phone,
-    terms: row.terms === '-' ? '月结30天' : row.terms,
+    contact: row.contact,
+    phone: row.phone,
+    terms: row.terms,
     status: row.status
   }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
+  if (!formModel.value.code || !formModel.value.name) {
+    ElMessage.warning('请填写供应商编码和名称')
+    return
+  }
+
   const payload = {
     code: formModel.value.code,
     name: formModel.value.name,
     contact: formModel.value.contact,
     phone: formModel.value.phone,
     terms: formModel.value.terms,
-    status: formModel.value.status as 'active' | 'frozen'
-  }
-
-  if (!payload.code || !payload.name) {
-    ElMessage.warning('请填写编码和名称')
-    return
+    status: formModel.value.status as Supplier['status']
   }
 
   if (dialogMode.value === 'add') {
@@ -223,20 +215,10 @@ async function submitDialog() {
   await refresh()
 }
 
-function remove(row: SupplierRow) {
-  onDelete(row)
-}
-
-function scoreColor(score: number) {
+function getScoreColor(score: number) {
   if (score >= 90) return '#67c23a'
-  if (score >= 70) return '#e6a23c'
-  return '#f56c6c'
-}
-
-function scoreClass(score: number) {
-  if (score >= 90) return 'score-good'
-  if (score >= 70) return 'score-warn'
-  return 'score-bad'
+  if (score >= 80) return '#409eff'
+  return '#e6a23c'
 }
 </script>
 
@@ -249,26 +231,11 @@ function scoreClass(score: number) {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 120px;
 }
 
 .score-text {
+  min-width: 40px;
   font-size: 12px;
-  white-space: nowrap;
-}
-
-.score-good {
-  color: #67c23a;
-  font-weight: 600;
-}
-
-.score-warn {
-  color: #e6a23c;
-  font-weight: 600;
-}
-
-.score-bad {
-  color: #f56c6c;
   font-weight: 600;
 }
 </style>

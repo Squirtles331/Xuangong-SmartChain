@@ -1,7 +1,7 @@
 <template>
   <el-dialog v-model="visible" title="登记回款" width="500px" :lock-scroll="false">
     <el-form :model="formData" label-width="100px">
-      <el-form-item label="客户" required>
+      <el-form-item label="客户名称" required>
         <el-select v-model="formData.customer" style="width: 100%">
           <el-option v-for="item in customerNames" :key="item" :label="item" :value="item" />
         </el-select>

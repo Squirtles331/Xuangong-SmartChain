@@ -1,79 +1,150 @@
 <template>
   <gi-page-layout>
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
-      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    <template #header>
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
+      </SearchSetting>
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe>
-      <template #shift="{ row }">
-        <el-tag :type="row.shift === 'day' ? 'warning' : row.shift === 'night' ? 'primary' : 'info'" size="small">{{
-          row.shift === 'day' ? '白班' : row.shift === 'night' ? '夜班' : '中班'
-        }}</el-tag>
+    <template #tool>
+      <gi-button type="add" @click="openAdd" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    </template>
+
+    <TableSetting title="班组排班" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #shift="{ row }">
+            <el-tag :type="row.shift === 'day' ? 'warning' : row.shift === 'night' ? 'primary' : 'info'">
+              {{ row.shift === 'day' ? '白班' : row.shift === 'night' ? '夜班' : '中班' }}
+            </el-tag>
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button type="delete" style="margin-left: 8px" @click="onDelete(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button type="delete" @click="remove(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <ScheduleFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
+import {
+  createHrSchedule,
+  deleteHrSchedule,
+  getHrScheduleList,
+  updateHrSchedule,
+  type HrScheduleQuery,
+  type HrScheduleRecord,
+  type HrShiftType
+} from '@/api/hr'
 import { useTable } from '@/hooks/useTable'
 import ScheduleFormDialog, { type ScheduleFormModel } from './ScheduleFormDialog.vue'
 
-interface ScheduleRow {
-  id: string
-  team: string
-  shift: string
-  members: string
-  leader: string
+const shiftOptions: Array<{ label: string; value: '' | HrShiftType }> = [
+  { label: '全部', value: '' },
+  { label: '白班', value: 'day' },
+  { label: '夜班', value: 'night' },
+  { label: '中班', value: 'middle' }
+]
+
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '班组/负责人', field: 'team' },
+  {
+    type: 'select-v2',
+    label: '班次',
+    field: 'shift',
+    props: {
+      options: shiftOptions
+    } as any
+  }
+]
+
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
+const columns: TableColumnItem<HrScheduleRecord>[] = [
+  { prop: 'team', label: '班组', minWidth: 100 },
+  { prop: 'shift', label: '班次', minWidth: 100, align: 'center', slotName: 'shift' },
+  { prop: 'members', label: '成员', minWidth: 240 },
+  { prop: 'leader', label: '班组长', minWidth: 100 },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const queryParams = reactive<{
+  team: string
+  shift: '' | HrShiftType
+}>({
+  team: '',
+  shift: ''
+})
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ScheduleFormModel>(createDefaultFormModel())
 
-const columns: TableColumnItem<ScheduleRow>[] = [
-  { prop: 'team', label: '班组', minWidth: 80 },
-  { label: '班次', minWidth: 60, slotName: 'shift', align: 'center' },
-  { prop: 'members', label: '成员', minWidth: 180 },
-  { prop: 'leader', label: '班组长', minWidth: 80 },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
-]
-
-const mockData = ref<ScheduleRow[]>([
-  { id: '1', team: '甲班', shift: 'day', members: '李四,王五,赵六', leader: '李四' },
-  { id: '2', team: '乙班', shift: 'night', members: '孙八,周九,吴十', leader: '孙八' }
-])
-
-const { tableData, pagination, loading, refresh, onDelete } = useTable<ScheduleRow>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<HrScheduleRecord>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const start = (page - 1) * size
-    return { list: mockData.value.slice(start, start + size), total: mockData.value.length }
+    const params: HrScheduleQuery = {
+      pageNum: page,
+      pageSize: size,
+      team: queryParams.team || undefined,
+      shift: queryParams.shift || undefined
+    }
+
+    const response = await getHrScheduleList(params)
+    return response.data
   },
-  deleteAPI: (ids) =>
-    Promise.all(
-      ids.map((id) => {
-        mockData.value = mockData.value.filter((e) => e.id !== id)
-      })
-    )
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteHrSchedule(id)))
 })
 
 function createDefaultFormModel(): ScheduleFormModel {
-  return { id: '', team: '', shift: 'day', members: '', leader: '' }
+  return {
+    id: '',
+    team: '',
+    shift: 'day',
+    members: '',
+    leader: ''
+  }
 }
 
-function handleExport() {
-  ElMessage.success('导出成功')
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
+}
+
+function handleReset() {
+  Object.assign(queryParams, {
+    team: '',
+    shift: ''
+  })
+  search()
 }
 
 function openAdd() {
@@ -82,7 +153,7 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: ScheduleRow) {
+function openEdit(row: HrScheduleRecord) {
   dialogMode.value = 'edit'
   formModel.value = { ...row }
   dialogVisible.value = true
@@ -90,22 +161,25 @@ function openEdit(row: ScheduleRow) {
 
 async function submitDialog() {
   if (!formModel.value.team) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('请填写班组')
     return
   }
 
   if (dialogMode.value === 'add') {
-    mockData.value.unshift({ ...formModel.value, id: Date.now().toString() } as ScheduleRow)
+    await createHrSchedule(formModel.value)
+    ElMessage.success('新增成功')
   } else {
-    const i = mockData.value.findIndex((e) => e.id === formModel.value.id)
-    if (i > -1) Object.assign(mockData.value[i], formModel.value)
+    await updateHrSchedule(formModel.value.id, formModel.value)
+    ElMessage.success('编辑成功')
   }
 
   dialogVisible.value = false
   await refresh()
 }
-
-function remove(row: ScheduleRow) {
-  onDelete(row)
-}
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

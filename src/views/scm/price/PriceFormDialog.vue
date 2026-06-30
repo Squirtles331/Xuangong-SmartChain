@@ -1,12 +1,12 @@
 <template>
   <gi-dialog
     v-model="visible"
+    :title="mode === 'add' ? '新增价格记录' : '编辑价格记录'"
     :footer="true"
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? '新增价格记录' : '编辑价格记录'"
-    width="600px"
+    width="620px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
   </gi-dialog>
@@ -68,7 +68,7 @@ function handleCancel() {
 
 async function handleSubmit() {
   if (!formData.value.material || !formData.value.supplier) {
-    ElMessage.warning('请填写必填项')
+    ElMessage.warning('请填写物料名称和供应商')
     return false
   }
   emit('submit')

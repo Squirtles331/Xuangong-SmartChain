@@ -5,7 +5,7 @@
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="title"
+    :title="mode === 'add' ? '新增作业票' : '编辑作业票'"
     width="600px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
@@ -13,7 +13,6 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
 
 export interface PermitFormModel {
@@ -30,7 +29,7 @@ interface Props {
   mode: 'add' | 'edit'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<PermitFormModel>('form', { required: true })
@@ -39,10 +38,8 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const title = computed(() => (props.mode === 'add' ? '新增作业票' : '编辑作业票'))
-
 const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '编号', field: 'code', required: true },
+  { type: 'input', label: '作业票编号', field: 'code', required: true },
   {
     type: 'select-v2',
     label: '类型',
@@ -59,7 +56,7 @@ const formColumns: FormColumnItem[] = [
   },
   { type: 'input', label: '作业位置', field: 'location', required: true },
   { type: 'input', label: '申请人', field: 'applicant' },
-  { type: 'date-picker', label: '日期', field: 'apply_date' },
+  { type: 'date-picker', label: '申请日期', field: 'apply_date' },
   {
     type: 'select-v2',
     label: '状态',

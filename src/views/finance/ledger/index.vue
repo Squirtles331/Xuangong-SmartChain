@@ -1,37 +1,71 @@
 <template>
   <gi-page-layout>
     <el-row :gutter="16">
-      <el-col :span="6" v-for="card in cards" :key="card.title">
+      <el-col v-for="card in cards" :key="card.title" :span="6">
         <el-card shadow="hover">
           <div class="card-title">{{ card.title }}</div>
-          <div class="card-value">{{ Number(card.value || 0).toLocaleString() }}<span class="card-unit"> CNY</span></div>
+          <div class="card-value">
+            {{ formatAmount(card.value) }}
+            <span class="card-unit">元</span>
+          </div>
         </el-card>
       </el-col>
     </el-row>
 
     <el-row :gutter="16" style="margin-top: 16px">
       <el-col :span="12">
-        <el-card header="Debit Accounts">
-          <gi-table :columns="debitColumns" :data="debitData" border stripe size="small" />
+        <el-card header="借方科目">
+          <gi-table :columns="accountColumns" :data="debitData" border stripe size="small">
+            <template #amount="{ row }">
+              {{ formatAmount(row.amount) }}
+            </template>
+          </gi-table>
         </el-card>
       </el-col>
       <el-col :span="12">
-        <el-card header="Credit Accounts">
-          <gi-table :columns="creditColumns" :data="creditData" border stripe size="small" />
+        <el-card header="贷方科目">
+          <gi-table :columns="accountColumns" :data="creditData" border stripe size="small">
+            <template #amount="{ row }">
+              {{ formatAmount(row.amount) }}
+            </template>
+          </gi-table>
         </el-card>
       </el-col>
     </el-row>
 
     <el-tabs v-model="tab" style="margin-top: 16px">
-      <el-tab-pane label="Ledger Entries" name="ledger">
-        <gi-table :columns="ledgerColumns" :data="ledgerData" border stripe size="small" />
+      <el-tab-pane label="总账分录" name="ledger">
+        <gi-table :columns="ledgerColumns" :data="ledgerData" border stripe size="small">
+          <template #debit="{ row }">
+            {{ formatAmount(row.debit) }}
+          </template>
+
+          <template #credit="{ row }">
+            {{ formatAmount(row.credit) }}
+          </template>
+        </gi-table>
       </el-tab-pane>
-      <el-tab-pane label="Reconciliation" name="reconciliation">
+
+      <el-tab-pane label="对账结果" name="reconciliation">
         <gi-table :columns="reconciliationColumns" :data="reconciliationData" border stripe size="small">
+          <template #debit="{ row }">
+            {{ formatAmount(row.debit) }}
+          </template>
+
+          <template #credit="{ row }">
+            {{ formatAmount(row.credit) }}
+          </template>
+
           <template #diff="{ row }">
-            <span :style="{ color: row.diff !== 0 ? '#f56c6c' : '' }">
-              {{ row.diff === 0 ? '0' : row.diff > 0 ? '+' + row.diff : row.diff }}
+            <span :style="{ color: row.diff === 0 ? '#67c23a' : '#f56c6c' }">
+              {{ row.diff === 0 ? '0.00' : formatAmount(row.diff) }}
             </span>
+          </template>
+
+          <template #status="{ row }">
+            <el-tag :type="row.status === 'matched' ? 'success' : 'warning'">
+              {{ row.status === 'matched' ? '已平衡' : '待处理' }}
+            </el-tag>
           </template>
         </gi-table>
       </el-tab-pane>
@@ -42,56 +76,62 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import type { TableColumnItem } from 'gi-component'
-import { getFinanceLedgerOverview } from '@/api/finance'
+import {
+  getFinanceLedgerOverview,
+  type FinanceAccountSummary,
+  type FinanceLedgerCard,
+  type FinanceLedgerEntry,
+  type FinanceReconciliationItem
+} from '@/api/finance'
 
 const tab = ref('ledger')
-const cards = ref<any[]>([])
-const debitData = ref<any[]>([])
-const creditData = ref<any[]>([])
-const ledgerData = ref<any[]>([])
-const reconciliationData = ref<any[]>([])
+const cards = ref<FinanceLedgerCard[]>([])
+const debitData = ref<FinanceAccountSummary[]>([])
+const creditData = ref<FinanceAccountSummary[]>([])
+const ledgerData = ref<FinanceLedgerEntry[]>([])
+const reconciliationData = ref<FinanceReconciliationItem[]>([])
 
-const debitColumns: TableColumnItem<any>[] = [
-  { prop: 'code', label: 'Code', minWidth: 100 },
-  { prop: 'account', label: 'Account', minWidth: 150 },
-  { prop: 'type', label: 'Type', minWidth: 100 },
-  { prop: 'amount', label: 'Amount', minWidth: 110, align: 'right' }
+const accountColumns: TableColumnItem<FinanceAccountSummary>[] = [
+  { prop: 'code', label: '科目编码', minWidth: 100 },
+  { prop: 'account', label: '科目名称', minWidth: 150 },
+  { prop: 'type', label: '科目类型', minWidth: 100, align: 'center' },
+  { prop: 'amount', label: '金额', minWidth: 120, align: 'right', slotName: 'amount' }
 ]
 
-const creditColumns: TableColumnItem<any>[] = [
-  { prop: 'code', label: 'Code', minWidth: 100 },
-  { prop: 'account', label: 'Account', minWidth: 150 },
-  { prop: 'type', label: 'Type', minWidth: 100 },
-  { prop: 'amount', label: 'Amount', minWidth: 110, align: 'right' }
+const ledgerColumns: TableColumnItem<FinanceLedgerEntry>[] = [
+  { prop: 'date', label: '日期', minWidth: 110 },
+  { prop: 'voucher', label: '凭证号', minWidth: 130 },
+  { prop: 'account', label: '科目', minWidth: 150 },
+  { prop: 'debit', label: '借方金额', minWidth: 120, align: 'right', slotName: 'debit' },
+  { prop: 'credit', label: '贷方金额', minWidth: 120, align: 'right', slotName: 'credit' },
+  { prop: 'summary', label: '摘要', minWidth: 220 }
 ]
 
-const ledgerColumns: TableColumnItem<any>[] = [
-  { prop: 'date', label: 'Date', minWidth: 110 },
-  { prop: 'voucher', label: 'Voucher', minWidth: 130 },
-  { prop: 'account', label: 'Account', minWidth: 150 },
-  { prop: 'debit', label: 'Debit', minWidth: 110, align: 'right' },
-  { prop: 'credit', label: 'Credit', minWidth: 110, align: 'right' },
-  { prop: 'summary', label: 'Summary', minWidth: 220 }
+const reconciliationColumns: TableColumnItem<FinanceReconciliationItem>[] = [
+  { prop: 'date', label: '日期', minWidth: 110 },
+  { prop: 'voucher', label: '凭证号', minWidth: 130 },
+  { prop: 'debit_account', label: '借方科目', minWidth: 150 },
+  { prop: 'credit_account', label: '贷方科目', minWidth: 150 },
+  { prop: 'debit', label: '借方金额', minWidth: 120, align: 'right', slotName: 'debit' },
+  { prop: 'credit', label: '贷方金额', minWidth: 120, align: 'right', slotName: 'credit' },
+  { label: '差异金额', minWidth: 100, align: 'right', slotName: 'diff' },
+  { label: '状态', minWidth: 100, align: 'center', slotName: 'status' }
 ]
 
-const reconciliationColumns: TableColumnItem<any>[] = [
-  { prop: 'date', label: 'Date', minWidth: 110 },
-  { prop: 'voucher', label: 'Voucher', minWidth: 130 },
-  { prop: 'debit_account', label: 'Debit Account', minWidth: 150 },
-  { prop: 'credit_account', label: 'Credit Account', minWidth: 150 },
-  { prop: 'debit', label: 'Debit', minWidth: 110, align: 'right' },
-  { prop: 'credit', label: 'Credit', minWidth: 110, align: 'right' },
-  { label: 'Diff', minWidth: 90, align: 'center', slotName: 'diff' },
-  { prop: 'status', label: 'Status', minWidth: 100, align: 'center' }
-]
+function formatAmount(value: number) {
+  return value.toLocaleString('zh-CN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
 
 async function loadData() {
-  const res = await getFinanceLedgerOverview()
-  cards.value = res.data.cards || []
-  debitData.value = res.data.debitData || []
-  creditData.value = res.data.creditData || []
-  ledgerData.value = res.data.ledgerData || []
-  reconciliationData.value = res.data.recData || []
+  const response = await getFinanceLedgerOverview()
+  cards.value = response.data.cards
+  debitData.value = response.data.debitData
+  creditData.value = response.data.creditData
+  ledgerData.value = response.data.ledgerData
+  reconciliationData.value = response.data.recData
 }
 
 onMounted(() => {
@@ -106,14 +146,14 @@ onMounted(() => {
 }
 
 .card-value {
+  margin-top: 8px;
   font-size: 28px;
   font-weight: 700;
-  margin: 8px 0;
 }
 
 .card-unit {
+  margin-left: 4px;
   font-size: 14px;
   color: #909399;
-  margin-left: 4px;
 }
 </style>

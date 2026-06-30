@@ -1,14 +1,14 @@
 <template>
   <gi-dialog
     v-model="visible"
+    :title="mode === 'add' ? '新增供应商' : '编辑供应商'"
     :footer="true"
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? '新增供应商' : '编辑供应商'"
     width="600px"
   >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="120" />
+    <gi-form v-model="formData" :columns="formColumns" :label-width="110" />
   </gi-dialog>
 </template>
 
@@ -40,11 +40,23 @@ const emit = defineEmits<{
 }>()
 
 const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '编码', field: 'code', required: true },
-  { type: 'input', label: '名称', field: 'name', required: true },
+  { type: 'input', label: '供应商编码', field: 'code', required: true },
+  { type: 'input', label: '供应商名称', field: 'name', required: true },
   { type: 'input', label: '联系人', field: 'contact' },
-  { type: 'input', label: '电话', field: 'phone' },
-  { type: 'input', label: '付款条款', field: 'terms' }
+  { type: 'input', label: '联系电话', field: 'phone' },
+  { type: 'input', label: '付款条件', field: 'terms' },
+  {
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    required: true,
+    props: {
+      options: [
+        { label: '正常', value: 'active' },
+        { label: '冻结', value: 'frozen' }
+      ]
+    } as any
+  }
 ]
 
 function handleCancel() {
@@ -53,7 +65,7 @@ function handleCancel() {
 
 async function handleSubmit() {
   if (!formData.value.code || !formData.value.name) {
-    ElMessage.warning('请填写编码和名称')
+    ElMessage.warning('请填写供应商编码和名称')
     return false
   }
   emit('submit')

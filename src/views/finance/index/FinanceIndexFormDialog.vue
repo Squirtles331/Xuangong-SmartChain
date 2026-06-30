@@ -15,17 +15,9 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
+import type { FinancePayable, FinancePayableStatus } from '@/api/finance'
 
-export interface FinancePayableFormModel {
-  id: string
-  code: string
-  supplier: string
-  amount: number
-  paid: number
-  balance: number
-  due_date: string
-  status: string
-}
+export interface FinancePayableFormModel extends FinancePayable {}
 
 interface Props {
   mode: 'add' | 'edit'
@@ -40,24 +32,27 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const title = computed(() => (props.mode === 'add' ? '新增应付' : '编辑应付'))
+const statusOptions: Array<{ label: string; value: FinancePayableStatus }> = [
+  { label: '未付款', value: 'open' },
+  { label: '已付款', value: 'paid' },
+  { label: '部分付款', value: 'partial' }
+]
+
+const title = computed(() => (props.mode === 'add' ? '新增应付单' : '编辑应付单'))
 
 const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '应付单号', field: 'code', required: true },
+  { type: 'input', label: '应付单号', field: 'code', props: { disabled: true } as any },
   { type: 'input', label: '供应商', field: 'supplier', required: true },
-  { type: 'input-number', label: '金额', field: 'amount', required: true, props: { min: 0 } as any },
-  { type: 'input-number', label: '已付', field: 'paid', props: { min: 0 } as any },
-  { type: 'date-picker', label: '到期日', field: 'due_date' },
+  { type: 'input-number', label: '应付金额', field: 'amount', required: true, props: { min: 0 } as any },
+  { type: 'input-number', label: '已付金额', field: 'paid', props: { min: 0 } as any },
+  { type: 'input-number', label: '未付余额', field: 'balance', props: { min: 0, disabled: true } as any },
+  { type: 'date-picker', label: '到期日期', field: 'due_date', props: { valueFormat: 'YYYY-MM-DD' } as any },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
     props: {
-      options: [
-        { label: '未付', value: 'open' },
-        { label: '已付', value: 'paid' },
-        { label: '部分付', value: 'partial' }
-      ]
+      options: statusOptions
     } as any
   }
 ]

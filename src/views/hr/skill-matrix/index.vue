@@ -12,7 +12,7 @@
     </template>
 
     <template #header>
-      <h3 style="margin: 0">{{ currentEmployee?.name || 'Select Employee' }} Skill Matrix</h3>
+      <h3 style="margin: 0">{{ currentEmployee?.name || '请选择员工' }} 技能矩阵</h3>
     </template>
 
     <template #tool>
@@ -23,6 +23,7 @@
       <template #level="{ row }">
         <el-rate v-model="row.level" :max="5" disabled size="small" />
       </template>
+
       <template #actions="{ row }">
         <gi-button type="edit" size="small" @click="openEdit(row)" />
         <gi-button type="delete" size="small" @click="removeSkill(row.id)" />
@@ -37,32 +38,24 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
-import { getSkillMatrixData } from '@/api/hr'
+import { getSkillMatrixData, type HrSkillItem, type HrSkillTreeNode } from '@/api/hr'
 import SkillMatrixFormDialog, { type SkillMatrixFormModel } from './SkillMatrixFormDialog.vue'
 
-interface SkillItem {
-  id: string
-  skill_name: string
-  level: number
-  cert_number: string
-  expire_date: string
-}
-
-const employees = ref<any[]>([])
-const currentEmployee = ref<any>(null)
-const skills = ref<SkillItem[]>([])
-const skillsByEmployee = ref<Record<string, SkillItem[]>>({})
+const employees = ref<HrSkillTreeNode[]>([])
+const currentEmployee = ref<HrSkillTreeNode | null>(null)
+const skills = ref<HrSkillItem[]>([])
+const skillsByEmployee = ref<Record<string, HrSkillItem[]>>({})
 const dialogVisible = ref(false)
 const mode = ref<'add' | 'edit'>('add')
 const editingId = ref('')
 const formModel = ref<SkillMatrixFormModel>(createDefaultForm())
 
-const columns: TableColumnItem<SkillItem>[] = [
-  { prop: 'skill_name', label: 'Skill', minWidth: 180 },
-  { label: 'Level', minWidth: 180, slotName: 'level' },
-  { prop: 'cert_number', label: 'Certificate', minWidth: 150 },
-  { prop: 'expire_date', label: 'Expire Date', minWidth: 120 },
-  { label: 'Actions', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+const columns: TableColumnItem<HrSkillItem>[] = [
+  { prop: 'skill_name', label: '技能名称', minWidth: 180 },
+  { label: '技能等级', minWidth: 160, slotName: 'level' },
+  { prop: 'cert_number', label: '证书编号', minWidth: 150 },
+  { prop: 'expire_date', label: '到期日期', minWidth: 120, align: 'center' },
+  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 function createDefaultForm(): SkillMatrixFormModel {
@@ -75,10 +68,10 @@ function createDefaultForm(): SkillMatrixFormModel {
   }
 }
 
-function flattenFirstEmployee(nodes: any[]): any | null {
+function findFirstEmployee(nodes: HrSkillTreeNode[]): HrSkillTreeNode | null {
   for (const node of nodes) {
-    if (Array.isArray(node.children) && node.children.length > 0) {
-      const child = flattenFirstEmployee(node.children)
+    if (node.children?.length) {
+      const child = findFirstEmployee(node.children)
       if (child) return child
     } else if (node.id) {
       return node
@@ -88,23 +81,23 @@ function flattenFirstEmployee(nodes: any[]): any | null {
 }
 
 async function loadData() {
-  const res = await getSkillMatrixData()
-  employees.value = res.data.employees || []
-  skillsByEmployee.value = res.data.skillsByEmployee || {}
+  const response = await getSkillMatrixData()
+  employees.value = response.data.employees || []
+  skillsByEmployee.value = response.data.skillsByEmployee || {}
 
-  const firstEmployee = flattenFirstEmployee(employees.value)
+  const firstEmployee = findFirstEmployee(employees.value)
   if (firstEmployee) onNodeClick(firstEmployee)
 }
 
-function onNodeClick(node: any) {
-  if (Array.isArray(node.children) && node.children.length > 0) return
+function onNodeClick(node: HrSkillTreeNode) {
+  if (node.children?.length) return
   currentEmployee.value = node
   skills.value = [...(skillsByEmployee.value[node.id] || [])]
 }
 
 function openAdd() {
   if (!currentEmployee.value) {
-    ElMessage.warning('Select an employee first')
+    ElMessage.warning('请先选择员工')
     return
   }
 
@@ -114,7 +107,7 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(skill: SkillItem) {
+function openEdit(skill: HrSkillItem) {
   mode.value = 'edit'
   editingId.value = skill.id
   formModel.value = { ...skill }
@@ -123,7 +116,7 @@ function openEdit(skill: SkillItem) {
 
 async function submit() {
   if (!formModel.value.skill_name) {
-    ElMessage.warning('Skill is required')
+    ElMessage.warning('请填写技能名称')
     return false
   }
 
@@ -148,12 +141,12 @@ function removeSkill(id: string) {
   const employeeId = currentEmployee.value?.id
   if (!employeeId) return
 
-  ElMessageBox.confirm('Delete this skill?', 'Warning', { type: 'warning' })
+  ElMessageBox.confirm('确认删除该技能记录吗？', '提示', { type: 'warning' })
     .then(() => {
       const target = skillsByEmployee.value[employeeId] || []
       skillsByEmployee.value[employeeId] = target.filter((item) => item.id !== id)
       skills.value = [...skillsByEmployee.value[employeeId]]
-      ElMessage.success('Deleted')
+      ElMessage.success('删除成功')
     })
     .catch(() => {})
 }

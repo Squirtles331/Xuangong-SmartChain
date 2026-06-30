@@ -1,61 +1,70 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <gi-form
-        ref="searchFormRef"
-        v-model="searchForm"
-        :columns="searchColumns"
-        :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
-        search
-        @reset="handleReset"
-        @search="handleSearch"
-      />
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
+      </SearchSetting>
     </template>
 
     <template #tool>
       <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe style="height: 100%">
-      <template #status="{ row }">
-        <el-tag :type="row.status === 'active' ? 'success' : 'danger'" size="small">
-          {{ row.status === 'active' ? '正常' : '黑名单' }}
-        </el-tag>
+    <TableSetting title="客户列表" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #creditLimit="{ row }">
+            {{ row.credit_limit.toLocaleString('zh-CN') }}
+          </template>
+
+          <template #status="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+              {{ row.status === 'active' ? '正常' : '停用' }}
+            </el-tag>
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button type="delete" style="margin-left: 8px" @click="onDelete(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #creditLimit="{ row }">
-        {{ formatNumber(row.credit_limit) }}
-      </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button style="margin-left: 8px" type="delete" @click="remove(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <CustomerFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
+import TableSetting from '@/components/TableSetting.vue'
 import { createCustomer, deleteCustomer, getCustomerList, updateCustomer, type Customer, type CustomerQuery } from '@/api/crm'
 import { useTable } from '@/hooks/useTable'
 import CustomerFormDialog, { type CustomerFormModel } from './CustomerFormDialog.vue'
 
-type CustomerRow = Customer
-
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({
-  code: '',
-  name: '',
-  status: ''
-})
-
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<CustomerFormModel>(createDefaultFormModel())
+const statusOptions = [
+  { label: '正常', value: 'active' },
+  { label: '停用', value: 'disabled' }
+]
 
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '客户编码', field: 'code' },
@@ -65,39 +74,49 @@ const searchColumns: FormColumnItem[] = [
     label: '状态',
     field: 'status',
     props: {
-      options: [
-        { label: '正常', value: 'active' },
-        { label: '黑名单', value: 'disabled' }
-      ]
+      options: [{ label: '全部', value: '' }, ...statusOptions]
     } as any
   }
 ]
 
-const columns: TableColumnItem<CustomerRow>[] = [
-  { prop: 'code', label: '客户编码', width: 150 },
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
+
+const columns: TableColumnItem<Customer>[] = [
+  { prop: 'code', label: '客户编码', minWidth: 140 },
   { prop: 'name', label: '客户名称', minWidth: 180 },
-  { prop: 'contact_person', label: '联系人', width: 100 },
-  { prop: 'contact_phone', label: '联系电话', width: 130 },
-  { prop: 'payment_terms', label: '付款条款', width: 110 },
+  { prop: 'contact_person', label: '联系人', minWidth: 120 },
+  { prop: 'contact_phone', label: '联系电话', minWidth: 140 },
+  { prop: 'payment_terms', label: '付款条件', minWidth: 120 },
   { label: '信用额度(元)', minWidth: 140, align: 'right', slotName: 'creditLimit' },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '状态', minWidth: 100, align: 'center', slotName: 'status' },
+  { label: '操作', minWidth: 160, fixed: 'right', align: 'center', slotName: 'actions' }
 ]
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<CustomerRow>({
+const queryParams = reactive({
+  code: '',
+  name: '',
+  status: ''
+})
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<CustomerFormModel>(createDefaultFormModel())
+
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<Customer>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: CustomerQuery = {
       pageNum: page,
       pageSize: size,
-      name: searchForm.value.name || undefined,
-      status: searchForm.value.status || undefined
+      code: queryParams.code || undefined,
+      name: queryParams.name || undefined,
+      status: queryParams.status || undefined
     }
     const response = await getCustomerList(params)
-    return {
-      list: response.data.list,
-      total: response.data.total
-    }
+    return response.data
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteCustomer(id)))
 })
@@ -115,16 +134,16 @@ function createDefaultFormModel(): CustomerFormModel {
   }
 }
 
-function formatNumber(n: number) {
-  return n.toLocaleString('en-US')
-}
-
-function handleSearch() {
-  search()
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
-  searchForm.value = { code: '', name: '', status: '' }
+  Object.assign(queryParams, {
+    code: '',
+    name: '',
+    status: ''
+  })
   search()
 }
 
@@ -134,7 +153,7 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: CustomerRow) {
+function openEdit(row: Customer) {
   dialogMode.value = 'edit'
   formModel.value = { ...row }
   dialogVisible.value = true
@@ -142,15 +161,19 @@ function openEdit(row: CustomerRow) {
 
 async function submitDialog() {
   if (!formModel.value.code || !formModel.value.name) {
-    ElMessage.warning('请填写编码和名称')
+    ElMessage.warning('请填写客户编码和客户名称')
     return
   }
 
-  const payload: Customer = {
-    ...formModel.value,
+  const payload = {
+    code: formModel.value.code,
+    name: formModel.value.name,
+    contact_person: formModel.value.contact_person,
+    contact_phone: formModel.value.contact_phone,
+    payment_terms: formModel.value.payment_terms,
+    credit_limit: formModel.value.credit_limit,
     status: formModel.value.status as Customer['status']
   }
-
   if (dialogMode.value === 'add') {
     await createCustomer(payload)
   } else {
@@ -159,10 +182,6 @@ async function submitDialog() {
 
   dialogVisible.value = false
   await refresh()
-}
-
-function remove(row: CustomerRow) {
-  onDelete(row)
 }
 </script>
 

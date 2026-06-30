@@ -5,7 +5,7 @@
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="title"
+    :title="mode === 'add' ? '新增预案' : '编辑预案'"
     width="600px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
@@ -13,7 +13,6 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
 
 export interface EmergencyFormModel {
@@ -29,7 +28,7 @@ interface Props {
   mode: 'add' | 'edit'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<EmergencyFormModel>('form', { required: true })
@@ -37,8 +36,6 @@ const formData = defineModel<EmergencyFormModel>('form', { required: true })
 const emit = defineEmits<{
   submit: []
 }>()
-
-const title = computed(() => (props.mode === 'add' ? '新增预案' : '编辑预案'))
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '预案名称', field: 'name', required: true },
@@ -71,7 +68,7 @@ const formColumns: FormColumnItem[] = [
     } as any
   },
   { type: 'input', label: '负责人', field: 'responsible' },
-  { type: 'date-picker', label: '最近演练', field: 'last_drill' }
+  { type: 'date-picker', label: '最近演练日期', field: 'last_drill' }
 ]
 
 function handleCancel() {

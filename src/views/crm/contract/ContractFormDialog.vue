@@ -1,12 +1,12 @@
 <template>
   <gi-dialog
     v-model="visible"
+    :title="mode === 'add' ? '新增合同' : '编辑合同'"
     :footer="true"
     :lock-scroll="false"
+    width="650px"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? '新增合同' : '编辑合同'"
-    width="650px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
   </gi-dialog>
@@ -41,7 +41,7 @@ const emit = defineEmits<{
 
 const formColumns: FormColumnItem[] = [
   { type: 'input', label: '合同编号', field: 'code', required: true },
-  { type: 'input', label: '客户', field: 'customer', required: true },
+  { type: 'input', label: '客户名称', field: 'customer', required: true },
   { type: 'input-number', label: '合同金额', field: 'amount', props: { min: 0 } as any },
   { type: 'date-picker', label: '签订日期', field: 'sign_date' },
   { type: 'date-picker', label: '生效日期', field: 'start_date' },
@@ -54,7 +54,8 @@ const formColumns: FormColumnItem[] = [
       options: [
         { label: '草稿', value: 'draft' },
         { label: '生效中', value: 'active' },
-        { label: '已过期', value: 'expired' }
+        { label: '已过期', value: 'expired' },
+        { label: '已终止', value: 'terminated' }
       ]
     } as any
   }

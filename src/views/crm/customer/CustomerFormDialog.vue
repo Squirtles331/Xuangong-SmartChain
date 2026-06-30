@@ -1,14 +1,14 @@
 <template>
   <gi-dialog
     v-model="visible"
+    :title="mode === 'add' ? '新增客户' : '编辑客户'"
     :footer="true"
     :lock-scroll="false"
+    width="600px"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? '新增客户' : '编辑客户'"
-    width="600px"
   >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="120" />
+    <gi-form v-model="formData" :columns="formColumns" :label-width="110" />
   </gi-dialog>
 </template>
 
@@ -30,7 +30,7 @@ interface Props {
   mode: 'add' | 'edit'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<CustomerFormModel>('form', { required: true })
@@ -44,8 +44,19 @@ const formColumns: FormColumnItem[] = [
   { type: 'input', label: '客户名称', field: 'name', required: true },
   { type: 'input', label: '联系人', field: 'contact_person' },
   { type: 'input', label: '联系电话', field: 'contact_phone' },
-  { type: 'input', label: '付款条款', field: 'payment_terms' },
-  { type: 'input-number', label: '信用额度', field: 'credit_limit', props: { min: 0, step: 10000 } as any }
+  { type: 'input', label: '付款条件', field: 'payment_terms' },
+  { type: 'input-number', label: '信用额度', field: 'credit_limit', props: { min: 0, step: 10000 } as any },
+  {
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    props: {
+      options: [
+        { label: '正常', value: 'active' },
+        { label: '停用', value: 'disabled' }
+      ]
+    } as any
+  }
 ]
 
 function handleCancel() {

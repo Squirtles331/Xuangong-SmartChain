@@ -1,126 +1,164 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="allSearchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form ref="searchFormRef" v-model="searchForm" :columns="visibleSearchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
       </SearchSetting>
     </template>
 
     <template #tool>
       <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
-      <el-button style="margin-left: 8px" @click="handleExport">Export</el-button>
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border stripe size="small">
-      <template #type="{ row }">
-        <el-tag :type="row.type === 'electricity' ? 'warning' : row.type === 'water' ? 'primary' : 'info'" size="small">
-          {{ row.type }}
-        </el-tag>
+    <TableSetting title="能耗明细" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          style="height: 100%"
+        >
+          <template #type="{ row }">
+            <el-tag :type="energyTypeTagMap[row.type]">
+              {{ row.type }}
+            </el-tag>
+          </template>
+
+          <template #usage="{ row }">
+            {{ row.usage.toLocaleString('zh-CN') }}
+          </template>
+
+          <template #cost="{ row }">
+            {{ row.cost.toLocaleString('zh-CN') }}
+          </template>
+
+          <template #rate="{ row }">
+            {{ row.rate }}
+          </template>
+
+          <template #actions="{ row }">
+            <gi-button type="edit" @click="openEdit(row)" />
+            <gi-button type="delete" style="margin-left: 8px" @click="onDelete(row)" />
+          </template>
+        </gi-table>
       </template>
-      <template #actions="{ row }">
-        <gi-button type="edit" size="small" @click="openEdit(row)" />
-        <gi-button type="delete" size="small" @click="remove(row)" />
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <EnergyDetailFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
   </gi-page-layout>
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
-import { getEnergyDetailList } from '@/api/energy'
+import TableSetting from '@/components/TableSetting.vue'
+import { deleteEnergyDetail, getEnergyDetailList, saveEnergyDetail, type EnergyDetail, type EnergyDetailQuery } from '@/api/energy'
 import { useTable } from '@/hooks/useTable'
 import EnergyDetailFormDialog, { type EnergyDetailFormModel } from './EnergyDetailFormDialog.vue'
 
-interface EnergyRow {
-  id: string
-  date: string
-  type: string
-  workshop: string
-  qty: number
-  unit: string
+const energyTypeTagMap: Record<EnergyDetail['type'], 'warning' | 'primary' | 'success'> = {
+  电: 'warning',
+  水: 'primary',
+  气: 'success'
 }
 
-const searchFormRef = ref<FormInstance | null>()
-const searchForm = ref({ keyword: '' })
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '关键字', field: 'keyword' },
+  {
+    type: 'select-v2',
+    label: '能源类型',
+    field: 'type',
+    props: {
+      options: [
+        { label: '全部', value: '' },
+        { label: '电', value: 'electricity' },
+        { label: '水', value: 'water' },
+        { label: '气', value: 'gas' }
+      ]
+    } as any
+  },
+  { type: 'input', label: '期间', field: 'period', props: { placeholder: '例如 2026-01' } as any }
+]
 
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
+
+const columns: TableColumnItem<EnergyDetail>[] = [
+  { prop: 'period', label: '期间', minWidth: 110 },
+  { label: '能源类型', minWidth: 100, slotName: 'type', align: 'center' },
+  { prop: 'workshop', label: '车间', minWidth: 160 },
+  { label: '用量', minWidth: 120, slotName: 'usage', align: 'right' },
+  { prop: 'unit', label: '单位', minWidth: 90, align: 'center' },
+  { label: '单价', minWidth: 100, slotName: 'rate', align: 'right' },
+  { label: '成本', minWidth: 120, slotName: 'cost', align: 'right' },
+  { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const queryParams = reactive({
+  keyword: '',
+  type: '',
+  period: ''
+})
+
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<EnergyDetailFormModel>(createDefaultFormModel())
 
-const searchColumns: FormColumnItem[] = [{ type: 'input', label: 'Keyword', field: 'keyword' } as any]
-
-const allSearchColumns = computed(() => searchColumns)
-const visibleSearchColumns = ref<FormColumnItem[]>([])
-
-const columns: TableColumnItem<EnergyRow>[] = [
-  { prop: 'date', label: 'Period', minWidth: 110 },
-  { label: 'Type', minWidth: 100, slotName: 'type', align: 'center' },
-  { prop: 'workshop', label: 'Workshop', minWidth: 160 },
-  { prop: 'qty', label: 'Usage', minWidth: 100, align: 'center' },
-  { prop: 'unit', label: 'Unit', minWidth: 80, align: 'center' },
-  { label: 'Actions', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
-]
-
-const allRows = ref<EnergyRow[]>([])
-
-const { tableData, pagination, loading, search, refresh } = useTable<EnergyRow>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<EnergyDetail>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    let filtered = allRows.value
-    if (searchForm.value.keyword) {
-      const kw = searchForm.value.keyword.trim().toLowerCase()
-      filtered = filtered.filter((item) => item.workshop.toLowerCase().includes(kw) || item.type.toLowerCase().includes(kw))
+    const params: EnergyDetailQuery = {
+      pageNum: page,
+      pageSize: size,
+      keyword: queryParams.keyword || undefined,
+      type: (queryParams.type || undefined) as EnergyDetailQuery['type'],
+      period: queryParams.period || undefined
     }
-    const start = (page - 1) * size
-    return { list: filtered.slice(start, start + size), total: filtered.length }
-  }
+    const response = await getEnergyDetailList(params)
+    return response.data
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteEnergyDetail(id)))
 })
 
 function createDefaultFormModel(): EnergyDetailFormModel {
-  return { id: '', date: '', type: 'electricity', workshop: '', qty: 0, unit: 'kWh' }
+  return {
+    id: '',
+    period: '',
+    type: 'electricity',
+    workshop: '',
+    usage: 0,
+    unit: 'kWh',
+    rate: 0.9,
+    cost: 0
+  }
 }
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
 }
 
-async function loadRows() {
-  const res = await getEnergyDetailList()
-  allRows.value = (res.data || []).map((item: any) => ({
-    id: String(item.id),
-    date: item.period,
-    type: mapEnergyType(item.type),
-    workshop: item.workshop,
-    qty: Number(item.usage ?? item.qty ?? 0),
-    unit: item.unit
-  }))
-}
-
-function mapEnergyType(type: string) {
-  const text = String(type || '')
-  if (text.includes('电')) return 'electricity'
-  if (text.includes('气') || text.includes('m')) return 'gas'
-  if (text.includes('水')) return 'water'
-  return text || 'electricity'
-}
-
-function handleSearch() {
-  search()
-}
-
 function handleReset() {
-  searchForm.value = { keyword: '' }
+  Object.assign(queryParams, {
+    keyword: '',
+    type: '',
+    period: ''
+  })
   search()
-}
-
-function handleExport() {
-  ElMessage.success('Export completed')
 }
 
 function openAdd() {
@@ -129,38 +167,51 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: EnergyRow) {
+function openEdit(row: EnergyDetail) {
   dialogMode.value = 'edit'
-  formModel.value = { ...row }
+  formModel.value = {
+    id: row.id,
+    period: row.period,
+    type: row.type === '电' ? 'electricity' : row.type === '水' ? 'water' : 'gas',
+    workshop: row.workshop,
+    usage: row.usage,
+    unit: row.unit,
+    rate: row.rate,
+    cost: row.cost
+  }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
-  if (!formModel.value.date) {
-    ElMessage.warning('Period is required')
+  if (!formModel.value.period || !formModel.value.workshop) {
+    ElMessage.warning('请填写期间和车间')
     return
   }
 
-  if (dialogMode.value === 'add') {
-    allRows.value.unshift({ ...formModel.value, id: Date.now().toString() } as EnergyRow)
-  } else {
-    const index = allRows.value.findIndex((item) => item.id === formModel.value.id)
-    if (index > -1) Object.assign(allRows.value[index], formModel.value)
-  }
+  const typeMap = {
+    electricity: '电',
+    water: '水',
+    gas: '气'
+  } as const
+
+  await saveEnergyDetail({
+    id: formModel.value.id,
+    period: formModel.value.period,
+    workshop: formModel.value.workshop,
+    type: typeMap[formModel.value.type],
+    usage: formModel.value.usage,
+    unit: formModel.value.unit,
+    rate: formModel.value.rate,
+    cost: formModel.value.cost
+  })
 
   dialogVisible.value = false
   await refresh()
 }
-
-function remove(row: EnergyRow) {
-  allRows.value = allRows.value.filter((item) => item.id !== row.id)
-  if ((pagination.currentPage - 1) * pagination.pageSize >= tableData.value.length) {
-    pagination.currentPage = Math.max(1, pagination.currentPage - 1)
-  }
-  refresh()
-}
-
-onMounted(() => {
-  loadRows()
-})
 </script>
+
+<style scoped>
+:deep(.gi-page-layout__tool) {
+  gap: 8px;
+}
+</style>

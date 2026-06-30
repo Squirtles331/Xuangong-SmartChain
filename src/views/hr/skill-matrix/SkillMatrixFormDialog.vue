@@ -5,7 +5,7 @@
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? 'Add Skill' : 'Edit Skill'"
+    :title="mode === 'add' ? '新增技能' : '编辑技能'"
     width="500px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
@@ -14,14 +14,9 @@
 
 <script lang="ts" setup>
 import type { FormColumnItem } from 'gi-component'
+import type { HrSkillItem } from '@/api/hr'
 
-export interface SkillMatrixFormModel {
-  id: string
-  skill_name: string
-  level: number
-  cert_number: string
-  expire_date: string
-}
+export interface SkillMatrixFormModel extends HrSkillItem {}
 
 interface Props {
   mode: 'add' | 'edit'
@@ -37,16 +32,16 @@ const emit = defineEmits<{
 }>()
 
 const formColumns: FormColumnItem[] = [
-  { type: 'input', label: 'Skill', field: 'skill_name', required: true },
+  { type: 'input', label: '技能名称', field: 'skill_name', required: true },
   {
     type: 'input-number',
-    label: 'Level',
+    label: '技能等级',
     field: 'level',
     required: true,
     props: { min: 1, max: 5 } as any
   },
-  { type: 'input', label: 'Certificate', field: 'cert_number' },
-  { type: 'date-picker', label: 'Expire Date', field: 'expire_date' }
+  { type: 'input', label: '证书编号', field: 'cert_number' },
+  { type: 'date-picker', label: '到期日期', field: 'expire_date', props: { valueFormat: 'YYYY-MM-DD' } as any }
 ]
 
 function handleCancel() {

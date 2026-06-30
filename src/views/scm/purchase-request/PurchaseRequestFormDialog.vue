@@ -1,43 +1,46 @@
 <template>
   <gi-dialog
     v-model="visible"
+    :title="mode === 'add' ? '新增采购申请' : '编辑采购申请'"
     :footer="true"
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? '新建采购申请' : '编辑采购申请'"
-    width="700px"
+    width="760px"
   >
     <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
+
     <el-divider />
+
     <div class="lines-header">
-      <strong>申请明细</strong>
-      <el-button type="primary" size="small" @click="addLine">+ 添加物料</el-button>
+      <span class="lines-title">申请明细</span>
+      <el-button type="primary" size="small" @click="addLine">新增物料</el-button>
     </div>
-    <el-table :data="lines" border size="small" style="margin-top: 8px">
-      <el-table-column prop="material" label="物料编码/名称" minWidth="200">
+
+    <el-table :data="lines" border size="small" style="margin-top: 12px">
+      <el-table-column prop="material" label="物料名称" min-width="220">
         <template #default="{ row }">
-          <el-input v-model="row.material" size="small" placeholder="请输入物料编码或名称" />
+          <el-input v-model="row.material" size="small" placeholder="请输入物料名称" />
         </template>
       </el-table-column>
-      <el-table-column prop="qty" label="数量" width="100">
+      <el-table-column prop="qty" label="数量" width="110">
         <template #default="{ row }">
           <el-input-number v-model="row.qty" :min="1" size="small" />
         </template>
       </el-table-column>
-      <el-table-column prop="unit" label="单位" width="80">
+      <el-table-column prop="unit" label="单位" width="100">
         <template #default="{ row }">
           <el-input v-model="row.unit" size="small" />
         </template>
       </el-table-column>
-      <el-table-column prop="need_date" label="需求日期" width="130">
+      <el-table-column prop="need_date" label="需求日期" width="150">
         <template #default="{ row }">
           <el-date-picker v-model="row.need_date" size="small" type="date" value-format="YYYY-MM-DD" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="60">
+      <el-table-column label="操作" width="80" align="center">
         <template #default="{ $index }">
-          <el-button type="danger" link size="small" @click="lines.splice($index, 1)">删除</el-button>
+          <el-button type="danger" link size="small" @click="removeLine($index)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -45,7 +48,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
@@ -77,7 +80,7 @@ const emit = defineEmits<{
   submit: [lines: PurchaseRequestLine[]]
 }>()
 
-const lines = ref<PurchaseRequestLine[]>([{ material: '', qty: 1, unit: '件', need_date: '' }])
+const lines = ref<PurchaseRequestLine[]>([])
 
 const formColumns: FormColumnItem[] = [
   {
@@ -112,8 +115,36 @@ const formColumns: FormColumnItem[] = [
   { type: 'input', label: '备注', field: 'remark', props: { type: 'textarea', rows: 2 } as any }
 ]
 
+watch(
+  () => visible.value,
+  (value) => {
+    if (!value) return
+    lines.value = [
+      {
+        material: '',
+        qty: 1,
+        unit: '件',
+        need_date: formData.value.need_date || ''
+      }
+    ]
+  }
+)
+
 function addLine() {
-  lines.value.push({ material: '', qty: 1, unit: '件', need_date: '' })
+  lines.value.push({
+    material: '',
+    qty: 1,
+    unit: '件',
+    need_date: formData.value.need_date || ''
+  })
+}
+
+function removeLine(index: number) {
+  if (lines.value.length === 1) {
+    ElMessage.warning('至少保留一条申请明细')
+    return
+  }
+  lines.value.splice(index, 1)
 }
 
 function handleCancel() {
@@ -125,6 +156,13 @@ async function handleSubmit() {
     ElMessage.warning('请填写需求日期')
     return false
   }
+
+  const invalidLine = lines.value.find((item) => !item.material || !item.need_date || item.qty <= 0)
+  if (invalidLine) {
+    ElMessage.warning('请完善申请明细')
+    return false
+  }
+
   emit('submit', [...lines.value])
   return false
 }
@@ -133,8 +171,11 @@ async function handleSubmit() {
 <style scoped>
 .lines-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: 8px;
+  justify-content: space-between;
+}
+
+.lines-title {
+  font-weight: 600;
 }
 </style>

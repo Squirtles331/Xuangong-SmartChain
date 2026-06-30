@@ -80,9 +80,54 @@ export function deletePurchaseOrder(id: string) {
   return apiDelete<Record<string, never>>(`/scm/purchase-orders/${id}`)
 }
 
+export interface PortalOrder {
+  id: string
+  code: string
+  material: string
+  qty: number
+  delivery_date: string
+  status: 'pending' | 'confirmed' | 'rejected'
+}
+
+export interface PortalDelivery {
+  id: string
+  code: string
+  material: string
+  qty: number
+  carrier: string
+  tracking_no: string
+  confirmed: boolean
+}
+
+export interface PortalTimelineItem {
+  timestamp: string
+  content: string
+  color: string
+  type: 'primary' | 'success' | 'warning' | 'info'
+  hollow: boolean
+}
+
+export interface PortalReconciliation {
+  period: string
+  order_code: string
+  material: string
+  order_qty: number
+  delivered_qty: number
+  accepted_qty: number
+  amount: number
+  rec_status: 'pending' | 'confirmed'
+}
+
+export interface SupplierPortalData {
+  orders: PortalOrder[]
+  deliveries: PortalDelivery[]
+  timelineItems: PortalTimelineItem[]
+  recData: PortalReconciliation[]
+}
+
 export function getSupplierPortalData() {
-  if (isMockMode) return mockService.getSupplierPortalData()
-  return apiGet<any>('/scm/portal')
+  if (isMockMode) return mockService.getSupplierPortalData() as Promise<ApiResponse<SupplierPortalData>>
+  return apiGet<SupplierPortalData>('/scm/portal')
 }
 
 export function confirmPortalOrder(id: string) {
@@ -116,6 +161,7 @@ export interface PriceQuery {
   pageSize: number
   material?: string
   supplier?: string
+  source?: string
 }
 
 export function getPriceList(params: PriceQuery) {
@@ -208,4 +254,9 @@ export function createPurchaseReturn(data: Partial<PurchaseReturn>) {
 export function updatePurchaseReturn(id: string, data: Partial<PurchaseReturn>) {
   if (isMockMode) return mockService.updatePurchaseReturn(id, data)
   return apiPut<Record<string, never>, Partial<PurchaseReturn>>(`/scm/purchase-returns/${id}`, data)
+}
+
+export function deletePurchaseReturn(id: string) {
+  if (isMockMode) return mockService.deletePurchaseReturn(id)
+  return apiDelete<Record<string, never>>(`/scm/purchase-returns/${id}`)
 }

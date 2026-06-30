@@ -1,12 +1,12 @@
 <template>
   <el-dialog v-model="visible" title="回款核销" width="650px" :lock-scroll="false">
     <p>
-      当前回款余额: <strong>{{ receiptAmount.toLocaleString() }} 元</strong>
+      当前回款金额: <strong>{{ receiptAmount.toLocaleString('zh-CN') }} 元</strong>
     </p>
     <el-table :data="rows" border @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" />
       <el-table-column prop="code" label="应收单号" width="160" />
-      <el-table-column prop="amount" label="金额" width="120" align="right" />
+      <el-table-column prop="amount" label="应收金额" width="120" align="right" />
       <el-table-column prop="balance" label="余额" width="120" align="right" />
       <el-table-column prop="aging" label="账龄" width="100" />
       <el-table-column label="核销金额" minWidth="120" align="center">

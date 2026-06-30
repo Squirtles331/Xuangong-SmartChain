@@ -15,17 +15,9 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
+import type { HrEmployee, HrEmployeeStatus } from '@/api/hr'
 
-export interface HrEmployeeFormModel {
-  id: string
-  code: string
-  name: string
-  department: string
-  position: string
-  phone: string
-  hire_date: string
-  status: string
-}
+export interface HrEmployeeFormModel extends HrEmployee {}
 
 interface Props {
   mode: 'add' | 'edit'
@@ -41,10 +33,15 @@ const emit = defineEmits<{
   submit: []
 }>()
 
+const statusOptions: Array<{ label: string; value: HrEmployeeStatus }> = [
+  { label: '在职', value: 'active' },
+  { label: '离职', value: 'inactive' }
+]
+
 const title = computed(() => (props.mode === 'add' ? '新增员工' : '编辑员工'))
 
 const formColumns = computed<FormColumnItem[]>(() => [
-  { type: 'input', label: '工号', field: 'code', required: true },
+  { type: 'input', label: '工号', field: 'code', props: { disabled: true } as any },
   { type: 'input', label: '姓名', field: 'name', required: true },
   {
     type: 'select-v2',
@@ -57,16 +54,13 @@ const formColumns = computed<FormColumnItem[]>(() => [
   },
   { type: 'input', label: '岗位', field: 'position', required: true },
   { type: 'input', label: '电话', field: 'phone' },
-  { type: 'date-picker', label: '入职日期', field: 'hire_date' },
+  { type: 'date-picker', label: '入职日期', field: 'hire_date', props: { valueFormat: 'YYYY-MM-DD' } as any },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
     props: {
-      options: [
-        { label: '在职', value: 'active' },
-        { label: '离职', value: 'inactive' }
-      ]
+      options: statusOptions
     } as any
   }
 ])
