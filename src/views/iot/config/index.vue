@@ -27,7 +27,7 @@
       </template>
       <template #actions="{ row }">
         <gi-button type="edit" @click="openEdit(row)" />
-        <gi-button style="margin-left: 8px" type="delete" @click="remove(row)" />
+        <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
       </template>
     </gi-table>
 
@@ -40,7 +40,7 @@ import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
-import { getIoTConfigList } from '@/api/iot'
+import { createIoTConfig, deleteIoTConfig, getIoTConfigList, updateIoTConfig } from '@/api/iot'
 import { useTable } from '@/hooks/useTable'
 import IoTConfigFormDialog, { type IoTConfigFormModel } from './IoTConfigFormDialog.vue'
 
@@ -104,7 +104,7 @@ const columns: TableColumnItem<IoTConfigRow>[] = [
   { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
 ]
 
-const { tableData, pagination, loading, search, refresh } = useTable<IoTConfigRow>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<IoTConfigRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const res = await getIoTConfigList({
@@ -115,7 +115,8 @@ const { tableData, pagination, loading, search, refresh } = useTable<IoTConfigRo
       status: searchForm.value.status || undefined
     })
     return { list: res.data.list, total: res.data.total }
-  }
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteIoTConfig(id)))
 })
 
 function createDefaultFormModel(): IoTConfigFormModel {
@@ -147,13 +148,6 @@ function openEdit(row: IoTConfigRow) {
   dialogVisible.value = true
 }
 
-function remove(row: IoTConfigRow) {
-  tableData.value = tableData.value.filter((c) => c.id !== row.id)
-  if ((pagination.currentPage - 1) * pagination.pageSize >= tableData.value.length) {
-    pagination.currentPage = Math.max(1, pagination.currentPage - 1)
-  }
-}
-
 async function submitDialog() {
   if (!formModel.value.name || !formModel.value.address) {
     ElMessage.warning('请填写设备名称和连接地址')
@@ -161,10 +155,9 @@ async function submitDialog() {
   }
 
   if (dialogMode.value === 'add') {
-    tableData.value.unshift({ ...formModel.value, id: String(Date.now()) } as IoTConfigRow)
+    await createIoTConfig({ ...formModel.value })
   } else {
-    const idx = tableData.value.findIndex((c) => c.id === formModel.value.id)
-    if (idx > -1) tableData.value[idx] = { ...formModel.value } as IoTConfigRow
+    await updateIoTConfig(formModel.value.id, { ...formModel.value })
   }
 
   dialogVisible.value = false

@@ -1,10 +1,10 @@
 <template>
   <gi-page-layout>
     <template #tool>
-      <el-button type="primary" @click="reload">Run Multi-Plant MRP</el-button>
+      <el-button type="primary" @click="reload">执行多工厂 MRP</el-button>
     </template>
 
-    <el-card header="Plant Capacity Utilization" shadow="never" style="margin-bottom: 16px">
+    <el-card header="工厂产能利用率" shadow="never" style="margin-bottom: 16px">
       <div ref="chartRef" style="width: 100%; height: 300px"></div>
     </el-card>
 
@@ -32,12 +32,12 @@ const plantCapacity = ref<any[]>([])
 let chart: EChartsType | null = null
 
 const columns: TableColumnItem<any>[] = [
-  { prop: 'material', label: 'Material', minWidth: 160 },
-  { prop: 'from_plant', label: 'From Plant', minWidth: 120 },
-  { prop: 'to_plant', label: 'To Plant', minWidth: 120 },
-  { prop: 'qty', label: 'Qty', minWidth: 80, align: 'center' },
-  { label: 'Type', minWidth: 100, slotName: 'type', align: 'center' },
-  { prop: 'suggestion', label: 'Suggestion', minWidth: 260 }
+  { prop: 'material', label: '物料', minWidth: 160 },
+  { prop: 'from_plant', label: '调出工厂', minWidth: 120 },
+  { prop: 'to_plant', label: '调入工厂', minWidth: 120 },
+  { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
+  { label: '类型', minWidth: 100, slotName: 'type', align: 'center' },
+  { prop: 'suggestion', label: '建议', minWidth: 260 }
 ]
 
 function renderChart() {
@@ -45,13 +45,13 @@ function renderChart() {
   chart ??= echarts.init(chartRef.value)
   chart.setOption({
     tooltip: { trigger: 'axis' },
-    legend: { data: ['Capacity', 'Used'] },
+    legend: { data: ['总产能', '已使用'] },
     xAxis: { type: 'category', data: plantCapacity.value.map((item) => item.plant) },
-    yAxis: { type: 'value', name: 'Capacity' },
+    yAxis: { type: 'value', name: '产能' },
     series: [
-      { name: 'Capacity', type: 'bar', data: plantCapacity.value.map((item) => item.capacity), itemStyle: { color: '#409eff' }, barGap: '10%' },
+      { name: '总产能', type: 'bar', data: plantCapacity.value.map((item) => item.capacity), itemStyle: { color: '#409eff' }, barGap: '10%' },
       {
-        name: 'Used',
+        name: '已使用',
         type: 'bar',
         data: plantCapacity.value.map((item) => item.used),
         itemStyle: { color: '#67c23a' },
@@ -75,7 +75,7 @@ async function loadData() {
 
 async function reload() {
   await loadData()
-  ElMessage.success('Multi-plant MRP finished')
+  ElMessage.success('多工厂 MRP 已完成')
 }
 
 function handleResize() {

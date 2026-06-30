@@ -62,6 +62,7 @@ import type { FormColumnItem, FormInstance, TableColumnItem } from 'gi-component
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { EQUIPMENT_STATUS } from '@/common/status-maps'
+import { createEquipment, deleteEquipment, getEquipmentList, updateEquipment, type Equipment } from '@/api/mdm'
 import { useTable } from '@/hooks/useTable'
 import EquipmentFormDialog, { type EquipmentFormModel } from './EquipmentFormDialog.vue'
 
@@ -71,7 +72,7 @@ interface EqRow {
   name: string
   model: string
   workshop: string
-  status: string
+  status: 'running' | 'idle' | 'repair' | 'maintenance'
   purchase_date: string
   commission_date: string
 }
@@ -133,10 +134,24 @@ const cols: TableColumnItem<EqRow>[] = [
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<EqRow>({
   rowKey: 'id',
-  listAPI: async () => {
-    return { list: [], total: 0 }
+  listAPI: async ({ page, size }) => {
+    const res = await getEquipmentList({
+      pageNum: page,
+      pageSize: size,
+      name: searchForm.value.keyword || undefined,
+      workshop: searchForm.value.workshop || undefined,
+      status: searchForm.value.status || undefined
+    })
+    return {
+      list: res.data.list.map((item) => ({
+        ...item,
+        purchase_date: item.purchase_date || '',
+        commission_date: item.commission_date || ''
+      })),
+      total: res.data.total
+    }
   },
-  deleteAPI: (ids) => Promise.all(ids.map(() => Promise.resolve()))
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteEquipment(id)))
 })
 
 const totalCount = computed(() => tableData.value.length)
@@ -191,7 +206,30 @@ function openEdit(row: EqRow) {
   dialogVisible.value = true
 }
 
+function buildEquipmentPayload(model: EquipmentFormModel): Partial<Equipment> {
+  return {
+    id: model.id,
+    code: model.code,
+    name: model.name,
+    model: model.model,
+    workshop: model.workshop,
+    status: model.status as Equipment['status'],
+    purchase_date: model.purchase_date,
+    commission_date: model.commission_date
+  }
+}
+
 async function submitDialog() {
+  if (!formModel.value.code || !formModel.value.name) {
+    return
+  }
+
+  if (dialogMode.value === 'add') {
+    await createEquipment(buildEquipmentPayload(formModel.value))
+  } else {
+    await updateEquipment(formModel.value.id, buildEquipmentPayload(formModel.value))
+  }
+
   dialogVisible.value = false
   await refresh()
 }

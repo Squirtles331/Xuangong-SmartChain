@@ -79,11 +79,56 @@ export const materialList = Mock.mock({
 }).list
 
 export const equipments = [
-  { id: '1', code: 'EQ0000000001', name: 'CNC Lathe', model: 'CK6150', workshop: 'Machining Workshop 1', status: 'running' },
-  { id: '2', code: 'EQ0000000002', name: 'CNC Lathe', model: 'CK6150', workshop: 'Machining Workshop 1', status: 'idle' },
-  { id: '3', code: 'EQ0000000003', name: 'Drill', model: 'Z3050', workshop: 'Machining Workshop 1', status: 'running' },
-  { id: '4', code: 'EQ0000000004', name: 'Grinder', model: 'M1432', workshop: 'Machining Workshop 1', status: 'repair' },
-  { id: '5', code: 'EQ0000000005', name: 'Machining Center', model: 'VMC850', workshop: 'Machining Workshop 2', status: 'running' }
+  {
+    id: '1',
+    code: 'EQ0000000001',
+    name: '数控车床',
+    model: 'CK6150',
+    workshop: '机加工一车间',
+    status: 'running',
+    purchase_date: '2023-03-12',
+    commission_date: '2023-04-01'
+  },
+  {
+    id: '2',
+    code: 'EQ0000000002',
+    name: '数控车床',
+    model: 'CK6150',
+    workshop: '机加工一车间',
+    status: 'idle',
+    purchase_date: '2023-05-20',
+    commission_date: '2023-06-08'
+  },
+  {
+    id: '3',
+    code: 'EQ0000000003',
+    name: '钻床',
+    model: 'Z3050',
+    workshop: '机加工一车间',
+    status: 'running',
+    purchase_date: '2022-11-18',
+    commission_date: '2022-12-06'
+  },
+  {
+    id: '4',
+    code: 'EQ0000000004',
+    name: '磨床',
+    model: 'M1432',
+    workshop: '机加工一车间',
+    status: 'repair',
+    purchase_date: '2021-09-15',
+    commission_date: '2021-10-10'
+  },
+  {
+    id: '5',
+    code: 'EQ0000000005',
+    name: '加工中心',
+    model: 'VMC850',
+    workshop: '机加工二车间',
+    status: 'maintenance',
+    purchase_date: '2024-01-09',
+    commission_date: '2024-01-28'
+  }
 ]
 
 export const workCenters = [

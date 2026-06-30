@@ -1,5 +1,5 @@
 import { isMockMode } from './_config'
-import { apiGet } from './_factory'
+import { apiDelete, apiGet, apiPost, apiPut } from './_factory'
 import * as mockService from '@/mock/services/wms'
 
 export function getInventoryList(params: { pageNum: number; pageSize: number; code?: string; name?: string; warehouse?: string }) {
@@ -35,6 +35,21 @@ export function getIoTAlertHistory(params: { pageNum: number; pageSize: number; 
 export function getIoTAlertRules() {
   if (isMockMode) return mockService.getIoTAlertRules()
   return apiGet<any>('/wms/iot-alert-rules')
+}
+
+export function createIoTAlertRule(data: Record<string, any>) {
+  if (isMockMode) return mockService.createIoTAlertRule(data)
+  return apiPost<Record<string, never>, Record<string, any>>('/wms/iot-alert-rules', data)
+}
+
+export function updateIoTAlertRule(id: string, data: Record<string, any>) {
+  if (isMockMode) return mockService.updateIoTAlertRule(id, data)
+  return apiPut<Record<string, never>, Record<string, any>>(`/wms/iot-alert-rules/${id}`, data)
+}
+
+export function deleteIoTAlertRule(id: string) {
+  if (isMockMode) return mockService.deleteIoTAlertRule(id)
+  return apiDelete<Record<string, never>>(`/wms/iot-alert-rules/${id}`)
 }
 
 export function getReceiptList(params: { pageNum: number; pageSize: number; code?: string; supplier?: string; status?: string }) {

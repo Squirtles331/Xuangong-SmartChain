@@ -3,6 +3,18 @@
  * Keep field names aligned with the frontend API contracts.
  */
 
+interface SystemUserRecord {
+  id: string
+  username: string
+  realName: string
+  email: string
+  phone: string
+  departmentId: string
+  status: 1 | 0
+  roles: string[]
+  createdAt: string
+}
+
 export const systemRoles = [
   {
     id: 'role-1',
@@ -42,7 +54,7 @@ export const systemRoles = [
   }
 ]
 
-export const systemUsers = [
+export const systemUsers: SystemUserRecord[] = [
   {
     id: 'user-1',
     username: 'admin',

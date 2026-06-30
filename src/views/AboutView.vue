@@ -6,7 +6,7 @@
         <el-card header="产品介绍" shadow="hover">
           <el-descriptions :column="2" border>
             <el-descriptions-item label="产品名称">璇链智造 MES 系统</el-descriptions-item>
-            <el-descriptions-item label="产品类型">制造执行系统 / Manufacturing Execution System</el-descriptions-item>
+            <el-descriptions-item label="产品类型">制造执行系统</el-descriptions-item>
             <el-descriptions-item label="技术栈" :span="2">Vue 3 + TypeScript + Element Plus + ECharts + gi-component</el-descriptions-item>
             <el-descriptions-item label="主要功能" :span="2">
               订单管理、物料管理(BOM)、工艺路线、生产排程、质量管理、设备管理(OEE)、能源管理、人力资源管理、财务管理、系统管理

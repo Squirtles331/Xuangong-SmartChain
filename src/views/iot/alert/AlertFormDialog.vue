@@ -40,12 +40,12 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const title = computed(() => (props.mode === 'add' ? 'Add Rule' : 'Edit Rule'))
+const title = computed(() => (props.mode === 'add' ? '新增规则' : '编辑规则'))
 
 const formColumns = computed<FormColumnItem[]>(() => [
   {
     type: 'select-v2',
-    label: 'Device',
+    label: '设备',
     field: 'device',
     required: true,
     props: {
@@ -54,21 +54,21 @@ const formColumns = computed<FormColumnItem[]>(() => [
   },
   {
     type: 'select-v2',
-    label: 'Metric',
+    label: '监测项',
     field: 'metric',
     required: true,
     props: {
       options: [
-        { label: 'Temperature', value: 'temp' },
+        { label: '温度', value: 'temp' },
         { label: 'RPM', value: 'rpm' },
-        { label: 'Vibration', value: 'vibration' },
-        { label: 'Current', value: 'current' }
+        { label: '振动', value: 'vibration' },
+        { label: '电流', value: 'current' }
       ]
     } as any
   },
   {
     type: 'select-v2',
-    label: 'Operator',
+    label: '运算符',
     field: 'operator',
     required: true,
     props: {
@@ -80,17 +80,17 @@ const formColumns = computed<FormColumnItem[]>(() => [
       ]
     } as any
   },
-  { type: 'input-number', label: 'Threshold', field: 'threshold', required: true },
+  { type: 'input-number', label: '阈值', field: 'threshold', required: true },
   {
     type: 'select-v2',
-    label: 'Level',
+    label: '等级',
     field: 'level',
     required: true,
     props: {
       options: [
-        { label: 'critical', value: 'critical' },
-        { label: 'warning', value: 'warning' },
-        { label: 'info', value: 'info' }
+        { label: '严重', value: 'critical' },
+        { label: '预警', value: 'warning' },
+        { label: '提示', value: 'info' }
       ]
     } as any
   }

@@ -68,7 +68,9 @@ export interface Equipment {
   name: string
   model: string
   workshop: string
-  status: 'running' | 'idle' | 'repair'
+  status: 'running' | 'idle' | 'repair' | 'maintenance'
+  purchase_date?: string
+  commission_date?: string
 }
 
 export interface EquipmentQuery {

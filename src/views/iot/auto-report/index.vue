@@ -52,6 +52,7 @@
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
+import { createIoTAutoReportRule, getIoTAutoReportList, updateIoTAutoReportRule } from '@/api/iot'
 import { useTable } from '@/hooks/useTable'
 import AutoReportFormDialog, { type AutoReportFormModel } from './AutoReportFormDialog.vue'
 
@@ -76,22 +77,16 @@ const dialogMode = ref<'add' | 'edit'>('add')
 const editingId = ref('')
 const formModel = ref<AutoReportFormModel>(createDefaultFormModel())
 
-const mockData = ref<AutoReportRow[]>([
-  { id: '1', equipment: '数控车床 CK6150', trigger: 'cycle_complete', threshold: 1, wo_field: 'qualified_qty', default_qty: 1, status: 'active' },
-  { id: '2', equipment: '钻床 Z3050', trigger: 'count_reached', threshold: 100, wo_field: 'qualified_qty', default_qty: 100, status: 'active' },
-  { id: '3', equipment: '加工中心 VMC850', trigger: 'power_off', threshold: 0, wo_field: 'qualified_qty', default_qty: 1, status: 'disabled' }
-])
-
 const { tableData, pagination, loading, refresh } = useTable<AutoReportRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const start = (page - 1) * size
-    return { list: mockData.value.slice(start, start + size), total: mockData.value.length }
+    const res = await getIoTAutoReportList({ pageNum: page, pageSize: size })
+    return { list: res.data.list, total: res.data.total }
   }
 })
 
 const reportStats = computed(() => {
-  const activeRules = mockData.value.filter((r) => r.status === 'active')
+  const activeRules = tableData.value.filter((r) => r.status === 'active')
   return [
     { label: '启用规则数', value: String(activeRules.length), unit: '条', color: '#409eff' },
     { label: '今日报工次数', value: '156', unit: '次', color: '#67c23a' },
@@ -142,19 +137,20 @@ async function submitDialog() {
   }
 
   if (dialogMode.value === 'add') {
-    mockData.value.unshift({ ...formModel.value, id: Date.now().toString() } as AutoReportRow)
+    await createIoTAutoReportRule({ ...formModel.value })
   } else {
-    const i = mockData.value.findIndex((e) => e.id === editingId.value)
-    if (i > -1) Object.assign(mockData.value[i], formModel.value)
+    await updateIoTAutoReportRule(editingId.value, { ...formModel.value })
   }
 
   dialogVisible.value = false
   await refresh()
 }
 
-function toggle(row: AutoReportRow) {
-  row.status = row.status === 'active' ? 'disabled' : 'active'
-  ElMessage.success(row.status === 'active' ? '已启用' : '已停用')
+async function toggle(row: AutoReportRow) {
+  const nextStatus = row.status === 'active' ? 'disabled' : 'active'
+  await updateIoTAutoReportRule(row.id, { ...row, status: nextStatus })
+  await refresh()
+  ElMessage.success(nextStatus === 'active' ? '已启用' : '已停用')
 }
 </script>
 

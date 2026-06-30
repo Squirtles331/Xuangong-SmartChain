@@ -4,6 +4,20 @@ import { wrapCreatedResponse, wrapDetailResponse, wrapListResponse, wrapSuccessR
 import { simulateDelay } from '../shared/delay'
 import { approvalFlows, auditLogs, codeRules, dictItems, dictTypes, menuTree, systemParams, systemRoles, systemUsers } from '../modules/system'
 
+function buildSystemUser(data: Partial<(typeof systemUsers)[number]> & { id: string }) {
+  return {
+    id: data.id,
+    username: data.username || '',
+    realName: data.realName || '',
+    email: data.email || '',
+    phone: data.phone || '',
+    departmentId: data.departmentId || '',
+    status: data.status ?? 1,
+    roles: Array.isArray(data.roles) ? data.roles : [],
+    createdAt: data.createdAt || new Date().toISOString().slice(0, 19).replace('T', ' ')
+  }
+}
+
 export async function getUserList(params: {
   pageNum: number
   pageSize: number
@@ -14,6 +28,8 @@ export async function getUserList(params: {
 }) {
   await simulateDelay()
 
+  const normalizedUsers = systemUsers.map((user) => buildSystemUser(user))
+  systemUsers.splice(0, systemUsers.length, ...normalizedUsers)
   let filtered = [...systemUsers]
 
   if (params.username) {
@@ -39,17 +55,10 @@ export async function getUserList(params: {
 export async function createUser(data: any) {
   await simulateDelay()
 
-  const newUser = {
-    id: generateId(),
-    username: data.username || '',
-    realName: data.realName || '',
-    email: data.email || '',
-    phone: data.phone || '',
-    departmentId: data.departmentId || '',
-    status: data.status ?? 1,
-    roles: Array.isArray(data.roles) ? data.roles : [],
-    createdAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
-  }
+  const newUser = buildSystemUser({
+    ...data,
+    id: generateId()
+  })
 
   systemUsers.unshift(newUser)
   return wrapCreatedResponse(newUser, '创建用户成功')
@@ -59,17 +68,10 @@ export async function updateUser(id: string, data: any) {
   await simulateDelay()
 
   const index = systemUsers.findIndex((user) => String(user.id) === id)
-  const nextUser = {
-    id,
-    username: data.username || '',
-    realName: data.realName || '',
-    email: data.email || '',
-    phone: data.phone || '',
-    departmentId: data.departmentId || '',
-    status: data.status ?? 1,
-    roles: Array.isArray(data.roles) ? data.roles : [],
-    createdAt: data.createdAt || new Date().toISOString().slice(0, 19).replace('T', ' ')
-  }
+  const nextUser = buildSystemUser({
+    ...data,
+    id
+  })
 
   if (index > -1) {
     systemUsers[index] = { ...systemUsers[index], ...nextUser }

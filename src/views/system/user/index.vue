@@ -15,7 +15,7 @@
 
     <template #tool>
       <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
     <TableSetting title="表格工具栏" :columns="columns" @refresh="refresh">
@@ -34,7 +34,7 @@
           </template>
 
           <template #roles="{ row }">
-            {{ row.roles.length ? row.roles.join(' / ') : '-' }}
+            {{ row?.roles?.join(' / ') || '-' }}
           </template>
 
           <template #status="{ row }">
@@ -45,7 +45,7 @@
 
           <template #actions="{ row }">
             <gi-button type="edit" @click="openEdit(row)" />
-            <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
+            <gi-button type="delete" style="margin-left: 8px" @click="onDelete(row)" />
           </template>
         </gi-table>
       </template>
@@ -116,10 +116,10 @@ const searchGridItemProps = {
 
 const columns: TableColumnItem<SysUser>[] = [
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
-  { prop: 'username', label: '用户名', minWidth: 120 },
+  { prop: 'username', label: '用户名', minWidth: 140 },
   { prop: 'realName', label: '姓名', minWidth: 120 },
-  { prop: 'roles', label: '角色', minWidth: 160, slotName: 'roles' },
-  { prop: 'status', label: '状态', minWidth: 100, slotName: 'status' },
+  { prop: 'roles', label: '角色', minWidth: 180, slotName: 'roles' },
+  { prop: 'status', label: '状态', minWidth: 100, slotName: 'status', align: 'center' },
   { prop: 'createdAt', label: '创建时间', minWidth: 180 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
@@ -191,14 +191,14 @@ function openEdit(row: SysUser) {
     id: row.id,
     username: row.username,
     realName: row.realName,
-    roles: [...row.roles],
+    roles: row.roles ? [...row.roles] : [],
     status: row.status
   }
   dialogVisible.value = true
 }
 
 async function submitDialog() {
-  if (!formModel.value.username || !formModel.value.roles.length) {
+  if (!formModel.value.username || !formModel.value.roles?.length) {
     ElMessage.warning('请填写用户名和角色')
     return
   }

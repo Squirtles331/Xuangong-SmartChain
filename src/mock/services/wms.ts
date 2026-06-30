@@ -3,8 +3,9 @@
  */
 import { inventory, iotAlertHistory, iotAlertRules, iotDevices, stockCountDiff, stockCountExec, wmsMaterials } from '../modules/wms'
 import { simulateDelay } from '../shared/delay'
+import { generateId } from '../shared/id'
 import { paginate, searchItems } from '../shared/paginate'
-import { wrapDetailResponse, wrapListResponse } from '../shared/response'
+import { wrapDetailResponse, wrapListResponse, wrapSuccessResponse } from '../shared/response'
 
 export async function getInventoryList(params: { pageNum: number; pageSize: number; code?: string; name?: string; warehouse?: string }) {
   await simulateDelay()
@@ -65,4 +66,24 @@ export async function getIoTAlertHistory(params: { pageNum: number; pageSize: nu
 export async function getIoTAlertRules() {
   await simulateDelay()
   return wrapDetailResponse(iotAlertRules)
+}
+
+export async function createIoTAlertRule(data: any) {
+  await simulateDelay()
+  ;(iotAlertRules as any[]).unshift({ id: generateId(), ...data })
+  return wrapSuccessResponse('预警规则创建成功')
+}
+
+export async function updateIoTAlertRule(id: string, data: any) {
+  await simulateDelay()
+  const index = (iotAlertRules as any[]).findIndex((item: any) => String(item.id) === id)
+  if (index > -1) Object.assign((iotAlertRules as any[])[index], data)
+  return wrapSuccessResponse('预警规则更新成功')
+}
+
+export async function deleteIoTAlertRule(id: string) {
+  await simulateDelay()
+  const index = (iotAlertRules as any[]).findIndex((item: any) => String(item.id) === id)
+  if (index > -1) (iotAlertRules as any[]).splice(index, 1)
+  return wrapSuccessResponse('预警规则删除成功')
 }

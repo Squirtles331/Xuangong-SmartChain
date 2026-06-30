@@ -12,30 +12,30 @@
         <div class="iot-header">
           <span class="iot-name">{{ device.name }}</span>
           <el-tag :type="device.online ? 'success' : 'danger'" size="small">
-            {{ device.online ? 'Online' : 'Offline' }}
+            {{ device.online ? '在线' : '离线' }}
           </el-tag>
         </div>
         <div class="iot-body">
           <div class="iot-row">
-            <span>Status</span>
+            <span>状态</span>
             <el-tag :type="device.running ? 'success' : 'info'" size="small">
-              {{ device.running ? 'Running' : 'Idle' }}
+              {{ device.running ? '运行中' : '空闲' }}
             </el-tag>
           </div>
           <div class="iot-row">
-            <span>RPM</span>
+            <span>转速</span>
             <strong>{{ device.rpm }} rpm</strong>
           </div>
           <div class="iot-row">
-            <span>Temp</span>
-            <strong :style="{ color: device.temp > 60 ? '#f56c6c' : '' }">{{ device.temp.toFixed(1) }} C</strong>
+            <span>温度</span>
+            <strong :style="{ color: device.temp > 60 ? '#f56c6c' : '' }">{{ device.temp.toFixed(1) }} °C</strong>
           </div>
           <div class="iot-row">
-            <span>Current</span>
+            <span>电流</span>
             <strong>{{ device.current.toFixed(1) }} A</strong>
           </div>
         </div>
-        <div class="iot-footer">Last report {{ device.last_report }}</div>
+        <div class="iot-footer">最近上报 {{ device.last_report }}</div>
       </el-card>
     </div>
 

@@ -55,9 +55,38 @@ export interface UserQuery {
   status?: SysUser['status']
 }
 
+function normalizeUser(user: Partial<SysUser>): SysUser {
+  return {
+    id: user.id || '',
+    username: user.username || '',
+    realName: user.realName || '',
+    email: user.email || '',
+    phone: user.phone || '',
+    departmentId: user.departmentId,
+    status: user.status ?? 1,
+    roles: Array.isArray(user.roles) ? user.roles : [],
+    createdAt: user.createdAt || ''
+  }
+}
+
 export function getUserList(params: UserQuery) {
-  if (isMockMode) return mockService.getUserList(params) as Promise<ApiResponse<PaginatedData<SysUser>>>
-  return apiGet<PaginatedData<SysUser>>('/system/users', { params })
+  if (isMockMode) {
+    return mockService.getUserList(params).then((response) => ({
+      ...response,
+      data: {
+        ...response.data,
+        list: response.data.list.map((user) => normalizeUser(user))
+      }
+    })) as Promise<ApiResponse<PaginatedData<SysUser>>>
+  }
+
+  return apiGet<PaginatedData<SysUser>>('/system/users', { params }).then((response) => ({
+    ...response,
+    data: {
+      ...response.data,
+      list: response.data.list.map((user) => normalizeUser(user))
+    }
+  }))
 }
 
 export function createUser(data: Partial<SysUser>) {
