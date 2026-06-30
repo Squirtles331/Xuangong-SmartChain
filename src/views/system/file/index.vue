@@ -1,7 +1,7 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="searchColumns" :required-fields="['keyword']" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
           v-model="queryParams"
           :columns="visibleSearchColumns"
@@ -20,7 +20,7 @@
       <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <TableSetting title="文件列表" :columns="columns" @refresh="refresh">
+    <TableSetting title="系统文件列表" :columns="columns" @refresh="refresh">
       <template #default="{ settingColumns, tableProps }">
         <gi-table
           :columns="settingColumns"
@@ -70,7 +70,7 @@ import { useTable } from '@/hooks/useTable'
 import FilePreviewDialog from './FilePreviewDialog.vue'
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '文件名称/所属模块/关联类型' } as any }
+  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '文件名称/所属模块/关联类型' } as any }
 ]
 
 const searchGridItemProps = {
@@ -78,7 +78,6 @@ const searchGridItemProps = {
 }
 
 const columns: TableColumnItem<SystemFile>[] = [
-  { type: 'index', label: '#', width: 60 },
   { label: '文件名称', minWidth: 240, slotName: 'name' },
   { prop: 'module', label: '所属模块', minWidth: 120 },
   { prop: 'objectType', label: '关联类型', minWidth: 120 },

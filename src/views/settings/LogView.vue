@@ -1,27 +1,52 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <gi-form ref="searchFormRef" v-model="searchForm" :columns="searchColumns" search @search="handleSearch" @reset="handleReset" />
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+        <gi-form
+          v-model="queryParams"
+          :columns="visibleSearchColumns"
+          :grid-item-props="searchGridItemProps"
+          search
+          @search="search"
+          @reset="handleReset"
+        />
+      </SearchSetting>
     </template>
 
-    <gi-table :columns="columns" :data="tableData" :pagination="pagination" :loading="loading" border style="height: 100%">
-      <template #actionType="{ row }">
-        <StatusTag :value="row.action" :options="auditActions" />
+    <TableSetting title="操作日志" :columns="columns" @refresh="refresh">
+      <template #default="{ settingColumns, tableProps }">
+        <gi-table
+          :columns="settingColumns"
+          :data="tableData"
+          :pagination="pagination"
+          :loading="loading"
+          v-bind="tableProps"
+          border
+          stripe
+          style="height: 100%"
+        >
+          <template #actionType="{ row }">
+            <StatusTag :value="row.action" :options="auditActions" />
+          </template>
+
+          <template #actions="{ row }">
+            <el-button type="primary" link size="small" @click="showDetail(row)">详情</el-button>
+          </template>
+        </gi-table>
       </template>
-      <template #actions="{ row }">
-        <el-button type="primary" link size="small" @click="showDetail(row)">详情</el-button>
-      </template>
-    </gi-table>
+    </TableSetting>
 
     <LogFormDialog v-model:visible="detailVisible" v-model:detail-log="detailLog" @close="detailVisible = false" />
   </gi-page-layout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { getAuditLogs, type AuditLog } from '@/api/system'
+import TableSetting from '@/components/TableSetting.vue'
+import { getAuditLogs, type AuditLog, type AuditLogQuery } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import LogFormDialog from './LogFormDialog.vue'
 
@@ -33,83 +58,117 @@ const auditActions = [
   { value: 'LOGIN', label: '登录', type: 'info' as const }
 ]
 
-const searchForm = ref({ userName: '', module: '', action: '', dateRange: [] as string[] })
+const auditModuleMap: Record<string, string> = {
+  '鐢ㄦ埛绠＄悊': '用户管理',
+  '鑿滃崟绠＄悊': '菜单管理',
+  '璐ㄦ绠＄悊': '质检管理'
+}
+
+const auditTargetMap: Record<string, string> = {
+  '鐢ㄦ埛 planner01': '用户 planner01',
+  '鑿滃崟 绯荤粺绠＄悊': '菜单 系统管理',
+  '妫€楠屽崟 IQC-001': '检验单 IQC-001'
+}
+
+const auditRequestMap: Record<string, string> = {
+  '{"name":"绯荤粺绠＄悊"}': '{"name":"系统管理"}'
+}
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '操作人', field: 'userName' },
-  { type: 'input', label: '模块', field: 'module' },
+  { type: 'input', label: '操作人', field: 'userName', props: { clearable: true } as any },
+  { type: 'input', label: '模块', field: 'module', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '操作类型',
     field: 'action',
     props: {
-      options: [{ label: '全部', value: '' }, ...auditActions.map((item) => ({ label: item.label, value: item.value }))]
+      clearable: true,
+      options: auditActions.map((item) => ({ label: item.label, value: item.value }))
     } as any
   },
   {
     type: 'date-picker',
     label: '时间范围',
     field: 'dateRange',
-    props: { type: 'daterange', startPlaceholder: '开始', endPlaceholder: '结束' } as any
+    props: {
+      type: 'daterange',
+      valueFormat: 'YYYY-MM-DD',
+      startPlaceholder: '开始日期',
+      endPlaceholder: '结束日期'
+    } as any
   }
 ]
 
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
+
 const columns: TableColumnItem<AuditLog>[] = [
-  { type: 'index', label: '#', width: 60 },
-  { prop: 'userName', label: '操作人', width: 100 },
-  { prop: 'module', label: '模块', width: 120 },
-  { label: '操作', minWidth: 80, slotName: 'actionType', align: 'center' },
-  { prop: 'target', label: '操作对象', minWidth: 160 },
-  { prop: 'ip', label: 'IP', width: 140 },
-  { prop: 'createdAt', label: '时间', width: 170 },
-  { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'userName', label: '操作人', minWidth: 100 },
+  { prop: 'module', label: '模块', minWidth: 130 },
+  { label: '操作类型', minWidth: 100, slotName: 'actionType', align: 'center' },
+  { prop: 'target', label: '操作对象', minWidth: 180 },
+  { prop: 'ip', label: 'IP 地址', minWidth: 130 },
+  { prop: 'createdAt', label: '操作时间', minWidth: 170 },
+  { label: '操作', minWidth: 90, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const allLogs = ref<AuditLog[]>([])
+const queryParams = reactive({
+  userName: '',
+  module: '',
+  action: '',
+  dateRange: [] as string[]
+})
 
-const { tableData, pagination, loading, search } = useTable<AuditLog>({
+const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const detailVisible = ref(false)
+const detailLog = ref<AuditLog | null>(null)
+
+const { tableData, pagination, loading, search, refresh } = useTable<AuditLog>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const response = await getAuditLogs({
-      pageNum: 1,
-      pageSize: 9999,
-      userName: searchForm.value.userName || undefined,
-      module: searchForm.value.module || undefined,
-      startDate: searchForm.value.dateRange?.[0] || undefined,
-      endDate: searchForm.value.dateRange?.[1] || undefined
-    })
-
-    allLogs.value = response.data.list
-
-    let filtered = allLogs.value
-    if (searchForm.value.action) {
-      filtered = filtered.filter((item) => item.action === searchForm.value.action)
+    const params: AuditLogQuery = {
+      pageNum: page,
+      pageSize: size,
+      userName: queryParams.userName || undefined,
+      module: queryParams.module || undefined,
+      action: queryParams.action || undefined,
+      startDate: queryParams.dateRange[0] || undefined,
+      endDate: queryParams.dateRange[1] || undefined
     }
-
-    const start = (page - 1) * size
+    const response = await getAuditLogs(params)
     return {
-      list: filtered.slice(start, start + size),
-      total: filtered.length
+      list: response.data.list.map(normalizeAuditLog),
+      total: response.data.total
     }
   }
 })
 
-function handleSearch() {
-  search()
+function normalizeAuditLog(row: AuditLog): AuditLog {
+  return {
+    ...row,
+    module: auditModuleMap[row.module] || row.module,
+    target: auditTargetMap[row.target] || row.target,
+    requestParams: auditRequestMap[row.requestParams] || row.requestParams
+  }
+}
+
+function onSearchFieldsChange(fields: FormColumnItem[]) {
+  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
-  searchForm.value = { userName: '', module: '', action: '', dateRange: [] }
+  Object.assign(queryParams, {
+    userName: '',
+    module: '',
+    action: '',
+    dateRange: []
+  })
   search()
 }
-
-const detailVisible = ref(false)
-const detailLog = ref<AuditLog | null>(null)
 
 function showDetail(row: AuditLog) {
   detailLog.value = row
   detailVisible.value = true
 }
 </script>
-
-<style scoped></style>

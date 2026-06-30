@@ -17,6 +17,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
 export interface CodeRuleFormModel {
@@ -88,6 +89,10 @@ const previewCode = computed(() => {
 })
 
 async function handleSubmit() {
+  if (!formData.value.code || !formData.value.name || !formData.value.prefix) {
+    ElMessage.warning('请完善编码规则信息')
+    return false
+  }
   emit('submit')
   return false
 }

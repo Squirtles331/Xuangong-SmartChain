@@ -96,7 +96,7 @@ const channelTagMap: Record<NotificationRule['channel'], 'success' | 'primary' |
 }
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '业务类型/Webhook 地址' } as any },
+  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '业务类型/Webhook 地址' } as any },
   { type: 'select-v2', label: '通知渠道', field: 'channel', props: { options: channelOptions, clearable: true } as any },
   { type: 'select-v2', label: '状态', field: 'status', props: { options: statusOptions, clearable: true } as any }
 ]
@@ -106,11 +106,10 @@ const searchGridItemProps = {
 }
 
 const columns: TableColumnItem<NotificationRule>[] = [
-  { type: 'index', label: '#', width: 60 },
-  { prop: 'bizType', label: '业务类型', minWidth: 140 },
+  { prop: 'bizType', label: '业务类型', minWidth: 160 },
   { label: '通知渠道', minWidth: 100, slotName: 'channel', align: 'center' },
   { prop: 'webhookUrl', label: 'Webhook 地址', minWidth: 320 },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
@@ -218,7 +217,7 @@ async function handleTest(row: NotificationRule) {
 
 async function handleToggle(row: NotificationRule) {
   await toggleNotificationRule(row.id)
-  ElMessage.success(row.status === 'active' ? '已停用' : '已启用')
+  ElMessage.success(row.status === 'active' ? '规则已停用' : '规则已启用')
   await refresh()
 }
 </script>

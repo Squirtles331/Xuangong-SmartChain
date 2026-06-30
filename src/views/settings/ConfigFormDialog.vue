@@ -1,30 +1,21 @@
 <template>
   <gi-dialog
     v-model="visible"
+    :title="mode === 'add' ? '新增参数' : '编辑参数'"
     :footer="true"
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? '新增参数' : '编辑参数'"
-    width="560px"
+    width="580px"
   >
-    <gi-form ref="formRef" v-model="formData" :columns="formColumns" label-width="100px" />
+    <gi-form v-model="formData" :columns="formColumns" :label-width="110" />
   </gi-dialog>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 import type { SystemParam } from '@/api/system'
-
-const categories: Record<string, string> = {
-  auth: '认证与安全',
-  mrp: 'MRP 计划',
-  stock: '库存与仓储',
-  production: '生产管理',
-  finance: '财务管理',
-  system: '系统通用'
-}
 
 export interface ConfigFormModel {
   id: string
@@ -51,37 +42,32 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formRef = ref()
-
 const formColumns: FormColumnItem[] = [
-  {
-    type: 'input',
-    label: '参数编码',
-    field: 'code',
-    props: { placeholder: '唯一标识，如: loginLockCount' },
-    rules: [{ required: true, message: '请输入参数编码', trigger: 'blur' }]
-  },
-  {
-    type: 'input',
-    label: '参数名称',
-    field: 'name',
-    props: { placeholder: '如: 登录失败锁定次数' },
-    rules: [{ required: true, message: '请输入参数名称', trigger: 'blur' }]
-  },
+  { type: 'input', label: '参数编码', field: 'code', required: true, props: { placeholder: '如：loginLockCount' } as any },
+  { type: 'input', label: '参数名称', field: 'name', required: true },
   {
     type: 'select-v2',
     label: '所属分类',
     field: 'category',
+    required: true,
     props: {
-      options: Object.entries(categories).map(([value, label]) => ({ label, value })),
-      placeholder: '请选择分类'
-    },
-    rules: [{ required: true, message: '请选择分类', trigger: 'change' }]
+      options: [
+        { label: '认证与安全', value: 'auth' },
+        { label: 'MRP 计划', value: 'mrp' },
+        { label: '库存与仓储', value: 'stock' },
+        { label: '生产管理', value: 'production' },
+        { label: '财务管理', value: 'finance' },
+        { label: '系统通用', value: 'system' },
+        { label: '安全策略', value: 'security' },
+        { label: '文件管理', value: 'file' }
+      ]
+    } as any
   },
   {
     type: 'select-v2',
     label: '值类型',
     field: 'valueType',
+    required: true,
     props: {
       options: [
         { label: '字符串', value: 'string' },
@@ -89,27 +75,22 @@ const formColumns: FormColumnItem[] = [
         { label: '布尔值', value: 'boolean' },
         { label: 'JSON', value: 'json' }
       ]
-    },
-    rules: [{ required: true, message: '请选择值类型', trigger: 'change' }]
+    } as any
   },
+  { type: 'input', label: '参数值', field: 'value', required: true },
+  { type: 'input', label: '默认值', field: 'defaultValue' },
   {
-    type: 'input',
-    label: '参数值',
-    field: 'value',
-    props: { placeholder: '当前值' },
-    rules: [{ required: true, message: '请输入参数值', trigger: 'blur' }]
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    props: {
+      options: [
+        { label: '启用', value: 'active' },
+        { label: '停用', value: 'disabled' }
+      ]
+    } as any
   },
-  {
-    type: 'input',
-    label: '默认值',
-    field: 'defaultValue'
-  },
-  {
-    type: 'input',
-    label: '描述',
-    field: 'description',
-    props: { type: 'textarea', rows: 2, placeholder: '参数用途说明' }
-  }
+  { type: 'input', label: '说明', field: 'description', props: { type: 'textarea', rows: 2 } as any }
 ]
 
 function handleCancel() {
@@ -117,15 +98,11 @@ function handleCancel() {
 }
 
 async function handleSubmit() {
-  if (!formRef.value) return false
-
-  try {
-    const valid = await formRef.value.validate()
-    if (!valid) return false
-    emit('submit')
-    return false
-  } catch {
+  if (!formData.value.code || !formData.value.name || !formData.value.value) {
+    ElMessage.warning('请完善参数信息')
     return false
   }
+  emit('submit')
+  return false
 }
 </script>

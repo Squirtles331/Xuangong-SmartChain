@@ -84,7 +84,7 @@ const protocolLabelMap: Record<SsoConfig['protocol'], string> = {
 }
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '配置名称/认证地址/Client ID' } as any },
+  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '配置名称/认证地址/Client ID' } as any },
   { type: 'select-v2', label: '协议', field: 'protocol', props: { options: protocolOptions, clearable: true } as any },
   { type: 'select-v2', label: '启用状态', field: 'enabled', props: { options: enabledOptions, clearable: true } as any }
 ]
@@ -94,7 +94,6 @@ const searchGridItemProps = {
 }
 
 const columns: TableColumnItem<SsoConfig>[] = [
-  { type: 'index', label: '#', width: 60 },
   { prop: 'name', label: '配置名称', minWidth: 160 },
   { prop: 'protocol', label: '协议', minWidth: 120, slotName: 'protocol' },
   { prop: 'url', label: '认证地址', minWidth: 240 },

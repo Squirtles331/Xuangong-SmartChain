@@ -11,6 +11,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
 export interface DictTypeFormModel {
@@ -34,12 +35,16 @@ const emit = defineEmits<{
 }>()
 
 const formColumns: FormColumnItem[] = [
-  { type: 'input', label: '字典编码', field: 'code', required: true, props: { placeholder: '如 work_order_priority' } as any },
-  { type: 'input', label: '字典名称', field: 'name', required: true, props: { placeholder: '如 工单优先级' } as any },
-  { type: 'input', label: '描述', field: 'description', props: { type: 'textarea', rows: 2 } as any }
+  { type: 'input', label: '字典编码', field: 'code', required: true, props: { placeholder: '如：work_order_priority' } as any },
+  { type: 'input', label: '字典名称', field: 'name', required: true, props: { placeholder: '如：工单优先级' } as any },
+  { type: 'input', label: '说明', field: 'description', props: { type: 'textarea', rows: 2 } as any }
 ]
 
 async function handleSubmit() {
+  if (!formData.value.code || !formData.value.name) {
+    ElMessage.warning('请填写字典编码和字典名称')
+    return false
+  }
   emit('submit')
   return false
 }

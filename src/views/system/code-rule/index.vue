@@ -18,7 +18,7 @@
       <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <TableSetting title="表格工具栏" :columns="columns" @refresh="refresh">
+    <TableSetting title="编码规则" :columns="columns" @refresh="refresh">
       <template #default="{ settingColumns, tableProps }">
         <gi-table
           :columns="settingColumns"
@@ -51,20 +51,19 @@ import { createCodeRule, deleteCodeRule, getCodeRules, updateCodeRule, type Code
 import { useTable } from '@/hooks/useTable'
 import CodeRuleFormDialog, { type CodeRuleFormModel } from './CodeRuleFormDialog.vue'
 
-const searchColumns: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword' }]
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword', props: { clearable: true } as any }]
 
 const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
 const columns: TableColumnItem<CodeRule>[] = [
-  { type: 'index', label: '#', width: 60 },
-  { prop: 'code', label: '规则编码', width: 100 },
-  { prop: 'name', label: '规则名称', minWidth: 150 },
-  { prop: 'prefix', label: '前缀', width: 80 },
-  { prop: 'dateFormat', label: '日期格式', width: 120 },
-  { prop: 'serialLength', label: '流水号长度', minWidth: 110, align: 'center' },
-  { prop: 'example', label: '示例', minWidth: 180 },
+  { prop: 'code', label: '规则编码', minWidth: 120 },
+  { prop: 'name', label: '规则名称', minWidth: 160 },
+  { prop: 'prefix', label: '前缀', minWidth: 100 },
+  { prop: 'dateFormat', label: '日期格式', minWidth: 120 },
+  { prop: 'serialLength', label: '流水号长度', minWidth: 120, align: 'center' },
+  { prop: 'example', label: '预览示例', minWidth: 180 },
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 

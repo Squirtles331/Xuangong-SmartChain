@@ -18,7 +18,7 @@
       <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <TableSetting title="表格工具栏" :columns="columns" @refresh="refresh">
+    <TableSetting title="审批流配置" :columns="columns" @refresh="refresh">
       <template #default="{ settingColumns, tableProps }">
         <gi-table
           :columns="settingColumns"
@@ -29,6 +29,10 @@
           border
           style="height: 100%"
         >
+          <template #businessType="{ row }">
+            {{ getBusinessTypeLabel(row.businessType) }}
+          </template>
+
           <template #status="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'info'">
               {{ row.status === 'active' ? '启用' : '停用' }}
@@ -86,12 +90,13 @@ const statusOptions: Array<{ label: string; value: ApprovalFlow['status'] }> = [
 ]
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '审批流名称', field: 'name' },
+  { type: 'input', label: '审批流名称', field: 'name', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '关联业务',
     field: 'businessType',
     props: {
+      clearable: true,
       options: businessTypeOptions
     } as any
   },
@@ -100,6 +105,7 @@ const searchColumns: FormColumnItem[] = [
     label: '状态',
     field: 'status',
     props: {
+      clearable: true,
       options: statusOptions
     } as any
   }
@@ -110,12 +116,11 @@ const searchGridItemProps = {
 }
 
 const columns: TableColumnItem<ApprovalFlow>[] = [
-  { type: 'index', label: '#', width: 60 },
-  { prop: 'name', label: '审批流名称', minWidth: 160 },
-  { prop: 'businessType', label: '关联业务', width: 160 },
-  { label: '审批节点', minWidth: 250, slotName: 'nodes' },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'name', label: '审批流名称', minWidth: 180 },
+  { label: '关联业务', minWidth: 140, slotName: 'businessType' },
+  { label: '审批节点', minWidth: 280, slotName: 'nodes' },
+  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const queryParams = reactive<{
@@ -143,7 +148,6 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<A
       businessType: queryParams.businessType || undefined,
       status: queryParams.status === '' ? undefined : queryParams.status
     }
-
     const response = await getApprovalFlows(params)
     return response.data
   },
@@ -152,6 +156,10 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<A
 
 function createDefaultFormModel(): ApprovalFlowFormModel {
   return { id: '', name: '', businessType: '', nodes: '' }
+}
+
+function getBusinessTypeLabel(value: string) {
+  return businessTypeOptions.find((item) => item.value === value)?.label || value
 }
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {
@@ -216,7 +224,7 @@ async function submitDialog() {
 
 function toggleStatus(row: ApprovalFlow) {
   row.status = row.status === 'active' ? 'disabled' : 'active'
-  ElMessage.success(row.status === 'active' ? '已启用' : '已停用')
+  ElMessage.success(row.status === 'active' ? '审批流已启用' : '审批流已停用')
 }
 </script>
 

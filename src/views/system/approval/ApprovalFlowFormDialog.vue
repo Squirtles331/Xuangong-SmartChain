@@ -12,6 +12,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
 export interface ApprovalFlowFormModel {
@@ -52,10 +53,20 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'input', label: '审批节点', field: 'nodes', required: true, props: { placeholder: '多个节点用逗号分隔，例如：车间主任,生产部长' } as any }
+  {
+    type: 'input',
+    label: '审批节点',
+    field: 'nodes',
+    required: true,
+    props: { placeholder: '多个节点用逗号分隔，例如：车间主任,生产部长' } as any
+  }
 ]
 
 async function handleSubmit() {
+  if (!formData.value.name || !formData.value.businessType || !formData.value.nodes) {
+    ElMessage.warning('请完善审批流信息')
+    return false
+  }
   emit('submit')
   return false
 }

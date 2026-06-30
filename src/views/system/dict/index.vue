@@ -1,7 +1,7 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="searchColumns" :required-fields="['keyword']" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
           v-model="queryParams"
           :columns="visibleSearchColumns"
@@ -18,7 +18,7 @@
       <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
-    <TableSetting title="表格工具栏" :columns="typeColumns" @refresh="refresh">
+    <TableSetting title="字典类型管理" :columns="typeColumns" @refresh="refresh">
       <template #default="{ settingColumns, tableProps }">
         <gi-table
           :columns="settingColumns"
@@ -31,7 +31,7 @@
         >
           <template #status="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'info'">
-              {{ row.status === 'active' ? '启用' : '禁用' }}
+              {{ row.status === 'active' ? '启用' : '停用' }}
             </el-tag>
           </template>
 
@@ -88,12 +88,11 @@ const searchGridItemProps = {
 }
 
 const typeColumns: TableColumnItem<DictType>[] = [
-  { type: 'index', label: '#', width: 60 },
   { prop: 'code', label: '字典编码', minWidth: 180 },
-  { prop: 'name', label: '字典名称', minWidth: 140 },
-  { prop: 'description', label: '描述', minWidth: 200 },
-  { label: '状态', minWidth: 100, slotName: 'status' },
-  { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'name', label: '字典名称', minWidth: 150 },
+  { prop: 'description', label: '说明', minWidth: 220 },
+  { label: '状态', minWidth: 100, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const queryParams = reactive<{

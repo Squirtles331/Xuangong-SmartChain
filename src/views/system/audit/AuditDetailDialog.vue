@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" title="操作日志详情" width="600px" :lock-scroll="false">
+  <gi-dialog v-model="visible" title="操作日志详情" width="600px" :footer="false" :lock-scroll="false">
     <el-descriptions :column="2" border>
       <el-descriptions-item label="操作人">{{ detailLog?.userName }}</el-descriptions-item>
       <el-descriptions-item label="操作时间">{{ detailLog?.createdAt }}</el-descriptions-item>
@@ -13,7 +13,7 @@
         <pre class="json-preview">{{ detailLog?.requestParams || '-' }}</pre>
       </el-descriptions-item>
     </el-descriptions>
-  </el-dialog>
+  </gi-dialog>
 </template>
 
 <script setup lang="ts">

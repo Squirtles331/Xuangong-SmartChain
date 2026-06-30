@@ -12,6 +12,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
 export interface SsoFormModel {
@@ -43,7 +44,7 @@ const formColumns: FormColumnItem[] = [
   { type: 'input', label: '配置名称', field: 'name', required: true },
   {
     type: 'select-v2',
-    label: 'SSO协议',
+    label: 'SSO 协议',
     field: 'protocol',
     required: true,
     props: {
@@ -64,6 +65,10 @@ const formColumns: FormColumnItem[] = [
 ]
 
 async function handleSubmit() {
+  if (!formData.value.name || !formData.value.url || !formData.value.clientId) {
+    ElMessage.warning('请完善单点登录配置')
+    return false
+  }
   emit('submit')
   return false
 }

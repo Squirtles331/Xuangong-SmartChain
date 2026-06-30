@@ -12,6 +12,7 @@
 </template>
 
 <script lang="ts" setup>
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem } from 'gi-component'
 
 export interface NotificationRuleFormModel {
@@ -47,7 +48,7 @@ const formColumns: FormColumnItem[] = [
         { label: '工序派工', value: '工序派工' },
         { label: '质检通知', value: '质检通知' },
         { label: '异常上报', value: '异常上报' },
-        { label: 'ECN生效', value: 'ECN生效' },
+        { label: 'ECN 生效', value: 'ECN 生效' },
         { label: '应收逾期', value: '应收逾期' }
       ]
     } as any
@@ -65,7 +66,7 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   },
-  { type: 'input', label: 'Webhook地址', field: 'webhookUrl', props: { placeholder: '企业微信/钉钉机器人 webhook' } as any },
+  { type: 'input', label: 'Webhook 地址', field: 'webhookUrl', props: { placeholder: '企业微信/钉钉机器人 webhook' } as any },
   {
     type: 'select-v2',
     label: '状态',
@@ -80,6 +81,10 @@ const formColumns: FormColumnItem[] = [
 ]
 
 async function handleSubmit() {
+  if (!formData.value.bizType || !formData.value.channel) {
+    ElMessage.warning('请完善通知规则信息')
+    return false
+  }
   emit('submit')
   return false
 }

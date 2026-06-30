@@ -1,19 +1,19 @@
 <template>
-  <el-dialog v-model="visible" title="操作日志详情" width="600px" @close="handleClose">
+  <gi-dialog v-model="visible" title="操作日志详情" :footer="false" width="640px" @close="handleClose">
     <el-descriptions :column="2" border>
-      <el-descriptions-item label="操作人">{{ detailLog?.userName }}</el-descriptions-item>
-      <el-descriptions-item label="操作时间">{{ detailLog?.createdAt }}</el-descriptions-item>
-      <el-descriptions-item label="模块">{{ detailLog?.module }}</el-descriptions-item>
+      <el-descriptions-item label="操作人">{{ detailLog?.userName || '-' }}</el-descriptions-item>
+      <el-descriptions-item label="操作时间">{{ detailLog?.createdAt || '-' }}</el-descriptions-item>
+      <el-descriptions-item label="所属模块">{{ detailLog?.module || '-' }}</el-descriptions-item>
       <el-descriptions-item label="操作类型">
         <StatusTag v-if="detailLog" :value="detailLog.action" :options="auditActions" />
       </el-descriptions-item>
-      <el-descriptions-item label="操作对象">{{ detailLog?.target }}</el-descriptions-item>
-      <el-descriptions-item label="IP地址">{{ detailLog?.ip }}</el-descriptions-item>
+      <el-descriptions-item label="操作对象">{{ detailLog?.target || '-' }}</el-descriptions-item>
+      <el-descriptions-item label="IP 地址">{{ detailLog?.ip || '-' }}</el-descriptions-item>
       <el-descriptions-item label="请求参数" :span="2">
         <pre class="json-preview">{{ detailLog?.requestParams || '-' }}</pre>
       </el-descriptions-item>
     </el-descriptions>
-  </el-dialog>
+  </gi-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -24,7 +24,8 @@ const auditActions = [
   { value: 'CREATE', label: '新增', type: 'success' as const },
   { value: 'UPDATE', label: '修改', type: 'warning' as const },
   { value: 'DELETE', label: '删除', type: 'danger' as const },
-  { value: 'APPROVE', label: '审批', type: 'primary' as const }
+  { value: 'APPROVE', label: '审批', type: 'primary' as const },
+  { value: 'LOGIN', label: '登录', type: 'info' as const }
 ]
 
 const visible = defineModel<boolean>('visible', { required: true })
@@ -41,11 +42,11 @@ function handleClose() {
 
 <style scoped>
 .json-preview {
-  max-height: 200px;
+  margin: 0;
+  max-height: 220px;
   overflow: auto;
-  font-size: 12px;
   white-space: pre-wrap;
   word-break: break-all;
-  margin: 0;
+  font-size: 12px;
 }
 </style>

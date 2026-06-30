@@ -1,7 +1,7 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="searchColumns" :required-fields="['userName']" @update:visible-fields="onSearchFieldsChange">
+      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
         <gi-form
           v-model="queryParams"
           :columns="visibleSearchColumns"
@@ -13,7 +13,7 @@
       </SearchSetting>
     </template>
 
-    <TableSetting title="表格工具栏" :columns="columns" @refresh="refresh">
+    <TableSetting title="系统审计日志" :columns="columns" @refresh="refresh">
       <template #default="{ settingColumns, tableProps }">
         <gi-table
           :columns="settingColumns"
@@ -59,21 +59,27 @@ const auditActionOptions = [
 ]
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '操作人', field: 'userName' },
-  { type: 'input', label: '模块', field: 'module' },
+  { type: 'input', label: '操作人', field: 'userName', props: { clearable: true } as any },
+  { type: 'input', label: '模块', field: 'module', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '操作类型',
     field: 'action',
     props: {
-      options: [{ label: '全部', value: '' }, ...auditActionOptions.map((item) => ({ label: item.label, value: item.value }))]
+      clearable: true,
+      options: auditActionOptions.map((item) => ({ label: item.label, value: item.value }))
     } as any
   },
   {
     type: 'date-picker',
     label: '时间范围',
     field: 'dateRange',
-    props: { type: 'daterange', startPlaceholder: '开始', endPlaceholder: '结束' } as any
+    props: {
+      type: 'daterange',
+      valueFormat: 'YYYY-MM-DD',
+      startPlaceholder: '开始日期',
+      endPlaceholder: '结束日期'
+    } as any
   }
 ]
 
@@ -82,14 +88,13 @@ const searchGridItemProps = {
 }
 
 const columns: TableColumnItem<AuditLog>[] = [
-  { type: 'index', label: '#', width: 60 },
-  { prop: 'userName', label: '操作人', width: 100 },
-  { prop: 'module', label: '模块', width: 120 },
+  { prop: 'userName', label: '操作人', minWidth: 100 },
+  { prop: 'module', label: '模块', minWidth: 120 },
   { label: '操作类型', minWidth: 100, slotName: 'actionType', align: 'center' },
-  { prop: 'target', label: '操作对象', minWidth: 160 },
-  { prop: 'ip', label: 'IP', width: 140 },
-  { prop: 'createdAt', label: '时间', width: 170 },
-  { label: '操作', minWidth: 80, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'target', label: '操作对象', minWidth: 180 },
+  { prop: 'ip', label: 'IP 地址', minWidth: 140 },
+  { prop: 'createdAt', label: '操作时间', minWidth: 170 },
+  { label: '操作', minWidth: 90, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const queryParams = reactive<{
