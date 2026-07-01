@@ -35,6 +35,8 @@ const router = useRouter()
 const layoutStore = useLayoutStore()
 
 const getRouteTitle = (path: string): string => {
+  // 优先用当前路由已解析的标题（含带参数的动态路由）；否则回退到按路径匹配路由记录
+  if (path === route.path && route.meta?.title) return route.meta.title as string
   const record = router.getRoutes().find((r) => r.path === path)
   return (record?.meta?.title as string) || '未知页面'
 }

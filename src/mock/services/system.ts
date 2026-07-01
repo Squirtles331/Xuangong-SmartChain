@@ -10,6 +10,8 @@ import {
   dictTypes,
   menuTree,
   notificationRules,
+  printTemplateCategories,
+  printTemplates,
   ssoConfigs,
   systemFiles,
   systemParams,
@@ -53,6 +55,69 @@ function walkMenuTree(nodes: any[], callback: (node: any, index: number, parent:
     }
   }
   return false
+}
+
+function flattenPrintTemplateCategories(nodes: any[], parentName = ''): any[] {
+  return nodes.flatMap((node) => {
+    const current = {
+      ...node,
+      parentName
+    }
+    const children = Array.isArray(node.children) ? flattenPrintTemplateCategories(node.children, node.name) : []
+    return [current, ...children]
+  })
+}
+
+function walkPrintTemplateCategoryTree(nodes: any[], callback: (node: any, index: number, parent: any[] | null) => boolean): boolean {
+  for (let index = 0; index < nodes.length; index += 1) {
+    const node = nodes[index]
+    if (callback(node, index, nodes)) {
+      return true
+    }
+    if (Array.isArray(node.children) && walkPrintTemplateCategoryTree(node.children, callback)) {
+      return true
+    }
+  }
+  return false
+}
+
+function collectPrintTemplateCategoryIds(nodes: any[], ids: Set<string> = new Set()) {
+  nodes.forEach((node) => {
+    ids.add(String(node.id))
+    if (Array.isArray(node.children)) collectPrintTemplateCategoryIds(node.children, ids)
+  })
+  return ids
+}
+
+function getPrintTemplateCategoryNode(categoryId: string) {
+  let found: any = null
+  walkPrintTemplateCategoryTree(printTemplateCategories, (node) => {
+    if (String(node.id) !== categoryId) return false
+    found = node
+    return true
+  })
+  return found
+}
+
+function getPrintTemplateCategoryDescendantIds(categoryId: string) {
+  const result = new Set<string>()
+  walkPrintTemplateCategoryTree(printTemplateCategories, (node) => {
+    if (String(node.id) !== categoryId) return false
+    collectPrintTemplateCategoryIds([node], result)
+    return true
+  })
+  return result
+}
+
+function fillPrintTemplateCategoryMeta(node: any, parentName = ''): any {
+  const current = {
+    ...node,
+    parentName
+  }
+  if (Array.isArray(node.children)) {
+    current.children = node.children.map((child: any) => fillPrintTemplateCategoryMeta(child, node.name))
+  }
+  return current
 }
 
 export async function getUserList(params: {
@@ -724,4 +789,230 @@ export async function testSsoConfig(id: string) {
   }
 
   return wrapSuccessResponse('连接测试成功')
+}
+
+export async function getPrintTemplateCategoryTree() {
+  await simulateDelay()
+  return wrapDetailResponse(printTemplateCategories.map((item) => fillPrintTemplateCategoryMeta(item)))
+}
+
+export async function getPrintTemplateCategoryList(params: { pageNum: number; pageSize: number; keyword?: string }) {
+  await simulateDelay()
+
+  let filtered = flattenPrintTemplateCategories(printTemplateCategories)
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['name', 'code', 'parentName'])
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function createPrintTemplateCategory(data: any) {
+  await simulateDelay()
+
+  const parent = data.parentId ? getPrintTemplateCategoryNode(String(data.parentId)) : null
+  const nextCategory = {
+    id: generateId(),
+    name: data.name || '',
+    code: data.code || '',
+    parentId: parent?.id || null,
+    level: parent ? Number(parent.level || 0) + 1 : 0,
+    createdBy: data.createdBy || '超级管理员',
+    createdAt: data.createdAt || new Date().toISOString().slice(0, 19).replace('T', ' '),
+    updatedBy: data.updatedBy || '超级管理员',
+    updatedAt: data.updatedAt || new Date().toISOString().slice(0, 19).replace('T', ' ')
+  }
+
+  if (!parent) {
+    printTemplateCategories.unshift(nextCategory)
+  } else {
+    if (!Array.isArray(parent.children)) parent.children = []
+    parent.children.unshift(nextCategory)
+  }
+
+  return wrapCreatedResponse({ ...nextCategory, parentName: parent?.name || '' }, '创建打印模板分类成功')
+}
+
+export async function updatePrintTemplateCategory(id: string, data: any) {
+  await simulateDelay()
+
+  let updatedNode: any = null
+  walkPrintTemplateCategoryTree(printTemplateCategories, (node) => {
+    if (String(node.id) !== id) return false
+    Object.assign(node, {
+      name: data.name ?? node.name,
+      code: data.code ?? node.code,
+      updatedBy: data.updatedBy || '超级管理员',
+      updatedAt: data.updatedAt || new Date().toISOString().slice(0, 19).replace('T', ' ')
+    })
+    updatedNode = node
+    return true
+  })
+
+  return wrapUpdatedResponse(updatedNode || { id, ...data }, '更新打印模板分类成功')
+}
+
+export async function deletePrintTemplateCategory(id: string) {
+  await simulateDelay()
+
+  const deleteIds = new Set<string>()
+  walkPrintTemplateCategoryTree(printTemplateCategories, (node) => {
+    if (String(node.id) !== id) return false
+    collectPrintTemplateCategoryIds([node], deleteIds)
+    return true
+  })
+
+  const rootIndex = printTemplateCategories.findIndex((item) => String(item.id) === id)
+  if (rootIndex > -1) {
+    printTemplateCategories.splice(rootIndex, 1)
+  } else {
+    walkPrintTemplateCategoryTree(printTemplateCategories, (node, index, parent) => {
+      if (String(node.id) !== id || !parent) return false
+      parent.splice(index, 1)
+      return true
+    })
+  }
+
+  for (let index = printTemplates.length - 1; index >= 0; index -= 1) {
+    if (deleteIds.has(String(printTemplates[index].categoryId))) {
+      printTemplates.splice(index, 1)
+    }
+  }
+
+  return wrapSuccessResponse('删除打印模板分类成功')
+}
+
+export async function getPrintTemplateList(params: {
+  pageNum: number
+  pageSize: number
+  categoryId?: string
+  keyword?: string
+  systemBuiltin?: boolean
+}) {
+  await simulateDelay()
+
+  const categoryMap = new Map(flattenPrintTemplateCategories(printTemplateCategories).map((item) => [String(item.id), item]))
+  let filtered = printTemplates.map((item) => ({
+    ...item,
+    categoryName: categoryMap.get(String(item.categoryId))?.name || ''
+  }))
+
+  if (params.categoryId) {
+    const ids = getPrintTemplateCategoryDescendantIds(String(params.categoryId))
+    filtered = filtered.filter((item) => ids.has(String(item.categoryId)))
+  }
+  if (params.keyword) filtered = searchItems(filtered, params.keyword, ['name', 'remark', 'categoryName'])
+  if (params.systemBuiltin !== undefined) filtered = filtered.filter((item) => item.systemBuiltin === params.systemBuiltin)
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function getPrintTemplateDetail(id: string) {
+  await simulateDelay()
+
+  const categoryMap = new Map(flattenPrintTemplateCategories(printTemplateCategories).map((item) => [String(item.id), item]))
+  const template = printTemplates.find((item) => String(item.id) === id)
+  return wrapDetailResponse(
+    template
+      ? {
+          ...template,
+          categoryName: categoryMap.get(String(template.categoryId))?.name || ''
+        }
+      : ({} as any)
+  )
+}
+
+export async function createPrintTemplate(data: any) {
+  await simulateDelay()
+
+  if (data.isDefault) {
+    printTemplates.forEach((item) => {
+      if (String(item.categoryId) === String(data.categoryId)) item.isDefault = false
+    })
+  }
+
+  const nextTemplate = {
+    id: generateId(),
+    categoryId: data.categoryId || '',
+    name: data.name || '',
+    systemBuiltin: data.systemBuiltin ?? false,
+    isDefault: data.isDefault ?? false,
+    remark: data.remark || '',
+    templateData: data.templateData ?? {
+      version: '1.0.0',
+      page: { width: 210, height: 297, unit: 'mm' },
+      components: []
+    },
+    createdBy: data.createdBy || '超级管理员',
+    createdAt: data.createdAt || new Date().toISOString().slice(0, 19).replace('T', ' '),
+    updatedBy: data.updatedBy || '超级管理员',
+    updatedAt: data.updatedAt || new Date().toISOString().slice(0, 19).replace('T', ' ')
+  }
+
+  printTemplates.unshift(nextTemplate)
+  return wrapCreatedResponse(nextTemplate, '创建打印模板成功')
+}
+
+export async function updatePrintTemplate(id: string, data: any) {
+  await simulateDelay()
+
+  const index = printTemplates.findIndex((item) => String(item.id) === id)
+  if (data.isDefault) {
+    printTemplates.forEach((item) => {
+      if (String(item.categoryId) === String(data.categoryId ?? printTemplates[index]?.categoryId) && String(item.id) !== id) {
+        item.isDefault = false
+      }
+    })
+  }
+
+  if (index > -1) {
+    printTemplates[index] = {
+      ...printTemplates[index],
+      ...data,
+      updatedBy: data.updatedBy || '超级管理员',
+      updatedAt: data.updatedAt || new Date().toISOString().slice(0, 19).replace('T', ' ')
+    }
+    return wrapUpdatedResponse(printTemplates[index], '更新打印模板成功')
+  }
+
+  return wrapUpdatedResponse({ id, ...data }, '更新打印模板成功')
+}
+
+export async function deletePrintTemplate(id: string) {
+  await simulateDelay()
+
+  const index = printTemplates.findIndex((item) => String(item.id) === id)
+  if (index > -1) printTemplates.splice(index, 1)
+
+  return wrapSuccessResponse('删除打印模板成功')
+}
+
+export async function setPrintTemplateDefault(id: string) {
+  await simulateDelay()
+
+  const current = printTemplates.find((item) => String(item.id) === id)
+  if (current) {
+    printTemplates.forEach((item) => {
+      if (String(item.categoryId) === String(current.categoryId)) {
+        item.isDefault = String(item.id) === id
+      }
+    })
+    current.updatedBy = '超级管理员'
+    current.updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  }
+
+  return wrapUpdatedResponse(current || { id }, '设置默认打印模板成功')
+}
+
+export async function updatePrintTemplateDesign(id: string, templateData: unknown) {
+  await simulateDelay()
+
+  const current = printTemplates.find((item) => String(item.id) === id)
+  if (current) {
+    current.templateData = templateData as typeof current.templateData
+    current.updatedBy = '超级管理员'
+    current.updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  }
+
+  return wrapUpdatedResponse(current || { id, templateData }, '保存打印模板设计成功')
 }

@@ -530,3 +530,106 @@ export function testSsoConfig(id: string) {
   if (isMockMode) return mockService.testSsoConfig(id)
   return apiPost<null>(`/system/sso-configs/${id}/test`)
 }
+
+export interface PrintTemplateCategory {
+  id: string
+  name: string
+  code: string
+  parentId: string | null
+  parentName?: string
+  level: number
+  createdBy: string
+  createdAt: string
+  updatedBy: string
+  updatedAt: string
+  children?: PrintTemplateCategory[]
+}
+
+export interface PrintTemplateCategoryQuery {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+}
+
+export function getPrintTemplateCategoryTree() {
+  if (isMockMode) return mockService.getPrintTemplateCategoryTree() as Promise<ApiResponse<PrintTemplateCategory[]>>
+  return apiGet<PrintTemplateCategory[]>('/system/print-template-categories/tree')
+}
+
+export function getPrintTemplateCategoryList(params: PrintTemplateCategoryQuery) {
+  if (isMockMode) return mockService.getPrintTemplateCategoryList(params) as Promise<ApiResponse<PaginatedData<PrintTemplateCategory>>>
+  return apiGet<PaginatedData<PrintTemplateCategory>>('/system/print-template-categories', { params })
+}
+
+export function createPrintTemplateCategory(data: Partial<PrintTemplateCategory>) {
+  if (isMockMode) return mockService.createPrintTemplateCategory(data)
+  return apiPost<PrintTemplateCategory, Partial<PrintTemplateCategory>>('/system/print-template-categories', data)
+}
+
+export function updatePrintTemplateCategory(id: string, data: Partial<PrintTemplateCategory>) {
+  if (isMockMode) return mockService.updatePrintTemplateCategory(id, data)
+  return apiPut<PrintTemplateCategory, Partial<PrintTemplateCategory>>(`/system/print-template-categories/${id}`, data)
+}
+
+export function deletePrintTemplateCategory(id: string) {
+  if (isMockMode) return mockService.deletePrintTemplateCategory(id)
+  return apiDelete<null>(`/system/print-template-categories/${id}`)
+}
+
+export interface PrintTemplate {
+  id: string
+  categoryId: string
+  categoryName?: string
+  name: string
+  systemBuiltin: boolean
+  isDefault: boolean
+  remark: string
+  templateData?: unknown
+  createdBy: string
+  createdAt: string
+  updatedBy: string
+  updatedAt: string
+}
+
+export interface PrintTemplateQuery {
+  pageNum: number
+  pageSize: number
+  categoryId?: string
+  keyword?: string
+  systemBuiltin?: boolean
+}
+
+export function getPrintTemplateList(params: PrintTemplateQuery) {
+  if (isMockMode) return mockService.getPrintTemplateList(params) as Promise<ApiResponse<PaginatedData<PrintTemplate>>>
+  return apiGet<PaginatedData<PrintTemplate>>('/system/print-templates', { params })
+}
+
+export function getPrintTemplateDetail(id: string) {
+  if (isMockMode) return mockService.getPrintTemplateDetail(id) as Promise<ApiResponse<PrintTemplate>>
+  return apiGet<PrintTemplate>(`/system/print-templates/${id}`)
+}
+
+export function createPrintTemplate(data: Partial<PrintTemplate>) {
+  if (isMockMode) return mockService.createPrintTemplate(data)
+  return apiPost<PrintTemplate, Partial<PrintTemplate>>('/system/print-templates', data)
+}
+
+export function updatePrintTemplate(id: string, data: Partial<PrintTemplate>) {
+  if (isMockMode) return mockService.updatePrintTemplate(id, data)
+  return apiPut<PrintTemplate, Partial<PrintTemplate>>(`/system/print-templates/${id}`, data)
+}
+
+export function deletePrintTemplate(id: string) {
+  if (isMockMode) return mockService.deletePrintTemplate(id)
+  return apiDelete<null>(`/system/print-templates/${id}`)
+}
+
+export function setPrintTemplateDefault(id: string) {
+  if (isMockMode) return mockService.setPrintTemplateDefault(id)
+  return apiPut<PrintTemplate>(`/system/print-templates/${id}/default`)
+}
+
+export function updatePrintTemplateDesign(id: string, templateData: unknown) {
+  if (isMockMode) return mockService.updatePrintTemplateDesign(id, templateData)
+  return apiPut<PrintTemplate, { templateData: unknown }>(`/system/print-templates/${id}/design`, { templateData })
+}

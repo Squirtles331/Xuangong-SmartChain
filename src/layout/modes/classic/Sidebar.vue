@@ -22,7 +22,7 @@
           <el-icon><component :is="getIcon(group.icon || 'Menu')" /></el-icon>
           <span class="menu-title">{{ group.title }}</span>
         </template>
-        <el-menu-item v-for="child in group.children" :key="child.path" :index="child.path">{{ child.title }}</el-menu-item>
+        <SidebarMenuItem v-for="child in group.children" :key="child.path" :item="child" />
       </el-sub-menu>
     </el-menu>
     <div class="sidebar-footer">
@@ -38,6 +38,7 @@ import { Fold } from '@element-plus/icons-vue'
 
 import * as Icons from '@element-plus/icons-vue'
 import { useSidebarMenu } from '@/layout/common/useSidebarMenu'
+import SidebarMenuItem from '@/layout/common/SidebarMenuItem.vue'
 
 const props = defineProps<{ activeMenu: string; collapsed: boolean; show: boolean }>()
 const emit = defineEmits<{ (e: 'select'): void; (e: 'toggle-collapse'): void }>()

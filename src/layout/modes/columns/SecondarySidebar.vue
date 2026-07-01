@@ -10,12 +10,7 @@
       text-color="var(--layout-sidebar-text)"
       active-text-color="var(--layout-sidebar-active-text)"
     >
-      <el-menu-item v-for="item in items" :key="item.path" :index="item.path">
-        <el-icon>
-          <component :is="getIcon(item.icon || 'Document')" />
-        </el-icon>
-        <span class="menu-title">{{ item.title }}</span>
-      </el-menu-item>
+      <SidebarMenuItem v-for="item in items" :key="item.path" :item="item" :leaf-icon="true" />
     </el-menu>
   </aside>
 </template>
@@ -23,12 +18,32 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
 import { computed } from 'vue'
-import * as Icons from '@element-plus/icons-vue'
+import SidebarMenuItem from '@/layout/common/SidebarMenuItem.vue'
 const props = defineProps<{ collapsed?: boolean }>()
 const router = useRouter()
 const route = useRoute()
 const activeChild = computed(() => route.path)
 const seg = computed(() => route.path.replace(/^\/+/, '').split('/')[0] || '')
+const stripParams = (p: string) => p.replace(/\/:[^/]+/g, '')
+const normalize = (p: string) => stripParams(p).replace(/\/+/g, '/').replace(/\/+$/, '')
+const mapChild = (c: any, parentPath: string): any => {
+  const childPath = normalize(`${parentPath}/${c.path}`)
+  const base = {
+    path: childPath,
+    title: c.meta?.title ?? c.name ?? c.path,
+    icon: c.meta?.icon as string | undefined
+  }
+  if (Array.isArray(c.children) && c.children.length) {
+    return {
+      ...base,
+      children: c.children
+        .filter((g: any) => !(g.meta && g.meta.hidden))
+        .sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
+        .map((g: any) => mapChild(g, childPath))
+    }
+  }
+  return base
+}
 const items = computed(() => {
   const options: any = (router as any).options
   const routes = Array.isArray(options?.routes) ? options.routes : []
@@ -38,16 +53,8 @@ const items = computed(() => {
   return children
     .filter((c: any) => !(c.meta && c.meta.hidden))
     .sort((a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0))
-    .map((c: any) => ({
-      path: `/${seg.value}/${c.path}`.replace(/\/+/g, '/').replace(/\/+$/, ''),
-      title: c.meta?.title ?? c.name ?? c.path,
-      icon: c.meta?.icon as string | undefined
-    }))
+    .map((c: any) => mapChild(c, `/${seg.value}`))
 })
-const getIcon = (name?: string) => {
-  const icons: any = Icons as any
-  return (name && icons[name]) || (icons['Document'] as any)
-}
 // fixed top title for secondary sidebar
 </script>
 

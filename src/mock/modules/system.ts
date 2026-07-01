@@ -494,3 +494,152 @@ export const approvalFlows = [
     status: 'disabled' as const
   }
 ]
+
+export const printTemplateCategories = [
+  {
+    id: 'print-cat-1',
+    name: '库存管理',
+    code: 'Ware',
+    parentId: null,
+    level: 0,
+    createdBy: '超级管理员',
+    createdAt: '2022-08-08 23:54:38',
+    updatedBy: '超级管理员',
+    updatedAt: '2023-02-10 18:28:41',
+    children: [
+      {
+        id: 'print-cat-1-1',
+        name: '出库单',
+        code: 'Ware_OutWareHouseBill',
+        parentId: 'print-cat-1',
+        level: 1,
+        createdBy: '超级管理员',
+        createdAt: '2022-08-27 20:17:42',
+        updatedBy: '超级管理员',
+        updatedAt: '2023-04-12 17:29:31'
+      },
+      {
+        id: 'print-cat-1-2',
+        name: '入库单',
+        code: 'Ware_WareHouseBill',
+        parentId: 'print-cat-1',
+        level: 1,
+        createdBy: '超级管理员',
+        createdAt: '2022-08-27 20:17:56',
+        updatedBy: '超级管理员',
+        updatedAt: '2023-04-12 17:29:45'
+      }
+    ]
+  },
+  {
+    id: 'print-cat-2',
+    name: '设备管理',
+    code: 'Equip',
+    parentId: null,
+    level: 0,
+    createdBy: '超级管理员',
+    createdAt: '2022-12-07 20:21:40',
+    updatedBy: '',
+    updatedAt: ''
+  },
+  {
+    id: 'print-cat-3',
+    name: '生产管理',
+    code: 'Production',
+    parentId: null,
+    level: 0,
+    createdBy: '超级管理员',
+    createdAt: '2022-08-08 23:53:21',
+    updatedBy: '超级管理员',
+    updatedAt: '2022-11-25 09:47:03',
+    children: [
+      {
+        id: 'print-cat-3-1',
+        name: '销售订单',
+        code: 'Production_SaleOrder',
+        parentId: 'print-cat-3',
+        level: 1,
+        createdBy: '超级管理员',
+        createdAt: '2022-08-20 14:00:00',
+        updatedBy: '超级管理员',
+        updatedAt: '2023-12-02 11:25:18'
+      },
+      {
+        id: 'print-cat-3-2',
+        name: '装配工单',
+        code: 'Production_AssembleWorkOrder',
+        parentId: 'print-cat-3',
+        level: 1,
+        createdBy: '超级管理员',
+        createdAt: '2022-08-20 14:10:00',
+        updatedBy: '超级管理员',
+        updatedAt: '2023-12-02 11:28:45'
+      },
+      {
+        id: 'print-cat-3-3',
+        name: '生产计划',
+        code: 'Production_Plan',
+        parentId: 'print-cat-3',
+        level: 1,
+        createdBy: '超级管理员',
+        createdAt: '2022-08-20 14:20:00',
+        updatedBy: '超级管理员',
+        updatedAt: '2026-07-01 23:36:20'
+      }
+    ]
+  }
+]
+
+export const printTemplates = [
+  {
+    id: 'print-tpl-1',
+    categoryId: 'print-cat-3-3',
+    name: '生产计划打印',
+    systemBuiltin: true,
+    isDefault: true,
+    remark: '系统内置模板',
+    templateData: {
+      version: '1.0.0',
+      page: { width: 210, height: 297, unit: 'mm' },
+      components: []
+    },
+    createdBy: '超级管理员',
+    createdAt: '2022-08-27 20:15:31',
+    updatedBy: '超级管理员',
+    updatedAt: '2026-07-01 23:36:20'
+  },
+  {
+    id: 'print-tpl-2',
+    categoryId: 'print-cat-3-2',
+    name: '装配工单标签',
+    systemBuiltin: false,
+    isDefault: true,
+    remark: '车间默认模板',
+    templateData: {
+      version: '1.0.0',
+      page: { width: 100, height: 150, unit: 'mm' },
+      components: []
+    },
+    createdBy: '超级管理员',
+    createdAt: '2024-03-18 10:20:00',
+    updatedBy: '超级管理员',
+    updatedAt: '2026-06-28 18:10:00'
+  },
+  {
+    id: 'print-tpl-3',
+    categoryId: 'print-cat-1-1',
+    name: '出库单标准模板',
+    systemBuiltin: true,
+    isDefault: true,
+    remark: '标准发货单模板',
+    templateData: {
+      version: '1.0.0',
+      page: { width: 210, height: 140, unit: 'mm' },
+      components: []
+    },
+    createdBy: '超级管理员',
+    createdAt: '2023-04-12 17:00:00',
+    updatedBy: '超级管理员',
+    updatedAt: '2025-11-05 09:12:00'
+  }
+]

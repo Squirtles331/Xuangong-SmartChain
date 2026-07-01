@@ -5,6 +5,7 @@ export interface SidebarItem {
   path: string
   title: string
   icon?: string
+  children?: SidebarItem[]
 }
 
 export interface SidebarGroup extends SidebarItem {
@@ -18,7 +19,9 @@ export function useSidebarMenu() {
   const isHidden = (r: any) => !!(r.meta && r.meta.hidden)
   const hasChildren = (r: any) => Array.isArray(r.children)
   const toPath = (p?: string) => (p ? `/${p}` : '/')
-  const normalize = (p: string) => p.replace(/\/+/g, '/').replace(/\/+$/, '')
+  // 去掉路径中的动态参数段（如 :id、:categoryId?），菜单项使用可直接跳转的静态路径
+  const stripParams = (p: string) => p.replace(/\/:[^/]+/g, '')
+  const normalize = (p: string) => stripParams(p).replace(/\/+/g, '/').replace(/\/+$/, '')
   const titleOf = (r: any, fallback: string) => r.meta?.title ?? r.name ?? r.path ?? fallback
 
   // 取根布局('/')的 children，并按 meta.order 排序
@@ -43,25 +46,29 @@ export function useSidebarMenu() {
       })
   })
 
-  // 分组一级菜单：有 children 的路由；组内子项同样排序、过滤 hidden
+  // 分组一级菜单：有 children 的路由；组内子项递归构建，支持任意层级的子分组
+  const buildItems = (parent: any, parentPath: string): SidebarItem[] => {
+    return (parent.children || [])
+      .filter((c: any) => !isHidden(c))
+      .sort(orderByMeta)
+      .map((c: any) => {
+        const childPath = normalize(`${parentPath}/${c.path}`)
+        const childTitle = titleOf(c, childPath)
+        const childIcon = c.meta?.icon as string | undefined
+        // 子项自身还有 children 时，作为可展开子分组继续递归
+        if (hasChildren(c)) {
+          return { path: childPath, title: childTitle, icon: childIcon, children: buildItems(c, childPath) }
+        }
+        return { path: childPath, title: childTitle, icon: childIcon }
+      })
+  }
+
   const groups = computed<SidebarGroup[]>(() => {
     return rootChildren.value.filter(hasChildren).map((r: any) => {
-      // 组信息
       const groupPath = toPath(r.path)
       const groupTitle = titleOf(r, groupPath)
       const groupIcon = r.meta?.icon as string | undefined
-      // 组内子项
-      const items = (r.children || [])
-        .filter((c: any) => !isHidden(c))
-        .sort(orderByMeta)
-        .map((c: any) => {
-          // 规范化子项路径，派生标题与图标
-          const childPath = normalize(`${groupPath}/${c.path}`)
-          const childTitle = titleOf(c, childPath)
-          const childIcon = c.meta?.icon as string | undefined
-          return { path: childPath, title: childTitle, icon: childIcon }
-        })
-      return { path: groupPath, title: groupTitle, icon: groupIcon, children: items }
+      return { path: groupPath, title: groupTitle, icon: groupIcon, children: buildItems(r, groupPath) }
     })
   })
 

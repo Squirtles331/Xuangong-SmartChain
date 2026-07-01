@@ -96,9 +96,28 @@ const routes: RouteRecordRaw[] = [
           },
           {
             path: 'print-template',
-            name: 'printTemplate',
-            component: () => import('@/views/system/print-template/index.vue'),
-            meta: { title: '打印模板', icon: 'Printer', order: 12 }
+            redirect: { name: 'printTemplate' },
+            meta: { title: '打印配置', icon: 'Printer', order: 12 },
+            children: [
+              {
+                path: 'list',
+                name: 'printTemplate',
+                component: () => import('@/views/system/print-template/index.vue'),
+                meta: { title: '打印模板', icon: 'Printer', order: 1 }
+              },
+              {
+                path: 'templates/:categoryId?',
+                name: 'printTemplateSettings',
+                component: () => import('@/views/system/print-template/template-list.vue'),
+                meta: { title: '打印模板设置', icon: 'Setting', order: 2 }
+              },
+              {
+                path: 'designer/:id',
+                name: 'printTemplateDesigner',
+                component: () => import('@/views/system/print-template/designer.vue'),
+                meta: { title: '打印模板设计', hidden: true }
+              }
+            ]
           }
         ]
       },
