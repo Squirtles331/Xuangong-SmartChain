@@ -16,7 +16,14 @@ import { configCompressPlugin } from './compress'
 export function getPluginsList(command: string, viteEnv: ImportMetaEnv) {
   const lifecycle = process.env.npm_lifecycle_event
   return [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          // vue-print-designer 是 Web Component，避免 Vue 当作未知组件告警
+          isCustomElement: (tag) => tag === 'print-designer'
+        }
+      }
+    }),
     vueJsx(),
     viteEnv.VITE_DEVTOOLS && vueDevTools(),
     eslintPlugin({ cache: false }), // EsLint 报错信息显示在浏览器界面上

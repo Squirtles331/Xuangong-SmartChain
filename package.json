@@ -27,6 +27,7 @@
     "pinia": "3.0.4",
     "vue": "3.5.38",
     "vue-draggable-plus": "^0.6.1",
+    "vue-print-designer": "^1.7.31",
     "vue-router": "4.4.5",
     "vxe-table": "4.19.19"
   },

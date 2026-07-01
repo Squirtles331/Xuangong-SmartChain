@@ -6,6 +6,9 @@ import VXETable from 'vxe-table'
 import GiComponent, { Dialog } from 'gi-component'
 import App from './App.vue'
 import router from './router'
+// 打印设计器 Web Component（vue-print-designer）
+import 'vue-print-designer'
+import 'vue-print-designer/style.css'
 // 引入样式
 import 'element-plus/dist/index.css'
 
