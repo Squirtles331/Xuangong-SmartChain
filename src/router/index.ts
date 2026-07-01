@@ -93,6 +93,24 @@ const routes: RouteRecordRaw[] = [
             name: 'systemSSO',
             component: () => import('@/views/system/sso/index.vue'),
             meta: { title: 'SSO配置', icon: 'Key', order: 11 }
+          },
+          {
+            path: 'print-template',
+            name: 'printTemplate',
+            component: () => import('@/views/system/print-template/index.vue'),
+            meta: { title: '打印模板', icon: 'Printer', order: 12 }
+          },
+          {
+            path: 'print-template/preview/:id',
+            name: 'printTemplatePreview',
+            component: () => import('@/views/system/print-template/preview/index.vue'),
+            meta: { title: '打印预览', hidden: true }
+          },
+          {
+            path: 'print-template/designer/:id',
+            name: 'printTemplateDesigner',
+            component: () => import('@/views/system/print-template/designer/index.vue'),
+            meta: { title: '打印设计器', hidden: true }
           }
         ]
       },

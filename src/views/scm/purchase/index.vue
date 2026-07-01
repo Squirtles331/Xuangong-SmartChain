@@ -52,6 +52,7 @@
 
           <template #actions="{ row }">
             <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button type="primary" link size="small" @click="onPrint(row)">打印</el-button>
             <el-button v-if="row.status !== 'received' && row.status !== 'closed'" type="primary" link size="small" @click="openReceive(row)">
               收货
             </el-button>
@@ -85,10 +86,39 @@ import {
   type PurchaseOrderQuery
 } from '@/api/scm'
 import { useTable } from '@/hooks/useTable'
+import { usePrint } from '@/print/usePrint'
 import PurchaseFormDialog, { type PurchaseFormModel } from './PurchaseFormDialog.vue'
 import PurchaseReceiveDialog, { type PurchaseReceiveFormModel } from './PurchaseReceiveDialog.vue'
 
 type PurchaseOrderRow = PurchaseOrder
+
+const { print } = usePrint()
+
+/** 采购订单 → 打印模板数据结构 */
+function toPrintData(row: PurchaseOrderRow) {
+  const price = 12.5 // 示例单价，真实场景取自明细
+  return {
+    supplierName: row.supplier,
+    orderNo: row.code,
+    orderDate: row.delivery,
+    items: [
+      {
+        materialName: row.material,
+        qty: row.qty,
+        price,
+        amount: row.qty * price
+      }
+    ]
+  }
+}
+
+async function onPrint(row: PurchaseOrderRow) {
+  try {
+    await print({ templateKey: 'scm.purchase.order', data: toPrintData(row), output: 'browser' })
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : '打印失败')
+  }
+}
 
 const purchaseOrderStatusOptions = [
   { value: 'sent', label: '已下发', type: 'warning' as const },
