@@ -39,6 +39,328 @@ pnpm dev
 访问 http://localhost:8099 即可看到登录页。
 
 ---
+/
+├── dashboard                 首页工作台
+│
+├── mes                       MES生产执行 ⭐核心
+│
+├── erp                       ERP经营计划
+│
+├── plm                       PLM产品工艺
+│
+├── wms                       WMS仓储物流
+│
+├── qms                       QMS质量管理
+│
+├── crm                       CRM客户管理
+│
+├── srm                       SRM供应商管理
+│
+├── iot                       IoT设备管理
+│
+├── mdm                       MDM主数据中心
+│
+├── bi                        数据分析
+│
+└── system                    系统管理
+/mes
+
+MES生产执行
+│
+├── /mes/work-order
+│       工单管理
+│
+├── /mes/dispatch
+│       工单派工
+│
+├── /mes/material
+│       物料齐套
+│
+├── /mes/production
+│       生产执行
+│
+├── /mes/report
+│       生产报工
+│
+├── /mes/process
+│       工序管理
+│
+├── /mes/wip
+│       在制品管理
+│
+├── /mes/trace
+│       产品追溯
+│
+├── /mes/person
+│       人员管理
+│
+├── /mes/shift
+│       班组排班
+│
+├── /mes/tooling
+│       工装模具
+│
+├── /mes/energy
+│       能耗管理
+│
+├── /mes/dashboard
+│       生产看板
+│
+└── /mes/log
+        生产日志
+/erp
+
+ERP经营计划
+│
+├── /erp/order
+│       销售订单
+│
+├── /erp/plan
+│       生产计划
+│
+├── /erp/mps
+│       MPS主生产计划
+│
+├── /erp/mrp
+│       MRP物料需求
+│
+├── /erp/material
+│       物料管理
+│
+├── /erp/inventory
+│       库存协同
+│
+├── /erp/cost
+│       生产成本
+│
+└── /erp/finance
+        基础财务
+/plm
+
+PLM产品工艺
+│
+├── /plm/product
+│       产品管理
+│
+├── /plm/bom
+│       BOM管理
+│
+├── /plm/ebom
+│       EBOM管理
+│
+├── /plm/mbom
+│       MBOM管理
+│
+├── /plm/process
+│       工艺路线
+│
+├── /plm/document
+│       工艺文件
+│
+├── /plm/change
+│       工程变更
+│
+├── /plm/ecr
+│       ECR变更申请
+│
+└── /plm/eco
+        ECO变更执行
+/wms
+
+WMS仓储物流
+│
+├── /wms/inbound
+│       入库管理
+│
+├── /wms/outbound
+│       出库管理
+│
+├── /wms/material
+│       物料配送
+│
+├── /wms/location
+│       库位管理
+│
+├── /wms/inventory
+│       库存管理
+│
+├── /wms/barcode
+│       条码管理
+│
+├── /wms/batch
+│       批次管理
+│
+└── /wms/check
+        盘点管理
+/qms
+
+QMS质量管理
+│
+├── /qms/standard
+│       检验标准
+│
+├── /qms/iqc
+│       来料检验
+│
+├── /qms/ipqc
+│       过程检验
+│
+├── /qms/fqc
+│       成品检验
+│
+├── /qms/defect
+│       缺陷管理
+│
+├── /qms/rework
+│       返工管理
+│
+├── /qms/scrap
+│       报废管理
+│
+└── /qms/trace
+        质量追溯
+/crm
+
+CRM客户管理
+│
+├── /crm/customer
+│       客户档案
+│
+├── /crm/contact
+│       联系人
+│
+├── /crm/order
+│       客户订单
+│
+├── /crm/contract
+│       销售合同
+│
+├── /crm/delivery
+│       交付跟踪
+│
+├── /crm/service
+│       售后服务
+│
+└── /crm/complaint
+        客诉管理
+/srm
+
+SRM供应商管理
+│
+├── /srm/supplier
+│       供应商档案
+│
+├── /srm/qualification
+│       供应商准入
+│
+├── /srm/inquiry
+│       询价比价
+│
+├── /srm/order
+│       采购订单
+│
+├── /srm/delivery
+│       到货管理
+│
+└── /srm/evaluation
+        供应商评价
+/iot
+
+IoT设备管理
+│
+├── /iot/device
+│       设备台账
+│
+├── /iot/gateway
+│       网关管理
+│
+├── /iot/tag
+│       点位管理
+│
+├── /iot/data
+│       实时数据
+│
+├── /iot/alarm
+│       报警管理
+│
+├── /iot/maintenance
+│       设备维护
+│
+└── /iot/oee
+        OEE分析
+/mdm
+
+MDM主数据中心
+│
+├── /mdm/customer
+│       客户主数据
+│
+├── /mdm/material
+│       物料主数据
+│
+├── /mdm/product
+│       产品主数据
+│
+├── /mdm/bom
+│       BOM主数据
+│
+├── /mdm/device
+│       设备主数据
+│
+├── /mdm/person
+│       人员主数据
+│
+├── /mdm/organization
+│       组织主数据
+│
+├── /mdm/sync
+│       数据同步
+│
+└── /mdm/governance
+        数据治理
+/bi
+
+数据分析
+│
+├── /bi/production
+│       生产分析
+│
+├── /bi/oee
+│       OEE分析
+│
+├── /bi/quality
+│       质量分析
+│
+├── /bi/cost
+│       成本分析
+│
+├── /bi/device
+│       设备分析
+│
+└── /bi/dashboard
+        综合驾驶舱
+系统管理
+│
+├── 用户管理
+├── 角色权限
+├── 组织管理
+├── 菜单管理
+├── 数据权限
+├── 操作日志
+├── 参数配置
+└── 租户管理
+首页
+生产制造(MES)
+计划排程(APS)
+产品工艺(PLM)
+质量管理(QMS)
+仓储物流(WMS)
+设备管理(IoT)
+供应链(SRM)
+客户管理(CRM)
+数据中心(MDM)
+报表分析(BI)
+系统管理
 
 ## 📦 功能模块
 
