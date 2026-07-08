@@ -11,10 +11,9 @@ stages:
           displayName: 安装依赖并检查代码
           nodeVersion: 20.18.0
           commands:
-            - npm install -g pnpm@8
-            - pnpm install
-            - pnpm lint:eslint
-            - pnpm type-check
+            - npm ci
+            - npm run lint:eslint
+            - npm run type-check
           # 缓存 node_modules
           caches:
             - path: node_modules
@@ -30,9 +29,8 @@ stages:
           displayName: 运行单元测试
           nodeVersion: 20.18.0
           commands:
-            - npm install -g pnpm@8
-            - pnpm install
-            - pnpm test || true
+            - npm ci
+            - npm run test || true
           caches:
             - path: node_modules
               key: $(CACHE_KEY)-node_modules
@@ -49,9 +47,8 @@ stages:
           displayName: 构建生产环境
           nodeVersion: 20.18.0
           commands:
-            - npm install -g pnpm@8
-            - pnpm install
-            - pnpm build
+            - npm ci
+            - npm run build
           env:
             NODE_ENV: production
             VITE_DROP_CONSOLE: true

@@ -206,11 +206,11 @@ function openEdit(row: Equipment) {
 }
 
 function openCheckPlan(_row: Equipment) {
-  router.push('/equipment/check')
+  router.push('/collaboration/equipment-iot/equipment/check')
 }
 
 function openMaintainPlan(_row: Equipment) {
-  router.push('/equipment/maintain')
+  router.push('/collaboration/equipment-iot/equipment/maintain')
 }
 
 async function submitDialog() {

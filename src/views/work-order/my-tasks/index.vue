@@ -60,7 +60,7 @@
               <el-progress :percentage="Math.round((task.reported_qty / task.planned_qty) * 100)" :stroke-width="8" />
             </div>
             <div class="task-footer">
-              <el-button type="success" @click="$router.push(`/work-order/report/${task.wo_id}`)">报工</el-button>
+              <el-button type="success" @click="$router.push(`/mes/execution/report/${task.wo_id}`)">报工</el-button>
               <el-button type="warning" @click="reportException(task)">异常上报</el-button>
             </div>
           </el-card>

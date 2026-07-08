@@ -128,6 +128,6 @@ async function submitChange() {
 
   await updateSalesOrder(order.value.id, payload)
   ElMessage.success('订单变更已提交')
-  router.push('/crm/order')
+  router.push('/customer-business/crm/order')
 }
 </script>

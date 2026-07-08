@@ -15,7 +15,7 @@
 
     <template #tool>
       <gi-button type="add" @click="openAdd">手工创建</gi-button>
-      <el-button type="primary" style="margin-left: 8px" @click="$router.push('/mrp/result')">从 MRP 结果生成</el-button>
+      <el-button type="primary" style="margin-left: 8px" @click="$router.push('/engineering-plan/planning/mrp/result')">从 MRP 结果生成</el-button>
       <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 

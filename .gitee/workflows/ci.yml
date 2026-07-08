@@ -21,36 +21,25 @@ jobs:
         with:
           node-version: '20' # 项目要求 >=20.18.0
 
-      - name: 安装 pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8
-
-      - name: 获取 pnpm 存储目录
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: 设置 pnpm 缓存
+      - name: 设置 npm 缓存
         uses: actions/cache@v3
         with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-npm-cache-
 
       - name: 安装依赖
-        run: pnpm install
+        run: npm ci
 
       - name: 代码格式检查（Prettier）
-        run: pnpm prettier --check .
+        run: npm exec prettier --check .
 
       - name: ESLint 代码检查
-        run: pnpm lint:eslint
+        run: npm run lint:eslint
 
       - name: TypeScript 类型检查
-        run: pnpm type-check
+        run: npm run type-check
 
   # 任务 2：运行测试
   test:
@@ -64,30 +53,19 @@ jobs:
         with:
           node-version: '20'
 
-      - name: 安装 pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8
-
-      - name: 获取 pnpm 存储目录
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: 设置 pnpm 缓存
+      - name: 设置 npm 缓存
         uses: actions/cache@v3
         with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-npm-cache-
 
       - name: 安装依赖
-        run: pnpm install
+        run: npm ci
 
       - name: 运行单元测试
-        run: pnpm test
+        run: npm run test
         continue-on-error: true # 如果没有测试用例，不会阻断流水线
 
   # 任务 3：构建项目
@@ -107,27 +85,16 @@ jobs:
         with:
           node-version: '20'
 
-      - name: 安装 pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8
-
-      - name: 获取 pnpm 存储目录
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: 设置 pnpm 缓存
+      - name: 设置 npm 缓存
         uses: actions/cache@v3
         with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-npm-cache-
 
       - name: 安装依赖
-        run: pnpm install
+        run: npm ci
 
       - name: 构建生产环境
         env:
@@ -140,7 +107,7 @@ jobs:
           VITE_DROP_DEBUGGER: true
           VITE_SOURCEMAP: false
           VITE_USE_CSS_SPLIT: false
-        run: pnpm build
+        run: npm run build
 
       - name: 查看构建产物
         run: |

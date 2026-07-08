@@ -145,7 +145,7 @@ function handleReset() {
 }
 
 function viewChange(row: SalesOrder) {
-  router.push(`/crm/order-change?id=${row.id}`)
+  router.push(`/customer-business/crm/order-change?id=${row.id}`)
 }
 
 async function createDelivery(row: SalesOrder) {

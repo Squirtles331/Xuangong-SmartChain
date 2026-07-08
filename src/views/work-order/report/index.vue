@@ -259,7 +259,7 @@ async function submitReport() {
 
         if (report.reported_qty >= report.planned_qty) {
           ElMessage.success('当前工单已全部完工')
-          router.push('/work-order/list')
+          router.push('/mes/work-order/list')
           return
         }
 

@@ -10,7 +10,7 @@
           </template>
 
           <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="$router.push(`/mrp/result?runId=${row.id}`)">查看结果</el-button>
+            <el-button type="primary" link size="small" @click="$router.push(`/engineering-plan/planning/mrp/result?runId=${row.id}`)">查看结果</el-button>
           </template>
 
           <template #expand="{ row }">

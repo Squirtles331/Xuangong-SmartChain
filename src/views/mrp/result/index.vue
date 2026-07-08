@@ -6,7 +6,7 @@
         <div>
           <el-tag v-if="lastRunTime" type="success" style="margin-right: 8px">最近运行 {{ lastRunTime }}</el-tag>
           <el-button type="primary" @click="runMRP">运行 MRP</el-button>
-          <el-button @click="$router.push('/mrp/history')">运行历史</el-button>
+          <el-button @click="$router.push('/engineering-plan/planning/mrp/history')">运行历史</el-button>
         </div>
       </div>
     </template>

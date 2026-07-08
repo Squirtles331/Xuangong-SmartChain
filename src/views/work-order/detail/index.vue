@@ -8,7 +8,7 @@
         </div>
         <div class="header-right">
           <template v-for="action in availableActions" :key="action.key">
-            <el-button v-if="action.key === 'report'" type="primary" @click="$router.push(`/work-order/report/${order.id}`)">报工</el-button>
+            <el-button v-if="action.key === 'report'" type="primary" @click="$router.push(`/mes/execution/report/${order.id}`)">报工</el-button>
             <el-button v-else :type="action.type" @click="handleTransition(action.key)">
               {{ action.label }}
             </el-button>

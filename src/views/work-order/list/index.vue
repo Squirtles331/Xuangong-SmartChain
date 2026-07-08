@@ -14,7 +14,7 @@
     </template>
 
     <template #tool>
-      <gi-button type="add" @click="$router.push('/work-order/create')">新建工单</gi-button>
+      <gi-button type="add" @click="$router.push('/mes/work-order/create')">新建工单</gi-button>
       <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
     </template>
 
@@ -48,7 +48,7 @@
           </template>
 
           <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="$router.push(`/work-order/${row.id}`)">详情</el-button>
+            <el-button type="primary" link size="small" @click="$router.push(`/mes/work-order/${row.id}`)">详情</el-button>
             <el-dropdown trigger="click">
               <el-button type="primary" link size="small">
                 更多
@@ -59,7 +59,7 @@
                   <el-dropdown-item v-if="row.status === 'draft'" @click="submitApproval(row)">提交审核</el-dropdown-item>
                   <el-dropdown-item v-if="row.status === 'approved'" @click="releaseOrder(row)">下发</el-dropdown-item>
                   <el-dropdown-item v-if="row.status === 'completed'" @click="closeOrder(row)">关闭</el-dropdown-item>
-                  <el-dropdown-item v-if="row.status === 'in_progress'" @click="$router.push(`/work-order/report/${row.id}`)">报工</el-dropdown-item>
+                  <el-dropdown-item v-if="row.status === 'in_progress'" @click="$router.push(`/mes/execution/report/${row.id}`)">报工</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>

@@ -99,7 +99,7 @@ function removeSplit(index: number) {
 
 function confirmSplit() {
   ElMessage.success('拆分成功，已生成子工单')
-  router.push('/work-order/list')
+  router.push('/mes/work-order/list')
 }
 </script>
 

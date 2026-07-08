@@ -167,11 +167,11 @@ function handleReset() {
 }
 
 function openAdd() {
-  router.push('/bom/create')
+  router.push('/engineering-plan/plm/bom/create')
 }
 
 function openEditor(row: BOMVersion) {
-  router.push(`/bom/editor/${row.id}`)
+  router.push(`/engineering-plan/plm/bom/editor/${row.id}`)
 }
 
 function openCompare(row: BOMVersion) {
@@ -183,7 +183,7 @@ function openCompare(row: BOMVersion) {
 function doCompare() {
   if (!compareBom.value || !compareVersion.value) return
   compareVisible.value = false
-  router.push(`/bom/compare?ids=${compareBom.value.id},${compareVersion.value}`)
+  router.push(`/engineering-plan/plm/bom/compare?ids=${compareBom.value.id},${compareVersion.value}`)
 }
 
 function convertToMBOM(row: BOMVersion) {

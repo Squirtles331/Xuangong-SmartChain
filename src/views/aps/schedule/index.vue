@@ -5,7 +5,7 @@
         <h2>APS 排程</h2>
         <div>
           <el-button type="primary" @click="handleRunSchedule">运行排程</el-button>
-          <el-button @click="$router.push('/aps/history')">历史版本</el-button>
+          <el-button @click="$router.push('/engineering-plan/planning/aps/history')">历史版本</el-button>
         </div>
       </div>
     </template>

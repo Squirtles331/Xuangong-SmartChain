@@ -378,7 +378,7 @@ async function submitOrder() {
       defective_qty: 0
     })
     ElMessage.success('工单创建成功')
-    router.push('/work-order/list')
+    router.push('/mes/work-order/list')
   } catch {
     ElMessage.error('工单创建失败')
   }

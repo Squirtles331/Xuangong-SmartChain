@@ -68,7 +68,7 @@ const breadcrumbs = computed(() => {
   return matched.map((item) => ({ title: item.meta.title as string, path: item.path }))
 })
 
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() => (route.meta?.activeMenu as string) || route.path)
 
 const toggleSidebar = () => {
   if (isMobile.value) {
