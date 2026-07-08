@@ -1,9 +1,9 @@
 import { resolve } from 'path'
 import type { ConfigEnv, UserConfig } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
-import { exclude, include } from './node/optimize'
-import { getPluginsList } from './node/plugins'
-import { wrapperEnv } from './node/getEnv'
+import { exclude, include } from './vite-support/optimize'
+import { getPluginsList } from './vite-support/plugins'
+import { wrapperEnv } from './vite-support/getEnv'
 import pkg from './package.json'
 import { getNowDate } from './src/common/utils/core/date'
 
