@@ -250,7 +250,12 @@ const routes: RouteRecordRaw[] = [
                 path: 'operation-task',
                 name: 'mesOperationTask',
                 component: plannedPage,
-                meta: planned(t.operationTask, 'List', 2, 'Operation task placeholder', ['Task pool', 'Dependencies', 'Status flow', 'Exception recovery'])
+                meta: planned(t.operationTask, 'List', 2, 'Operation task placeholder', [
+                  'Task pool',
+                  'Dependencies',
+                  'Status flow',
+                  'Exception recovery'
+                ])
               },
               {
                 path: 'report/:id',
@@ -268,13 +273,23 @@ const routes: RouteRecordRaw[] = [
                 path: 'kitting',
                 name: 'mesKitting',
                 component: plannedPage,
-                meta: planned(t.kitting, 'Select', 4, 'Kitting verification placeholder', ['Material check', 'Version check', 'Qualification check', 'Release gate'])
+                meta: planned(t.kitting, 'Select', 4, 'Kitting verification placeholder', [
+                  'Material check',
+                  'Version check',
+                  'Qualification check',
+                  'Release gate'
+                ])
               },
               {
                 path: 'consumption',
                 name: 'mesConsumption',
                 component: plannedPage,
-                meta: planned(t.consumption, 'TakeawayBox', 5, 'Consumption placeholder', ['Batch binding', 'Actual usage', 'Supplement / return', 'Substitute approval'])
+                meta: planned(t.consumption, 'TakeawayBox', 5, 'Consumption placeholder', [
+                  'Batch binding',
+                  'Actual usage',
+                  'Supplement / return',
+                  'Substitute approval'
+                ])
               }
             ]
           },
@@ -299,25 +314,45 @@ const routes: RouteRecordRaw[] = [
                 path: 'product-trace',
                 name: 'mesProductTrace',
                 component: plannedPage,
-                meta: planned(t.productTrace, 'Connection', 3, 'Product trace placeholder', ['Forward trace', 'Reverse trace', 'Entity linkage', 'Impact scope'])
+                meta: planned(t.productTrace, 'Connection', 3, 'Product trace placeholder', [
+                  'Forward trace',
+                  'Reverse trace',
+                  'Entity linkage',
+                  'Impact scope'
+                ])
               },
               {
                 path: 'production-log',
                 name: 'mesProductionLog',
                 component: plannedPage,
-                meta: planned(t.productionLog, 'Notebook', 4, 'Production log placeholder', ['Timeline', 'Object filter', 'Status history', 'Audit trail'])
+                meta: planned(t.productionLog, 'Notebook', 4, 'Production log placeholder', [
+                  'Timeline',
+                  'Object filter',
+                  'Status history',
+                  'Audit trail'
+                ])
               },
               {
                 path: 'exception-center',
                 name: 'mesExceptionCenter',
                 component: plannedPage,
-                meta: planned(t.exceptionCenter, 'Warning', 5, 'Exception center placeholder', ['Exception grades', 'Lock scope', 'Recovery rules', 'Approval release'])
+                meta: planned(t.exceptionCenter, 'Warning', 5, 'Exception center placeholder', [
+                  'Exception grades',
+                  'Lock scope',
+                  'Recovery rules',
+                  'Approval release'
+                ])
               },
               {
                 path: 'rework-order',
                 name: 'mesReworkOrder',
                 component: plannedPage,
-                meta: planned(t.reworkOrder, 'RefreshLeft', 6, 'Rework order placeholder', ['Source link', 'Rework route', 'Reinspection handoff', 'Cost collection'])
+                meta: planned(t.reworkOrder, 'RefreshLeft', 6, 'Rework order placeholder', [
+                  'Source link',
+                  'Rework route',
+                  'Reinspection handoff',
+                  'Cost collection'
+                ])
               }
             ]
           }
@@ -416,7 +451,12 @@ const routes: RouteRecordRaw[] = [
                 path: 'demand-pool',
                 name: 'planningDemandPool',
                 component: plannedPage,
-                meta: planned(t.demandPool, 'CollectionTag', 1, 'Demand pool placeholder', ['Demand merge', 'Priority queue', 'Impact review', 'Release prep'])
+                meta: planned(t.demandPool, 'CollectionTag', 1, 'Demand pool placeholder', [
+                  'Demand merge',
+                  'Priority queue',
+                  'Impact review',
+                  'Release prep'
+                ])
               },
               {
                 path: 'aps/schedule',
@@ -470,7 +510,12 @@ const routes: RouteRecordRaw[] = [
                 path: 'disturbance-reschedule',
                 name: 'planningDisturbanceReschedule',
                 component: plannedPage,
-                meta: planned(t.disturbance, 'RefreshRight', 10, 'Reschedule placeholder', ['L1 adjust', 'L2 local', 'L3 global', 'Constraint coordination'])
+                meta: planned(t.disturbance, 'RefreshRight', 10, 'Reschedule placeholder', [
+                  'L1 adjust',
+                  'L2 local',
+                  'L3 global',
+                  'Constraint coordination'
+                ])
               }
             ]
           }
@@ -486,18 +531,83 @@ const routes: RouteRecordRaw[] = [
             name: 'wmsCollaboration',
             meta: { title: t.wms, icon: 'Box', order: 1 },
             children: [
-              { path: 'inventory', name: 'wmsInventory', component: () => import('@/views/wms/inventory/index.vue'), meta: { title: t.inventory, icon: 'List', order: 1 } },
-              { path: 'picking', name: 'wmsPicking', component: () => import('@/views/wms/picking/index.vue'), meta: { title: t.picking, icon: 'TakeawayBox', order: 2 } },
-              { path: 'receipt', name: 'wmsReceipt', component: () => import('@/views/wms/receipt/index.vue'), meta: { title: t.receipt, icon: 'Download', order: 3 } },
-              { path: 'delivery', name: 'wmsDelivery', component: () => import('@/views/wms/delivery/index.vue'), meta: { title: t.delivery, icon: 'Upload', order: 4 } },
-              { path: 'return', name: 'wmsReturn', component: () => import('@/views/wms/return/index.vue'), meta: { title: t.return, icon: 'Refresh', order: 5 } },
-              { path: 'stock-count', name: 'wmsStockCount', component: () => import('@/views/wms/stock-count/index.vue'), meta: { title: t.stockCount, icon: 'Checked', order: 6 } },
-              { path: 'transfer', name: 'wmsTransfer', component: () => import('@/views/wms/transfer/index.vue'), meta: { title: t.transfer, icon: 'Connection', order: 7 } },
-              { path: 'backflush', name: 'wmsBackflush', component: () => import('@/views/wms/backflush/index.vue'), meta: { title: t.backflush, icon: 'RefreshLeft', order: 8 } },
-              { path: 'barcode', name: 'wmsBarcode', component: () => import('@/views/wms/barcode/index.vue'), meta: { title: t.barcode, icon: 'Postcard', order: 9 } },
-              { path: 'barcode-print', name: 'wmsBarcodePrint', component: () => import('@/views/wms/barcode-print/index.vue'), meta: { title: t.barcodePrint, icon: 'Printer', order: 10 } },
-              { path: 'barcode-scan', name: 'wmsBarcodeScan', component: () => import('@/views/wms/barcode-scan/index.vue'), meta: { title: t.barcodeScan, icon: 'Scan', order: 11 } },
-              { path: 'batch-quarantine', name: 'wmsBatchQuarantine', component: plannedPage, meta: planned(t.quarantine, 'Lock', 12, 'Batch quarantine placeholder', ['Quarantine list', 'Freeze / release', 'Decision link', 'Inventory control']) }
+              {
+                path: 'inventory',
+                name: 'wmsInventory',
+                component: () => import('@/views/wms/inventory/index.vue'),
+                meta: { title: t.inventory, icon: 'List', order: 1 }
+              },
+              {
+                path: 'picking',
+                name: 'wmsPicking',
+                component: () => import('@/views/wms/picking/index.vue'),
+                meta: { title: t.picking, icon: 'TakeawayBox', order: 2 }
+              },
+              {
+                path: 'receipt',
+                name: 'wmsReceipt',
+                component: () => import('@/views/wms/receipt/index.vue'),
+                meta: { title: t.receipt, icon: 'Download', order: 3 }
+              },
+              {
+                path: 'delivery',
+                name: 'wmsDelivery',
+                component: () => import('@/views/wms/delivery/index.vue'),
+                meta: { title: t.delivery, icon: 'Upload', order: 4 }
+              },
+              {
+                path: 'return',
+                name: 'wmsReturn',
+                component: () => import('@/views/wms/return/index.vue'),
+                meta: { title: t.return, icon: 'Refresh', order: 5 }
+              },
+              {
+                path: 'stock-count',
+                name: 'wmsStockCount',
+                component: () => import('@/views/wms/stock-count/index.vue'),
+                meta: { title: t.stockCount, icon: 'Checked', order: 6 }
+              },
+              {
+                path: 'transfer',
+                name: 'wmsTransfer',
+                component: () => import('@/views/wms/transfer/index.vue'),
+                meta: { title: t.transfer, icon: 'Connection', order: 7 }
+              },
+              {
+                path: 'backflush',
+                name: 'wmsBackflush',
+                component: () => import('@/views/wms/backflush/index.vue'),
+                meta: { title: t.backflush, icon: 'RefreshLeft', order: 8 }
+              },
+              {
+                path: 'barcode',
+                name: 'wmsBarcode',
+                component: () => import('@/views/wms/barcode/index.vue'),
+                meta: { title: t.barcode, icon: 'Postcard', order: 9 }
+              },
+              {
+                path: 'barcode-print',
+                name: 'wmsBarcodePrint',
+                component: () => import('@/views/wms/barcode-print/index.vue'),
+                meta: { title: t.barcodePrint, icon: 'Printer', order: 10 }
+              },
+              {
+                path: 'barcode-scan',
+                name: 'wmsBarcodeScan',
+                component: () => import('@/views/wms/barcode-scan/index.vue'),
+                meta: { title: t.barcodeScan, icon: 'Scan', order: 11 }
+              },
+              {
+                path: 'batch-quarantine',
+                name: 'wmsBatchQuarantine',
+                component: plannedPage,
+                meta: planned(t.quarantine, 'Lock', 12, 'Batch quarantine placeholder', [
+                  'Quarantine list',
+                  'Freeze / release',
+                  'Decision link',
+                  'Inventory control'
+                ])
+              }
             ]
           },
           {
@@ -505,14 +615,69 @@ const routes: RouteRecordRaw[] = [
             name: 'qmsDecision',
             meta: { title: t.qms, icon: 'Checked', order: 2 },
             children: [
-              { path: 'inspection', name: 'qmsInspection', component: () => import('@/views/qms/inspection/index.vue'), meta: { title: t.inspection, icon: 'Search', order: 1 } },
-              { path: 'template', name: 'qmsTemplate', component: () => import('@/views/qms/template/index.vue'), meta: { title: t.template, icon: 'Notebook', order: 2 } },
-              { path: 'supplier-quality', name: 'qmsSupplierQuality', component: () => import('@/views/qms/supplier-quality/index.vue'), meta: { title: t.supplierQuality, icon: 'TrendCharts', order: 3 } },
-              { path: 'ncr', name: 'qmsNcr', component: plannedPage, meta: planned(t.ncr, 'CircleClose', 4, 'NCR placeholder', ['NCR ledger', 'Owner assignment', 'Decision actions', 'MES/WMS link']) },
-              { path: 'concession', name: 'qmsConcession', component: plannedPage, meta: planned(t.concession, 'Finished', 5, 'Concession placeholder', ['Request', 'Approval route', 'Risk note', 'Release range']) },
-              { path: 'rework-review', name: 'qmsReworkReview', component: plannedPage, meta: planned(t.reworkReview, 'RefreshLeft', 6, 'Rework review placeholder', ['Review', 'Route choice', 'Create order', 'Reinspection rule']) },
-              { path: 'scrap-review', name: 'qmsScrapReview', component: plannedPage, meta: planned(t.scrapReview, 'DeleteFilled', 7, 'Scrap review placeholder', ['Scrap request', 'Cause / owner', 'Quantity approval', 'Loss collection']) },
-              { path: 're-inspection', name: 'qmsReInspection', component: plannedPage, meta: planned(t.reInspection, 'Select', 8, 'Reinspection placeholder', ['Reinspection task', 'Result confirm', 'Unlock action', 'Close case']) }
+              {
+                path: 'inspection',
+                name: 'qmsInspection',
+                component: () => import('@/views/qms/inspection/index.vue'),
+                meta: { title: t.inspection, icon: 'Search', order: 1 }
+              },
+              {
+                path: 'template',
+                name: 'qmsTemplate',
+                component: () => import('@/views/qms/template/index.vue'),
+                meta: { title: t.template, icon: 'Notebook', order: 2 }
+              },
+              {
+                path: 'supplier-quality',
+                name: 'qmsSupplierQuality',
+                component: () => import('@/views/qms/supplier-quality/index.vue'),
+                meta: { title: t.supplierQuality, icon: 'TrendCharts', order: 3 }
+              },
+              {
+                path: 'ncr',
+                name: 'qmsNcr',
+                component: plannedPage,
+                meta: planned(t.ncr, 'CircleClose', 4, 'NCR placeholder', ['NCR ledger', 'Owner assignment', 'Decision actions', 'MES/WMS link'])
+              },
+              {
+                path: 'concession',
+                name: 'qmsConcession',
+                component: plannedPage,
+                meta: planned(t.concession, 'Finished', 5, 'Concession placeholder', ['Request', 'Approval route', 'Risk note', 'Release range'])
+              },
+              {
+                path: 'rework-review',
+                name: 'qmsReworkReview',
+                component: plannedPage,
+                meta: planned(t.reworkReview, 'RefreshLeft', 6, 'Rework review placeholder', [
+                  'Review',
+                  'Route choice',
+                  'Create order',
+                  'Reinspection rule'
+                ])
+              },
+              {
+                path: 'scrap-review',
+                name: 'qmsScrapReview',
+                component: plannedPage,
+                meta: planned(t.scrapReview, 'DeleteFilled', 7, 'Scrap review placeholder', [
+                  'Scrap request',
+                  'Cause / owner',
+                  'Quantity approval',
+                  'Loss collection'
+                ])
+              },
+              {
+                path: 're-inspection',
+                name: 'qmsReInspection',
+                component: plannedPage,
+                meta: planned(t.reInspection, 'Select', 8, 'Reinspection placeholder', [
+                  'Reinspection task',
+                  'Result confirm',
+                  'Unlock action',
+                  'Close case'
+                ])
+              }
             ]
           },
           {
@@ -520,12 +685,42 @@ const routes: RouteRecordRaw[] = [
             name: 'srmCollaboration',
             meta: { title: t.srm, icon: 'ShoppingBag', order: 3 },
             children: [
-              { path: 'supplier', name: 'scmSupplier', component: () => import('@/views/scm/supplier/index.vue'), meta: { title: t.supplier, icon: 'Avatar', order: 1 } },
-              { path: 'purchase-request', name: 'scmPR', component: () => import('@/views/scm/purchase-request/index.vue'), meta: { title: t.pr, icon: 'Edit', order: 2 } },
-              { path: 'purchase', name: 'scmPurchase', component: () => import('@/views/scm/purchase/index.vue'), meta: { title: t.purchase, icon: 'ShoppingCart', order: 3 } },
-              { path: 'return', name: 'scmReturn', component: () => import('@/views/scm/return/index.vue'), meta: { title: t.purchaseReturn, icon: 'Sell', order: 4 } },
-              { path: 'price', name: 'scmPrice', component: () => import('@/views/scm/price/index.vue'), meta: { title: t.price, icon: 'Money', order: 5 } },
-              { path: 'portal', name: 'scmPortal', component: () => import('@/views/scm/portal/index.vue'), meta: { title: t.portal, icon: 'Connection', order: 6 } }
+              {
+                path: 'supplier',
+                name: 'scmSupplier',
+                component: () => import('@/views/scm/supplier/index.vue'),
+                meta: { title: t.supplier, icon: 'Avatar', order: 1 }
+              },
+              {
+                path: 'purchase-request',
+                name: 'scmPR',
+                component: () => import('@/views/scm/purchase-request/index.vue'),
+                meta: { title: t.pr, icon: 'Edit', order: 2 }
+              },
+              {
+                path: 'purchase',
+                name: 'scmPurchase',
+                component: () => import('@/views/scm/purchase/index.vue'),
+                meta: { title: t.purchase, icon: 'ShoppingCart', order: 3 }
+              },
+              {
+                path: 'return',
+                name: 'scmReturn',
+                component: () => import('@/views/scm/return/index.vue'),
+                meta: { title: t.purchaseReturn, icon: 'Sell', order: 4 }
+              },
+              {
+                path: 'price',
+                name: 'scmPrice',
+                component: () => import('@/views/scm/price/index.vue'),
+                meta: { title: t.price, icon: 'Money', order: 5 }
+              },
+              {
+                path: 'portal',
+                name: 'scmPortal',
+                component: () => import('@/views/scm/portal/index.vue'),
+                meta: { title: t.portal, icon: 'Connection', order: 6 }
+              }
             ]
           },
           {
@@ -533,17 +728,72 @@ const routes: RouteRecordRaw[] = [
             name: 'equipmentIotSupport',
             meta: { title: t.equipmentIot, icon: 'Cpu', order: 4 },
             children: [
-              { path: 'equipment/list', name: 'equipmentList', component: () => import('@/views/equipment/list/index.vue'), meta: { title: t.equipmentList, icon: 'Monitor', order: 1 } },
-              { path: 'equipment/check', name: 'equipmentCheck', component: () => import('@/views/equipment/check/index.vue'), meta: { title: t.equipmentCheck, icon: 'Checked', order: 2 } },
-              { path: 'equipment/maintain', name: 'equipmentMaintain', component: () => import('@/views/equipment/maintain/index.vue'), meta: { title: t.maintain, icon: 'SetUp', order: 3 } },
-              { path: 'equipment/repair', name: 'equipmentRepair', component: () => import('@/views/equipment/repair/index.vue'), meta: { title: t.repair, icon: 'Tools', order: 4 } },
-              { path: 'equipment/spare', name: 'equipmentSpare', component: () => import('@/views/equipment/spare/index.vue'), meta: { title: t.spare, icon: 'Box', order: 5 } },
-              { path: 'equipment/oee', name: 'equipmentOEE', component: () => import('@/views/equipment/oee/index.vue'), meta: { title: t.oee, icon: 'TrendCharts', order: 6 } },
-              { path: 'iot/monitor', name: 'iotMonitor', component: () => import('@/views/iot/monitor/index.vue'), meta: { title: t.monitor, icon: 'Monitor', order: 7 } },
-              { path: 'iot/config', name: 'iotConfig', component: () => import('@/views/iot/config/index.vue'), meta: { title: t.collectConfig, icon: 'Setting', order: 8 } },
-              { path: 'iot/history', name: 'iotHistory', component: () => import('@/views/iot/history/index.vue'), meta: { title: t.historyData, icon: 'Clock', order: 9 } },
-              { path: 'iot/alert', name: 'iotAlert', component: () => import('@/views/iot/alert/index.vue'), meta: { title: t.alertRule, icon: 'Bell', order: 10 } },
-              { path: 'iot/auto-report', name: 'iotAutoReport', component: () => import('@/views/iot/auto-report/index.vue'), meta: { title: t.autoReport, icon: 'Connection', order: 11 } }
+              {
+                path: 'equipment/list',
+                name: 'equipmentList',
+                component: () => import('@/views/equipment/list/index.vue'),
+                meta: { title: t.equipmentList, icon: 'Monitor', order: 1 }
+              },
+              {
+                path: 'equipment/check',
+                name: 'equipmentCheck',
+                component: () => import('@/views/equipment/check/index.vue'),
+                meta: { title: t.equipmentCheck, icon: 'Checked', order: 2 }
+              },
+              {
+                path: 'equipment/maintain',
+                name: 'equipmentMaintain',
+                component: () => import('@/views/equipment/maintain/index.vue'),
+                meta: { title: t.maintain, icon: 'SetUp', order: 3 }
+              },
+              {
+                path: 'equipment/repair',
+                name: 'equipmentRepair',
+                component: () => import('@/views/equipment/repair/index.vue'),
+                meta: { title: t.repair, icon: 'Tools', order: 4 }
+              },
+              {
+                path: 'equipment/spare',
+                name: 'equipmentSpare',
+                component: () => import('@/views/equipment/spare/index.vue'),
+                meta: { title: t.spare, icon: 'Box', order: 5 }
+              },
+              {
+                path: 'equipment/oee',
+                name: 'equipmentOEE',
+                component: () => import('@/views/equipment/oee/index.vue'),
+                meta: { title: t.oee, icon: 'TrendCharts', order: 6 }
+              },
+              {
+                path: 'iot/monitor',
+                name: 'iotMonitor',
+                component: () => import('@/views/iot/monitor/index.vue'),
+                meta: { title: t.monitor, icon: 'Monitor', order: 7 }
+              },
+              {
+                path: 'iot/config',
+                name: 'iotConfig',
+                component: () => import('@/views/iot/config/index.vue'),
+                meta: { title: t.collectConfig, icon: 'Setting', order: 8 }
+              },
+              {
+                path: 'iot/history',
+                name: 'iotHistory',
+                component: () => import('@/views/iot/history/index.vue'),
+                meta: { title: t.historyData, icon: 'Clock', order: 9 }
+              },
+              {
+                path: 'iot/alert',
+                name: 'iotAlert',
+                component: () => import('@/views/iot/alert/index.vue'),
+                meta: { title: t.alertRule, icon: 'Bell', order: 10 }
+              },
+              {
+                path: 'iot/auto-report',
+                name: 'iotAutoReport',
+                component: () => import('@/views/iot/auto-report/index.vue'),
+                meta: { title: t.autoReport, icon: 'Connection', order: 11 }
+              }
             ]
           }
         ]
@@ -558,14 +808,54 @@ const routes: RouteRecordRaw[] = [
             name: 'crmBusiness',
             meta: { title: t.crm, icon: 'User', order: 1 },
             children: [
-              { path: 'customer', name: 'crmCustomer', component: () => import('@/views/crm/customer/index.vue'), meta: { title: t.customer, icon: 'User', order: 1 } },
-              { path: 'order', name: 'crmOrder', component: () => import('@/views/crm/order/index.vue'), meta: { title: t.order, icon: 'Document', order: 2 } },
-              { path: 'order-change', name: 'crmOrderChange', component: () => import('@/views/crm/order-change/index.vue'), meta: { title: t.orderChange, hidden: true, activeMenu: '/customer-business/crm/order' } },
-              { path: 'contract', name: 'crmContract', component: () => import('@/views/crm/contract/index.vue'), meta: { title: t.contract, icon: 'Tickets', order: 3 } },
-              { path: 'opportunity', name: 'crmOpportunity', component: () => import('@/views/crm/opportunity/index.vue'), meta: { title: t.opportunity, icon: 'Aim', order: 4 } },
-              { path: 'quotation', name: 'crmQuotation', component: () => import('@/views/crm/quotation/index.vue'), meta: { title: t.quotation, icon: 'PriceTag', order: 5 } },
-              { path: 'invoice', name: 'crmInvoice', component: () => import('@/views/crm/invoice/index.vue'), meta: { title: t.invoice, icon: 'Stamp', order: 6 } },
-              { path: 'receivable', name: 'crmReceivable', component: () => import('@/views/crm/receivable/index.vue'), meta: { title: t.receivable, icon: 'Money', order: 7 } }
+              {
+                path: 'customer',
+                name: 'crmCustomer',
+                component: () => import('@/views/crm/customer/index.vue'),
+                meta: { title: t.customer, icon: 'User', order: 1 }
+              },
+              {
+                path: 'order',
+                name: 'crmOrder',
+                component: () => import('@/views/crm/order/index.vue'),
+                meta: { title: t.order, icon: 'Document', order: 2 }
+              },
+              {
+                path: 'order-change',
+                name: 'crmOrderChange',
+                component: () => import('@/views/crm/order-change/index.vue'),
+                meta: { title: t.orderChange, hidden: true, activeMenu: '/customer-business/crm/order' }
+              },
+              {
+                path: 'contract',
+                name: 'crmContract',
+                component: () => import('@/views/crm/contract/index.vue'),
+                meta: { title: t.contract, icon: 'Tickets', order: 3 }
+              },
+              {
+                path: 'opportunity',
+                name: 'crmOpportunity',
+                component: () => import('@/views/crm/opportunity/index.vue'),
+                meta: { title: t.opportunity, icon: 'Aim', order: 4 }
+              },
+              {
+                path: 'quotation',
+                name: 'crmQuotation',
+                component: () => import('@/views/crm/quotation/index.vue'),
+                meta: { title: t.quotation, icon: 'PriceTag', order: 5 }
+              },
+              {
+                path: 'invoice',
+                name: 'crmInvoice',
+                component: () => import('@/views/crm/invoice/index.vue'),
+                meta: { title: t.invoice, icon: 'Stamp', order: 6 }
+              },
+              {
+                path: 'receivable',
+                name: 'crmReceivable',
+                component: () => import('@/views/crm/receivable/index.vue'),
+                meta: { title: t.receivable, icon: 'Money', order: 7 }
+              }
             ]
           }
         ]
@@ -580,12 +870,42 @@ const routes: RouteRecordRaw[] = [
             name: 'operationsAnalysis',
             meta: { title: t.opsAnalysis, icon: 'Histogram', order: 1 },
             children: [
-              { path: 'dashboard', name: 'dashboard', component: () => import('@/views/analysis/DashboardView.vue'), meta: { title: t.dashboard, icon: 'Histogram', order: 1 } },
-              { path: 'report', name: 'report', component: () => import('@/views/analysis/ReportView.vue'), meta: { title: t.reportList, icon: 'Document', order: 2 } },
-              { path: 'finance/index', name: 'financeIndex', component: () => import('@/views/finance/index/index.vue'), meta: { title: t.finance, icon: 'Money', order: 3 } },
-              { path: 'finance/cost', name: 'financeCost', component: () => import('@/views/finance/cost/index.vue'), meta: { title: t.cost, icon: 'TrendCharts', order: 4 } },
-              { path: 'finance/report', name: 'financeReport', component: () => import('@/views/finance/report/index.vue'), meta: { title: t.financeReport, icon: 'DataLine', order: 5 } },
-              { path: 'finance/ledger', name: 'financeLedger', component: () => import('@/views/finance/ledger/index.vue'), meta: { title: t.ledger, icon: 'Notebook', order: 6 } }
+              {
+                path: 'dashboard',
+                name: 'dashboard',
+                component: () => import('@/views/analysis/DashboardView.vue'),
+                meta: { title: t.dashboard, icon: 'Histogram', order: 1 }
+              },
+              {
+                path: 'report',
+                name: 'report',
+                component: () => import('@/views/analysis/ReportView.vue'),
+                meta: { title: t.reportList, icon: 'Document', order: 2 }
+              },
+              {
+                path: 'finance/index',
+                name: 'financeIndex',
+                component: () => import('@/views/finance/index/index.vue'),
+                meta: { title: t.finance, icon: 'Money', order: 3 }
+              },
+              {
+                path: 'finance/cost',
+                name: 'financeCost',
+                component: () => import('@/views/finance/cost/index.vue'),
+                meta: { title: t.cost, icon: 'TrendCharts', order: 4 }
+              },
+              {
+                path: 'finance/report',
+                name: 'financeReport',
+                component: () => import('@/views/finance/report/index.vue'),
+                meta: { title: t.financeReport, icon: 'DataLine', order: 5 }
+              },
+              {
+                path: 'finance/ledger',
+                name: 'financeLedger',
+                component: () => import('@/views/finance/ledger/index.vue'),
+                meta: { title: t.ledger, icon: 'Notebook', order: 6 }
+              }
             ]
           },
           {
@@ -593,18 +913,78 @@ const routes: RouteRecordRaw[] = [
             name: 'complianceAnalysis',
             meta: { title: t.compliance, icon: 'Warning', order: 2 },
             children: [
-              { path: 'energy/overview', name: 'energyOverview', component: () => import('@/views/energy/overview/index.vue'), meta: { title: t.energyOverview, icon: 'DataLine', order: 1 } },
-              { path: 'energy/detail', name: 'energyDetail', component: () => import('@/views/energy/detail/index.vue'), meta: { title: t.energyDetail, icon: 'List', order: 2 } },
-              { path: 'energy/benchmark', name: 'energyBenchmark', component: () => import('@/views/energy/benchmark/index.vue'), meta: { title: t.energyBenchmark, icon: 'TrendCharts', order: 3 } },
-              { path: 'ehs/index', name: 'ehsIndex', component: () => import('@/views/ehs/index/index.vue'), meta: { title: t.safety, icon: 'Warning', order: 4 } },
-              { path: 'ehs/permit', name: 'ehsPermit', component: () => import('@/views/ehs/permit/index.vue'), meta: { title: t.permit, icon: 'Document', order: 5 } },
-              { path: 'ehs/emergency', name: 'ehsEmergency', component: () => import('@/views/ehs/emergency/index.vue'), meta: { title: t.emergency, icon: 'WarningFilled', order: 6 } },
-              { path: 'ehs/training', name: 'ehsTraining', component: () => import('@/views/ehs/training/index.vue'), meta: { title: t.training, icon: 'Reading', order: 7 } },
-              { path: 'hr/index', name: 'hrIndex', component: () => import('@/views/hr/index/index.vue'), meta: { title: t.hr, icon: 'User', order: 8 } },
-              { path: 'hr/attendance', name: 'hrAttendance', component: () => import('@/views/hr/attendance/index.vue'), meta: { title: t.attendance, icon: 'Clock', order: 9 } },
-              { path: 'hr/schedule', name: 'hrSchedule', component: () => import('@/views/hr/schedule/index.vue'), meta: { title: t.schedule, icon: 'Calendar', order: 10 } },
-              { path: 'hr/piecework', name: 'hrPiecework', component: () => import('@/views/hr/piecework/index.vue'), meta: { title: t.piecework, icon: 'Money', order: 11 } },
-              { path: 'hr/skill-matrix', name: 'hrSkillMatrix', component: () => import('@/views/hr/skill-matrix/index.vue'), meta: { title: t.skillMatrix, icon: 'Grid', order: 12 } }
+              {
+                path: 'energy/overview',
+                name: 'energyOverview',
+                component: () => import('@/views/energy/overview/index.vue'),
+                meta: { title: t.energyOverview, icon: 'DataLine', order: 1 }
+              },
+              {
+                path: 'energy/detail',
+                name: 'energyDetail',
+                component: () => import('@/views/energy/detail/index.vue'),
+                meta: { title: t.energyDetail, icon: 'List', order: 2 }
+              },
+              {
+                path: 'energy/benchmark',
+                name: 'energyBenchmark',
+                component: () => import('@/views/energy/benchmark/index.vue'),
+                meta: { title: t.energyBenchmark, icon: 'TrendCharts', order: 3 }
+              },
+              {
+                path: 'ehs/index',
+                name: 'ehsIndex',
+                component: () => import('@/views/ehs/index/index.vue'),
+                meta: { title: t.safety, icon: 'Warning', order: 4 }
+              },
+              {
+                path: 'ehs/permit',
+                name: 'ehsPermit',
+                component: () => import('@/views/ehs/permit/index.vue'),
+                meta: { title: t.permit, icon: 'Document', order: 5 }
+              },
+              {
+                path: 'ehs/emergency',
+                name: 'ehsEmergency',
+                component: () => import('@/views/ehs/emergency/index.vue'),
+                meta: { title: t.emergency, icon: 'WarningFilled', order: 6 }
+              },
+              {
+                path: 'ehs/training',
+                name: 'ehsTraining',
+                component: () => import('@/views/ehs/training/index.vue'),
+                meta: { title: t.training, icon: 'Reading', order: 7 }
+              },
+              {
+                path: 'hr/index',
+                name: 'hrIndex',
+                component: () => import('@/views/hr/index/index.vue'),
+                meta: { title: t.hr, icon: 'User', order: 8 }
+              },
+              {
+                path: 'hr/attendance',
+                name: 'hrAttendance',
+                component: () => import('@/views/hr/attendance/index.vue'),
+                meta: { title: t.attendance, icon: 'Clock', order: 9 }
+              },
+              {
+                path: 'hr/schedule',
+                name: 'hrSchedule',
+                component: () => import('@/views/hr/schedule/index.vue'),
+                meta: { title: t.schedule, icon: 'Calendar', order: 10 }
+              },
+              {
+                path: 'hr/piecework',
+                name: 'hrPiecework',
+                component: () => import('@/views/hr/piecework/index.vue'),
+                meta: { title: t.piecework, icon: 'Money', order: 11 }
+              },
+              {
+                path: 'hr/skill-matrix',
+                name: 'hrSkillMatrix',
+                component: () => import('@/views/hr/skill-matrix/index.vue'),
+                meta: { title: t.skillMatrix, icon: 'Grid', order: 12 }
+              }
             ]
           }
         ]
@@ -619,25 +999,95 @@ const routes: RouteRecordRaw[] = [
             name: 'platformSystem',
             meta: { title: t.system, icon: 'Setting', order: 1 },
             children: [
-              { path: 'user', name: 'user', component: () => import('@/views/system/user/index.vue'), meta: { title: t.user, icon: 'User', order: 1 } },
-              { path: 'role', name: 'role', component: () => import('@/views/system/role/index.vue'), meta: { title: t.role, icon: 'UserFilled', order: 2 } },
-              { path: 'menu', name: 'menu', component: () => import('@/views/system/menu/index.vue'), meta: { title: t.menu, icon: 'Menu', order: 3 } },
-              { path: 'dict', name: 'dict', component: () => import('@/views/system/dict/index.vue'), meta: { title: t.dict, icon: 'Notebook', order: 4 } },
-              { path: 'params', name: 'params', component: () => import('@/views/system/params/index.vue'), meta: { title: t.params, icon: 'Tools', order: 5 } },
-              { path: 'audit', name: 'audit', component: () => import('@/views/system/audit/index.vue'), meta: { title: t.audit, icon: 'DocumentChecked', order: 6 } },
-              { path: 'code-rule', name: 'codeRule', component: () => import('@/views/system/code-rule/index.vue'), meta: { title: t.codeRule, icon: 'Stamp', order: 7 } },
-              { path: 'approval', name: 'approval', component: () => import('@/views/system/approval/index.vue'), meta: { title: t.approval, icon: 'Select', order: 8 } },
-              { path: 'file', name: 'file', component: () => import('@/views/system/file/index.vue'), meta: { title: t.file, icon: 'FolderOpened', order: 9 } },
-              { path: 'notification', name: 'systemNotification', component: () => import('@/views/system/notification/index.vue'), meta: { title: t.notification, icon: 'Bell', order: 10 } },
-              { path: 'sso', name: 'systemSSO', component: () => import('@/views/system/sso/index.vue'), meta: { title: t.sso, icon: 'Key', order: 11 } },
+              {
+                path: 'user',
+                name: 'user',
+                component: () => import('@/views/system/user/index.vue'),
+                meta: { title: t.user, icon: 'User', order: 1 }
+              },
+              {
+                path: 'role',
+                name: 'role',
+                component: () => import('@/views/system/role/index.vue'),
+                meta: { title: t.role, icon: 'UserFilled', order: 2 }
+              },
+              {
+                path: 'menu',
+                name: 'menu',
+                component: () => import('@/views/system/menu/index.vue'),
+                meta: { title: t.menu, icon: 'Menu', order: 3 }
+              },
+              {
+                path: 'dict',
+                name: 'dict',
+                component: () => import('@/views/system/dict/index.vue'),
+                meta: { title: t.dict, icon: 'Notebook', order: 4 }
+              },
+              {
+                path: 'params',
+                name: 'params',
+                component: () => import('@/views/system/params/index.vue'),
+                meta: { title: t.params, icon: 'Tools', order: 5 }
+              },
+              {
+                path: 'audit',
+                name: 'audit',
+                component: () => import('@/views/system/audit/index.vue'),
+                meta: { title: t.audit, icon: 'DocumentChecked', order: 6 }
+              },
+              {
+                path: 'code-rule',
+                name: 'codeRule',
+                component: () => import('@/views/system/code-rule/index.vue'),
+                meta: { title: t.codeRule, icon: 'Stamp', order: 7 }
+              },
+              {
+                path: 'approval',
+                name: 'approval',
+                component: () => import('@/views/system/approval/index.vue'),
+                meta: { title: t.approval, icon: 'Select', order: 8 }
+              },
+              {
+                path: 'file',
+                name: 'file',
+                component: () => import('@/views/system/file/index.vue'),
+                meta: { title: t.file, icon: 'FolderOpened', order: 9 }
+              },
+              {
+                path: 'notification',
+                name: 'systemNotification',
+                component: () => import('@/views/system/notification/index.vue'),
+                meta: { title: t.notification, icon: 'Bell', order: 10 }
+              },
+              {
+                path: 'sso',
+                name: 'systemSSO',
+                component: () => import('@/views/system/sso/index.vue'),
+                meta: { title: t.sso, icon: 'Key', order: 11 }
+              },
               {
                 path: 'print-template',
                 redirect: { name: 'printTemplate' },
                 meta: { title: t.printConfig, icon: 'Printer', order: 12 },
                 children: [
-                  { path: 'list', name: 'printTemplate', component: () => import('@/views/system/print-template/index.vue'), meta: { title: t.printTemplate, icon: 'Printer', order: 1 } },
-                  { path: 'templates/:categoryId?', name: 'printTemplateSettings', component: () => import('@/views/system/print-template/template-list.vue'), meta: { title: t.printTemplateSettings, icon: 'Setting', order: 2 } },
-                  { path: 'designer/:id', name: 'printTemplateDesigner', component: () => import('@/views/system/print-template/designer.vue'), meta: { title: t.printTemplateDesigner, hidden: true, activeMenu: '/platform-foundation/system/print-template/list' } }
+                  {
+                    path: 'list',
+                    name: 'printTemplate',
+                    component: () => import('@/views/system/print-template/index.vue'),
+                    meta: { title: t.printTemplate, icon: 'Printer', order: 1 }
+                  },
+                  {
+                    path: 'templates/:categoryId?',
+                    name: 'printTemplateSettings',
+                    component: () => import('@/views/system/print-template/template-list.vue'),
+                    meta: { title: t.printTemplateSettings, icon: 'Setting', order: 2 }
+                  },
+                  {
+                    path: 'designer/:id',
+                    name: 'printTemplateDesigner',
+                    component: () => import('@/views/system/print-template/designer.vue'),
+                    meta: { title: t.printTemplateDesigner, hidden: true, activeMenu: '/platform-foundation/system/print-template/list' }
+                  }
                 ]
               }
             ]
@@ -647,10 +1097,30 @@ const routes: RouteRecordRaw[] = [
             name: 'platformMdm',
             meta: { title: t.mdm, icon: 'DataAnalysis', order: 2 },
             children: [
-              { path: 'organization', name: 'mdmOrg', component: () => import('@/views/mdm/organization/index.vue'), meta: { title: t.organization, icon: 'OfficeBuilding', order: 1 } },
-              { path: 'material', name: 'mdmMaterial', component: () => import('@/views/mdm/material/index.vue'), meta: { title: t.material, icon: 'Goods', order: 2 } },
-              { path: 'resource', name: 'mdmResource', component: () => import('@/views/mdm/resource/index.vue'), meta: { title: t.resource, icon: 'Cpu', order: 3 } },
-              { path: 'work-center', name: 'mdmWorkCenter', component: () => import('@/views/mdm/work-center/index.vue'), meta: { title: t.workCenter, icon: 'Grid', order: 4 } },
+              {
+                path: 'organization',
+                name: 'mdmOrg',
+                component: () => import('@/views/mdm/organization/index.vue'),
+                meta: { title: t.organization, icon: 'OfficeBuilding', order: 1 }
+              },
+              {
+                path: 'material',
+                name: 'mdmMaterial',
+                component: () => import('@/views/mdm/material/index.vue'),
+                meta: { title: t.material, icon: 'Goods', order: 2 }
+              },
+              {
+                path: 'resource',
+                name: 'mdmResource',
+                component: () => import('@/views/mdm/resource/index.vue'),
+                meta: { title: t.resource, icon: 'Cpu', order: 3 }
+              },
+              {
+                path: 'work-center',
+                name: 'mdmWorkCenter',
+                component: () => import('@/views/mdm/work-center/index.vue'),
+                meta: { title: t.workCenter, icon: 'Grid', order: 4 }
+              },
               { path: 'mold', name: 'mdmMold', component: () => import('@/views/mdm/mold/index.vue'), meta: { title: t.mold, icon: 'Box', order: 5 } }
             ]
           },
@@ -659,8 +1129,18 @@ const routes: RouteRecordRaw[] = [
             name: 'platformSettings',
             meta: { title: t.platformSettings, icon: 'Tools', order: 3 },
             children: [
-              { path: 'config', name: 'config', component: () => import('@/views/settings/ConfigView.vue'), meta: { title: t.systemConfig, icon: 'Tools', order: 1 } },
-              { path: 'log', name: 'log', component: () => import('@/views/settings/LogView.vue'), meta: { title: t.settingLog, icon: 'DocumentChecked', order: 2 } }
+              {
+                path: 'config',
+                name: 'config',
+                component: () => import('@/views/settings/ConfigView.vue'),
+                meta: { title: t.systemConfig, icon: 'Tools', order: 1 }
+              },
+              {
+                path: 'log',
+                name: 'log',
+                component: () => import('@/views/settings/LogView.vue'),
+                meta: { title: t.settingLog, icon: 'DocumentChecked', order: 2 }
+              }
             ]
           }
         ]

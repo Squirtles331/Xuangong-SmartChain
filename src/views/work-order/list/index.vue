@@ -59,7 +59,9 @@
                   <el-dropdown-item v-if="row.status === 'draft'" @click="submitApproval(row)">提交审核</el-dropdown-item>
                   <el-dropdown-item v-if="row.status === 'approved'" @click="releaseOrder(row)">下发</el-dropdown-item>
                   <el-dropdown-item v-if="row.status === 'completed'" @click="closeOrder(row)">关闭</el-dropdown-item>
-                  <el-dropdown-item v-if="row.status === 'in_progress'" @click="$router.push(`/mes/execution/report/${row.id}`)">报工</el-dropdown-item>
+                  <el-dropdown-item v-if="row.status === 'in_progress'" @click="$router.push(`/mes/execution/report/${row.id}`)"
+                    >报工</el-dropdown-item
+                  >
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
