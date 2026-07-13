@@ -11,7 +11,9 @@
       <Header :breadcrumbs="breadcrumbs" @toggle-sidebar="$emit('toggle-sidebar')" />
       <main class="app-main">
         <AffixTabs :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
-        <router-view />
+        <div class="app-content">
+          <router-view />
+        </div>
       </main>
     </div>
     <div v-if="sidebarShow && isMobile" class="sidebar-mask" @click="$emit('toggle-sidebar')"></div>
@@ -68,6 +70,13 @@ defineEmits<{
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
+}
+.app-content {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 @media (max-width: 768px) {
   .sidebar-mask {

@@ -2,13 +2,19 @@
   <el-sub-menu v-if="item.children && item.children.length" :index="item.path">
     <template #title>
       <el-icon><component :is="getIcon(item.icon || 'Menu')" /></el-icon>
-      <span class="menu-title">{{ item.title }}</span>
+      <span class="menu-title-wrap">
+        <span class="menu-title">{{ item.title }}</span>
+        <span v-if="item.menuTag" class="menu-tag">{{ item.menuTag }}</span>
+      </span>
     </template>
     <SidebarMenuItem v-for="child in item.children" :key="child.path" :item="child" :leaf-icon="leafIcon" />
   </el-sub-menu>
   <el-menu-item v-else :index="item.path">
     <el-icon v-if="leafIcon"><component :is="getIcon(item.icon || 'Document')" /></el-icon>
-    <span class="menu-title">{{ item.title }}</span>
+    <span class="menu-title-wrap">
+      <span class="menu-title">{{ item.title }}</span>
+      <span v-if="item.menuTag" class="menu-tag">{{ item.menuTag }}</span>
+    </span>
   </el-menu-item>
 </template>
 
@@ -23,3 +29,25 @@ const getIcon = (name?: string) => {
   return (name && icons[name]) || (icons['Document'] as any)
 }
 </script>
+
+<style scoped>
+.menu-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.menu-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(17, 94, 166, 0.08);
+  color: #115ea6;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+</style>

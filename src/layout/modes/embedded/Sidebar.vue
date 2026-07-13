@@ -1,13 +1,20 @@
 <template>
-  <aside class="app-sidebar" :class="{ collapsed: collapsed, show: show }">
+  <aside class="app-sidebar" :class="{ collapsed, show }">
     <div class="sidebar-top">
-      <el-avatar class="avatar" size="small" />
-      <span class="system-name">玄工智链 · XIC</span>
+      <div class="sidebar-brand">
+        <img class="sidebar-brand-logo" :src="logoUrl" alt="玄工智链" />
+        <div class="sidebar-brand-copy">
+          <div class="sidebar-brand-title">玄工智链</div>
+          <div class="sidebar-brand-subtitle">嵌入导航</div>
+        </div>
+      </div>
     </div>
+
     <el-menu
       class="sidebar-menu"
       :default-active="activeMenu"
       :collapse="collapsed"
+      :unique-opened="true"
       router
       background-color="var(--layout-sidebar-bg)"
       text-color="var(--layout-sidebar-text)"
@@ -18,115 +25,203 @@
         <el-icon>
           <component :is="getIcon(item.icon || (item.path === '/' ? 'House' : 'Document'))" />
         </el-icon>
-        <span class="menu-title">{{ item.title }}</span>
+        <span class="menu-title-wrap">
+          <span class="menu-title">{{ item.title }}</span>
+          <span v-if="item.menuTag" class="menu-tag">{{ item.menuTag }}</span>
+        </span>
       </el-menu-item>
+
       <el-sub-menu v-for="group in groups" :key="group.path" :index="group.path">
         <template #title>
           <el-icon><component :is="getIcon(group.icon || 'Menu')" /></el-icon>
-          <span class="menu-title">{{ group.title }}</span>
+          <span class="menu-title-wrap">
+            <span class="menu-title">{{ group.title }}</span>
+            <span v-if="group.menuTag" class="menu-tag">{{ group.menuTag }}</span>
+          </span>
         </template>
-        <el-menu-item v-for="child in group.children" :key="child.path" :index="child.path">{{ child.title }}</el-menu-item>
+        <el-menu-item v-for="child in group.children" :key="child.path" :index="child.path">
+          {{ child.title }}
+        </el-menu-item>
       </el-sub-menu>
     </el-menu>
+
     <div class="sidebar-bottom">
-      <UserDropdown />
-      <el-button type="text" class="collapse-toggle" @click="emit('toggle-collapse')">
-        <el-icon><Fold /></el-icon>
-      </el-button>
+      <span v-if="!collapsed" class="sidebar-footer-text">切换导航</span>
+      <div class="sidebar-bottom-actions">
+        <UserDropdown />
+        <el-button text class="collapse-toggle" @click="emit('toggle-collapse')">
+          <el-icon><Fold /></el-icon>
+        </el-button>
+      </div>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { Fold } from '@element-plus/icons-vue'
-import UserDropdown from '@/layout/common/header-right/UserDropdown.vue'
 import * as Icons from '@element-plus/icons-vue'
+import { Fold } from '@element-plus/icons-vue'
+import logoUrl from '@/assets/images/logo.png'
+import UserDropdown from '@/layout/common/header-right/UserDropdown.vue'
 import { useSidebarMenu } from '@/layout/common/useSidebarMenu'
-const props = defineProps<{ activeMenu: string; collapsed: boolean; show: boolean }>()
-const emit = defineEmits<{ (e: 'select'): void; (e: 'toggle-collapse'): void }>()
 
+defineProps<{ activeMenu: string; collapsed: boolean; show: boolean }>()
+
+const emit = defineEmits<{ (e: 'select'): void; (e: 'toggle-collapse'): void }>()
 const { singleItems, groups } = useSidebarMenu()
+
 const onSelect = () => emit('select')
+
 const getIcon = (name?: string) => {
-  const icons: any = Icons as any
-  return (name && icons[name]) || (icons['Document'] as any)
+  const icons = Icons as Record<string, unknown>
+  return (name && icons[name]) || icons.Document
 }
 </script>
 
 <style scoped>
 .app-sidebar {
-  width: 200px;
+  width: 248px;
   background-color: var(--layout-sidebar-bg);
   transition: width 0.3s;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
+
 .app-sidebar.collapsed {
-  width: 64px;
+  width: 76px;
 }
+
 .sidebar-top {
-  height: 60px;
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid var(--layout-sidebar-border);
+}
+
+.sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--layout-header-border);
-  background-color: var(--layout-sidebar-bg);
+  gap: 12px;
 }
-.system-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
+
+.sidebar-brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px;
 }
-.app-sidebar.collapsed .system-name {
+
+.sidebar-brand-copy {
+  min-width: 0;
+}
+
+.sidebar-brand-title {
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #f4f7fb;
+}
+
+.sidebar-brand-subtitle {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.2;
+  color: rgba(208, 220, 236, 0.72);
+}
+
+.app-sidebar.collapsed .sidebar-brand-copy {
   display: none;
 }
+
 .sidebar-menu {
   flex: 1;
   overflow-y: auto;
-}
-.sidebar-menu {
+  padding: 12px 10px 14px;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .sidebar-menu::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
+
 .app-sidebar :deep(.el-menu) {
   border-right: none;
 }
-.app-sidebar :deep(.el-menu-item) {
-  height: 48px;
-  line-height: 48px;
-  color: var(--layout-sidebar-text);
-}
+
+.app-sidebar :deep(.el-menu-item),
 .app-sidebar :deep(.el-sub-menu__title) {
-  height: 48px;
-  line-height: 48px;
+  height: 44px;
+  line-height: 44px;
+  margin-bottom: 6px;
+  border-radius: 10px;
   color: var(--layout-sidebar-text);
 }
+
 .app-sidebar :deep(.el-menu-item:hover),
 .app-sidebar :deep(.el-sub-menu__title:hover) {
   background-color: var(--layout-sidebar-hover-bg);
 }
+
 .app-sidebar :deep(.el-menu-item.is-active) {
   color: var(--layout-sidebar-active-text);
   background-color: var(--layout-sidebar-active-bg);
-  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(94, 155, 229, 0.2);
 }
-.app-sidebar.collapsed .menu-title {
+
+.app-sidebar :deep(.el-sub-menu .el-menu-item) {
+  min-width: 0;
+  padding-left: 46px !important;
+}
+
+.menu-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.menu-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(155, 196, 245, 0.12);
+  color: #b8d6fb;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.app-sidebar.collapsed .menu-title,
+.app-sidebar.collapsed .menu-tag {
   display: none;
 }
+
 .sidebar-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  gap: 12px;
+  padding: 12px 14px;
   border-top: 1px solid var(--layout-sidebar-border);
   background-color: var(--layout-sidebar-bg);
 }
+
+.sidebar-footer-text {
+  font-size: 12px;
+  color: rgba(208, 220, 236, 0.72);
+}
+
+.sidebar-bottom-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .collapse-toggle {
   color: var(--layout-sidebar-text);
 }

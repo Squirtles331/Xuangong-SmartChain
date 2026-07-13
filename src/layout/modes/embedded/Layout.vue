@@ -9,7 +9,9 @@
     />
     <div class="right-pane">
       <AffixTabs :tabs="tabs" :active-tab="activeTab" @remove-tab="$emit('remove-tab', $event)" @tab-click="$emit('tab-click', $event)" />
-      <router-view />
+      <div class="app-content">
+        <router-view />
+      </div>
     </div>
   </div>
 </template>
@@ -52,10 +54,20 @@ defineEmits<{
   background-color: var(--layout-main-bg);
   overflow: hidden;
 }
+
 .right-pane {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
+}
+
+.app-content {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0;
 }
 </style>

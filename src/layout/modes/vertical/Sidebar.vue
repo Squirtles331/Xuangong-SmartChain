@@ -19,14 +19,20 @@
         <el-icon>
           <component :is="getIcon(item.icon || (item.path === '/' ? 'House' : 'Document'))" />
         </el-icon>
-        <span class="menu-title">{{ item.title }}</span>
+        <span class="menu-title-wrap">
+          <span class="menu-title">{{ item.title }}</span>
+          <span v-if="item.menuTag" class="menu-tag">{{ item.menuTag }}</span>
+        </span>
       </el-menu-item>
       <el-sub-menu v-for="group in groups" :key="group.path" :index="group.path">
         <template #title>
           <el-icon><component :is="getIcon(group.icon || 'Menu')" /></el-icon>
-          <span class="menu-title">{{ group.title }}</span>
+          <span class="menu-title-wrap">
+            <span class="menu-title">{{ group.title }}</span>
+            <span v-if="group.menuTag" class="menu-tag">{{ group.menuTag }}</span>
+          </span>
         </template>
-        <el-menu-item v-for="child in group.children" :key="child.path" :index="child.path">{{ child.title }}</el-menu-item>
+        <SidebarMenuItem v-for="child in group.children" :key="child.path" :item="child" />
       </el-sub-menu>
     </el-menu>
   </aside>
@@ -36,6 +42,7 @@
 import * as Icons from '@element-plus/icons-vue'
 import { House, Document, Menu } from '@element-plus/icons-vue'
 import { useSidebarMenu } from '@/layout/common/useSidebarMenu'
+import SidebarMenuItem from '@/layout/common/SidebarMenuItem.vue'
 const props = defineProps<{ activeMenu: string; collapsed: boolean; show: boolean }>()
 const emit = defineEmits<{ (e: 'select'): void; (e: 'toggle-collapse'): void }>()
 
@@ -82,6 +89,27 @@ const getIcon = (name?: string) => {
 }
 .app-sidebar.collapsed .menu-title {
   display: none;
+}
+.app-sidebar.collapsed .menu-tag {
+  display: none;
+}
+.menu-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.menu-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(17, 94, 166, 0.08);
+  color: #115ea6;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
 }
 .sidebar-menu {
   flex: 1;

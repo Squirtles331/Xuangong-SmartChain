@@ -8,17 +8,12 @@
 <script lang="ts" setup>
 import { Moon, Sunny } from '@element-plus/icons-vue'
 import { ref, onMounted, onUnmounted } from 'vue'
-type AppTheme = 'light' | 'dark-blue' | 'dark-deep' | 'dark-midnight' | 'dark-neutral' | 'corporate-blue'
+type AppTheme = 'light' | 'night-shift-dark'
 const root = document.documentElement
-const hasDarkClass = () =>
-  root.classList.contains('dark-blue') ||
-  root.classList.contains('dark-deep') ||
-  root.classList.contains('dark-midnight') ||
-  root.classList.contains('dark-neutral') ||
-  root.classList.contains('corporate-blue')
+const hasDarkClass = () => root.classList.contains('night-shift-dark')
 const isDark = ref<boolean>(hasDarkClass())
 const applyTheme = (val: AppTheme) => {
-  root.classList.remove('dark-blue', 'dark-deep', 'dark-midnight', 'dark-neutral', 'corporate-blue')
+  root.classList.remove('night-shift-dark')
   if (val !== 'light') root.classList.add(val)
   localStorage.setItem('app-theme', val)
   isDark.value = val !== 'light'
@@ -26,7 +21,7 @@ const applyTheme = (val: AppTheme) => {
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const supportsVT = 'startViewTransition' in document
 const toggleTheme = (e?: MouseEvent) => {
-  const next = isDark.value ? 'light' : 'dark-deep'
+  const next = isDark.value ? 'light' : 'night-shift-dark'
   if (!supportsVT || prefersReduced) {
     applyTheme(next)
     return

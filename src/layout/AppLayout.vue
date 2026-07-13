@@ -45,7 +45,7 @@ const sidebarCollapsed = ref(false)
 const sidebarShow = ref(false)
 const isMobile = ref(false)
 
-const tabs = ref<Tab[]>([{ title: '首页', path: '/' }])
+const tabs = ref<Tab[]>([{ title: '工作台', path: '/' }])
 const activeTab = ref('/')
 
 watch(
@@ -118,18 +118,6 @@ const handleTabClick = (path: string) => {
 
 const currentLayoutComp = computed(() => {
   switch (layoutStore.mode) {
-    // 纵向布局：左侧侧栏 + 顶部头部 + 内容
-    case 'vertical':
-      return defineAsyncComponent(() => import('@/layout/modes/vertical/Layout.vue'))
-    // 横向布局：无侧栏，仅头部 + 内容（面包屑隐藏）
-    case 'horizontal':
-      return defineAsyncComponent(() => import('@/layout/modes/horizontal/Layout.vue'))
-    // 分栏布局：主侧栏 + 次侧栏 + 内容
-    case 'columns':
-      return defineAsyncComponent(() => import('@/layout/modes/columns/Layout.vue'))
-    // 混合布局：头部 + 侧栏组合，灵活扩展
-    case 'mixed':
-      return defineAsyncComponent(() => import('@/layout/modes/mixed/Layout.vue'))
     // 嵌入布局：仅内容区域（无头部、无侧栏）
     case 'embedded':
       return defineAsyncComponent(() => import('@/layout/modes/embedded/Layout.vue'))
