@@ -34,7 +34,7 @@ const onTabClick = (path: string) => emit('tab-click', path)
 .route-tabs {
   background-color: var(--layout-header-bg);
   border-bottom: 1px solid var(--layout-header-border);
-  padding: 0 20px;
+  padding: 0 12px;
 }
 
 .route-tabs__bar {
@@ -45,6 +45,7 @@ const onTabClick = (path: string) => emit('tab-click', path)
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
+  padding: 0;
 }
 
 .route-tabs__bar::-webkit-scrollbar {

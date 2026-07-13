@@ -83,7 +83,7 @@ const getIcon = (name?: string) => {
 }
 
 .app-sidebar.collapsed {
-  width: 76px;
+  width: 80px;
 }
 
 .sidebar-top {
@@ -125,8 +125,24 @@ const getIcon = (name?: string) => {
   color: rgba(208, 220, 236, 0.72);
 }
 
+.app-sidebar.collapsed .sidebar-top {
+  padding: 16px 0 12px;
+}
+
+.app-sidebar.collapsed .sidebar-brand {
+  justify-content: center;
+}
+
 .app-sidebar.collapsed .sidebar-brand-copy {
   display: none;
+}
+
+.app-sidebar.collapsed .sidebar-brand-logo {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 10px;
+  background: transparent;
 }
 
 .sidebar-menu {
@@ -166,6 +182,11 @@ const getIcon = (name?: string) => {
   box-shadow: inset 0 0 0 1px rgba(94, 155, 229, 0.2);
 }
 
+.app-sidebar :deep(.el-menu-item .el-icon),
+.app-sidebar :deep(.el-sub-menu__title .el-icon) {
+  margin-right: 10px;
+}
+
 .app-sidebar :deep(.el-sub-menu .el-menu-item) {
   min-width: 0;
   padding-left: 46px !important;
@@ -196,6 +217,21 @@ const getIcon = (name?: string) => {
   display: none;
 }
 
+.app-sidebar.collapsed .sidebar-menu {
+  padding: 12px 8px 14px;
+}
+
+.app-sidebar.collapsed :deep(.el-menu-item),
+.app-sidebar.collapsed :deep(.el-sub-menu__title) {
+  justify-content: center;
+  padding: 0 !important;
+}
+
+.app-sidebar.collapsed :deep(.el-menu-item .el-icon),
+.app-sidebar.collapsed :deep(.el-sub-menu__title .el-icon) {
+  margin-right: 0;
+}
+
 .sidebar-footer {
   display: flex;
   align-items: center;
@@ -212,6 +248,15 @@ const getIcon = (name?: string) => {
 
 .collapse-toggle {
   color: var(--layout-sidebar-text);
+}
+
+.app-sidebar.collapsed .sidebar-footer {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.app-sidebar.collapsed .sidebar-footer-text {
+  display: none;
 }
 
 @media (max-width: 768px) {
