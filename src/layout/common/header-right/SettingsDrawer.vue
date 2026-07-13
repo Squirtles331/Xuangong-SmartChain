@@ -167,8 +167,7 @@ onUnmounted(() => {
   padding: 16px;
   border-radius: 18px;
   border: 1px solid var(--layout-divider);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--el-bg-color) 96%, transparent) 0%, var(--el-fill-color-lighter) 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--el-bg-color) 96%, transparent) 0%, var(--el-fill-color-lighter) 100%);
   box-shadow: var(--el-box-shadow-lighter);
 }
 

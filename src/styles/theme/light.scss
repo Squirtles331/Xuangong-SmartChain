@@ -153,4 +153,40 @@
   --workbench-progress-ok: #22c55e;
   --workbench-progress-busy: #3b82f6;
   --workbench-progress-warning: #f97316;
+
+  /* -------- Planned Page -------- */
+  --planned-title: #1e2a37;
+  --planned-desc: #607082;
+  --planned-panel-bg: #ffffff;
+  --planned-panel-border: #dbe3ef;
+  --planned-item-bg: #f7fafc;
+  --planned-item-border: #e5edf5;
+  --planned-item-text: #334155;
+  --planned-label: #7b8a9a;
+
+  /* -------- Login -------- */
+  --login-page-bg:
+    radial-gradient(circle at top left, rgba(31, 94, 122, 0.16), transparent 28%), linear-gradient(135deg, #eef4f8 0%, #f6f9fc 48%, #edf3f7 100%);
+  --login-brand-bg: linear-gradient(180deg, rgba(14, 30, 45, 0.92) 0%, rgba(16, 38, 58, 0.96) 100%);
+  --login-brand-border: rgba(255, 255, 255, 0.08);
+  --login-brand-title: #f4f8fc;
+  --login-brand-text: #bfd0e0;
+  --login-brand-muted: #8fa5b9;
+  --login-brand-badge-bg: rgba(75, 138, 168, 0.18);
+  --login-brand-badge-text: #d7e6f2;
+  --login-brand-point-bg: rgba(255, 255, 255, 0.04);
+  --login-brand-point-border: rgba(255, 255, 255, 0.08);
+  --login-grid-line: rgba(255, 255, 255, 0.06);
+  --login-card-bg: rgba(255, 255, 255, 0.92);
+  --login-card-border: rgba(216, 224, 234, 0.92);
+  --login-card-shadow: 0 22px 48px rgba(15, 27, 45, 0.12);
+  --login-card-title: #1e2a37;
+  --login-card-text: #607082;
+  --login-field-bg: #ffffff;
+  --login-field-border: #d8e0ea;
+  --login-field-placeholder: #8a97a6;
+  --login-captcha-bg: linear-gradient(135deg, #f7fafc 0%, #eef4f8 100%);
+  --login-captcha-text: #1f3850;
+  --login-secondary-bg: #f6f9fc;
+  --login-secondary-border: #d8e0ea;
 }

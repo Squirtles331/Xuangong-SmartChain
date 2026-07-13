@@ -17,7 +17,7 @@
           <div class="hero-updated">更新时间：{{ workbenchData?.updatedAt || '今天 08:30' }}</div>
           <div class="hero-actions__buttons">
             <el-button type="primary" @click="goTo('/mes/traceability/kanban')">查看生产看板</el-button>
-            <el-button @click="goTo('/management-analysis/operations/dashboard')">进入经营驾驶舱</el-button>
+            <el-button @click="goTo('/bi/dashboard')">进入经营驾驶舱</el-button>
           </div>
         </div>
       </div>
@@ -196,7 +196,7 @@
               <h3>经营摘要（轻量）</h3>
               <p>首页只保留健康度摘要，完整经营趋势、收入、成本与利润分析统一进入经营驾驶舱。</p>
             </div>
-            <el-button @click="goTo('/management-analysis/operations/dashboard')">查看完整经营驾驶舱</el-button>
+            <el-button @click="goTo('/bi/dashboard')">查看完整经营驾驶舱</el-button>
           </div>
         </template>
 

@@ -10,37 +10,37 @@ export const plmRoute: RouteRecordRaw = {
     {
       path: 'bom/list',
       name: 'bomList',
-      component: () => import('@/views/bom/list/index.vue'),
+      component: () => import('@/views/plm/bom/list/index.vue'),
       meta: { title: '产品结构清单', icon: 'List', order: 1, ownerSystem: 'PLM', coreObject: 'BOM 版本' }
     },
     {
       path: 'bom/create',
       name: 'bomCreate',
-      component: () => import('@/views/bom/editor/index.vue'),
+      component: () => import('@/views/plm/bom/editor/index.vue'),
       meta: { title: '新建产品结构', hidden: true, activeMenu: '/plm/bom/list' }
     },
     {
       path: 'bom/editor/:id',
       name: 'bomEditor',
-      component: () => import('@/views/bom/editor/index.vue'),
+      component: () => import('@/views/plm/bom/editor/index.vue'),
       meta: { title: '产品结构编辑', hidden: true, activeMenu: '/plm/bom/list' }
     },
     {
       path: 'bom/compare',
       name: 'bomCompare',
-      component: () => import('@/views/bom/compare/index.vue'),
+      component: () => import('@/views/plm/bom/compare/index.vue'),
       meta: { title: '结构版本比较', icon: 'Switch', order: 2 }
     },
     {
       path: 'bom/explode',
       name: 'bomExplode',
-      component: () => import('@/views/bom/explode/index.vue'),
+      component: () => import('@/views/plm/bom/explode/index.vue'),
       meta: { title: '用量展开与反查', icon: 'Search', order: 3 }
     },
     {
       path: 'bom/cost',
       name: 'bomCost',
-      component: () => import('@/views/bom/cost/index.vue'),
+      component: () => import('@/views/plm/bom/cost/index.vue'),
       meta: { title: '结构成本估算', icon: 'Money', order: 4 }
     },
     {
@@ -55,25 +55,25 @@ export const plmRoute: RouteRecordRaw = {
     {
       path: 'routing/editor/:id',
       name: 'routingEditor',
-      component: () => import('@/views/routing/editor/index.vue'),
+      component: () => import('@/views/plm/routing/editor/index.vue'),
       meta: { title: '工艺路线编辑', hidden: true, activeMenu: '/plm/routing' }
     },
     {
       path: 'routing/parallel',
       name: 'routingParallel',
-      component: () => import('@/views/routing/parallel/index.vue'),
+      component: () => import('@/views/plm/routing/parallel/index.vue'),
       meta: { title: '并行工序', icon: 'Share', order: 6 }
     },
     {
       path: 'routing/auto-time',
       name: 'routingAutoTime',
-      component: () => import('@/views/routing/auto-time/index.vue'),
+      component: () => import('@/views/plm/routing/auto-time/index.vue'),
       meta: { title: '标准工时学习', icon: 'Timer', order: 7 }
     },
     {
       path: 'ecn/list',
       name: 'ecnList',
-      component: () => import('@/views/ecn/list/index.vue'),
+      component: () => import('@/views/plm/ecn/list/index.vue'),
       meta: { title: '工程变更', icon: 'Switch', order: 8 }
     },
     {

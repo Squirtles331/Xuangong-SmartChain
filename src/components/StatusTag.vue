@@ -7,15 +7,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+type StatusValue = string | number | boolean
+
 export interface StatusOption {
-  value: string
+  value: StatusValue
   label: string
   type?: 'success' | 'warning' | 'danger' | 'info' | 'primary'
 }
 
 const props = withDefaults(
   defineProps<{
-    value: string
+    value: StatusValue
     options?: StatusOption[]
     size?: '' | 'small' | 'default' | 'large'
     effect?: 'dark' | 'light' | 'plain'

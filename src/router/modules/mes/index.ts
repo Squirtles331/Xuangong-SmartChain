@@ -15,31 +15,31 @@ export const mesRoute: RouteRecordRaw = {
         {
           path: 'list',
           name: 'workOrderList',
-          component: () => import('@/views/work-order/list/index.vue'),
+          component: () => import('@/views/mes/work-order/list/index.vue'),
           meta: { title: '工单列表', icon: 'Tickets', order: 1, ownerSystem: 'MES', coreObject: '生产工单' }
         },
         {
           path: 'create',
           name: 'workOrderCreate',
-          component: () => import('@/views/work-order/create/index.vue'),
+          component: () => import('@/views/mes/work-order/create/index.vue'),
           meta: { title: '新建工单', icon: 'Plus', order: 2, hidden: true, activeMenu: '/mes/work-order/list' }
         },
         {
           path: ':id',
           name: 'workOrderDetail',
-          component: () => import('@/views/work-order/detail/index.vue'),
+          component: () => import('@/views/mes/work-order/detail/index.vue'),
           meta: { title: '工单详情', hidden: true, activeMenu: '/mes/work-order/list', ownerSystem: 'MES', coreObject: '生产工单' }
         },
         {
           path: 'split',
           name: 'workOrderSplit',
-          component: () => import('@/views/work-order/split/index.vue'),
+          component: () => import('@/views/mes/work-order/split/index.vue'),
           meta: { title: '工单拆分', hidden: true, activeMenu: '/mes/work-order/list' }
         },
         {
           path: 'outsource',
           name: 'workOrderOutsource',
-          component: () => import('@/views/work-order/outsource/index.vue'),
+          component: () => import('@/views/mes/work-order/outsource/index.vue'),
           meta: { title: '委外工单', icon: 'Connection', order: 3 }
         }
       ]
@@ -52,7 +52,7 @@ export const mesRoute: RouteRecordRaw = {
         {
           path: 'my-tasks',
           name: 'workOrderMyTasks',
-          component: () => import('@/views/work-order/my-tasks/index.vue'),
+          component: () => import('@/views/mes/work-order/my-tasks/index.vue'),
           meta: { title: '我的任务', icon: 'User', order: 1, ownerSystem: 'MES', coreObject: '工序任务' }
         },
         {
@@ -74,7 +74,7 @@ export const mesRoute: RouteRecordRaw = {
         {
           path: 'report/:id',
           name: 'workOrderReport',
-          component: () => import('@/views/work-order/report/index.vue'),
+          component: () => import('@/views/mes/work-order/report/index.vue'),
           meta: {
             title: '工序报工',
             hidden: true,
@@ -149,13 +149,13 @@ export const mesRoute: RouteRecordRaw = {
         {
           path: 'kanban',
           name: 'workOrderKanban',
-          component: () => import('@/views/work-order/kanban/index.vue'),
+          component: () => import('@/views/mes/work-order/kanban/index.vue'),
           meta: { title: '生产看板', icon: 'DataBoard', order: 1 }
         },
         {
           path: 'trace-report',
           name: 'workOrderTrace',
-          component: () => import('@/views/work-order/trace/index.vue'),
+          component: () => import('@/views/mes/work-order/trace/index.vue'),
           meta: { title: '报工记录', icon: 'Clock', order: 2 }
         },
         {

@@ -55,16 +55,40 @@
   font-size: 12px;
   height: 40px;
   padding: 8px 0;
+  text-align: center;
 }
 .el-table td.el-table__cell {
   padding: 10px 0;
   color: #303133;
-}
-.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
-  background-color: #fafafa;
+  text-align: center;
 }
 .el-table__body tr:hover > td.el-table__cell {
   background-color: #ecf5ff;
+}
+
+.cc-list-view .el-table__header {
+  background-color: var(--el-fill-color-light);
+}
+
+.cc-list-view .el-table__body tr.el-table__row.el-table__row--striped .el-table__cell,
+.cc-list-view .el-table__body tr.el-table__row.el-table__row--striped .el-table-fixed-column--left,
+.cc-list-view .el-table__body tr.el-table__row.el-table__row--striped .el-table-fixed-column--right,
+.cc-list-view .el-table__body tr.el-table__row.el-table__row--striped .el-table__fixed-right-patch {
+  background-color: var(--el-table-row-hover-bg-color) !important;
+}
+
+.cc-list-view .el-table__body tr.el-table__row:not(.el-table__row--striped) .el-table__cell,
+.cc-list-view .el-table__body tr.el-table__row:not(.el-table__row--striped) .el-table-fixed-column--left,
+.cc-list-view .el-table__body tr.el-table__row:not(.el-table__row--striped) .el-table-fixed-column--right,
+.cc-list-view .el-table__body tr.el-table__row:not(.el-table__row--striped) .el-table__fixed-right-patch {
+  background-color: var(--el-bg-color) !important;
+}
+
+.cc-list-view .el-table__body tr.el-table__row:hover .el-table__cell,
+.cc-list-view .el-table__body tr.el-table__row:hover .el-table-fixed-column--left,
+.cc-list-view .el-table__body tr.el-table__row:hover .el-table-fixed-column--right,
+.cc-list-view .el-table__body tr.el-table__row:hover .el-table__fixed-right-patch {
+  background-color: var(--el-table-row-hover-bg-color) !important;
 }
 
 /* ---- 4. 表单统一 ---- */

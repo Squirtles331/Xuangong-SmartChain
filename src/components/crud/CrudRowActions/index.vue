@@ -46,11 +46,17 @@ function rowButtonType(tone?: CrudRowActionItem['tone']) {
 .crud-row-actions {
   display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 0;
+  justify-content: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 0;
 }
 
 .crud-row-actions :deep(.el-button + .el-button) {
   margin-left: 0;
+}
+
+.crud-row-actions :deep(.el-button) {
+  padding-inline: 2px;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="table-setting" :class="{ 'table-setting--fullscreen': isFullscreen }">
+  <div class="table-setting cc-list-view" :class="{ 'table-setting--fullscreen': isFullscreen }">
     <div class="table-setting__toolbar">
       <div class="table-setting__toolbar-left">
         <slot name="toolbar-left">
