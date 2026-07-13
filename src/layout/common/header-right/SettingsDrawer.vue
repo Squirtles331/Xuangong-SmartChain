@@ -12,16 +12,20 @@
             <div class="preview layout-classic"><div class="page"></div></div>
             <div class="label">经典布局</div>
           </div>
-          <div class="option-card" :class="{ active: layoutMode === 'embedded' }" @click="setLayout('embedded')">
-            <div class="preview layout-embedded"><div class="page"></div></div>
-            <div class="label">嵌入布局</div>
+          <div class="option-card" :class="{ active: layoutMode === 'double-row' }" @click="setLayout('double-row')">
+            <div class="preview layout-double-row"><div class="page"></div></div>
+            <div class="label">顶侧双排</div>
+          </div>
+          <div class="option-card" :class="{ active: layoutMode === 'double-column' }" @click="setLayout('double-column')">
+            <div class="preview layout-double-column"><div class="page"></div></div>
+            <div class="label">左侧双列</div>
           </div>
         </div>
       </div>
 
       <div class="section">
         <div class="section-title">全局主题</div>
-        <div class="card-grid">
+        <div class="card-grid theme-grid">
           <div class="option-card" :class="{ active: currentTheme === 'light' }" @click="setTheme('light', $event)">
             <div class="preview theme-light"><div class="page"></div></div>
             <div class="label">工业蓝灰</div>
@@ -46,15 +50,15 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { type LayoutMode, useLayoutStore } from '@/stores/layout'
 import { applyAppTheme, getActiveAppTheme, getStoredAppTheme, type AppTheme } from '@/hooks/useAppTheme'
+import { type LayoutMode, useLayoutStore } from '@/stores/layout'
 
 const props = defineProps<{ modelValue: boolean }>()
-const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
+const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
 
 const open = computed({
   get: () => props.modelValue,
-  set: (v: boolean) => emit('update:modelValue', v)
+  set: (value: boolean) => emit('update:modelValue', value)
 })
 
 const layoutStore = useLayoutStore()
@@ -65,8 +69,8 @@ const root = document.documentElement
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const supportsVT = 'startViewTransition' in document
 
-const applyTheme = (val: AppTheme) => {
-  currentTheme.value = applyAppTheme(val)
+const applyTheme = (value: AppTheme) => {
+  currentTheme.value = applyAppTheme(value)
 }
 
 const setLayout = (mode: LayoutMode) => {
@@ -74,9 +78,9 @@ const setLayout = (mode: LayoutMode) => {
   layoutMode.value = mode
 }
 
-const setTheme = (val: AppTheme, event?: MouseEvent) => {
+const setTheme = (value: AppTheme, event?: MouseEvent) => {
   if (!supportsVT || prefersReduced) {
-    applyTheme(val)
+    applyTheme(value)
     return
   }
 
@@ -87,7 +91,7 @@ const setTheme = (val: AppTheme, event?: MouseEvent) => {
   const radius = Math.hypot(Math.max(centerX, viewportWidth - centerX), Math.max(centerY, viewportHeight - centerY))
 
   const transition = (document as Document & { startViewTransition?: (cb: () => void) => { ready: Promise<void> } }).startViewTransition?.(() =>
-    applyTheme(val)
+    applyTheme(value)
   )
 
   transition?.ready.then(() => {
@@ -95,7 +99,11 @@ const setTheme = (val: AppTheme, event?: MouseEvent) => {
       {
         clipPath: [`circle(0px at ${centerX}px ${centerY}px)`, `circle(${radius}px at ${centerX}px ${centerY}px)`]
       },
-      { duration: 450, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
+      {
+        duration: 450,
+        easing: 'ease-in-out',
+        pseudoElement: '::view-transition-new(root)'
+      }
     )
   })
 }
@@ -193,8 +201,12 @@ onUnmounted(() => {
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.theme-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .option-card {
@@ -227,11 +239,11 @@ onUnmounted(() => {
 }
 
 .preview {
+  display: grid;
   height: 70px;
   overflow: hidden;
   border-radius: 8px;
   background: #edf2f7;
-  display: grid;
   place-items: center;
 }
 
@@ -246,12 +258,23 @@ onUnmounted(() => {
   background: linear-gradient(90deg, #18324d 0 28%, transparent 28% 100%), linear-gradient(180deg, #ffffff 0 22%, #eef3f7 22% 100%);
 }
 
-.layout-embedded .page {
-  background: linear-gradient(90deg, #18324d 0 24%, transparent 24% 100%), linear-gradient(180deg, #eef4f8 0 16%, #ffffff 16% 100%);
+.layout-double-row .page {
+  background:
+    linear-gradient(180deg, #ffffff 0 26%, #eaf1f7 26% 42%, transparent 42% 100%), linear-gradient(90deg, #eef4f8 0 23%, transparent 23% 100%);
+}
+
+.layout-double-column .page {
+  background: linear-gradient(90deg, #18324d 0 18%, #eef4f8 18% 42%, transparent 42% 100%), linear-gradient(180deg, #ffffff 0 22%, #eef3f7 22% 100%);
 }
 
 .theme-night-shift-dark .page {
   border-color: rgba(149, 170, 196, 0.16);
   background: linear-gradient(180deg, #172231 0%, #111a27 100%);
+}
+
+@media (max-width: 960px) {
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>

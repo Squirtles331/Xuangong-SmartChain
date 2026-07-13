@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLayoutStore } from '@/stores/layout'
 
@@ -35,9 +35,8 @@ const router = useRouter()
 const layoutStore = useLayoutStore()
 
 const getRouteTitle = (path: string): string => {
-  // 优先用当前路由已解析的标题（含带参数的动态路由）；否则回退到按路径匹配路由记录
   if (path === route.path && route.meta?.title) return route.meta.title as string
-  const record = router.getRoutes().find((r) => r.path === path)
+  const record = router.getRoutes().find((item) => item.path === path)
   return (record?.meta?.title as string) || '未知页面'
 }
 
@@ -63,9 +62,12 @@ watch(
   { immediate: true }
 )
 
-const breadcrumbs = computed(() => {
+const breadcrumbs = computed<Breadcrumb[]>(() => {
   const matched = route.matched.filter((item) => item.meta?.title)
-  return matched.map((item) => ({ title: item.meta.title as string, path: item.path }))
+  return matched.map((item) => ({
+    title: item.meta.title as string,
+    path: item.path
+  }))
 })
 
 const activeMenu = computed(() => (route.meta?.activeMenu as string) || route.path)
@@ -73,9 +75,10 @@ const activeMenu = computed(() => (route.meta?.activeMenu as string) || route.pa
 const toggleSidebar = () => {
   if (isMobile.value) {
     sidebarShow.value = !sidebarShow.value
-  } else {
-    sidebarCollapsed.value = !sidebarCollapsed.value
+    return
   }
+
+  sidebarCollapsed.value = !sidebarCollapsed.value
 }
 
 const handleMenuSelect = () => {
@@ -102,12 +105,16 @@ onBeforeUnmount(() => {
 
 const removeTab = (targetPath: string) => {
   if (targetPath === '/') return
+
   const index = tabs.value.findIndex((tab) => tab.path === targetPath)
-  if (index > -1) {
-    tabs.value.splice(index, 1)
-    if (activeTab.value === targetPath) {
-      const prevTab = tabs.value[index - 1] || tabs.value[0]
-      if (prevTab) router.push(prevTab.path)
+  if (index === -1) return
+
+  tabs.value.splice(index, 1)
+
+  if (activeTab.value === targetPath) {
+    const fallbackTab = tabs.value[index - 1] || tabs.value[0]
+    if (fallbackTab) {
+      router.push(fallbackTab.path)
     }
   }
 }
@@ -118,10 +125,10 @@ const handleTabClick = (path: string) => {
 
 const currentLayoutComp = computed(() => {
   switch (layoutStore.mode) {
-    // 嵌入布局：仅内容区域（无头部、无侧栏）
-    case 'embedded':
-      return defineAsyncComponent(() => import('@/layout/modes/embedded/Layout.vue'))
-    // 经典布局：标准头部 + 左侧侧栏 + 内容
+    case 'double-row':
+      return defineAsyncComponent(() => import('@/layout/modes/double-row/Layout.vue'))
+    case 'double-column':
+      return defineAsyncComponent(() => import('@/layout/modes/double-column/Layout.vue'))
     case 'classic':
     default:
       return defineAsyncComponent(() => import('@/layout/modes/classic/Layout.vue'))

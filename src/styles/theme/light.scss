@@ -106,6 +106,13 @@
   --layout-divider: #d8e0ea;
   --layout-overlay: var(--el-mask-color);
   --layout-content-padding: 20px;
+  --layout-scroll-control-bg: rgba(255, 255, 255, 0.82);
+  --layout-scroll-control-border: rgba(124, 146, 170, 0.18);
+  --layout-scroll-control-color: var(--el-text-color-primary);
+  --layout-scroll-control-hover-bg: rgba(255, 255, 255, 0.96);
+  --layout-scroll-control-hover-border: rgba(32, 104, 182, 0.26);
+  --layout-scroll-control-hover-color: var(--el-color-primary);
+  --layout-scroll-control-disabled-opacity: 0.38;
 
   /* -------- Tabs -------- */
   --tab-bg: #ffffff;

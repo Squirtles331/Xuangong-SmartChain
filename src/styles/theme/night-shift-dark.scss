@@ -98,6 +98,13 @@ html.night-shift-dark {
   --layout-divider: #263447;
   --layout-overlay: var(--el-mask-color);
   --layout-content-padding: 20px;
+  --layout-scroll-control-bg: rgba(27, 40, 56, 0.88);
+  --layout-scroll-control-border: rgba(147, 164, 184, 0.18);
+  --layout-scroll-control-color: var(--el-text-color-primary);
+  --layout-scroll-control-hover-bg: rgba(34, 50, 70, 0.98);
+  --layout-scroll-control-hover-border: rgba(75, 138, 168, 0.34);
+  --layout-scroll-control-hover-color: var(--el-color-primary-light-7);
+  --layout-scroll-control-disabled-opacity: 0.34;
 
   --tab-bg: #172231;
   --tab-color: var(--el-text-color-secondary);

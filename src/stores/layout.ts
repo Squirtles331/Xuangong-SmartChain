@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia'
 
-export type LayoutMode = 'classic' | 'embedded'
+export type LayoutMode = 'classic' | 'double-row' | 'double-column'
 
 const STORAGE_KEY = 'app-layout-mode'
-const SUPPORTED_MODES: LayoutMode[] = ['classic', 'embedded']
+const SUPPORTED_MODES: LayoutMode[] = ['classic', 'double-row', 'double-column']
 
 const getInitialMode = (): LayoutMode => {
-  const saved = localStorage.getItem(STORAGE_KEY) as LayoutMode | null
+  const saved = localStorage.getItem(STORAGE_KEY) as LayoutMode | 'embedded' | null
+  if (saved === 'embedded') return 'double-row'
   return saved && SUPPORTED_MODES.includes(saved) ? saved : 'classic'
 }
 
@@ -15,9 +16,7 @@ export const useLayoutStore = defineStore('layout', {
     mode: getInitialMode()
   }),
   getters: {
-    showBreadcrumb: (state) => {
-      return state.mode !== 'embedded'
-    }
+    showBreadcrumb: () => true
   },
   actions: {
     setMode(mode: LayoutMode) {

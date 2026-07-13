@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 export interface SidebarItem {
   path: string
@@ -13,8 +13,13 @@ export interface SidebarGroup extends SidebarItem {
   children: SidebarItem[]
 }
 
+export interface TopLevelNavItem extends SidebarItem {
+  kind: 'single' | 'group'
+}
+
 export function useSidebarMenu() {
   const router = useRouter()
+  const route = useRoute()
 
   const orderByMeta = (a: any, b: any) => (a.meta?.order ?? 0) - (b.meta?.order ?? 0)
   const isHidden = (route: any) => !!route.meta?.hidden
@@ -83,5 +88,62 @@ export function useSidebarMenu() {
     })
   })
 
-  return { singleItems, groups }
+  const topLevelItems = computed<TopLevelNavItem[]>(() =>
+    rootChildren.value
+      .filter((route: any) => !isHidden(route))
+      .map((route: any) => {
+        if (hasChildren(route)) {
+          const groupPath = toPath(route.path)
+          return {
+            path: groupPath,
+            title: titleOf(route, groupPath),
+            icon: route.meta?.icon as string | undefined,
+            menuTag: route.meta?.menuTag as string | undefined,
+            children: buildItems(route, groupPath),
+            kind: 'group' as const
+          }
+        }
+
+        return {
+          path: toPath(route.path),
+          title: titleOf(route, toPath(route.path)),
+          icon: route.meta?.icon as string | undefined,
+          menuTag: route.meta?.menuTag as string | undefined,
+          kind: 'single' as const
+        }
+      })
+  )
+
+  const resolveFirstPath = (item: SidebarItem): string => {
+    if (Array.isArray(item.children) && item.children.length > 0) {
+      return resolveFirstPath(item.children[0])
+    }
+    return item.path
+  }
+
+  const currentPath = computed(() => normalize(((route.meta?.activeMenu as string) || route.path) ?? '/'))
+
+  const activeTopLevelPath = computed(() => {
+    const current = currentPath.value
+    const matched = topLevelItems.value.find((item) => current === item.path || current.startsWith(`${item.path}/`))
+    return matched?.path || '/'
+  })
+
+  const activeTopLevelItem = computed(() => topLevelItems.value.find((item) => item.path === activeTopLevelPath.value) || null)
+
+  const currentSidebarItems = computed<SidebarItem[]>(() => {
+    const active = activeTopLevelItem.value
+    if (!active || active.kind !== 'group') return []
+    return active.children || []
+  })
+
+  return {
+    singleItems,
+    groups,
+    topLevelItems,
+    activeTopLevelPath,
+    activeTopLevelItem,
+    currentSidebarItems,
+    resolveFirstPath
+  }
 }
