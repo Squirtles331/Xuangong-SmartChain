@@ -1,51 +1,38 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="操作日志"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :show-add-button="false"
+    :table-attrs="{ border: true, stripe: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+  >
+    <template #actionType="{ row }">
+      <StatusTag :value="row.action" :options="auditActions" />
     </template>
 
-    <TableSetting title="操作日志" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          stripe
-          style="height: 100%"
-        >
-          <template #actionType="{ row }">
-            <StatusTag :value="row.action" :options="auditActions" />
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="detailActions" @action="showDetail(row)" />
+    </template>
 
-          <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="showDetail(row)">详情</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <LogFormDialog v-model:visible="detailVisible" v-model:detail-log="detailLog" @close="detailVisible = false" />
-  </gi-page-layout>
+    <template #dialog>
+      <LogFormDialog v-model:visible="detailVisible" v-model:detail-log="detailLog" @close="detailVisible = false" />
+    </template>
+  </CrudPage>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import TableSetting from '@/components/TableSetting.vue'
 import { getAuditLogs, type AuditLog, type AuditLogQuery } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import LogFormDialog from './LogFormDialog.vue'
@@ -58,20 +45,22 @@ const auditActions = [
   { value: 'LOGIN', label: '登录', type: 'info' as const }
 ]
 
+const detailActions = [{ key: 'detail', label: '详情', tone: 'primary' as const }]
+
 const auditModuleMap: Record<string, string> = {
-  '鐢ㄦ埛绠＄悊': '用户管理',
-  '鑿滃崟绠＄悊': '菜单管理',
-  '璐ㄦ绠＄悊': '质检管理'
+  系统管理: '系统管理',
+  菜单管理: '菜单管理',
+  质检管理: '质检管理'
 }
 
 const auditTargetMap: Record<string, string> = {
-  '鐢ㄦ埛 planner01': '用户 planner01',
-  '鑿滃崟 绯荤粺绠＄悊': '菜单 系统管理',
-  '妫€楠屽崟 IQC-001': '检验单 IQC-001'
+  'user:planner01': '用户 planner01',
+  'menu:system': '菜单 系统管理',
+  'inspection:IQC-001': '检验单 IQC-001'
 }
 
 const auditRequestMap: Record<string, string> = {
-  '{"name":"绯荤粺绠＄悊"}': '{"name":"系统管理"}'
+  '{"name":"system"}': '{"name":"系统管理"}'
 }
 
 const searchColumns: FormColumnItem[] = [
@@ -99,10 +88,6 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const searchGridItemProps = {
-  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-}
-
 const columns: TableColumnItem<AuditLog>[] = [
   { prop: 'userName', label: '操作人', minWidth: 100 },
   { prop: 'module', label: '模块', minWidth: 130 },
@@ -120,7 +105,6 @@ const queryParams = reactive({
   dateRange: [] as string[]
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const detailVisible = ref(false)
 const detailLog = ref<AuditLog | null>(null)
 
@@ -136,6 +120,7 @@ const { tableData, pagination, loading, search, refresh } = useTable<AuditLog>({
       startDate: queryParams.dateRange[0] || undefined,
       endDate: queryParams.dateRange[1] || undefined
     }
+
     const response = await getAuditLogs(params)
     return {
       list: response.data.list.map(normalizeAuditLog),
@@ -149,12 +134,8 @@ function normalizeAuditLog(row: AuditLog): AuditLog {
     ...row,
     module: auditModuleMap[row.module] || row.module,
     target: auditTargetMap[row.target] || row.target,
-    requestParams: auditRequestMap[row.requestParams] || row.requestParams
+    requestParams: auditRequestMap[row.requestParams || ''] || row.requestParams
   }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {

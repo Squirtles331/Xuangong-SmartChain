@@ -1,15 +1,10 @@
-import type { AxiosResponse } from 'axios'
 import type { Ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import { reactive, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
-/** 删除操作的配置选项 */
 export interface DeleteOptions {
-  /** 确认框标题 */
   title?: string
-  /** 确认框内容 */
   content?: string
-  /** 成功提示信息 */
   successTip?: string
 }
 
@@ -27,25 +22,24 @@ interface Options<T> {
   onSuccess?: () => void
   onError?: (_error: Error) => void
   immediate?: boolean
-  /** 行数据的唯一键（如表格 row-key） */
   rowKey?: keyof T
   listAPI: (_p: PageParams) => Promise<PageResult<T>> | Promise<T[]>
-  deleteAPI?: (_pks: string[]) => Promise<any>
-  exportAPI?: () => Promise<any>
+  deleteAPI?: (_pks: string[]) => Promise<unknown>
+  exportAPI?: () => Promise<unknown>
 }
 
-export function useTable<F>(options: Options<F>) {
+export function useTable<T>(options: Options<T>) {
   const { onSuccess, onError, immediate = true } = options
 
   const loading = ref(false)
-  const tableData: Ref<F[]> = ref([])
+  const tableData: Ref<T[]> = ref([])
 
   const pagination = reactive({
     currentPage: 1,
     pageSize: 10,
     total: 0,
-    onCurrentChange: (size: number) => {
-      pagination.currentPage = size
+    onCurrentChange: (page: number) => {
+      pagination.currentPage = page
       getTableData()
     },
     onSizeChange: (size: number) => {
@@ -61,10 +55,11 @@ export function useTable<F>(options: Options<F>) {
   async function getTableData() {
     try {
       loading.value = true
-      const res = await options.listAPI({ page: pagination.currentPage, size: pagination.pageSize })
-      const data = !Array.isArray(res) ? res.list : res
-      tableData.value = data as F[]
-      const total = !Array.isArray(res) ? res.total : data.length
+      const result = await options.listAPI({ page: pagination.currentPage, size: pagination.pageSize })
+      const list = Array.isArray(result) ? result : result.list
+      const total = Array.isArray(result) ? result.length : result.total
+
+      tableData.value = list as T[]
       setTotal(total)
       onSuccess?.()
     } catch (error) {
@@ -74,7 +69,9 @@ export function useTable<F>(options: Options<F>) {
     }
   }
 
-  immediate && getTableData()
+  if (immediate) {
+    getTableData()
+  }
 
   function search() {
     pagination.currentPage = 1
@@ -85,9 +82,9 @@ export function useTable<F>(options: Options<F>) {
     getTableData()
   }
 
-  function handleDelete(deleteApi: () => Promise<AxiosResponse<unknown>>, deleteOptions?: DeleteOptions): Promise<boolean | undefined> {
+  function handleDelete(deleteAction: () => Promise<unknown>, deleteOptions?: DeleteOptions): Promise<boolean | undefined> {
     return new Promise((resolve) => {
-      ElMessageBox.confirm(deleteOptions?.content ?? '是否确认删除？', deleteOptions?.title ?? '提示', {
+      ElMessageBox.confirm(deleteOptions?.content ?? '是否确认删除当前数据？', deleteOptions?.title ?? '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
@@ -97,8 +94,9 @@ export function useTable<F>(options: Options<F>) {
             resolve(undefined)
             return
           }
+
           instance.confirmButtonLoading = true
-          deleteApi()
+          deleteAction()
             .then(() => {
               ElMessage.success(deleteOptions?.successTip ?? '删除成功')
               getTableData()
@@ -106,8 +104,8 @@ export function useTable<F>(options: Options<F>) {
               done()
               resolve(true)
             })
-            .catch((err) => {
-              console.error('删除失败', err)
+            .catch((error) => {
+              console.error('删除失败', error)
               instance.confirmButtonLoading = false
               done()
               resolve(false)
@@ -118,32 +116,35 @@ export function useTable<F>(options: Options<F>) {
   }
 
   const selectedKeys = ref<string[]>([])
-  const onSelectionChange = (rows: F[]) => {
-    selectedKeys.value = rows.map((row) => row[options.rowKey as keyof F] as unknown as string)
+
+  const onSelectionChange = (rows: T[]) => {
+    if (!options.rowKey) return
+    selectedKeys.value = rows.map((row) => row[options.rowKey as keyof T] as unknown as string)
   }
 
-  const onDelete = (row: F) => {
-    if (!options.deleteAPI) {
-      ElMessage.error('deleteAPI没有配置')
+  const onDelete = (row: T) => {
+    if (!options.deleteAPI || !options.rowKey) {
+      ElMessage.error('当前页面未配置删除能力')
       return
     }
-    const deleteAPI = options.deleteAPI
-    handleDelete(() => deleteAPI([row[options.rowKey as keyof F] as unknown as string]))
+
+    handleDelete(() => options.deleteAPI?.([row[options.rowKey as keyof T] as unknown as string]) as Promise<unknown>)
   }
 
   const onBatchDelete = () => {
     if (!options.deleteAPI) {
-      ElMessage.error('deleteAPI没有配置')
+      ElMessage.error('当前页面未配置删除能力')
       return
     }
+
     if (!selectedKeys.value.length) {
-      ElMessage.error('请选择要删除的数据')
+      ElMessage.warning('请先选择需要删除的数据')
       return
     }
-    const deleteAPI = options.deleteAPI
-    handleDelete(() => deleteAPI(selectedKeys.value.map((key) => key as unknown as string)), {
+
+    handleDelete(() => options.deleteAPI?.(selectedKeys.value) as Promise<unknown>, {
       title: '批量删除',
-      content: `确定要删除选中的 ${selectedKeys.value.length} 条数据吗？`,
+      content: `确认删除已选中的 ${selectedKeys.value.length} 条数据吗？`,
       successTip: '删除成功'
     })
   }

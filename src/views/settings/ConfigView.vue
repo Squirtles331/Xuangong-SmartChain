@@ -1,69 +1,51 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="系统参数配置"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    add-text="新增参数"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #category="{ row }">
+      <el-tag :type="getCategoryTagType(row.category)" size="small">{{ getCategoryLabel(row.category) }}</el-tag>
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd">新增参数</gi-button>
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #valueCell="{ row }">
+      <span class="param-value">{{ formatDisplayValue(row) }}</span>
+      <el-tag v-if="row.value === row.defaultValue" size="small" type="info" class="default-tag">默认值</el-tag>
     </template>
 
-    <TableSetting title="系统参数配置" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          stripe
-          style="height: 100%"
-        >
-          <template #category="{ row }">
-            <el-tag :type="getCategoryTagType(row.category)" size="small">{{ getCategoryLabel(row.category) }}</el-tag>
-          </template>
+    <template #status="{ row }">
+      <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
+        {{ row.status === 'active' ? '启用' : '停用' }}
+      </el-tag>
+    </template>
 
-          <template #valueCell="{ row }">
-            <span class="param-value">{{ formatDisplayValue(row) }}</span>
-            <el-tag v-if="row.value === row.defaultValue" size="small" type="info" class="default-tag">默认值</el-tag>
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="rowActions" @action="handleRowAction($event, row)" />
+    </template>
 
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
-              {{ row.status === 'active' ? '启用' : '停用' }}
-            </el-tag>
-          </template>
-
-          <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button type="warning" link size="small" @click="resetToDefault(row)">恢复默认</el-button>
-            <el-button type="danger" link size="small" @click="onDelete(row)">删除</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <ConfigFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <ConfigFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem } from '@/components/crud/types'
 import {
   createSystemParam,
   deleteSystemParam,
@@ -146,10 +128,14 @@ const queryParams = reactive({
   status: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ConfigFormModel>(createDefaultFormModel())
+const rowActions: CrudRowActionItem[] = [
+  { key: 'edit', label: '编辑', tone: 'primary' },
+  { key: 'reset', label: '恢复默认', tone: 'warning' },
+  { key: 'delete', label: '删除', tone: 'danger' }
+]
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<SystemParam>({
   rowKey: 'id',
@@ -190,10 +176,6 @@ function normalizeParamRow(row: SystemParam): SystemParam {
     name: systemParamNameMap[row.code] || row.name,
     description: systemParamDescMap[row.code] || row.description
   }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
@@ -246,6 +228,22 @@ function openEdit(row: SystemParam) {
   dialogVisible.value = true
 }
 
+function handleRowAction(action: string, row: SystemParam) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'reset') {
+    resetToDefault(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
+}
+
 async function submitDialog() {
   if (!formModel.value.code || !formModel.value.name) {
     ElMessage.warning('请填写参数编码和参数名称')
@@ -281,10 +279,6 @@ async function resetToDefault(row: SystemParam) {
 </script>
 
 <style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-
 .param-value {
   font-family: 'Courier New', monospace;
 }

@@ -1,41 +1,46 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form v-model="queryParams" :columns="visibleSearchColumns" search @search="search" @reset="handleReset" />
-      </SearchSetting>
-    </template>
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
-      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="领料单列表"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :toolbar-actions="toolbarActions"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+    @toolbar-action="handleToolbarAction"
+  >
+    <template #headerTop>
+      <PageOwnershipNotice />
     </template>
 
-    <TableSetting title="领料单列表" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'picked' ? 'primary' : 'success'" size="small">
-              {{ row.status === 'pending' ? '待拣料' : row.status === 'picked' ? '已拣料' : '已出库' }}
-            </el-tag>
-          </template>
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <gi-button type="delete" @click="remove(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
+    <template #status="{ row }">
+      <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'picked' ? 'primary' : 'success'" size="small">
+        {{ row.status === 'pending' ? '待拣料' : row.status === 'picked' ? '已拣料' : '已出库' }}
+      </el-tag>
+    </template>
 
-    <PickingFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="rowActions" @action="handleRowAction($event, row)" />
+    </template>
+
+    <template #dialog>
+      <PickingFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem, CrudToolbarActionItem } from '@/components/crud/types'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { getPickingList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
@@ -79,8 +84,6 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
-
 const columns: TableColumnItem<PickingRow>[] = [
   { prop: 'woCode', label: '工单号', width: 170 },
   { prop: 'material', label: '产品名称', minWidth: 160 },
@@ -88,6 +91,12 @@ const columns: TableColumnItem<PickingRow>[] = [
   { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
   { prop: 'createdAt', label: '创建时间', minWidth: 160 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const toolbarActions: CrudToolbarActionItem[] = [{ key: 'export', label: '导出' }]
+const rowActions: CrudRowActionItem[] = [
+  { key: 'edit', label: '编辑', tone: 'primary' },
+  { key: 'delete', label: '删除', tone: 'danger' }
 ]
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<PickingRow>({
@@ -107,6 +116,10 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<P
   }
 })
 
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<PickingFormModel>(createDefaultForm())
+
 function mapRow(item: any): PickingRow {
   return {
     id: String(item.id),
@@ -118,10 +131,6 @@ function mapRow(item: any): PickingRow {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
 function handleReset() {
   queryParams.value = {
     woCode: '',
@@ -130,13 +139,15 @@ function handleReset() {
   search()
 }
 
+function handleToolbarAction(action: string) {
+  if (action === 'export') {
+    handleExport()
+  }
+}
+
 function handleExport() {
   ElMessage.success('导出成功')
 }
-
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<PickingFormModel>(createDefaultForm())
 
 function createDefaultForm(): PickingFormModel {
   return {
@@ -164,6 +175,17 @@ function openEdit(row: PickingRow) {
     status: row.status
   }
   dialogVisible.value = true
+}
+
+function handleRowAction(action: string, row: PickingRow) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'delete') {
+    remove(row)
+  }
 }
 
 async function submitDialog() {

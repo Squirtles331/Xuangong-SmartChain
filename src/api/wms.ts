@@ -1,4 +1,5 @@
-import { isMockMode } from './_config'
+import * as staticService from '@/static/services/wms'
+import { isMockMode, isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut } from './_factory'
 import * as mockService from '@/mock/services/wms'
 
@@ -63,6 +64,7 @@ export function getDeliveryList(params: { pageNum: number; pageSize: number; cod
 }
 
 export function getPickingList(params: { pageNum: number; pageSize: number; code?: string; warehouse?: string; status?: string }) {
+  if (isStaticMode) return staticService.getPickingList(params)
   if (isMockMode) return mockService.getPickingList(params)
   return apiGet<any>('/wms/picking', { params })
 }

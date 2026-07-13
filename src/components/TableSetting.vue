@@ -117,6 +117,10 @@ import { FullScreen, Grid, LocationFilled, Rank, RefreshRight, ScaleToOriginal, 
 import { computed, ref, watch } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 
+defineOptions({
+  name: 'TableSetting'
+})
+
 export interface TableSettingColumnItem {
   key: string
   title: string

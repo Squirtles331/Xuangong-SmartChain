@@ -1,5 +1,19 @@
 <template>
-  <gi-page-layout :size="280" style="height: calc(100vh - 120px)">
+  <CrudPage
+    v-model:search-model="queryParams"
+    :title="tableTitle"
+    :page-attrs="{ size: 280, style: 'height: calc(100vh - 120px)' }"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :table-attrs="{ border: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
     <template #left>
       <div class="tree-wrapper">
         <div class="tree-header">
@@ -20,67 +34,40 @@
       </div>
     </template>
 
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
-    </template>
-
     <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
-      <el-button style="margin-left: 8px" @click="router.push({ name: 'printTemplate' })">返回分类</el-button>
+      <gi-button type="add" @click="openAdd">新增</gi-button>
+      <gi-button type="reset" @click="refresh">刷新</gi-button>
+      <el-button @click="router.push({ name: 'printTemplate' })">返回分类</el-button>
     </template>
 
-    <TableSetting :title="tableTitle" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #index="{ $index }">
-            {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
-          </template>
+    <template #index="{ $index }">
+      {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
+    </template>
 
-          <template #systemBuiltin="{ row }">
-            <el-tag :type="row.systemBuiltin ? 'primary' : 'info'">
-              {{ row.systemBuiltin ? '是' : '否' }}
-            </el-tag>
-          </template>
+    <template #systemBuiltin="{ row }">
+      <el-tag :type="row.systemBuiltin ? 'primary' : 'info'">
+        {{ row.systemBuiltin ? '是' : '否' }}
+      </el-tag>
+    </template>
 
-          <template #isDefault="{ row }">
-            <el-switch :model-value="row.isDefault" @change="(value) => handleDefaultChange(row, value)" />
-          </template>
+    <template #isDefault="{ row }">
+      <el-switch :model-value="row.isDefault" @change="(value) => handleDefaultChange(row, value)" />
+    </template>
 
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <el-button type="warning" link size="small" @click="openDesigner(row)">编辑打印模板</el-button>
-            <gi-button type="delete" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="templateActions" @action="handleRowAction($event, row)" />
+    </template>
 
-    <PrintTemplateDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      :category-options="categoryOptions"
-      @submit="submitDialog"
-    />
-  </gi-page-layout>
+    <template #dialog>
+      <PrintTemplateDialog
+        v-model:visible="dialogVisible"
+        v-model:form="formModel"
+        :mode="dialogMode"
+        :category-options="categoryOptions"
+        @submit="submitDialog"
+      />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
@@ -89,8 +76,8 @@ import type { ElTree } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { useRoute, useRouter } from 'vue-router'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import {
   createPrintTemplate,
   deletePrintTemplate,
@@ -122,7 +109,7 @@ const searchColumns: FormColumnItem[] = [
     type: 'input',
     label: '模板名称',
     field: 'keyword',
-    props: { placeholder: '请输入模板名称/备注', clearable: true } as any
+    props: { placeholder: '请输入模板名称 / 备注', clearable: true } as any
   },
   {
     type: 'select-v2',
@@ -138,10 +125,6 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const searchGridItemProps = {
-  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-}
-
 const columns: TableColumnItem<PrintTemplate>[] = [
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
   { prop: 'categoryName', label: '模板分类', minWidth: 140 },
@@ -156,7 +139,12 @@ const columns: TableColumnItem<PrintTemplate>[] = [
   { label: '操作', minWidth: 260, slotName: 'actions', fixed: 'right', align: 'center' }
 ]
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const templateActions = [
+  { key: 'edit', label: '编辑', tone: 'primary' as const },
+  { key: 'designer', label: '编辑模板', tone: 'secondary' as const },
+  { key: 'delete', label: '删除', tone: 'danger' as const }
+]
+
 const categoryTree = ref<PrintTemplateCategory[]>([])
 const selectedCategoryId = ref((route.params.categoryId as string) || '')
 const selectedCategoryName = ref('')
@@ -193,7 +181,7 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<P
       pageSize: size,
       categoryId: selectedCategoryId.value || undefined,
       keyword: queryParams.keyword || undefined,
-      systemBuiltin: queryParams.systemBuiltin === '' ? undefined : queryParams.systemBuiltin === 'true' ? true : false
+      systemBuiltin: queryParams.systemBuiltin === '' ? undefined : queryParams.systemBuiltin === 'true'
     }
 
     const response = await getPrintTemplateList(params)
@@ -225,26 +213,28 @@ function syncSelectedCategory() {
   if (!selectedCategoryId.value) return
 
   let found: PrintTemplateCategory | null = null
+
   function walk(nodes: PrintTemplateCategory[]) {
     for (const node of nodes) {
       if (node.id === selectedCategoryId.value) {
         found = node
         return
       }
-      if (node.children?.length) walk(node.children)
+
+      if (node.children?.length) {
+        walk(node.children)
+      }
+
       if (found) return
     }
   }
 
   walk(categoryTree.value)
+
   if (found) {
     selectedCategoryName.value = found.name
     treeRef.value?.setCurrentKey(found.id)
   }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
@@ -283,11 +273,23 @@ function openEdit(row: PrintTemplate) {
   dialogVisible.value = true
 }
 
-function openDesigner(row: PrintTemplate) {
-  router.push({
-    name: 'printTemplateDesigner',
-    params: { id: row.id }
-  })
+function handleRowAction(action: string, row: PrintTemplate) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'designer') {
+    router.push({
+      name: 'printTemplateDesigner',
+      params: { id: row.id }
+    })
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
 }
 
 async function handleDefaultChange(row: PrintTemplate, value: boolean | string | number) {
@@ -295,6 +297,7 @@ async function handleDefaultChange(row: PrintTemplate, value: boolean | string |
     await refresh()
     return
   }
+
   await setPrintTemplateDefault(row.id)
   ElMessage.success('默认模板已更新')
   await refresh()
@@ -327,10 +330,6 @@ async function submitDialog() {
 </script>
 
 <style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-
 .tree-wrapper {
   display: flex;
   flex-direction: column;

@@ -1,60 +1,45 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
-    </template>
-
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="系统文件列表"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :show-add-button="false"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+  >
     <template #tool>
       <el-upload :auto-upload="false" :show-file-list="false" @change="handleUpload">
         <gi-button type="add">上传文件</gi-button>
       </el-upload>
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+      <gi-button type="reset" @click="refresh">刷新</gi-button>
     </template>
 
-    <TableSetting title="系统文件列表" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #name="{ row }">
-            <span class="file-name">
-              <el-icon :size="20" :color="fileIconColor(row.type)">
-                <component :is="fileIcon(row.type)" />
-              </el-icon>
-              {{ row.name }}
-            </span>
-          </template>
+    <template #name="{ row }">
+      <span class="file-name">
+        <el-icon :size="20" :color="fileIconColor(row.type)">
+          <component :is="fileIcon(row.type)" />
+        </el-icon>
+        {{ row.name }}
+      </span>
+    </template>
 
-          <template #size="{ row }">
-            {{ formatSize(row.size) }}
-          </template>
+    <template #size="{ row }">
+      {{ formatSize(row.size) }}
+    </template>
 
-          <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="openPreview(row)">预览</el-button>
-            <el-button type="primary" link size="small" @click="downloadFile(row)">下载</el-button>
-            <gi-button type="delete" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="fileActions" @action="handleRowAction($event, row)" />
+    </template>
 
-    <FilePreviewDialog v-model:visible="previewVisible" :file="previewFileData" :icon-component="fileIcon" />
-  </gi-page-layout>
+    <template #dialog>
+      <FilePreviewDialog v-model:visible="previewVisible" :file="previewFileData" :icon-component="fileIcon" />
+    </template>
+  </CrudPage>
 </template>
 
 <script setup lang="ts">
@@ -63,19 +48,15 @@ import { ElMessage } from 'element-plus'
 import type { UploadFile } from 'element-plus'
 import { Document, Files, Grid, Picture, VideoCamera } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import { deleteSystemFile, getSystemFiles, uploadSystemFile, type SystemFile, type SystemFileQuery } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import FilePreviewDialog from './FilePreviewDialog.vue'
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '文件名称/所属模块/关联类型' } as any }
+  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '文件名称 / 所属模块 / 关联类型', clearable: true } as any }
 ]
-
-const searchGridItemProps = {
-  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-}
 
 const columns: TableColumnItem<SystemFile>[] = [
   { label: '文件名称', minWidth: 240, slotName: 'name' },
@@ -83,14 +64,19 @@ const columns: TableColumnItem<SystemFile>[] = [
   { prop: 'objectType', label: '关联类型', minWidth: 120 },
   { label: '文件大小', minWidth: 100, slotName: 'size', align: 'right' },
   { prop: 'uploadedAt', label: '上传时间', minWidth: 170 },
-  { label: '操作', minWidth: 200, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
+]
+
+const fileActions = [
+  { key: 'preview', label: '预览', tone: 'primary' as const },
+  { key: 'download', label: '下载', tone: 'secondary' as const },
+  { key: 'delete', label: '删除', tone: 'danger' as const }
 ]
 
 const queryParams = reactive({
   keyword: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const previewVisible = ref(false)
 const previewFileData = ref<SystemFile | null>(null)
 
@@ -124,10 +110,6 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<S
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteSystemFile(id)))
 })
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
 
 function handleReset() {
   queryParams.keyword = ''
@@ -175,21 +157,25 @@ async function handleUpload(file: UploadFile) {
   await refresh()
 }
 
-function openPreview(row: SystemFile) {
-  previewFileData.value = row
-  previewVisible.value = true
-}
+function handleRowAction(action: string, row: SystemFile) {
+  if (action === 'preview') {
+    previewFileData.value = row
+    previewVisible.value = true
+    return
+  }
 
-function downloadFile(row: SystemFile) {
-  ElMessage.success(`开始下载：${row.name}`)
+  if (action === 'download') {
+    ElMessage.success(`开始下载：${row.name}`)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
 }
 </script>
 
 <style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-
 .file-name {
   display: flex;
   align-items: center;

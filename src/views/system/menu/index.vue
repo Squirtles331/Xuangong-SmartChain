@@ -1,5 +1,19 @@
 <template>
-  <gi-page-layout :size="320" style="height: calc(100vh - 120px)">
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="菜单列表"
+    :page-attrs="{ size: 320, style: 'height: calc(100vh - 120px)' }"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :table-attrs="{ border: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd(currentTreeNode)"
+  >
     <template #left>
       <div class="tree-wrapper">
         <div class="tree-header">
@@ -32,53 +46,22 @@
       </div>
     </template>
 
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+    <template #type="{ row }">
+      <el-tag :type="typeTagMap[row.type]">{{ typeLabelMap[row.type] }}</el-tag>
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd(currentTreeNode)" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #visible="{ row }">
+      <el-tag :type="row.visible ? 'success' : 'info'">{{ row.visible ? '显示' : '隐藏' }}</el-tag>
     </template>
 
-    <TableSetting title="菜单列表" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #type="{ row }">
-            <el-tag :type="typeTagMap[row.type]">{{ typeLabelMap[row.type] }}</el-tag>
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="menuActions" @action="handleRowAction($event, row)" />
+    </template>
 
-          <template #visible="{ row }">
-            <el-tag :type="row.visible ? 'success' : 'info'">{{ row.visible ? '显示' : '隐藏' }}</el-tag>
-          </template>
-
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <gi-button type="delete" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <MenuFormDialog v-model:visible="dialogVisible" v-model:form="dialogFormModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <MenuFormDialog v-model:visible="dialogVisible" v-model:form="dialogFormModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
@@ -86,8 +69,8 @@ import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Document, Folder, Operation } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import { createMenu, deleteMenu, getMenuList, getMenuTree, updateMenu, type MenuQuery, type SysMenu } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import MenuFormDialog, { type MenuFormModel } from './MenuFormDialog.vue'
@@ -111,7 +94,7 @@ const typeTagMap: Record<SysMenu['type'], 'info' | 'primary' | 'warning'> = {
 }
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '菜单名称/路由/权限编码' } as any },
+  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '菜单名称 / 路由 / 权限编码', clearable: true } as any },
   {
     type: 'select-v2',
     label: '类型',
@@ -119,10 +102,6 @@ const searchColumns: FormColumnItem[] = [
     props: { options: typeOptions, clearable: true } as any
   }
 ]
-
-const searchGridItemProps = {
-  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-}
 
 const columns: TableColumnItem<SysMenu>[] = [
   { type: 'index', label: '#', width: 60 },
@@ -136,6 +115,11 @@ const columns: TableColumnItem<SysMenu>[] = [
   { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
+const menuActions = [
+  { key: 'edit', label: '编辑', tone: 'primary' as const },
+  { key: 'delete', label: '删除', tone: 'danger' as const }
+]
+
 const queryParams = reactive<{
   keyword: string
   type: '' | SysMenu['type']
@@ -144,7 +128,6 @@ const queryParams = reactive<{
   type: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const menuTree = ref<SysMenu[]>([])
 const currentTreeNode = ref<SysMenu | null>(null)
 const dialogVisible = ref(false)
@@ -192,10 +175,6 @@ function createDefaultFormModel(): MenuFormModel {
     sortOrder: 1,
     visible: true
   }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
@@ -249,6 +228,17 @@ function openEdit(row: SysMenu) {
   dialogVisible.value = true
 }
 
+function handleRowAction(action: string, row: SysMenu) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
+}
+
 async function submitDialog() {
   if (!dialogFormModel.value.name || !dialogFormModel.value.permissionCode) {
     ElMessage.warning('请填写菜单名称和权限编码')
@@ -281,10 +271,6 @@ async function submitDialog() {
 </script>
 
 <style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-
 .tree-wrapper {
   display: flex;
   flex-direction: column;

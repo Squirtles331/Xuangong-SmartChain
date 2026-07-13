@@ -1,50 +1,49 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form v-model="queryParams" :columns="visibleSearchColumns" search @search="search" @reset="handleReset" />
-      </SearchSetting>
-    </template>
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="倒冲记录"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #status="{ row }">
+      <el-tag :type="row.status === 'pending' ? 'warning' : 'success'" size="small">
+        {{ row.status === 'pending' ? '待倒冲' : '已倒冲' }}
+      </el-tag>
     </template>
 
-    <TableSetting title="倒冲记录" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'pending' ? 'warning' : 'success'" size="small">
-              {{ row.status === 'pending' ? '待倒冲' : '已倒冲' }}
-            </el-tag>
-          </template>
-          <template #diff="{ row }">
-            <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '#909399' }">
-              {{ row.diff > 0 ? '+' : '' }}{{ row.diff }}
-            </span>
-          </template>
-          <template #diffRate="{ row }">
-            <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '#909399' }">
-              {{ row.bomQty > 0 ? ((Math.abs(row.diff) / row.bomQty) * 100).toFixed(2) : '0.00' }}%
-            </span>
-          </template>
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <el-button style="margin-left: 8px" type="primary" link size="small" @click="doBackflush(row)">执行倒冲</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
+    <template #diff="{ row }">
+      <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '#909399' }"> {{ row.diff > 0 ? '+' : '' }}{{ row.diff }} </span>
+    </template>
 
-    <BackflushFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #diffRate="{ row }">
+      <span :style="{ color: row.diff > 0 ? '#f56c6c' : row.diff < 0 ? '#67c23a' : '#909399' }">
+        {{ row.bomQty > 0 ? ((Math.abs(row.diff) / row.bomQty) * 100).toFixed(2) : '0.00' }}%
+      </span>
+    </template>
+
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
+    </template>
+
+    <template #dialog>
+      <BackflushFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem } from '@/components/crud/types'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { getBackflushList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
@@ -90,8 +89,6 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
-
 const columns: TableColumnItem<BackflushRow>[] = [
   { prop: 'material', label: '物料名称', minWidth: 180 },
   { prop: 'woCode', label: '工单号', minWidth: 170 },
@@ -122,6 +119,10 @@ const { tableData, pagination, loading, search, refresh } = useTable<BackflushRo
   }
 })
 
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<BackflushFormModel>(createDefaultForm())
+
 function mapRow(item: any): BackflushRow {
   return {
     id: String(item.id),
@@ -135,10 +136,6 @@ function mapRow(item: any): BackflushRow {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
 function handleReset() {
   queryParams.value = {
     keyword: '',
@@ -146,10 +143,6 @@ function handleReset() {
   }
   search()
 }
-
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<BackflushFormModel>(createDefaultForm())
 
 function createDefaultForm(): BackflushFormModel {
   return {
@@ -174,6 +167,24 @@ function openEdit(row: BackflushRow) {
   dialogMode.value = 'edit'
   formModel.value = { ...row }
   dialogVisible.value = true
+}
+
+function getRowActions(row: BackflushRow): CrudRowActionItem[] {
+  return [
+    { key: 'edit', label: '编辑', tone: 'primary' },
+    { key: 'execute', label: '执行倒冲', tone: 'secondary', hidden: row.status !== 'pending' }
+  ]
+}
+
+function handleRowAction(action: string, row: BackflushRow) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'execute') {
+    doBackflush(row)
+  }
 }
 
 async function submitDialog() {

@@ -1,4 +1,5 @@
-import { isMockMode } from './_config'
+import * as staticService from '@/static/services/work-order'
+import { isMockMode, isStaticMode } from './_config'
 import { apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
 import * as mockService from '@/mock/services/work-order'
 
@@ -31,31 +32,37 @@ export interface WorkOrderQuery {
 }
 
 export function getWorkOrderList(params: WorkOrderQuery) {
+  if (isStaticMode) return staticService.getWorkOrderList(params) as Promise<ApiResponse<PaginatedData<WorkOrder>>>
   if (isMockMode) return mockService.getWorkOrderList(params) as Promise<ApiResponse<PaginatedData<WorkOrder>>>
   return apiGet<PaginatedData<WorkOrder>>('/work-orders', { params })
 }
 
 export function getWorkOrderDetail(id: string) {
+  if (isStaticMode) return staticService.getWorkOrderDetail(id)
   if (isMockMode) return mockService.getWorkOrderDetail(id)
   return apiGet<WorkOrder>(`/work-orders/${id}`)
 }
 
 export function createWorkOrder(data: any) {
+  if (isStaticMode) return staticService.createWorkOrder(data)
   if (isMockMode) return mockService.createWorkOrder(data)
   return apiPost<Record<string, never>, any>('/work-orders', data)
 }
 
 export function approveWorkOrder(id: string, approved: boolean, comment?: string) {
+  if (isStaticMode) return staticService.approveWorkOrder(id, approved, comment)
   if (isMockMode) return mockService.approveWorkOrder(id, approved, comment)
   return apiPut<Record<string, never>, { approved: boolean; comment?: string }>(`/work-orders/${id}/approve`, { approved, comment })
 }
 
 export function releaseWorkOrder(id: string) {
+  if (isStaticMode) return staticService.releaseWorkOrder(id)
   if (isMockMode) return mockService.releaseWorkOrder(id)
   return apiPut<Record<string, never>>(`/work-orders/${id}/release`)
 }
 
 export function closeWorkOrder(id: string, data: { close_type: string; reason?: string; wip_disposition?: string }) {
+  if (isStaticMode) return staticService.closeWorkOrder(id, data)
   if (isMockMode) return mockService.closeWorkOrder(id, data)
   return apiPut<Record<string, never>, { close_type: string; reason?: string; wip_disposition?: string }>(`/work-orders/${id}/close`, data)
 }
@@ -77,6 +84,7 @@ export interface WoOperation {
 }
 
 export function getWorkOrderOperations(workOrderId: string) {
+  if (isStaticMode) return staticService.getWorkOrderOperations(workOrderId)
   if (isMockMode) return mockService.getWorkOrderOperations(workOrderId)
   return apiGet<WoOperation[]>(`/work-orders/${workOrderId}/operations`)
 }
@@ -95,6 +103,7 @@ export function reportOperation(
   operationId: string,
   data: { qualified_qty: number; defective_qty: number; defect_reasons?: string[]; actual_hours: number }
 ) {
+  if (isStaticMode) return staticService.reportOperation(operationId, data)
   if (isMockMode) return mockService.reportOperation(operationId, data)
   return apiPut<Record<string, never>, { qualified_qty: number; defective_qty: number; defect_reasons?: string[]; actual_hours: number }>(
     `/operations/${operationId}/report`,
@@ -172,6 +181,7 @@ export interface ReportHistoryQuery {
 }
 
 export function getReportHistory(params: ReportHistoryQuery) {
+  if (isStaticMode) return staticService.getReportHistory(params) as Promise<ApiResponse<PaginatedData<ReportRecord>>>
   if (isMockMode) return mockService.getReportHistory(params) as Promise<ApiResponse<PaginatedData<ReportRecord>>>
   return apiGet<PaginatedData<ReportRecord>>('/work-orders/report-history', { params })
 }

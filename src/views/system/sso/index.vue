@@ -1,65 +1,47 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="单点登录配置"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #protocol="{ row }">
+      {{ protocolLabelMap[row.protocol] }}
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #enabled="{ row }">
+      <el-tag :type="row.enabled ? 'success' : 'info'">{{ row.enabled ? '启用' : '停用' }}</el-tag>
     </template>
 
-    <TableSetting title="单点登录配置" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #protocol="{ row }">
-            {{ protocolLabelMap[row.protocol] }}
-          </template>
+    <template #status="{ row }">
+      <el-tag :type="row.status === 'online' ? 'success' : 'danger'">{{ row.status === 'online' ? '在线' : '离线' }}</el-tag>
+    </template>
 
-          <template #enabled="{ row }">
-            <el-tag :type="row.enabled ? 'success' : 'info'">{{ row.enabled ? '启用' : '停用' }}</el-tag>
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="rowActions" @action="handleRowAction($event, row)" />
+    </template>
 
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'online' ? 'success' : 'danger'">{{ row.status === 'online' ? '在线' : '离线' }}</el-tag>
-          </template>
-
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <el-button type="primary" link size="small" @click="handleTest(row)">测试连接</el-button>
-            <gi-button type="delete" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <SsoFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <SsoFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem } from '@/components/crud/types'
 import { createSsoConfig, deleteSsoConfig, getSsoConfigs, testSsoConfig, updateSsoConfig, type SsoConfig, type SsoConfigQuery } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import SsoFormDialog, { type SsoFormModel } from './SsoFormDialog.vue'
@@ -114,10 +96,14 @@ const queryParams = reactive<{
   enabled: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<SsoFormModel>(createDefaultFormModel())
+const rowActions: CrudRowActionItem[] = [
+  { key: 'edit', label: '编辑', tone: 'primary' },
+  { key: 'test', label: '测试连接', tone: 'secondary' },
+  { key: 'delete', label: '删除', tone: 'danger' }
+]
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<SsoConfig>({
   rowKey: 'id',
@@ -150,10 +136,6 @@ function createDefaultFormModel(): SsoFormModel {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
 function handleReset() {
   Object.assign(queryParams, {
     keyword: '',
@@ -183,6 +165,22 @@ function openEdit(row: SsoConfig) {
     enabled: row.enabled
   }
   dialogVisible.value = true
+}
+
+function handleRowAction(action: string, row: SsoConfig) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'test') {
+    handleTest(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
 }
 
 async function submitDialog() {
@@ -222,9 +220,3 @@ async function handleTest(row: SsoConfig) {
   await refresh()
 }
 </script>
-
-<style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-</style>

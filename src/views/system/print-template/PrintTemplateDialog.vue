@@ -1,20 +1,20 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
-    :on-cancel="handleCancel"
+  <CrudFormDialog
+    v-model:visible="visible"
+    v-model:form="formData"
     :title="mode === 'add' ? '新增打印模板' : '编辑打印模板'"
+    :columns="formColumns"
+    :label-width="110"
     width="680px"
-  >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="110" />
-  </gi-dialog>
+    @submit="emit('submit')"
+  />
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 
 export interface PrintTemplateFormModel {
   id: string
@@ -26,7 +26,7 @@ export interface PrintTemplateFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
   categoryOptions: Array<{ label: string; value: string }>
 }
 
@@ -64,13 +64,4 @@ const formColumns = computed<FormColumnItem[]>(() => [
     } as any
   }
 ])
-
-function handleCancel() {
-  visible.value = false
-}
-
-async function handleSubmit() {
-  emit('submit')
-  return false
-}
 </script>

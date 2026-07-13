@@ -1,23 +1,26 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
+  <CrudFormDialog
+    v-model:visible="visible"
     :title="mode === 'add' ? '新增编码规则' : '编辑编码规则'"
+    v-model:form="formData"
+    :columns="formColumns"
+    :label-width="120"
     width="550px"
+    :before-submit="beforeSubmit"
+    @submit="emit('submit')"
   >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="120" />
     <div class="preview-box" style="margin-top: 16px; padding: 12px; background: #f5f7fa; border-radius: 6px">
       <span style="font-size: 13px; color: #606266">编码预览：</span>
       <span style="font-size: 16px; font-weight: bold; color: #409eff; margin-left: 8px">{{ previewCode }}</span>
     </div>
-  </gi-dialog>
+  </CrudFormDialog>
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 import type { FormColumnItem } from 'gi-component'
 
 export interface CodeRuleFormModel {
@@ -30,7 +33,7 @@ export interface CodeRuleFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
 }
 
 defineProps<Props>()
@@ -42,7 +45,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '规则编码', field: 'code', required: true },
   { type: 'input', label: '规则名称', field: 'name', required: true },
   { type: 'input', label: '前缀', field: 'prefix', required: true },
@@ -60,7 +63,7 @@ const formColumns: FormColumnItem[] = [
     } as any
   },
   { type: 'input-number', label: '流水号长度', field: 'serialLength', required: true, props: { min: 2, max: 10 } as any }
-]
+])
 
 const previewCode = computed(() => {
   const prefix = formData.value.prefix || '???'
@@ -88,12 +91,11 @@ const previewCode = computed(() => {
   return `${prefix}${dateStr}${serial}`
 })
 
-async function handleSubmit() {
+function beforeSubmit() {
   if (!formData.value.code || !formData.value.name || !formData.value.prefix) {
     ElMessage.warning('请完善编码规则信息')
     return false
   }
-  emit('submit')
-  return false
+  return true
 }
 </script>

@@ -1,19 +1,21 @@
 <template>
-  <gi-dialog
-    v-model="visible"
+  <CrudFormDialog
+    v-model:visible="visible"
+    v-model:form="formData"
     :title="mode === 'add' ? '新增参数' : '编辑参数'"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
-    :on-cancel="handleCancel"
+    :columns="formColumns"
+    :label-width="110"
     width="580px"
-  >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="110" />
-  </gi-dialog>
+    :before-submit="beforeSubmit"
+    @submit="emit('submit')"
+  />
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 import type { FormColumnItem } from 'gi-component'
 import type { SystemParam } from '@/api/system'
 
@@ -30,7 +32,7 @@ export interface ConfigFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
 }
 
 defineProps<Props>()
@@ -42,7 +44,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '参数编码', field: 'code', required: true, props: { placeholder: '如：loginLockCount' } as any },
   { type: 'input', label: '参数名称', field: 'name', required: true },
   {
@@ -91,18 +93,13 @@ const formColumns: FormColumnItem[] = [
     } as any
   },
   { type: 'input', label: '说明', field: 'description', props: { type: 'textarea', rows: 2 } as any }
-]
+])
 
-function handleCancel() {
-  visible.value = false
-}
-
-async function handleSubmit() {
+function beforeSubmit() {
   if (!formData.value.code || !formData.value.name || !formData.value.value) {
     ElMessage.warning('请完善参数信息')
     return false
   }
-  emit('submit')
-  return false
+  return true
 }
 </script>

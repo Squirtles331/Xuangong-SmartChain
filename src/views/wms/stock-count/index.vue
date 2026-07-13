@@ -1,55 +1,58 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form v-model="queryParams" :columns="visibleSearchColumns" search @search="search" @reset="handleReset" />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="盘点计划"
+    :search-columns="searchColumns"
+    :columns="planColumns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :table-attrs="{ border: true, stripe: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openCreate"
+  >
+    <template #beforeTable>
+      <el-row :gutter="16" class="diff-summary">
+        <el-col v-for="item in diffSummary" :key="item.label" :span="6">
+          <el-card shadow="hover" class="diff-card">
+            <div class="diff-label">{{ item.label }}</div>
+            <div class="diff-value" :style="{ color: item.color }">{{ item.value }}</div>
+          </el-card>
+        </el-col>
+      </el-row>
     </template>
-    <template #tool>
-      <gi-button type="add" @click="openCreate" />
+
+    <template #type="{ row }">
+      <el-tag :type="row.type === 'full' ? 'danger' : 'warning'" size="small">
+        {{ row.type === 'full' ? '全盘' : '循环盘点' }}
+      </el-tag>
     </template>
 
-    <el-row :gutter="16" style="margin-bottom: 16px">
-      <el-col v-for="item in diffSummary" :key="item.label" :span="6">
-        <el-card shadow="hover" class="diff-card">
-          <div class="diff-label">{{ item.label }}</div>
-          <div class="diff-value" :style="{ color: item.color }">{{ item.value }}</div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <template #status="{ row }">
+      <el-tag :type="statusTagMap[row.status] || 'info'" size="small">
+        {{ statusLabelMap[row.status] || row.status }}
+      </el-tag>
+    </template>
 
-    <TableSetting title="盘点计划" :columns="planColumns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
-          <template #type="{ row }">
-            <el-tag :type="row.type === 'full' ? 'danger' : 'warning'" size="small">
-              {{ row.type === 'full' ? '全盘' : '循环盘点' }}
-            </el-tag>
-          </template>
-          <template #status="{ row }">
-            <el-tag :type="statusTagMap[row.status] || 'info'" size="small">
-              {{ statusLabelMap[row.status] || row.status }}
-            </el-tag>
-          </template>
-          <template #actions="{ row }">
-            <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="startCount(row)">开始盘点</el-button>
-            <el-button v-if="row.status !== 'pending'" type="success" link size="small" @click="viewDiff(row)">查看差异</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
+    </template>
 
-    <StockCountExecuteDialog v-model:visible="execVisible" v-model:items="execItems" @submit="submitCount" />
-    <StockCountDiffDialog v-model:visible="diffVisible" v-model:items="diffItems" @submit="confirmDiff" />
-  </gi-page-layout>
+    <template #dialog>
+      <StockCountExecuteDialog v-model:visible="execVisible" v-model:items="execItems" @submit="submitCount" />
+      <StockCountDiffDialog v-model:visible="diffVisible" v-model:items="diffItems" @submit="confirmDiff" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import { getStockCountDiff, getStockCountList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import StockCountExecuteDialog, { type StockCountExecuteItem } from './StockCountExecuteDialog.vue'
@@ -124,7 +127,6 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const rawExecLines = ref<any[]>([])
 const rawDiffLines = ref<any[]>([])
 const execItems = ref<StockCountExecuteItem[]>([])
@@ -219,10 +221,6 @@ function buildPlans(lines: any[]): PlanRow[] {
   return Array.from(planMap.values())
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
 function handleReset() {
   queryParams.value = {
     keyword: '',
@@ -233,7 +231,24 @@ function handleReset() {
 }
 
 function openCreate() {
-  ElMessage.info('当前为 Mock 演示模式，暂不提供新增盘点计划')
+  ElMessage.info('当前为静态演示模式，暂不提供新增盘点计划')
+}
+
+function getRowActions(row: PlanRow) {
+  return row.status === 'pending'
+    ? [{ key: 'start', label: '开始盘点', tone: 'primary' as const }]
+    : [{ key: 'diff', label: '查看差异', tone: 'success' as const }]
+}
+
+function handleRowAction(action: string, row: PlanRow) {
+  if (action === 'start') {
+    startCount(row)
+    return
+  }
+
+  if (action === 'diff') {
+    viewDiff(row)
+  }
 }
 
 function startCount(plan: PlanRow) {
@@ -279,6 +294,10 @@ function confirmDiff() {
 </script>
 
 <style scoped>
+.diff-summary {
+  margin-bottom: 16px;
+}
+
 .diff-card :deep(.el-card__body) {
   padding: 16px;
   text-align: center;

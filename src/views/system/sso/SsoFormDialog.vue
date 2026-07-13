@@ -1,18 +1,21 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
+  <CrudFormDialog
+    v-model:visible="visible"
     :title="mode === 'add' ? '新增单点登录配置' : '编辑单点登录配置'"
+    v-model:form="formData"
+    :columns="formColumns"
+    :label-width="120"
     width="680px"
-  >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="120" />
-  </gi-dialog>
+    :before-submit="beforeSubmit"
+    @submit="emit('submit')"
+  />
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 import type { FormColumnItem } from 'gi-component'
 
 export interface SsoFormModel {
@@ -28,7 +31,7 @@ export interface SsoFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
 }
 
 defineProps<Props>()
@@ -40,7 +43,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '配置名称', field: 'name', required: true },
   {
     type: 'select-v2',
@@ -62,14 +65,13 @@ const formColumns: FormColumnItem[] = [
   { type: 'input', label: '回调地址', field: 'redirectUri' },
   { type: 'input', label: '默认角色', field: 'defaultRole' },
   { type: 'switch', label: '启用', field: 'enabled' }
-]
+])
 
-async function handleSubmit() {
+function beforeSubmit() {
   if (!formData.value.name || !formData.value.url || !formData.value.clientId) {
     ElMessage.warning('请完善单点登录配置')
     return false
   }
-  emit('submit')
-  return false
+  return true
 }
 </script>

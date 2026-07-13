@@ -1,67 +1,62 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="调拨单列表"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    add-text="新建调拨单"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #beforeTable>
+      <el-card header="在途库存概览" shadow="never" style="margin-bottom: 16px">
+        <el-row :gutter="16">
+          <el-col v-for="item in transitItems" :key="item.code" :span="8">
+            <el-card shadow="hover" class="transit-card">
+              <div class="transit-header">
+                <span class="transit-code">{{ item.code }}</span>
+                <el-tag type="primary" size="small">在途</el-tag>
+              </div>
+              <div class="transit-body">
+                <div class="transit-info"><span>物料：</span>{{ item.material }}</div>
+                <div class="transit-info"><span>数量：</span>{{ item.qty }}</div>
+                <div class="transit-info"><span>路线：</span>{{ item.from_wh }} -> {{ item.to_wh }}</div>
+                <div class="transit-info"><span>发出时间：</span>{{ item.out_time || '-' }}</div>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
+      </el-card>
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #status="{ row }">
+      <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'transit' ? 'primary' : 'success'" size="small">
+        {{ row.status === 'pending' ? '待调出' : row.status === 'transit' ? '在途' : '已完成' }}
+      </el-tag>
     </template>
 
-    <el-card header="在途库存概览" shadow="never" style="margin-bottom: 16px">
-      <el-row :gutter="16">
-        <el-col v-for="item in transitItems" :key="item.code" :span="8">
-          <el-card shadow="hover" class="transit-card">
-            <div class="transit-header">
-              <span class="transit-code">{{ item.code }}</span>
-              <el-tag type="primary" size="small">在途</el-tag>
-            </div>
-            <div class="transit-body">
-              <div class="transit-info"><span>物料：</span>{{ item.material }}</div>
-              <div class="transit-info"><span>数量：</span>{{ item.qty }}</div>
-              <div class="transit-info"><span>路线：</span>{{ item.from_wh }} -> {{ item.to_wh }}</div>
-              <div class="transit-info"><span>发出时间：</span>{{ item.out_time || '-' }}</div>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
-    </el-card>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
+    </template>
 
-    <TableSetting title="调拨单列表" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'transit' ? 'primary' : 'success'" size="small">
-              {{ row.status === 'pending' ? '待调出' : row.status === 'transit' ? '在途' : '已完成' }}
-            </el-tag>
-          </template>
-          <template #actions="{ row }">
-            <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="confirmOut(row)">调出确认</el-button>
-            <el-button v-if="row.status === 'transit'" type="success" link size="small" @click="confirmIn(row)">调入确认</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <TransferFormDialog v-model:visible="dialogVisible" v-model:form="formModel" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <TransferFormDialog v-model:visible="dialogVisible" v-model:form="formModel" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem } from '@/components/crud/types'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { getTransferList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
@@ -131,6 +126,21 @@ const { tableData, pagination, loading, search, refresh } = useTable<TransferRow
   }
 })
 
+const transitItems = computed(() => tableData.value.filter((item) => item.status === 'transit'))
+
+const columns: TableColumnItem<TransferRow>[] = [
+  { prop: 'code', label: '调拨单号', width: 160 },
+  { prop: 'material', label: '物料名称', minWidth: 160 },
+  { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
+  { prop: 'from_wh', label: '调出仓库', width: 120 },
+  { prop: 'to_wh', label: '调入仓库', width: 120 },
+  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
+  { label: '操作', minWidth: 180, slotName: 'actions', align: 'center' }
+]
+
+const dialogVisible = ref(false)
+const formModel = ref<TransferFormModel>(createDefaultForm())
+
 function mapRow(item: any): TransferRow {
   return {
     id: String(item.id),
@@ -144,28 +154,8 @@ function mapRow(item: any): TransferRow {
   }
 }
 
-const transitItems = computed(() => tableData.value.filter((item) => item.status === 'transit'))
-
-const columns: TableColumnItem<TransferRow>[] = [
-  { prop: 'code', label: '调拨单号', width: 160 },
-  { prop: 'material', label: '物料名称', minWidth: 160 },
-  { prop: 'qty', label: '数量', minWidth: 80, align: 'center' },
-  { prop: 'from_wh', label: '调出仓库', width: 120 },
-  { prop: 'to_wh', label: '调入仓库', width: 120 },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 180, slotName: 'actions', align: 'center' }
-]
-
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
-const dialogVisible = ref(false)
-const formModel = ref<TransferFormModel>(createDefaultForm())
-
 function createDefaultForm(): TransferFormModel {
   return { material: '', qty: 1, from_wh: '原材料仓', to_wh: '机加工线边仓' }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
@@ -176,6 +166,24 @@ function handleReset() {
 function openAdd() {
   formModel.value = createDefaultForm()
   dialogVisible.value = true
+}
+
+function getRowActions(row: TransferRow): CrudRowActionItem[] {
+  return [
+    { key: 'out', label: '调出确认', tone: 'primary', hidden: row.status !== 'pending' },
+    { key: 'in', label: '调入确认', tone: 'success', hidden: row.status !== 'transit' }
+  ]
+}
+
+function handleRowAction(action: string, row: TransferRow) {
+  if (action === 'out') {
+    confirmOut(row)
+    return
+  }
+
+  if (action === 'in') {
+    confirmIn(row)
+  }
 }
 
 async function submitDialog() {

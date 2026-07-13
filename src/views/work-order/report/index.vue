@@ -1,6 +1,8 @@
 <template>
   <gi-page-layout>
     <div class="report-container">
+      <PageOwnershipNotice class="report-ownership" />
+
       <div class="report-header">
         <h2>工序报工</h2>
         <div class="report-info">
@@ -86,6 +88,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import type { TableColumnItem } from 'gi-component'
 import * as echarts from 'echarts'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import TableSetting from '@/components/TableSetting.vue'
 import {
   getReportHistory,
@@ -349,6 +352,10 @@ watch(tableData, () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
+}
+
+.report-ownership {
   margin-bottom: 16px;
 }
 

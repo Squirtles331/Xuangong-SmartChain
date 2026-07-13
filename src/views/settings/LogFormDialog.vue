@@ -1,5 +1,13 @@
 <template>
-  <gi-dialog v-model="visible" title="操作日志详情" :footer="false" width="640px" @close="handleClose">
+  <CrudFormDialog
+    v-model:visible="visible"
+    v-model:form="dialogState"
+    title="操作日志详情"
+    :columns="[]"
+    width="640px"
+    :show-footer="false"
+    @cancel="emit('close')"
+  >
     <el-descriptions :column="2" border>
       <el-descriptions-item label="操作人">{{ detailLog?.userName || '-' }}</el-descriptions-item>
       <el-descriptions-item label="操作时间">{{ detailLog?.createdAt || '-' }}</el-descriptions-item>
@@ -13,11 +21,13 @@
         <pre class="json-preview">{{ detailLog?.requestParams || '-' }}</pre>
       </el-descriptions-item>
     </el-descriptions>
-  </gi-dialog>
+  </CrudFormDialog>
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import StatusTag from '@/components/StatusTag.vue'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
 import type { AuditLog } from '@/api/system'
 
 const auditActions = [
@@ -31,13 +41,11 @@ const auditActions = [
 const visible = defineModel<boolean>('visible', { required: true })
 const detailLog = defineModel<AuditLog | null>('detailLog', { required: true })
 
+const dialogState = computed(() => ({}))
+
 const emit = defineEmits<{
   close: []
 }>()
-
-function handleClose() {
-  emit('close')
-}
 </script>
 
 <style scoped>

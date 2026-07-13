@@ -1,65 +1,48 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="委外工单"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :toolbar-actions="toolbarActions"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+    @toolbar-action="handleToolbarAction"
+  >
+    <template #dueDate="{ row }">
+      <span :style="isOverdue(row) ? 'color: #f56c6c; font-weight: 600' : ''">
+        {{ row.due_date }}
+        <el-tag v-if="isOverdue(row)" type="danger" size="small" style="margin-left: 4px">逾期</el-tag>
+      </span>
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
-      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+    <template #status="{ row }">
+      <el-tag :type="statusTagMap[row.status]">{{ statusLabelMap[row.status] }}</el-tag>
     </template>
 
-    <TableSetting title="委外工单" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #dueDate="{ row }">
-            <span :style="isOverdue(row) ? 'color: #f56c6c; font-weight: 600' : ''">
-              {{ row.due_date }}
-              <el-tag v-if="isOverdue(row)" type="danger" size="small" style="margin-left: 4px">逾期</el-tag>
-            </span>
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
+    </template>
 
-          <template #status="{ row }">
-            <el-tag :type="statusTagMap[row.status]">{{ statusLabelMap[row.status] }}</el-tag>
-          </template>
-
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <el-button v-if="row.status === 'sent'" type="primary" link size="small" @click="confirmSend(row)">确认发出</el-button>
-            <el-button v-if="row.status === 'processing'" type="success" link size="small" @click="confirmReceive(row)">确认收回</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <OutsourceFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <OutsourceFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem, CrudToolbarActionItem } from '@/components/crud/types'
 import {
   createOutsourceOrder,
   getOutsourceOrders,
@@ -127,7 +110,7 @@ const queryParams = reactive<{
   status: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const toolbarActions: CrudToolbarActionItem[] = [{ key: 'export', label: '导出' }]
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<OutsourceFormModel>(createDefaultFormModel())
@@ -162,16 +145,18 @@ function createDefaultFormModel(): OutsourceFormModel {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
 function handleReset() {
   Object.assign(queryParams, {
     keyword: '',
     status: ''
   })
   search()
+}
+
+function handleToolbarAction(action: string) {
+  if (action === 'export') {
+    handleExport()
+  }
 }
 
 function handleExport() {
@@ -188,6 +173,30 @@ function openEdit(row: OutsourceOrder) {
   dialogMode.value = 'edit'
   formModel.value = { ...row }
   dialogVisible.value = true
+}
+
+function getRowActions(row: OutsourceOrder): CrudRowActionItem[] {
+  return [
+    { key: 'edit', label: '编辑', tone: 'primary' },
+    { key: 'send', label: '确认发出', tone: 'secondary', hidden: row.status !== 'sent' },
+    { key: 'receive', label: '确认收回', tone: 'success', hidden: row.status !== 'processing' }
+  ]
+}
+
+function handleRowAction(action: string, row: OutsourceOrder) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'send') {
+    confirmSend(row)
+    return
+  }
+
+  if (action === 'receive') {
+    confirmReceive(row)
+  }
 }
 
 async function submitDialog() {

@@ -1,16 +1,19 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
-          search
-          @reset="handleReset"
-          @search="search"
-        />
-      </SearchSetting>
+      <div class="page-header-stack">
+        <PageOwnershipNotice />
+        <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
+          <gi-form
+            v-model="queryParams"
+            :columns="visibleSearchColumns"
+            :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
+            search
+            @reset="handleReset"
+            @search="search"
+          />
+        </SearchSetting>
+      </div>
     </template>
 
     <template #tool>
@@ -51,6 +54,7 @@
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import TableSetting from '@/components/TableSetting.vue'
@@ -228,3 +232,11 @@ async function submitInspect() {
   ElMessage.success(`检验完成：${verdictMap[inspectResult.value] || ''}`)
 }
 </script>
+
+<style scoped>
+.page-header-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+</style>

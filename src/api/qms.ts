@@ -1,4 +1,5 @@
-import { isMockMode } from './_config'
+import * as staticService from '@/static/services/qms'
+import { isMockMode, isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
 import * as mockService from '@/mock/services/qms'
 
@@ -46,21 +47,25 @@ export function getInspectionTaskList(params: {
   material?: string
   status?: string
 }) {
+  if (isStaticMode) return staticService.getInspectionTaskList(params) as Promise<ApiResponse<PaginatedData<InspectionTask>>>
   if (isMockMode) return mockService.getInspectionTaskList(params) as Promise<ApiResponse<PaginatedData<InspectionTask>>>
   return apiGet<PaginatedData<InspectionTask>>('/qms/inspections', { params })
 }
 
 export function createInspectionTask(data: Partial<InspectionTask>) {
+  if (isStaticMode) return staticService.createInspectionTask(data)
   if (isMockMode) return mockService.createInspectionTask(data)
   return apiPost<Record<string, never>, Partial<InspectionTask>>('/qms/inspections', data)
 }
 
 export function updateInspectionTask(id: string, data: Partial<InspectionTask>) {
+  if (isStaticMode) return staticService.updateInspectionTask(id, data)
   if (isMockMode) return mockService.updateInspectionTask(id, data)
   return apiPut<Record<string, never>, Partial<InspectionTask>>(`/qms/inspections/${id}`, data)
 }
 
 export function deleteInspectionTask(id: string) {
+  if (isStaticMode) return staticService.deleteInspectionTask(id)
   if (isMockMode) return mockService.deleteInspectionTask(id)
   return apiDelete<Record<string, never>>(`/qms/inspections/${id}`)
 }

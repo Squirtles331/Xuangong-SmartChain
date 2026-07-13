@@ -1,10 +1,18 @@
 <template>
-  <gi-dialog v-model="visible" :footer="true" :lock-scroll="false" :on-before-ok="handleSubmit" :title="mode === 'add' ? '新增角色' : '编辑角色'">
-    <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
-  </gi-dialog>
+  <CrudFormDialog
+    v-model:visible="visible"
+    v-model:form="formData"
+    :title="mode === 'add' ? '新增角色' : '编辑角色'"
+    :columns="formColumns"
+    :label-width="100"
+    @submit="emit('submit')"
+  />
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 import type { FormColumnItem } from 'gi-component'
 
 export interface RoleFormModel {
@@ -17,7 +25,7 @@ export interface RoleFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
 }
 
 defineProps<Props>()
@@ -29,7 +37,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '角色编码', field: 'code', required: true },
   { type: 'input', label: '角色名称', field: 'name', required: true },
   { type: 'input', label: '描述', field: 'description', props: { type: 'textarea', rows: 2 } as any },
@@ -44,10 +52,5 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   }
-]
-
-async function handleSubmit() {
-  emit('submit')
-  return false
-}
+])
 </script>

@@ -1,45 +1,40 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form v-model="queryParams" :columns="visibleSearchColumns" search @search="search" @reset="handleReset" />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="库存台账"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :show-add-button="false"
+    :table-attrs="{ border: true, stripe: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="search"
+  >
+    <template #qty="{ row }">
+      <div class="qty-cell">
+        <span :class="{ 'qty-warn': row.qty < row.safety }">{{ row.qty }}</span>
+        <el-tag v-if="row.qty < row.safety" type="danger" size="small" class="qty-tag">低于安全库存</el-tag>
+      </div>
     </template>
 
-    <TableSetting title="库存台账" :columns="columns" @refresh="search">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          stripe
-          style="height: 100%"
-        >
-          <template #qty="{ row }">
-            <div class="qty-cell">
-              <span :class="{ 'qty-warn': row.qty < row.safety }">{{ row.qty }}</span>
-              <el-tag v-if="row.qty < row.safety" type="danger" size="small" class="qty-tag">低于安全库存</el-tag>
-            </div>
-          </template>
-          <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="trace(row)">批次追溯</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="traceActions" @action="trace(row)" />
+    </template>
 
-    <InventoryTraceDialog v-model:visible="traceVisible" v-model:trace-data="traceData" />
-  </gi-page-layout>
+    <template #dialog>
+      <InventoryTraceDialog v-model:visible="traceVisible" v-model:trace-data="traceData" />
+    </template>
+  </CrudPage>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import { reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import { getInventoryList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import InventoryTraceDialog, { type InventoryTraceItem } from './InventoryTraceDialog.vue'
@@ -58,11 +53,6 @@ interface InventoryRow {
   safety: number
   unit: string
 }
-
-const queryParams = ref({
-  keyword: '',
-  warehouse: ''
-})
 
 const warehouseOptions = [
   { label: '原材料仓', value: '原材料仓' },
@@ -92,8 +82,6 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
-
 const columns: TableColumnItem<InventoryRow>[] = [
   { prop: 'code', label: '物料编码', width: 170 },
   { prop: 'name', label: '物料名称', minWidth: 140 },
@@ -101,12 +89,22 @@ const columns: TableColumnItem<InventoryRow>[] = [
   { prop: 'warehouse', label: '仓库', width: 110 },
   { prop: 'location', label: '库位', width: 110 },
   { prop: 'lot', label: '批次号', width: 150 },
-  { label: '当前库存', minWidth: 120, slotName: 'qty', align: 'center' },
+  { label: '当前库存', minWidth: 160, slotName: 'qty', align: 'center' },
   { prop: 'safety', label: '安全库存', minWidth: 100, align: 'center' },
   { prop: 'reserved', label: '已预留', minWidth: 90, align: 'center' },
   { prop: 'available', label: '可用库存', minWidth: 100, align: 'center' },
   { label: '操作', minWidth: 100, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
+
+const traceActions = [{ key: 'trace', label: '批次追溯', tone: 'primary' as const }]
+
+const queryParams = reactive({
+  keyword: '',
+  warehouse: ''
+})
+
+const traceVisible = ref(false)
+const traceData = ref<InventoryTraceItem[]>([])
 
 const { tableData, pagination, loading, search } = useTable<InventoryRow>({
   rowKey: 'id',
@@ -114,9 +112,9 @@ const { tableData, pagination, loading, search } = useTable<InventoryRow>({
     const response = await getInventoryList({
       pageNum: page,
       pageSize: size,
-      code: queryParams.value.keyword || undefined,
-      name: queryParams.value.keyword || undefined,
-      warehouse: queryParams.value.warehouse || undefined
+      code: queryParams.keyword || undefined,
+      name: queryParams.keyword || undefined,
+      warehouse: queryParams.warehouse || undefined
     })
 
     return {
@@ -143,20 +141,13 @@ function mapRow(item: any): InventoryRow {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
 function handleReset() {
-  queryParams.value = {
+  Object.assign(queryParams, {
     keyword: '',
     warehouse: ''
-  }
+  })
   search()
 }
-
-const traceVisible = ref(false)
-const traceData = ref<InventoryTraceItem[]>([])
 
 function trace(row: InventoryRow) {
   traceData.value = [

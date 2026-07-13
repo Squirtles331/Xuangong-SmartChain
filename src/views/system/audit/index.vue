@@ -1,51 +1,38 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="系统审计日志"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :show-add-button="false"
+    :table-attrs="{ border: true, stripe: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+  >
+    <template #actionType="{ row }">
+      <StatusTag :value="row.action" :options="auditActionOptions" />
     </template>
 
-    <TableSetting title="系统审计日志" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          stripe
-          style="height: 100%"
-        >
-          <template #actionType="{ row }">
-            <StatusTag :value="row.action" :options="auditActionOptions" />
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="detailActions" @action="showDetail(row)" />
+    </template>
 
-          <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click.stop="showDetail(row)">详情</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <AuditDetailDialog v-model:visible="detailVisible" :detail-log="detailLog" :action-options="auditActionOptions" />
-  </gi-page-layout>
+    <template #dialog>
+      <AuditDetailDialog v-model:visible="detailVisible" :detail-log="detailLog" :action-options="auditActionOptions" />
+    </template>
+  </CrudPage>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import TableSetting from '@/components/TableSetting.vue'
 import { getAuditLogs, type AuditLog, type AuditLogQuery } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import AuditDetailDialog from './AuditDetailDialog.vue'
@@ -57,6 +44,8 @@ const auditActionOptions = [
   { value: 'APPROVE', label: '审批', type: 'primary' as const },
   { value: 'LOGIN', label: '登录', type: 'info' as const }
 ]
+
+const detailActions = [{ key: 'detail', label: '详情', tone: 'primary' as const }]
 
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '操作人', field: 'userName', props: { clearable: true } as any },
@@ -83,10 +72,6 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const searchGridItemProps = {
-  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-}
-
 const columns: TableColumnItem<AuditLog>[] = [
   { prop: 'userName', label: '操作人', minWidth: 100 },
   { prop: 'module', label: '模块', minWidth: 120 },
@@ -109,7 +94,6 @@ const queryParams = reactive<{
   dateRange: []
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const detailVisible = ref(false)
 const detailLog = ref<AuditLog | null>(null)
 
@@ -133,10 +117,6 @@ const { tableData, pagination, loading, search, refresh } = useTable<AuditLog>({
     return response.data
   }
 })
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
 
 function handleReset() {
   Object.assign(queryParams, {

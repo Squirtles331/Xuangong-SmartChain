@@ -65,6 +65,10 @@ import { Rank, Setting } from '@element-plus/icons-vue'
 import { computed, nextTick, ref, watch } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 
+defineOptions({
+  name: 'SearchSetting'
+})
+
 interface SearchSettingFieldItem {
   key: string
   title: string

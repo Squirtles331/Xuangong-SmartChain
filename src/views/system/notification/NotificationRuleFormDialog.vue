@@ -1,18 +1,21 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
+  <CrudFormDialog
+    v-model:visible="visible"
     :title="mode === 'add' ? '新增通知规则' : '编辑通知规则'"
+    v-model:form="formData"
+    :columns="formColumns"
+    :label-width="100"
     width="600px"
-  >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
-  </gi-dialog>
+    :before-submit="beforeSubmit"
+    @submit="emit('submit')"
+  />
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 import type { FormColumnItem } from 'gi-component'
 
 export interface NotificationRuleFormModel {
@@ -24,7 +27,7 @@ export interface NotificationRuleFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
 }
 
 defineProps<Props>()
@@ -36,7 +39,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   {
     type: 'select-v2',
     label: '业务类型',
@@ -78,14 +81,13 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   }
-]
+])
 
-async function handleSubmit() {
+function beforeSubmit() {
   if (!formData.value.bizType || !formData.value.channel) {
     ElMessage.warning('请完善通知规则信息')
     return false
   }
-  emit('submit')
-  return false
+  return true
 }
 </script>

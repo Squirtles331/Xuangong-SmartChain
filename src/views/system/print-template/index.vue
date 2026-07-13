@@ -1,73 +1,54 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="打印模板分类"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :table-attrs="{ border: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #index="{ $index }">
+      {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #name="{ row }">
+      <el-button link type="primary" @click="openTemplates(row)">
+        {{ row.name }}
+      </el-button>
     </template>
 
-    <TableSetting title="打印模板分类" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #index="{ $index }">
-            {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
-          </template>
+    <template #parentName="{ row }">
+      {{ row.parentName || '-' }}
+    </template>
 
-          <template #name="{ row }">
-            <el-button link type="primary" @click="openTemplates(row)">
-              {{ row.name }}
-            </el-button>
-          </template>
+    <template #updatedBy="{ row }">
+      {{ row.updatedBy || '-' }}
+    </template>
 
-          <template #parentName="{ row }">
-            {{ row.parentName || '-' }}
-          </template>
+    <template #updatedAt="{ row }">
+      {{ row.updatedAt || '-' }}
+    </template>
 
-          <template #updatedBy="{ row }">
-            {{ row.updatedBy || '-' }}
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="categoryActions" @action="handleRowAction($event, row)" />
+    </template>
 
-          <template #updatedAt="{ row }">
-            {{ row.updatedAt || '-' }}
-          </template>
-
-          <template #actions="{ row }">
-            <el-button link type="primary" size="small" @click="openTemplates(row)">模板设置</el-button>
-            <gi-button type="edit" @click="openEdit(row)" />
-            <gi-button type="delete" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <PrintTemplateCategoryDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      :parent-options="parentOptions"
-      @submit="submitDialog"
-    />
-  </gi-page-layout>
+    <template #dialog>
+      <PrintTemplateCategoryDialog
+        v-model:visible="dialogVisible"
+        v-model:form="formModel"
+        :mode="dialogMode"
+        :parent-options="parentOptions"
+        @submit="submitDialog"
+      />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
@@ -75,8 +56,8 @@ import { computed, reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import {
   createPrintTemplateCategory,
   deletePrintTemplateCategory,
@@ -100,13 +81,9 @@ const searchColumns: FormColumnItem[] = [
     type: 'input',
     label: '分类名称',
     field: 'keyword',
-    props: { placeholder: '请输入分类名称/编码', clearable: true } as any
+    props: { placeholder: '请输入分类名称 / 编码', clearable: true } as any
   }
 ]
-
-const searchGridItemProps = {
-  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-}
 
 const columns: TableColumnItem<PrintTemplateCategory>[] = [
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
@@ -118,10 +95,15 @@ const columns: TableColumnItem<PrintTemplateCategory>[] = [
   { prop: 'createdAt', label: '创建时间', minWidth: 180 },
   { prop: 'updatedBy', label: '修改人', minWidth: 120, slotName: 'updatedBy' },
   { prop: 'updatedAt', label: '修改时间', minWidth: 180, slotName: 'updatedAt' },
-  { label: '操作', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const categoryActions = [
+  { key: 'templates', label: '模板设置', tone: 'secondary' as const },
+  { key: 'edit', label: '编辑', tone: 'primary' as const },
+  { key: 'delete', label: '删除', tone: 'danger' as const }
+]
+
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<PrintTemplateCategoryFormModel>(createDefaultFormModel())
@@ -180,10 +162,6 @@ async function loadCategoryTree() {
   categoryTree.value = response.data
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
 function handleReset() {
   queryParams.keyword = ''
   search()
@@ -213,6 +191,22 @@ function openTemplates(row: PrintTemplateCategory) {
   })
 }
 
+function handleRowAction(action: string, row: PrintTemplateCategory) {
+  if (action === 'templates') {
+    openTemplates(row)
+    return
+  }
+
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
+}
+
 async function submitDialog() {
   if (!formModel.value.name || !formModel.value.code) {
     ElMessage.warning('请填写分类名称和分类编码')
@@ -236,9 +230,3 @@ async function submitDialog() {
   ElMessage.success(dialogMode.value === 'add' ? '新增成功' : '保存成功')
 }
 </script>
-
-<style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-</style>

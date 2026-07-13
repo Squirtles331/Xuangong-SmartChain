@@ -1,18 +1,21 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
+  <CrudFormDialog
+    v-model:visible="visible"
+    v-model:form="formData"
     :title="mode === 'add' ? '新增领料单' : '编辑领料单'"
+    :columns="formColumns"
+    :label-width="100"
     width="600px"
-  >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
-  </gi-dialog>
+    :before-submit="beforeSubmit"
+    @submit="emit('submit')"
+  />
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 import type { FormColumnItem } from 'gi-component'
 
 export interface PickingFormModel {
@@ -24,7 +27,7 @@ export interface PickingFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
 }
 
 defineProps<Props>()
@@ -36,7 +39,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '工单号', field: 'woCode', required: true },
   { type: 'input', label: '产品名称', field: 'material', required: true },
   {
@@ -64,15 +67,14 @@ const formColumns: FormColumnItem[] = [
       ]
     } as any
   }
-]
+])
 
-async function handleSubmit() {
+function beforeSubmit() {
   if (!formData.value.woCode || !formData.value.material) {
     ElMessage.warning('请填写必填项')
     return false
   }
 
-  emit('submit')
-  return false
+  return true
 }
 </script>

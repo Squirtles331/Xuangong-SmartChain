@@ -1,20 +1,19 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
+  <CrudFormDialog
+    v-model:visible="visible"
+    v-model:form="formData"
     :title="mode === 'add' ? '新增菜单节点' : '编辑菜单节点'"
+    :columns="formColumns"
+    :label-width="100"
     width="600px"
+    @submit="emit('submit')"
   >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
-
-    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #ebeef5">
+    <div class="icon-preview">
       <el-form-item label="图标预览">
-        <div style="display: flex; align-items: center; gap: 12px">
+        <div class="icon-preview__content">
           <el-icon v-if="formData.icon" :size="28"><component :is="formData.icon" /></el-icon>
-          <span v-else style="color: #999">未选择</span>
-          <el-button type="primary" link @click="iconDialogVisible = true">选择图标</el-button>
+          <span v-else class="icon-preview__empty">未选择</span>
+          <el-button link type="primary" @click="iconDialogVisible = true">选择图标</el-button>
         </div>
       </el-form-item>
     </div>
@@ -29,12 +28,14 @@
       </div>
       <el-empty v-if="!filteredIcons.length" description="未找到匹配图标" />
     </el-dialog>
-  </gi-dialog>
+  </CrudFormDialog>
 </template>
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import type { FormColumnItem } from 'gi-component'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 
 export interface MenuFormModel {
   id: string
@@ -50,7 +51,7 @@ export interface MenuFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
 }
 
 defineProps<Props>()
@@ -188,14 +189,25 @@ function selectIcon(name: string) {
   formData.value.icon = name
   iconDialogVisible.value = false
 }
-
-async function handleSubmit() {
-  emit('submit')
-  return false
-}
 </script>
 
 <style scoped>
+.icon-preview {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
+}
+
+.icon-preview__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-preview__empty {
+  color: #999;
+}
+
 .icon-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);

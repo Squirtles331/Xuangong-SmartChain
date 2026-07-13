@@ -1,20 +1,22 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
-    :on-cancel="handleCancel"
+  <CrudFormDialog
+    v-model:visible="visible"
+    v-model:form="formData"
     :title="mode === 'add' ? '新增工单' : '编辑工单'"
+    :columns="formColumns"
+    :label-width="100"
     width="600px"
-  >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
-  </gi-dialog>
+    :before-submit="beforeSubmit"
+    @submit="emit('submit')"
+  />
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
 import { ElMessage } from 'element-plus'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 
 export interface WorkOrderFormModel {
   id: string
@@ -23,7 +25,7 @@ export interface WorkOrderFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
 }
 
 defineProps<Props>()
@@ -35,18 +37,13 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [{ type: 'input', label: '工单名称', field: 'name', required: true }]
+const formColumns = computed<FormColumnItem[]>(() => [{ type: 'input', label: '工单名称', field: 'name', required: true }])
 
-function handleCancel() {
-  visible.value = false
-}
-
-async function handleSubmit() {
+function beforeSubmit() {
   if (!formData.value.name) {
     ElMessage.warning('请填写必填项')
     return false
   }
-  emit('submit')
-  return false
+  return true
 }
 </script>

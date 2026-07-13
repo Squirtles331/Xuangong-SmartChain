@@ -1,84 +1,68 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="工单列表"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    add-text="新建工单"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="$router.push('/mes/work-order/create')"
+  >
+    <template #headerTop>
+      <PageOwnershipNotice />
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="$router.push('/mes/work-order/create')">新建工单</gi-button>
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #priority="{ row }">
+      <StatusTag :value="row.priority" :options="WORK_ORDER_PRIORITY" />
     </template>
 
-    <TableSetting title="工单列表" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #priority="{ row }">
-            <StatusTag :value="row.priority" :options="WORK_ORDER_PRIORITY" />
-          </template>
+    <template #progress="{ row }">
+      <div class="progress-cell">
+        <el-progress :percentage="row.progress" :stroke-width="6" :color="row.progress === 100 ? '#67c23a' : '#409eff'" />
+      </div>
+    </template>
 
-          <template #progress="{ row }">
-            <div class="progress-cell">
-              <el-progress :percentage="row.progress" :stroke-width="6" :color="row.progress === 100 ? '#67c23a' : '#409eff'" />
-            </div>
-          </template>
+    <template #status="{ row }">
+      <StatusTag :value="row.status" :options="WORK_ORDER_STATUS" />
+    </template>
 
-          <template #status="{ row }">
-            <StatusTag :value="row.status" :options="WORK_ORDER_STATUS" />
-          </template>
+    <template #plannedEnd="{ row }">
+      <span :style="{ color: isOverdue(row) ? '#f56c6c' : '' }">{{ row.planned_end_date || '-' }}</span>
+    </template>
 
-          <template #plannedEnd="{ row }">
-            <span :style="{ color: isOverdue(row) ? '#f56c6c' : '' }">{{ row.planned_end_date || '-' }}</span>
-          </template>
-
-          <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="$router.push(`/mes/work-order/${row.id}`)">详情</el-button>
-            <el-dropdown trigger="click">
-              <el-button type="primary" link size="small">
-                更多
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item v-if="row.status === 'draft'" @click="submitApproval(row)">提交审核</el-dropdown-item>
-                  <el-dropdown-item v-if="row.status === 'approved'" @click="releaseOrder(row)">下发</el-dropdown-item>
-                  <el-dropdown-item v-if="row.status === 'completed'" @click="closeOrder(row)">关闭</el-dropdown-item>
-                  <el-dropdown-item v-if="row.status === 'in_progress'" @click="$router.push(`/mes/execution/report/${row.id}`)"
-                    >报工</el-dropdown-item
-                  >
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-  </gi-page-layout>
+    <template #actions="{ row }">
+      <el-button type="primary" link size="small" @click="$router.push(`/mes/work-order/${row.id}`)">详情</el-button>
+      <el-dropdown trigger="click">
+        <el-button type="primary" link size="small">
+          更多
+          <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item v-if="row.status === 'draft'" @click="submitApproval(row)">提交审核</el-dropdown-item>
+            <el-dropdown-item v-if="row.status === 'approved'" @click="releaseOrder(row)">下发</el-dropdown-item>
+            <el-dropdown-item v-if="row.status === 'completed'" @click="closeOrder(row)">关闭</el-dropdown-item>
+            <el-dropdown-item v-if="row.status === 'in_progress'" @click="$router.push(`/mes/execution/report/${row.id}`)">报工</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </template>
+  </CrudPage>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { WORK_ORDER_PRIORITY, WORK_ORDER_STATUS } from '@/common/status-maps'
 import { approveWorkOrder, closeWorkOrder, getWorkOrderList, releaseWorkOrder, type WorkOrder, type WorkOrderQuery } from '@/api/work-order'
@@ -167,8 +151,6 @@ const queryParams = reactive<{
   dateRange: []
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
-
 const { tableData, pagination, loading, search, refresh } = useTable<WorkOrderRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
@@ -196,10 +178,6 @@ function mapWorkOrderRow(item: WorkOrderRow): WorkOrderRow {
     current_operation: item.current_operation || '待排产',
     progress: item.planned_qty > 0 ? Math.round(((item.completed_qty || 0) / item.planned_qty) * 100) : 0
   }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
@@ -243,9 +221,5 @@ function closeOrder(row: WorkOrderRow) {
 <style scoped>
 .progress-cell {
   min-width: 120px;
-}
-
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
 }
 </style>

@@ -1,69 +1,50 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="字典类型管理"
+    :search-columns="searchColumns"
+    :columns="typeColumns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :table-attrs="{ border: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAddType"
+  >
+    <template #status="{ row }">
+      <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+        {{ row.status === 'active' ? '启用' : '停用' }}
+      </el-tag>
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAddType" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #actions="{ row }">
+      <CrudRowActions :actions="typeActions" @action="handleRowAction($event, row)" />
     </template>
 
-    <TableSetting title="字典类型管理" :columns="typeColumns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
-              {{ row.status === 'active' ? '启用' : '停用' }}
-            </el-tag>
-          </template>
+    <template #dialog>
+      <DictTypeDialog v-model:visible="typeDialogVisible" v-model:form="typeFormModel" :mode="typeDialogMode" @submit="submitTypeDialog" />
 
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEditType(row)" />
-            <gi-button type="delete" @click="deleteType(row)" />
-            <el-button type="primary" link size="small" @click="openItems(row)">字典项</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <DictTypeDialog v-model:visible="typeDialogVisible" v-model:form="typeFormModel" :mode="typeDialogMode" @submit="submitTypeDialog" />
-
-    <DictItemsDialog
-      v-model:visible="itemDialogVisible"
-      v-model:items="currentItems"
-      :dict-type-name="currentType?.name || ''"
-      @close="closeItemDialog"
-      @create-item="createItemFromDialog"
-      @update-item="updateItemFromDialog"
-      @delete-item="deleteItem"
-    />
-  </gi-page-layout>
+      <DictItemsDialog
+        v-model:visible="itemDialogVisible"
+        v-model:items="currentItems"
+        :dict-type-name="currentType?.name || ''"
+        @close="closeItemDialog"
+        @create-item="createItemFromDialog"
+        @update-item="updateItemFromDialog"
+        @delete-item="deleteItem"
+      />
+    </template>
+  </CrudPage>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import {
   createDictItem,
   createDictType,
@@ -81,27 +62,28 @@ import { useTable } from '@/hooks/useTable'
 import DictItemsDialog from './DictItemsDialog.vue'
 import DictTypeDialog, { type DictTypeFormModel } from './DictTypeDialog.vue'
 
-const searchColumns: FormColumnItem[] = [{ type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '字典编码/字典名称' } as any }]
-
-const searchGridItemProps = {
-  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-}
+const searchColumns: FormColumnItem[] = [
+  { type: 'input', label: '关键字', field: 'keyword', props: { placeholder: '字典编码 / 字典名称', clearable: true } as any }
+]
 
 const typeColumns: TableColumnItem<DictType>[] = [
   { prop: 'code', label: '字典编码', minWidth: 180 },
   { prop: 'name', label: '字典名称', minWidth: 150 },
   { prop: 'description', label: '说明', minWidth: 220 },
   { label: '状态', minWidth: 100, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const queryParams = reactive<{
-  keyword: string
-}>({
+const typeActions = [
+  { key: 'edit', label: '编辑', tone: 'primary' as const },
+  { key: 'items', label: '字典项', tone: 'secondary' as const },
+  { key: 'delete', label: '删除', tone: 'danger' as const }
+]
+
+const queryParams = reactive<{ keyword: string }>({
   keyword: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const typeDialogVisible = ref(false)
 const typeDialogMode = ref<'add' | 'edit'>('add')
 const typeFormModel = ref<DictTypeFormModel>(createDefaultTypeForm())
@@ -122,10 +104,6 @@ const { tableData, pagination, loading, search, refresh } = useTable<DictType>({
 
 function createDefaultTypeForm(): DictTypeFormModel {
   return { id: '', code: '', name: '', description: '' }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
@@ -150,6 +128,22 @@ function openEditType(row: DictType) {
     description: row.description
   }
   typeDialogVisible.value = true
+}
+
+function handleRowAction(action: string, row: DictType) {
+  if (action === 'edit') {
+    openEditType(row)
+    return
+  }
+
+  if (action === 'items') {
+    openItems(row)
+    return
+  }
+
+  if (action === 'delete') {
+    deleteType(row)
+  }
 }
 
 async function submitTypeDialog() {
@@ -250,9 +244,3 @@ function closeItemDialog() {
   currentItems.value = []
 }
 </script>
-
-<style scoped lang="scss">
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-</style>

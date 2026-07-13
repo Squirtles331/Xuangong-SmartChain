@@ -1,63 +1,53 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="生产追溯记录"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :show-add-button="false"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+  >
+    <template #actions="{ row }">
+      <CrudRowActions :actions="detailActions" @action="viewDetail(row)" />
     </template>
 
-    <TableSetting title="生产追溯记录" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="viewDetail(row)">详情</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <TraceDetailDialog v-model:visible="detailVisible" :detail="currentDetail" />
-  </gi-page-layout>
+    <template #dialog>
+      <TraceDetailDialog v-model:visible="detailVisible" :detail="currentDetail" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import { getTraceRecords, type TraceRecord, type TraceRecordQuery } from '@/api/work-order'
 import { useTable } from '@/hooks/useTable'
 import TraceDetailDialog, { type TraceDetail } from './TraceDetailDialog.vue'
 
+const detailActions = [{ key: 'detail', label: '详情', tone: 'primary' as const }]
+
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '工单号', field: 'wo_code' },
-  { type: 'input', label: '操作人', field: 'worker' },
+  { type: 'input', label: '工单号', field: 'wo_code', props: { clearable: true } as any },
+  { type: 'input', label: '操作人', field: 'worker', props: { clearable: true } as any },
   {
     type: 'date-picker',
     label: '日期范围',
     field: 'date_range',
-    props: { type: 'daterange', startPlaceholder: '开始日期', endPlaceholder: '结束日期', valueFormat: 'YYYY-MM-DD' } as any
+    props: {
+      type: 'daterange',
+      startPlaceholder: '开始日期',
+      endPlaceholder: '结束日期',
+      valueFormat: 'YYYY-MM-DD'
+    } as any
   }
 ]
-
-const searchGridItemProps = {
-  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
-}
 
 const columns: TableColumnItem<TraceRecord>[] = [
   { prop: 'wo_code', label: '工单号', minWidth: 170 },
@@ -80,7 +70,6 @@ const queryParams = reactive<{
   date_range: []
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const detailVisible = ref(false)
 const currentDetail = ref<TraceDetail | null>(null)
 
@@ -100,10 +89,6 @@ const { tableData, pagination, loading, search, refresh } = useTable<TraceRecord
     return response.data
   }
 })
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
 
 function handleReset() {
   Object.assign(queryParams, {

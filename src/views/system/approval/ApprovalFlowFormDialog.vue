@@ -1,18 +1,21 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
+  <CrudFormDialog
+    v-model:visible="visible"
     :title="mode === 'add' ? '新增审批流' : '编辑审批流'"
+    v-model:form="formData"
+    :columns="formColumns"
+    :label-width="120"
     width="600px"
-  >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="120" />
-  </gi-dialog>
+    :before-submit="beforeSubmit"
+    @submit="emit('submit')"
+  />
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 import type { FormColumnItem } from 'gi-component'
 
 export interface ApprovalFlowFormModel {
@@ -23,7 +26,7 @@ export interface ApprovalFlowFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
 }
 
 defineProps<Props>()
@@ -35,7 +38,7 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '审批流名称', field: 'name', required: true },
   {
     type: 'select-v2',
@@ -60,14 +63,13 @@ const formColumns: FormColumnItem[] = [
     required: true,
     props: { placeholder: '多个节点用逗号分隔，例如：车间主任,生产部长' } as any
   }
-]
+])
 
-async function handleSubmit() {
+function beforeSubmit() {
   if (!formData.value.name || !formData.value.businessType || !formData.value.nodes) {
     ElMessage.warning('请完善审批流信息')
     return false
   }
-  emit('submit')
-  return false
+  return true
 }
 </script>

@@ -1,52 +1,47 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="退料/退货单列表"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    add-text="新建退料/退货单"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #type="{ row }">
+      <el-tag :type="row.type === 'return' ? 'danger' : 'warning'" size="small">
+        {{ row.type === 'return' ? '生产退料' : '采购退货' }}
+      </el-tag>
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #status="{ row }">
+      <el-tag :type="row.status === 'pending' ? 'warning' : 'success'" size="small">
+        {{ row.status === 'pending' ? '待处理' : '已完成' }}
+      </el-tag>
     </template>
 
-    <TableSetting title="退料/退货单列表" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
-          <template #type="{ row }">
-            <el-tag :type="row.type === 'return' ? 'danger' : 'warning'" size="small">
-              {{ row.type === 'return' ? '生产退料' : '采购退货' }}
-            </el-tag>
-          </template>
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'pending' ? 'warning' : 'success'" size="small">
-              {{ row.status === 'pending' ? '待处理' : '已完成' }}
-            </el-tag>
-          </template>
-          <template #actions="{ row }">
-            <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="confirmReturn(row)">确认</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
+    </template>
 
-    <ReturnFormDialog v-model:visible="dialogVisible" v-model:form="formModel" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <ReturnFormDialog v-model:visible="dialogVisible" v-model:form="formModel" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem } from '@/components/crud/types'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import { getReturnList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
@@ -118,6 +113,9 @@ const { tableData, pagination, loading, search, refresh } = useTable<ReturnRow>(
   }
 })
 
+const dialogVisible = ref(false)
+const formModel = ref<ReturnFormModel>(createDefaultForm())
+
 function mapRow(item: any): ReturnRow {
   return {
     id: String(item.id),
@@ -131,18 +129,10 @@ function mapRow(item: any): ReturnRow {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
 function handleReset() {
   Object.assign(queryParams, { code: '', reason: '', status: '' })
   search()
 }
-
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
-const dialogVisible = ref(false)
-const formModel = ref<ReturnFormModel>(createDefaultForm())
 
 function createDefaultForm(): ReturnFormModel {
   return { type: 'return', source: '', material: '', qty: 1, reason: '多余退料' }
@@ -151,6 +141,16 @@ function createDefaultForm(): ReturnFormModel {
 function openAdd() {
   formModel.value = createDefaultForm()
   dialogVisible.value = true
+}
+
+function getRowActions(row: ReturnRow): CrudRowActionItem[] {
+  return [{ key: 'confirm', label: '确认', tone: 'primary', hidden: row.status !== 'pending' }]
+}
+
+function handleRowAction(action: string, row: ReturnRow) {
+  if (action === 'confirm') {
+    confirmReturn(row)
+  }
 }
 
 async function submitDialog() {

@@ -1,44 +1,46 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form v-model="queryParams" :columns="visibleSearchColumns" search @search="search" @reset="handleReset" />
-      </SearchSetting>
-    </template>
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
-      <el-button style="margin-left: 8px" @click="handleExport">导出</el-button>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="入库单列表"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :toolbar-actions="toolbarActions"
+    :table-attrs="{ border: true, stripe: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+    @toolbar-action="handleToolbarAction"
+  >
+    <template #type="{ row }">
+      <StatusTag :value="row.type" :options="receiptTypeOptions" />
     </template>
 
-    <TableSetting title="入库单列表" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
-          <template #type="{ row }">
-            <StatusTag :value="row.type" :options="receiptTypeOptions" />
-          </template>
-          <template #status="{ row }">
-            <StatusTag :value="row.status" :options="receiptStatusOptions" />
-          </template>
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <gi-button type="delete" @click="remove(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
+    <template #status="{ row }">
+      <StatusTag :value="row.status" :options="receiptStatusOptions" />
+    </template>
 
-    <ReceiptFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="rowActions" @action="handleRowAction($event, row)" />
+    </template>
+
+    <template #dialog>
+      <ReceiptFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
-import StatusTag from '@/components/StatusTag.vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem, CrudToolbarActionItem } from '@/components/crud/types'
+import StatusTag from '@/components/StatusTag.vue'
 import { getReceiptList } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import ReceiptFormDialog, { type ReceiptFormModel } from './ReceiptFormDialog.vue'
@@ -71,12 +73,6 @@ const warehouseOptions = [
   { label: '成品仓', value: '成品仓' }
 ]
 
-const queryParams = ref({
-  code: '',
-  type: '',
-  status: ''
-})
-
 const searchColumns: FormColumnItem[] = [
   { type: 'input', label: '入库单号', field: 'code', props: { clearable: true } as any },
   {
@@ -99,8 +95,6 @@ const searchColumns: FormColumnItem[] = [
   }
 ]
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
-
 const columns: TableColumnItem<ReceiptRow>[] = [
   { prop: 'code', label: '入库单号', width: 160 },
   { label: '入库类型', minWidth: 110, slotName: 'type', align: 'center' },
@@ -111,6 +105,18 @@ const columns: TableColumnItem<ReceiptRow>[] = [
   { prop: 'createdAt', label: '创建时间', minWidth: 160 },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
+
+const toolbarActions: CrudToolbarActionItem[] = [{ key: 'export', label: '导出' }]
+const rowActions: CrudRowActionItem[] = [
+  { key: 'edit', label: '编辑', tone: 'primary' },
+  { key: 'delete', label: '删除', tone: 'danger' }
+]
+
+const queryParams = ref({
+  code: '',
+  type: '',
+  status: ''
+})
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<ReceiptRow>({
   rowKey: 'id',
@@ -130,6 +136,10 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<R
   }
 })
 
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<ReceiptFormModel>(createDefaultForm())
+
 function mapRow(item: any): ReceiptRow {
   return {
     id: String(item.id),
@@ -143,10 +153,6 @@ function mapRow(item: any): ReceiptRow {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
 function handleReset() {
   queryParams.value = {
     code: '',
@@ -156,13 +162,11 @@ function handleReset() {
   search()
 }
 
-function handleExport() {
-  ElMessage.success('导出成功')
+function handleToolbarAction(action: string) {
+  if (action === 'export') {
+    ElMessage.success('导出成功')
+  }
 }
-
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<ReceiptFormModel>(createDefaultForm())
 
 function createDefaultForm(): ReceiptFormModel {
   return {
@@ -196,12 +200,19 @@ function openEdit(row: ReceiptRow) {
   dialogVisible.value = true
 }
 
+function handleRowAction(action: string, row: ReceiptRow) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
+}
+
 async function submitDialog() {
   dialogVisible.value = false
   await refresh()
-}
-
-function remove(row: ReceiptRow) {
-  onDelete(row)
 }
 </script>

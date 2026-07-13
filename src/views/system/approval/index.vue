@@ -1,76 +1,51 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="审批流配置"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #businessType="{ row }">
+      {{ getBusinessTypeLabel(row.businessType) }}
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #status="{ row }">
+      <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+        {{ row.status === 'active' ? '启用' : '停用' }}
+      </el-tag>
     </template>
 
-    <TableSetting title="审批流配置" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #businessType="{ row }">
-            {{ getBusinessTypeLabel(row.businessType) }}
-          </template>
+    <template #nodes="{ row }">
+      <el-steps :active="row.nodes.length" align-center style="max-width: 600px">
+        <el-step v-for="(node, index) in row.nodes" :key="index" :title="node" :description="getNodeDescription(Number(index), row.nodes.length)" />
+      </el-steps>
+    </template>
 
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
-              {{ row.status === 'active' ? '启用' : '停用' }}
-            </el-tag>
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
+    </template>
 
-          <template #nodes="{ row }">
-            <el-steps :active="row.nodes.length" align-center style="max-width: 600px">
-              <el-step
-                v-for="(node, index) in row.nodes"
-                :key="index"
-                :title="node"
-                :description="index === 0 ? '发起' : index === row.nodes.length - 1 ? '终审' : `第 ${index + 1} 级`"
-              />
-            </el-steps>
-          </template>
-
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <el-button :type="row.status === 'active' ? 'warning' : 'success'" link size="small" @click="toggleStatus(row)">
-              {{ row.status === 'active' ? '停用' : '启用' }}
-            </el-button>
-            <gi-button type="delete" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <ApprovalFlowFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <ApprovalFlowFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem } from '@/components/crud/types'
 import { createApprovalFlow, deleteApprovalFlow, getApprovalFlows, updateApprovalFlow, type ApprovalFlow, type ApprovalFlowQuery } from '@/api/system'
 import { useTable } from '@/hooks/useTable'
 import ApprovalFlowFormDialog, { type ApprovalFlowFormModel } from './ApprovalFlowFormDialog.vue'
@@ -133,7 +108,6 @@ const queryParams = reactive<{
   status: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<ApprovalFlowFormModel>(createDefaultFormModel())
@@ -162,8 +136,18 @@ function getBusinessTypeLabel(value: string) {
   return businessTypeOptions.find((item) => item.value === value)?.label || value
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
+function getNodeDescription(index: number, total: number) {
+  if (index === 0) return '发起'
+  if (index === total - 1) return '终审'
+  return `第 ${index + 1} 级`
+}
+
+function getRowActions(row: ApprovalFlow): CrudRowActionItem[] {
+  return [
+    { key: 'edit', label: '编辑', tone: 'primary' },
+    { key: 'toggle', label: row.status === 'active' ? '停用' : '启用', tone: row.status === 'active' ? 'warning' : 'success' },
+    { key: 'delete', label: '删除', tone: 'danger' }
+  ]
 }
 
 function handleReset() {
@@ -190,6 +174,22 @@ function openEdit(row: ApprovalFlow) {
     nodes: row.nodes.join(',')
   }
   dialogVisible.value = true
+}
+
+function handleRowAction(action: string, row: ApprovalFlow) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'toggle') {
+    toggleStatus(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
 }
 
 async function submitDialog() {
@@ -227,9 +227,3 @@ function toggleStatus(row: ApprovalFlow) {
   ElMessage.success(row.status === 'active' ? '审批流已启用' : '审批流已停用')
 }
 </script>
-
-<style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-</style>

@@ -1,18 +1,19 @@
 <template>
-  <gi-dialog
-    v-model="visible"
-    :footer="true"
-    :lock-scroll="false"
-    :on-before-ok="handleSubmit"
+  <CrudFormDialog
+    v-model:visible="visible"
+    v-model:form="formData"
     :title="mode === 'add' ? '新增字典项' : '编辑字典项'"
+    :columns="formColumns"
+    :label-width="100"
     width="500px"
-  >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
-  </gi-dialog>
+    @submit="emit('submit')"
+  />
 </template>
 
 <script lang="ts" setup>
 import type { FormColumnItem } from 'gi-component'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import type { CrudDialogMode } from '@/components/crud/types'
 
 export interface DictItemFormModel {
   id: string
@@ -23,7 +24,7 @@ export interface DictItemFormModel {
 }
 
 interface Props {
-  mode: 'add' | 'edit'
+  mode: CrudDialogMode
 }
 
 defineProps<Props>()
@@ -54,9 +55,4 @@ const formColumns: FormColumnItem[] = [
     } as any
   }
 ]
-
-async function handleSubmit() {
-  emit('submit')
-  return false
-}
 </script>
