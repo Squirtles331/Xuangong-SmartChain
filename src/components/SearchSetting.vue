@@ -240,7 +240,17 @@ async function applyDraftFields() {
   }
 
   &__icon-btn {
-    color: var(--el-color-primary);
+    color: var(--crud-icon-text);
+    background: var(--crud-icon-bg);
+    border: 1px solid transparent;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+
+    &:hover {
+      background: var(--crud-icon-hover-bg);
+      color: var(--crud-title);
+    }
   }
 
   &__drawer {
@@ -248,6 +258,7 @@ async function applyDraftFields() {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    color: var(--crud-body);
   }
 
   &__drawer-header {
@@ -260,7 +271,7 @@ async function applyDraftFields() {
   &__drawer-title {
     font-size: 13px;
     font-weight: 600;
-    color: var(--el-text-color-primary);
+    color: var(--crud-title);
   }
 
   &__drawer-actions {
@@ -297,13 +308,14 @@ async function applyDraftFields() {
     gap: 8px;
     padding: 6px 8px;
     margin-bottom: 8px;
-    border-radius: var(--el-border-radius-small);
-    border: 1px solid var(--el-border-color-lighter);
-    background: var(--el-fill-color-blank);
+    border-radius: 12px;
+    border: 1px solid var(--crud-panel-border);
+    background: var(--crud-panel-muted-bg);
     box-sizing: border-box;
 
     &:hover {
       background-color: var(--el-fill-color-light);
+      box-shadow: var(--crud-panel-shadow-hover);
     }
   }
 
@@ -314,7 +326,7 @@ async function applyDraftFields() {
     justify-content: center;
     padding: 0 4px;
     box-sizing: border-box;
-    color: var(--el-text-color-secondary);
+    color: var(--crud-muted);
     cursor: move;
   }
 
@@ -325,7 +337,7 @@ async function applyDraftFields() {
 
     :deep(.el-checkbox__label) {
       font-size: 12px;
-      color: var(--el-text-color-regular);
+      color: var(--crud-body);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -333,7 +345,7 @@ async function applyDraftFields() {
   }
 
   :deep(.el-checkbox.is-disabled .el-checkbox__label) {
-    color: var(--el-text-color-placeholder);
+    color: var(--crud-muted);
   }
 
   &__drawer-footer {

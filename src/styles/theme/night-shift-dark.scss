@@ -109,7 +109,8 @@ html.night-shift-dark {
 
   /* -------- Workbench -------- */
   --workbench-hero-border: #314154;
-  --workbench-hero-bg: radial-gradient(circle at top left, rgba(75, 138, 168, 0.18), transparent 34%), linear-gradient(135deg, #172231 0%, #101926 100%);
+  --workbench-hero-bg:
+    radial-gradient(circle at top left, rgba(75, 138, 168, 0.18), transparent 34%), linear-gradient(135deg, #172231 0%, #101926 100%);
   --workbench-card-bg: #172231;
   --workbench-card-muted-bg: #1b2838;
   --workbench-card-gradient: linear-gradient(180deg, #1a2737 0%, #14202e 100%);
@@ -143,4 +144,24 @@ html.night-shift-dark {
   --workbench-progress-ok: #4f9d75;
   --workbench-progress-busy: #4b8aa8;
   --workbench-progress-warning: #d29a3a;
+
+  /* -------- CRUD / Search / Table -------- */
+  --crud-panel-bg: #172231;
+  --crud-panel-muted-bg: #1b2838;
+  --crud-panel-gradient: linear-gradient(180deg, #1a2737 0%, #14202e 100%);
+  --crud-panel-border: #314154;
+  --crud-panel-divider: #3a4b60;
+  --crud-panel-shadow: 0 14px 30px rgba(4, 9, 14, 0.18);
+  --crud-panel-shadow-hover: 0 18px 34px rgba(4, 9, 14, 0.26);
+  --crud-title: #eef4fb;
+  --crud-body: #b3c0cf;
+  --crud-muted: #93a4b8;
+  --crud-accent-bg: rgba(75, 138, 168, 0.18);
+  --crud-accent-text: #b9d8ea;
+  --crud-icon-bg: #223246;
+  --crud-icon-hover-bg: #2b4158;
+  --crud-icon-text: #d7e7ef;
+  --crud-row-action-bg: rgba(75, 138, 168, 0.16);
+  --crud-row-action-danger-bg: rgba(201, 106, 106, 0.16);
+  --crud-row-action-warning-bg: rgba(210, 154, 58, 0.16);
 }
