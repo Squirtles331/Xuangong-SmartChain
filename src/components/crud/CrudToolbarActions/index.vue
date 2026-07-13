@@ -55,8 +55,4 @@ function toolbarButtonType(tone?: CrudToolbarActionItem['tone']) {
   flex-wrap: wrap;
   gap: 8px;
 }
-
-.crud-toolbar-actions :deep(.el-button) {
-  border-radius: 12px;
-}
 </style>

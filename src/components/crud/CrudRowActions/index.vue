@@ -47,25 +47,10 @@ function rowButtonType(tone?: CrudRowActionItem['tone']) {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px 0;
 }
 
 .crud-row-actions :deep(.el-button + .el-button) {
   margin-left: 0;
-}
-
-.crud-row-actions :deep(.el-button) {
-  min-height: 26px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: var(--crud-row-action-bg);
-}
-
-.crud-row-actions :deep(.el-button--danger) {
-  background: var(--crud-row-action-danger-bg);
-}
-
-.crud-row-actions :deep(.el-button--warning) {
-  background: var(--crud-row-action-warning-bg);
 }
 </style>

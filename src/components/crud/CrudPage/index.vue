@@ -165,22 +165,4 @@ function handleSelectionChange(rows: T[]) {
   flex-direction: column;
   gap: 12px;
 }
-
-:deep(.gi-page-layout__header) {
-  padding: 16px;
-  border: 1px solid var(--crud-panel-border);
-  border-radius: 18px;
-  background: var(--crud-panel-gradient);
-  box-shadow: var(--crud-panel-shadow);
-}
-
-:deep(.gi-page-layout__tool) {
-  margin-top: 12px;
-  padding: 12px 16px;
-  border: 1px solid var(--crud-panel-border);
-  border-radius: 16px;
-  background: var(--crud-panel-bg);
-  box-shadow: var(--crud-panel-shadow);
-  gap: 8px;
-}
 </style>

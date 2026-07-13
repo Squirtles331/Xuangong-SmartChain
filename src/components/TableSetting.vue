@@ -321,7 +321,7 @@ const settingColumns = computed<TableColumnItem[]>(() => {
     font-size: 15px;
     font-weight: 600;
     line-height: 32px;
-    color: var(--crud-title);
+    color: var(--el-text-color-primary);
   }
 
   &--fullscreen {
@@ -339,12 +339,7 @@ const settingColumns = computed<TableColumnItem[]>(() => {
     gap: 8px;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
-    padding: 14px 16px;
-    border: 1px solid var(--crud-panel-border);
-    border-radius: 16px;
-    background: var(--crud-panel-gradient);
-    box-shadow: var(--crud-panel-shadow);
+    margin-bottom: 8px;
   }
 
   &__toolbar-left {
@@ -356,11 +351,6 @@ const settingColumns = computed<TableColumnItem[]>(() => {
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    padding: 12px 14px 14px;
-    border: 1px solid var(--crud-panel-border);
-    border-radius: 18px;
-    background: var(--crud-panel-bg);
-    box-shadow: var(--crud-panel-shadow);
   }
 
   &__draggable {
@@ -382,16 +372,13 @@ const settingColumns = computed<TableColumnItem[]>(() => {
   &__draggable-item {
     display: flex;
     align-items: center;
-    padding: 6px 8px;
+    padding: 2px 4px;
     cursor: pointer;
-    border-radius: 12px;
-    border: 1px solid var(--crud-panel-border);
-    background: var(--crud-panel-muted-bg);
+    border-radius: var(--el-border-radius-small);
     box-sizing: border-box;
 
     &:hover {
       background-color: var(--el-fill-color-light);
-      box-shadow: var(--crud-panel-shadow-hover);
     }
   }
 
@@ -402,7 +389,7 @@ const settingColumns = computed<TableColumnItem[]>(() => {
     justify-content: center;
     padding: 0 4px;
     box-sizing: border-box;
-    color: var(--crud-muted);
+    color: var(--el-text-color-secondary);
     cursor: move;
   }
 
@@ -414,7 +401,7 @@ const settingColumns = computed<TableColumnItem[]>(() => {
 
     :deep(.el-checkbox__label) {
       font-size: 12px;
-      color: var(--crud-body);
+      color: var(--el-text-color-regular);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -422,7 +409,7 @@ const settingColumns = computed<TableColumnItem[]>(() => {
   }
 
   :deep(.el-checkbox.is-disabled .el-checkbox__label) {
-    color: var(--crud-muted);
+    color: var(--el-text-color-placeholder);
   }
 
   &__pins {
@@ -439,12 +426,12 @@ const settingColumns = computed<TableColumnItem[]>(() => {
     align-items: center;
     justify-content: center;
     padding: 2px;
-    color: var(--crud-muted);
+    color: var(--el-text-color-placeholder);
     cursor: pointer;
     transition: color 0.2s;
 
     &:hover {
-      color: var(--crud-body);
+      color: var(--el-text-color-secondary);
     }
 
     &.is-active {
@@ -455,27 +442,10 @@ const settingColumns = computed<TableColumnItem[]>(() => {
       transform: scaleX(-1);
     }
   }
-
-  &__popover {
-    color: var(--crud-body);
-  }
 }
 
 :deep(.el-dropdown-menu__item.is-active) {
   font-weight: 600;
   color: var(--el-color-primary);
-}
-
-:deep(.table-setting__icon-btn),
-:deep(.el-button[type='primary'][bg][text][circle]) {
-  color: var(--crud-icon-text);
-  background: var(--crud-icon-bg);
-  border: 1px solid transparent;
-}
-
-:deep(.table-setting__icon-btn:hover),
-:deep(.el-button[type='primary'][bg][text][circle]:hover) {
-  background: var(--crud-icon-hover-bg);
-  color: var(--crud-title);
 }
 </style>
