@@ -239,6 +239,7 @@ const loading = ref(false)
 const workbenchData = ref<WorkbenchHomepageData | null>(null)
 const statusChartRef = ref<HTMLDivElement>()
 let statusChart: echarts.ECharts | null = null
+let themeObserver: MutationObserver | null = null
 
 const todoCards = computed<WorkbenchTodoCard[]>(() => workbenchData.value?.todoCards || [])
 const alerts = computed<WorkbenchAlertItem[]>(() => workbenchData.value?.alerts || [])
@@ -257,6 +258,11 @@ const tagTypeMap: Record<WorkbenchSeverity, 'success' | 'warning' | 'info' | 'da
   info: 'info'
 }
 
+function getThemeColor(cssVarName: string, fallback: string) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(cssVarName).trim()
+  return value || fallback
+}
+
 function trendClass(direction?: string) {
   if (direction === 'up') return 'trend trend--up'
   if (direction === 'down') return 'trend trend--down'
@@ -265,9 +271,9 @@ function trendClass(direction?: string) {
 }
 
 function progressColor(status: WorkbenchWorkshopLoadItem['status']) {
-  if (status === 'warning') return '#f97316'
-  if (status === 'busy') return '#3b82f6'
-  return '#22c55e'
+  if (status === 'warning') return getThemeColor('--workbench-progress-warning', '#f97316')
+  if (status === 'busy') return getThemeColor('--workbench-progress-busy', '#3b82f6')
+  return getThemeColor('--workbench-progress-ok', '#22c55e')
 }
 
 function loadStatusText(status: WorkbenchWorkshopLoadItem['status']) {
@@ -285,6 +291,10 @@ function renderStatusChart() {
 
   if (!statusChartRef.value || chartData.length === 0) return
 
+  const axisColor = getThemeColor('--workbench-chart-axis', '#d0d7e2')
+  const gridColor = getThemeColor('--workbench-chart-grid', '#eef2f7')
+  const labelColor = getThemeColor('--workbench-chart-label', '#475569')
+
   statusChart ??= echarts.init(statusChartRef.value)
   statusChart.setOption({
     tooltip: { trigger: 'item' },
@@ -293,11 +303,13 @@ function renderStatusChart() {
       type: 'category',
       data: chartData.map((item) => item.label),
       axisTick: { show: false },
-      axisLine: { lineStyle: { color: '#d0d7e2' } }
+      axisLine: { lineStyle: { color: axisColor } },
+      axisLabel: { color: labelColor }
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: '#eef2f7' } }
+      axisLabel: { color: labelColor },
+      splitLine: { lineStyle: { color: gridColor } }
     },
     series: [
       {
@@ -307,7 +319,7 @@ function renderStatusChart() {
           value: item.value,
           itemStyle: { color: item.color, borderRadius: [8, 8, 0, 0] }
         })),
-        label: { show: true, position: 'top', color: '#475569' }
+        label: { show: true, position: 'top', color: labelColor }
       }
     ]
   })
@@ -333,10 +345,16 @@ async function loadWorkbench() {
 onMounted(async () => {
   await loadWorkbench()
   window.addEventListener('resize', handleResize)
+  themeObserver = new MutationObserver(() => {
+    renderStatusChart()
+  })
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
+  themeObserver?.disconnect()
+  themeObserver = null
   statusChart?.dispose()
   statusChart = null
 })
@@ -352,8 +370,8 @@ onBeforeUnmount(() => {
 
 .hero-card {
   margin-bottom: 16px;
-  border: 1px solid #d8e1ec;
-  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 34%), linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+  border: 1px solid var(--workbench-hero-border);
+  background: var(--workbench-hero-bg);
 }
 
 .hero-card__content {
@@ -371,8 +389,8 @@ onBeforeUnmount(() => {
   align-items: center;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--workbench-eyebrow-bg);
+  color: var(--workbench-eyebrow-text);
   font-size: 12px;
   font-weight: 600;
 }
@@ -381,13 +399,13 @@ onBeforeUnmount(() => {
   margin: 14px 0 10px;
   font-size: 28px;
   line-height: 1.2;
-  color: #0f172a;
+  color: var(--workbench-title);
 }
 
 .hero-copy__summary {
   margin: 0;
   max-width: 760px;
-  color: #475569;
+  color: var(--workbench-body);
   line-height: 1.7;
 }
 
@@ -403,8 +421,8 @@ onBeforeUnmount(() => {
   align-items: center;
   padding: 6px 12px;
   border-radius: 999px;
-  background: #fff7ed;
-  color: #c2410c;
+  background: var(--workbench-tip-bg);
+  color: var(--workbench-tip-text);
   font-size: 12px;
   font-weight: 600;
 }
@@ -419,7 +437,7 @@ onBeforeUnmount(() => {
 }
 
 .hero-updated {
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 13px;
 }
 
@@ -445,13 +463,13 @@ onBeforeUnmount(() => {
 .panel-card__header h3 {
   margin: 0;
   font-size: 20px;
-  color: #0f172a;
+  color: var(--workbench-title);
 }
 
 .section-heading p,
 .panel-card__header p {
   margin: 6px 0 0;
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -481,9 +499,9 @@ onBeforeUnmount(() => {
   overflow: hidden;
   padding: 18px 18px 20px;
   border-radius: 18px;
-  background: #ffffff;
-  border: 1px solid #dbe3ef;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  background: var(--workbench-card-bg);
+  border: 1px solid var(--workbench-card-border);
+  box-shadow: var(--workbench-card-shadow);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
@@ -498,19 +516,19 @@ onBeforeUnmount(() => {
 }
 
 .todo-card--normal::before {
-  background: #2563eb;
+  background: var(--workbench-status-normal);
 }
 
 .todo-card--warning::before {
-  background: #f59e0b;
+  background: var(--workbench-status-warning);
 }
 
 .todo-card--danger::before {
-  background: #ef4444;
+  background: var(--workbench-status-danger);
 }
 
 .todo-card--info::before {
-  background: #06b6d4;
+  background: var(--workbench-status-info);
 }
 
 .todo-card:hover,
@@ -521,7 +539,7 @@ onBeforeUnmount(() => {
 .summary-metric:hover,
 .load-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--workbench-card-shadow-hover);
 }
 
 .todo-card__top {
@@ -532,14 +550,14 @@ onBeforeUnmount(() => {
 }
 
 .todo-card__system {
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 12px;
   font-weight: 600;
 }
 
 .todo-card__value {
   margin-top: 18px;
-  color: #0f172a;
+  color: var(--workbench-title);
   display: flex;
   align-items: baseline;
   gap: 6px;
@@ -551,7 +569,7 @@ onBeforeUnmount(() => {
 }
 
 .todo-card__value span {
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 14px;
 }
 
@@ -559,12 +577,12 @@ onBeforeUnmount(() => {
   margin-top: 10px;
   font-size: 18px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--workbench-title);
 }
 
 .todo-card__helper {
   margin-top: 8px;
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -575,7 +593,8 @@ onBeforeUnmount(() => {
 
 .panel-card {
   height: 100%;
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--workbench-card-border);
+  background: var(--workbench-card-bg);
 }
 
 .panel-card__header {
@@ -596,7 +615,7 @@ onBeforeUnmount(() => {
   gap: 12px;
   padding: 14px 16px;
   border-radius: 14px;
-  background: #f8fafc;
+  background: var(--workbench-card-muted-bg);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -609,16 +628,16 @@ onBeforeUnmount(() => {
 }
 
 .alert-item__indicator--danger {
-  background: #ef4444;
+  background: var(--workbench-status-danger);
 }
 
 .alert-item__indicator--warning {
-  background: #f59e0b;
+  background: var(--workbench-status-warning);
 }
 
 .alert-item__indicator--normal,
 .alert-item__indicator--info {
-  background: #3b82f6;
+  background: var(--workbench-status-normal);
 }
 
 .alert-item__body {
@@ -631,23 +650,23 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 12px;
 }
 
 .alert-item__type {
-  color: #0f172a;
+  color: var(--workbench-title);
   font-weight: 600;
 }
 
 .alert-item__title {
   margin: 8px 0;
-  color: #1e293b;
+  color: var(--workbench-body);
   line-height: 1.6;
 }
 
 .alert-item__action {
-  color: #2563eb;
+  color: var(--workbench-link);
   font-weight: 600;
 }
 
@@ -660,13 +679,13 @@ onBeforeUnmount(() => {
 .execution-stat {
   padding: 14px 16px;
   border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
+  background: var(--workbench-card-gradient);
+  border: 1px solid var(--workbench-card-border);
 }
 
 .execution-stat__title,
 .summary-metric__title {
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 13px;
 }
 
@@ -676,7 +695,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  color: #0f172a;
+  color: var(--workbench-title);
 }
 
 .execution-stat__value strong,
@@ -687,7 +706,7 @@ onBeforeUnmount(() => {
 
 .execution-stat__value span,
 .summary-metric__value span {
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 13px;
 }
 
@@ -698,19 +717,19 @@ onBeforeUnmount(() => {
 }
 
 .trend--up {
-  color: #16a34a;
+  color: var(--workbench-trend-up);
 }
 
 .trend--down {
-  color: #ef4444;
+  color: var(--workbench-trend-down);
 }
 
 .trend--warning {
-  color: #ea580c;
+  color: var(--workbench-trend-warning);
 }
 
 .trend--flat {
-  color: #64748b;
+  color: var(--workbench-muted);
 }
 
 .chart-grid {
@@ -724,13 +743,13 @@ onBeforeUnmount(() => {
 .load-panel {
   padding: 16px;
   border-radius: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--workbench-card-muted-bg);
+  border: 1px solid var(--workbench-card-border);
 }
 
 .chart-panel__title {
   margin-bottom: 12px;
-  color: #0f172a;
+  color: var(--workbench-title);
   font-weight: 600;
 }
 
@@ -746,7 +765,7 @@ onBeforeUnmount(() => {
 
 .load-item {
   padding: 12px 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--workbench-card-divider);
 }
 
 .load-item:last-child {
@@ -762,17 +781,17 @@ onBeforeUnmount(() => {
 
 .load-item__head {
   margin-bottom: 8px;
-  color: #0f172a;
+  color: var(--workbench-title);
   font-weight: 600;
 }
 
 .load-item__rate {
-  color: #2563eb;
+  color: var(--workbench-link);
 }
 
 .load-item__foot {
   margin-top: 8px;
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 12px;
 }
 
@@ -785,8 +804,8 @@ onBeforeUnmount(() => {
 .domain-card {
   padding: 16px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
+  background: var(--workbench-card-gradient);
+  border: 1px solid var(--workbench-card-border);
 }
 
 .domain-card__head {
@@ -797,13 +816,13 @@ onBeforeUnmount(() => {
 }
 
 .domain-card__title {
-  color: #0f172a;
+  color: var(--workbench-title);
   font-weight: 600;
 }
 
 .domain-card__owner {
   margin-top: 4px;
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 12px;
 }
 
@@ -813,8 +832,8 @@ onBeforeUnmount(() => {
   height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--workbench-badge-bg);
+  color: var(--workbench-badge-text);
   font-size: 12px;
   font-weight: 700;
 }
@@ -829,24 +848,24 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
   padding-top: 8px;
-  color: #475569;
-  border-top: 1px solid #edf2f7;
+  color: var(--workbench-body);
+  border-top: 1px solid var(--workbench-card-soft-divider);
 }
 
 .domain-summary__value--normal {
-  color: #2563eb;
+  color: var(--workbench-status-normal);
 }
 
 .domain-summary__value--warning {
-  color: #ea580c;
+  color: var(--workbench-trend-warning);
 }
 
 .domain-summary__value--danger {
-  color: #dc2626;
+  color: var(--workbench-status-danger);
 }
 
 .domain-summary__value--info {
-  color: #0891b2;
+  color: var(--workbench-status-info);
 }
 
 .shortcut-grid {
@@ -861,8 +880,8 @@ onBeforeUnmount(() => {
   gap: 8px;
   padding: 16px;
   border-radius: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--workbench-card-muted-bg);
+  border: 1px solid var(--workbench-card-border);
 }
 
 .shortcut-card__badge {
@@ -872,19 +891,19 @@ onBeforeUnmount(() => {
   width: 34px;
   height: 34px;
   border-radius: 12px;
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--workbench-shortcut-badge-bg);
+  color: var(--workbench-shortcut-badge-text);
   font-weight: 700;
 }
 
 .shortcut-card__title {
-  color: #0f172a;
+  color: var(--workbench-title);
   font-size: 15px;
   font-weight: 600;
 }
 
 .shortcut-card__meta {
-  color: #64748b;
+  color: var(--workbench-muted);
   font-size: 12px;
 }
 
@@ -901,8 +920,8 @@ onBeforeUnmount(() => {
 .summary-metric {
   padding: 18px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
+  background: var(--workbench-card-gradient);
+  border: 1px solid var(--workbench-card-border);
 }
 
 @media (max-width: 1440px) {

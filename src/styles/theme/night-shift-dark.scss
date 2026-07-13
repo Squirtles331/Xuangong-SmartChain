@@ -106,4 +106,41 @@ html.night-shift-dark {
   --tab-active-border: #35526c;
   --tab-hover-bg: #1f2d3d;
   --tab-active-shadow: rgba(4, 9, 14, 0.2);
+
+  /* -------- Workbench -------- */
+  --workbench-hero-border: #314154;
+  --workbench-hero-bg: radial-gradient(circle at top left, rgba(75, 138, 168, 0.18), transparent 34%), linear-gradient(135deg, #172231 0%, #101926 100%);
+  --workbench-card-bg: #172231;
+  --workbench-card-muted-bg: #1b2838;
+  --workbench-card-gradient: linear-gradient(180deg, #1a2737 0%, #14202e 100%);
+  --workbench-card-border: #314154;
+  --workbench-card-divider: #3a4b60;
+  --workbench-card-soft-divider: #324457;
+  --workbench-card-shadow: 0 16px 40px rgba(4, 9, 14, 0.2);
+  --workbench-card-shadow-hover: 0 22px 44px rgba(4, 9, 14, 0.32);
+  --workbench-title: #eef4fb;
+  --workbench-body: #b3c0cf;
+  --workbench-muted: #93a4b8;
+  --workbench-eyebrow-bg: rgba(75, 138, 168, 0.18);
+  --workbench-eyebrow-text: #b9d8ea;
+  --workbench-tip-bg: rgba(210, 154, 58, 0.16);
+  --workbench-tip-text: #f0cb88;
+  --workbench-badge-bg: rgba(75, 138, 168, 0.18);
+  --workbench-badge-text: #b9d8ea;
+  --workbench-shortcut-badge-bg: rgba(75, 138, 168, 0.22);
+  --workbench-shortcut-badge-text: #dcecf5;
+  --workbench-status-normal: #6aa7c3;
+  --workbench-status-warning: #d29a3a;
+  --workbench-status-danger: #d98181;
+  --workbench-status-info: #4fbfd6;
+  --workbench-trend-up: #5eb687;
+  --workbench-trend-down: #d98181;
+  --workbench-trend-warning: #e4b25b;
+  --workbench-link: #9ec7da;
+  --workbench-chart-axis: #506378;
+  --workbench-chart-grid: #2b394c;
+  --workbench-chart-label: #a8bacd;
+  --workbench-progress-ok: #4f9d75;
+  --workbench-progress-busy: #4b8aa8;
+  --workbench-progress-warning: #d29a3a;
 }

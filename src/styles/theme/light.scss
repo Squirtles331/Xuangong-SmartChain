@@ -115,4 +115,41 @@
   --tab-active-border: #b8cad4;
   --tab-hover-bg: #f4f7fa;
   --tab-active-shadow: rgba(15, 27, 45, 0.04);
+
+  /* -------- Workbench -------- */
+  --workbench-hero-border: #d8e1ec;
+  --workbench-hero-bg: radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 34%), linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+  --workbench-card-bg: #ffffff;
+  --workbench-card-muted-bg: #f8fafc;
+  --workbench-card-gradient: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --workbench-card-border: #dbe3ef;
+  --workbench-card-divider: #e5e7eb;
+  --workbench-card-soft-divider: #edf2f7;
+  --workbench-card-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  --workbench-card-shadow-hover: 0 18px 32px rgba(15, 23, 42, 0.08);
+  --workbench-title: #0f172a;
+  --workbench-body: #475569;
+  --workbench-muted: #64748b;
+  --workbench-eyebrow-bg: #eff6ff;
+  --workbench-eyebrow-text: #2563eb;
+  --workbench-tip-bg: #fff7ed;
+  --workbench-tip-text: #c2410c;
+  --workbench-badge-bg: #eff6ff;
+  --workbench-badge-text: #2563eb;
+  --workbench-shortcut-badge-bg: #dbeafe;
+  --workbench-shortcut-badge-text: #1d4ed8;
+  --workbench-status-normal: #2563eb;
+  --workbench-status-warning: #f59e0b;
+  --workbench-status-danger: #ef4444;
+  --workbench-status-info: #06b6d4;
+  --workbench-trend-up: #16a34a;
+  --workbench-trend-down: #ef4444;
+  --workbench-trend-warning: #ea580c;
+  --workbench-link: #2563eb;
+  --workbench-chart-axis: #d0d7e2;
+  --workbench-chart-grid: #eef2f7;
+  --workbench-chart-label: #475569;
+  --workbench-progress-ok: #22c55e;
+  --workbench-progress-busy: #3b82f6;
+  --workbench-progress-warning: #f97316;
 }
