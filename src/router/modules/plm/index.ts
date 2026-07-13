@@ -46,11 +46,15 @@ export const plmRoute: RouteRecordRaw = {
     {
       path: 'routing',
       name: 'plmRoutingList',
-      component: plannedPage,
-      meta: planned('工艺路线', 'Connection', 5, '统一管理工艺路线版本、工序顺序和工艺维护入口。', ['路线列表', '路线版本', '工序顺序', '编辑入口'], {
+      component: () => import('@/views/plm/routing/index.vue'),
+      meta: {
+        title: '工艺路线',
+        icon: 'Connection',
+        order: 5,
         ownerSystem: 'PLM',
-        coreObject: '工艺路线版本'
-      })
+        coreObject: '工艺路线版本',
+        boundaryNote: 'PLM 维护工艺定义真相，MES 负责执行过程真相。'
+      }
     },
     {
       path: 'routing/editor/:id',

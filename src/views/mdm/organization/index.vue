@@ -1,5 +1,20 @@
-<template>
-  <gi-page-layout :size="260" style="height: calc(100vh - 120px)">
+﻿<template>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="组织主数据"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="tableColumns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :page-attrs="pageAttrs"
+    :table-attrs="{ border: true, stripe: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
     <template #left>
       <div class="tree-wrapper">
         <div class="tree-header">
@@ -35,65 +50,50 @@
       </div>
     </template>
 
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+    <template #headerTop>
+      <PageOwnershipNotice />
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #beforeTable>
+      <div class="page-overview">
+        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
+          <div class="overview-label">{{ card.label }}</div>
+          <div class="overview-value">{{ card.value }}</div>
+          <div class="overview-desc">{{ card.desc }}</div>
+        </div>
+      </div>
     </template>
 
-    <TableSetting title="组织列表" :columns="tableColumns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          class="content-table"
-        >
-          <template #index="{ $index }">
-            {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
-          </template>
+    <template #index="{ $index }">
+      {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
+    </template>
 
-          <template #type="{ row }">
-            <el-tag size="small" :type="getTypeTagType(row.type)">
-              {{ getTypeLabel(row.type) }}
-            </el-tag>
-          </template>
+    <template #type="{ row }">
+      <el-tag size="small" :type="getTypeTagType(row.type)">
+        {{ getTypeLabel(row.type) }}
+      </el-tag>
+    </template>
 
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEditByRow(row)" />
-            <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="rowActions" @action="handleRowAction($event, row)" />
+    </template>
 
-    <OrganizationFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <OrganizationFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { ElTree } from 'element-plus'
 import { CaretBottom, CaretRight, Grid, HomeFilled, Location, OfficeBuilding } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem } from '@/components/crud/types'
 import { createOrgNode, deleteOrgNode, getOrgNodeDetail, getOrgTree, getOrgTreeList, updateOrgNode, type OrgListItem, type OrgNode } from '@/api/mdm'
 import { useTable } from '@/hooks/useTable'
 import OrganizationFormDialog, { type OrgType, type OrganizationFormModel } from './OrganizationFormDialog.vue'
@@ -105,6 +105,10 @@ const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<OrganizationFormModel>(createDefaultFormModel())
 const selectedNodeId = ref('')
+
+const pageAttrs = {
+  size: 260
+}
 
 const queryParams = reactive<{
   keyword: string
@@ -132,8 +136,6 @@ const searchColumns: FormColumnItem[] = [
     } as any
   }
 ]
-
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 
 const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
@@ -166,6 +168,22 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<O
   onSuccess: syncCurrentNode
 })
 
+const rowActions: CrudRowActionItem[] = [
+  { key: 'edit', label: '编辑', tone: 'primary' },
+  { key: 'delete', label: '删除', tone: 'danger' }
+]
+
+const overviewCards = computed(() => {
+  const nodes = flattenOrgNodes(orgTree.value)
+
+  return [
+    { label: '组织节点总量', value: nodes.length, desc: '当前统一组织层级下已纳入治理的节点数量' },
+    { label: '工厂数量', value: nodes.filter((item) => item.type === 'plant').length, desc: '作为计划、库存和制造执行的核心经营主体' },
+    { label: '车间数量', value: nodes.filter((item) => item.type === 'workshop').length, desc: '用于承接工作中心、设备和报工的执行单元' },
+    { label: '产线数量', value: nodes.filter((item) => item.type === 'line').length, desc: '用于细化节拍、排产和现场采集边界' }
+  ]
+})
+
 init()
 
 async function init() {
@@ -185,10 +203,6 @@ function createDefaultFormModel(): OrganizationFormModel {
     code: '',
     type: 'group'
   }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
@@ -227,6 +241,10 @@ function getTypeTagType(type: OrgType) {
   return 'warning'
 }
 
+function flattenOrgNodes(nodes: OrgNode[]): OrgNode[] {
+  return nodes.flatMap((node) => [node, ...flattenOrgNodes(node.children || [])])
+}
+
 function openAdd() {
   const parent = currentNode.value
   const typeMap: Record<OrgType, OrgType> = {
@@ -260,6 +278,17 @@ function openEditByRow(row: OrgListItem) {
     type: row.type
   }
   dialogVisible.value = true
+}
+
+function handleRowAction(action: string, row: OrgListItem) {
+  if (action === 'edit') {
+    openEditByRow(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
 }
 
 async function submitDialog() {
@@ -361,11 +390,48 @@ async function deleteOrgNodes(ids: string[]) {
   margin-right: 4px;
 }
 
-.content-table {
-  min-height: 420px;
+.page-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
+.overview-card {
+  padding: 14px 16px;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
+}
+
+.overview-label {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+
+.overview-value {
+  margin-top: 10px;
+  color: var(--el-text-color-primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.overview-desc {
+  margin-top: 8px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1200px) {
+  .page-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .page-overview {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

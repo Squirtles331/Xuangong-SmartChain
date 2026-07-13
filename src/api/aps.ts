@@ -2,6 +2,7 @@ import http from '@/utils/http'
 import type { ApiResponse, PaginatedData } from '@/utils/http'
 import { isMockMode } from './_config'
 import { unwrapApiResponse } from './_factory'
+import { apsConstraintData } from '@/mock/modules/aps'
 import * as mockService from '@/mock/services/aps'
 
 export interface ApsConstraintBase {
@@ -41,6 +42,19 @@ export interface SkillConstraint {
   utilization: number
 }
 
+export interface ApsConstraintSnapshot {
+  molds: MoldConstraint[]
+  tools: ToolConstraint[]
+  skills: SkillConstraint[]
+  materialShortages: Array<{
+    id: string
+    material: string
+    wo_code: string
+    available_date: string
+    qty_short: number
+  }>
+}
+
 export type ConstraintType = 'mold' | 'tool' | 'skill'
 
 export interface ConstraintListQuery {
@@ -62,6 +76,10 @@ export function runApsSchedule() {
 export function getConstraintList<T>(params: ConstraintListQuery) {
   if (isMockMode) return mockService.getConstraintList(params) as Promise<ApiResponse<PaginatedData<T>>>
   return unwrapApiResponse(http.get<ApiResponse<PaginatedData<T>>>('/aps/constraints', { params }))
+}
+
+export function getApsConstraintSnapshot(): ApsConstraintSnapshot {
+  return JSON.parse(JSON.stringify(apsConstraintData)) as ApsConstraintSnapshot
 }
 
 export function saveConstraint(data: Record<string, any>) {

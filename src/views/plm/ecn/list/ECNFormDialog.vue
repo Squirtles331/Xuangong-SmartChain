@@ -5,10 +5,10 @@
     :lock-scroll="false"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
-    :title="mode === 'add' ? '新建变更单' : '编辑变更单'"
-    width="600px"
+    :title="mode === 'add' ? '新建工程变更单' : '编辑工程变更单'"
+    width="720px"
   >
-    <gi-form v-model="formData" :columns="formColumns" :label-width="100" />
+    <gi-form v-model="formData" :columns="formColumns" :label-width="110" />
   </gi-dialog>
 </template>
 
@@ -21,9 +21,12 @@ export interface ECNFormModel {
   change_type: string
   material: string
   current_version: string
+  target_version: string
   status: string
   urgency: string
   applicant: string
+  plan_effective_date: string
+  reason: string
 }
 
 interface Props {
@@ -52,10 +55,11 @@ const formColumns: FormColumnItem[] = [
         { label: '工艺变更', value: '工艺变更' },
         { label: 'BOM+工艺变更', value: 'BOM+工艺变更' }
       ]
-    } as any
+    } as never
   },
   { type: 'input', label: '变更对象', field: 'material', required: true },
   { type: 'input', label: '当前版本', field: 'current_version' },
+  { type: 'input', label: '目标版本', field: 'target_version', required: true },
   {
     type: 'select-v2',
     label: '紧急程度',
@@ -67,9 +71,27 @@ const formColumns: FormColumnItem[] = [
         { label: '普通', value: 'normal' },
         { label: '计划', value: 'planned' }
       ]
-    } as any
+    } as never
   },
-  { type: 'input', label: '申请人', field: 'applicant' }
+  {
+    type: 'select-v2',
+    label: '状态',
+    field: 'status',
+    required: true,
+    props: {
+      options: [
+        { label: '草稿', value: 'draft' },
+        { label: '待审批', value: 'pending_approval' },
+        { label: '已批准', value: 'approved' },
+        { label: '执行中', value: 'executing' },
+        { label: '已验证', value: 'verified' },
+        { label: '已关闭', value: 'closed' }
+      ]
+    } as never
+  },
+  { type: 'input', label: '申请人', field: 'applicant' },
+  { type: 'input', label: '计划切换日期', field: 'plan_effective_date' },
+  { type: 'textarea', label: '变更原因', field: 'reason', props: { rows: 4, placeholder: '请说明版本切换原因与预期收益' } as never }
 ]
 
 function handleCancel() {

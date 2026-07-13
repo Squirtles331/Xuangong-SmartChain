@@ -44,6 +44,8 @@ const emit = defineEmits<{
 function formatStatus(status: string) {
   if (status === 'active') return '生效中'
   if (status === 'draft') return '草稿'
+  if (status === 'pending_approval') return '待评审'
+  if (status === 'disabled') return '已停用'
   return '已归档'
 }
 </script>

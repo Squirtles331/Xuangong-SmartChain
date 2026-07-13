@@ -1,81 +1,89 @@
-<template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+﻿<template>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="工作中心"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :add-text="addText"
+    :table-attrs="{ border: true, stripe: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #headerTop>
+      <PageOwnershipNotice />
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #beforeTable>
+      <div class="page-overview">
+        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
+          <div class="overview-label">{{ card.label }}</div>
+          <div class="overview-value">{{ card.value }}</div>
+          <div class="overview-desc">{{ card.desc }}</div>
+        </div>
+      </div>
     </template>
 
-    <TableSetting title="工作中心列表" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #index="{ $index }">
-            {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
-          </template>
+    <template #status="{ row }">
+      <StatusTag v-if="statusOptions.length" :value="row.status" :options="statusOptions" />
+      <span v-else>{{ row.status ?? '-' }}</span>
+    </template>
 
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'running' ? 'success' : row.status === 'idle' ? 'info' : 'danger'" size="small">
-              {{ getStatusLabel(row.status) }}
-            </el-tag>
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="rowActions" @action="handleRowAction($event, row)" />
+    </template>
 
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <gi-button type="delete" style="margin-left: 8px" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <WorkCenterFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <CrudFormDialog
+        v-model:visible="dialogVisible"
+        v-model:form="formModel"
+        :title="dialogMode === 'add' ? addText : editText"
+        :columns="formColumns"
+        width="680px"
+        :label-width="110"
+        @submit="submitDialog"
+      />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
-import { createWorkCenter, deleteWorkCenter, getWorkCenterList, updateWorkCenter, type WorkCenter, type WorkCenterQuery } from '@/api/mdm'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem } from '@/components/crud/types'
 import { useTable } from '@/hooks/useTable'
-import WorkCenterFormDialog, { type WorkCenterFormModel } from './WorkCenterFormDialog.vue'
 
-const workshopOptions = [
-  { label: '机加工一车间', value: '机加工一车间' },
-  { label: '机加工二车间', value: '机加工二车间' },
-  { label: '装配车间', value: '装配车间' }
-]
+type MasterDataRow = Record<string, any>
+
+type StatusOption = {
+  value: string
+  label: string
+  type: 'primary' | 'success' | 'warning' | 'danger' | 'info'
+}
+
+const title = '工作中心'
+const addText = '新增' + title
+const editText = '编辑' + title
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键词', field: 'keyword', props: { placeholder: '工作中心编码/名称/车间' } as any },
   {
-    type: 'select-v2',
-    label: '车间',
-    field: 'workshop',
-    props: {
-      options: [{ label: '全部', value: '' }, ...workshopOptions]
-    } as any
+    'type': 'input',
+    'label': '关键字',
+    'field': 'keyword',
+    'props': {
+      'placeholder': '工作中心编码 / 名称 / 车间'
+    }
   }
 ]
 
@@ -83,81 +91,239 @@ const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
-const columns: TableColumnItem<WorkCenter>[] = [
-  { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
-  { prop: 'code', label: '工作中心编码', minWidth: 140 },
-  { prop: 'name', label: '工作中心名称', minWidth: 140 },
-  { prop: 'workshop', label: '所属车间', minWidth: 140 },
-  { prop: 'shift', label: '班次', minWidth: 100, align: 'center' },
-  { prop: 'people', label: '人数', minWidth: 80, align: 'center' },
-  { prop: 'efficiency', label: '效率(%)', minWidth: 100, align: 'center' },
-  { prop: 'costPerHour', label: '工时费率(元/h)', minWidth: 120, align: 'center' },
-  { prop: 'status', label: '状态', minWidth: 100, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+const columns: TableColumnItem<MasterDataRow>[] = [
+  {
+    'prop': 'code',
+    'label': '工作中心编码',
+    'minWidth': 140
+  },
+  {
+    'prop': 'name',
+    'label': '工作中心名称',
+    'minWidth': 150
+  },
+  {
+    'prop': 'workshop',
+    'label': '所属车间',
+    'minWidth': 140
+  },
+  {
+    'prop': 'shift',
+    'label': '班次',
+    'minWidth': 100,
+    'align': 'center'
+  },
+  {
+    'prop': 'people',
+    'label': '人数',
+    'minWidth': 80,
+    'align': 'center'
+  },
+  {
+    'prop': 'efficiency',
+    'label': '效率(%)',
+    'minWidth': 100,
+    'align': 'center'
+  },
+  {
+    'prop': 'status',
+    'label': '状态',
+    'minWidth': 90,
+    'slotName': 'status',
+    'align': 'center'
+  },
+  {
+    'label': '操作',
+    'minWidth': 150,
+    'fixed': 'right',
+    'slotName': 'actions',
+    'align': 'center'
+  }
 ]
 
-const queryParams = reactive<{
-  keyword: string
-  workshop: string
-}>({
-  keyword: '',
-  workshop: ''
-})
+const formColumns: FormColumnItem[] = [
+  {
+    'type': 'input',
+    'label': '工作中心编码',
+    'field': 'code',
+    'required': true
+  },
+  {
+    'type': 'input',
+    'label': '工作中心名称',
+    'field': 'name',
+    'required': true
+  },
+  {
+    'type': 'input',
+    'label': '所属车间',
+    'field': 'workshop'
+  },
+  {
+    'type': 'input',
+    'label': '班次',
+    'field': 'shift'
+  },
+  {
+    'type': 'input-number',
+    'label': '人数',
+    'field': 'people',
+    'props': {
+      'min': 0,
+      'precision': 0
+    }
+  },
+  {
+    'type': 'input-number',
+    'label': '效率',
+    'field': 'efficiency',
+    'props': {
+      'min': 0,
+      'max': 100,
+      'precision': 0
+    }
+  },
+  {
+    'type': 'select-v2',
+    'label': '状态',
+    'field': 'status',
+    'props': {
+      'options': [
+        {
+          'label': '启用',
+          'value': 'active'
+        },
+        {
+          'label': '停用',
+          'value': 'disabled'
+        }
+      ]
+    }
+  }
+]
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const keywordFields = ['code', 'name', 'workshop']
+
+const statusOptions: StatusOption[] = [
+  {
+    'value': 'active',
+    'label': '启用',
+    'type': 'success'
+  },
+  {
+    'value': 'disabled',
+    'label': '停用',
+    'type': 'warning'
+  }
+]
+
+const rowActions: CrudRowActionItem[] = [
+  { key: 'edit', label: '编辑', tone: 'primary' },
+  { key: 'delete', label: '删除', tone: 'danger' }
+]
+
+const records = ref<MasterDataRow[]>([
+  {
+    'id': 'WC-001',
+    'code': 'WC-ASM-01',
+    'name': '主装工位',
+    'workshop': '装配车间',
+    'shift': '白班',
+    'people': 8,
+    'efficiency': 92,
+    'status': 'active'
+  },
+  {
+    'id': 'WC-002',
+    'code': 'WC-CNC-02',
+    'name': '机加二组',
+    'workshop': '机加工二车间',
+    'shift': '两班倒',
+    'people': 12,
+    'efficiency': 88,
+    'status': 'active'
+  },
+  {
+    'id': 'WC-003',
+    'code': 'WC-TST-01',
+    'name': '测试工位',
+    'workshop': '测试车间',
+    'shift': '白班',
+    'people': 4,
+    'efficiency': 85,
+    'status': 'disabled'
+  }
+])
+
+const queryParams = reactive<Record<string, any>>({
+  'keyword': ''
+})
 const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<WorkCenterFormModel>(createDefaultFormModel())
+const formModel = ref<MasterDataRow>(createDefaultFormModel())
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<WorkCenter>({
-  rowKey: 'id',
-  listAPI: async ({ page, size }) => {
-    const params: WorkCenterQuery = {
-      pageNum: page,
-      pageSize: size,
-      keyword: queryParams.keyword || undefined,
-      workshop: queryParams.workshop || undefined
-    }
+const filteredRecords = computed(() =>
+  records.value.filter((row) =>
+    Object.entries(queryParams).every(([field, value]) => {
+      if (value === '' || value === undefined || value === null) return true
 
-    const response = await getWorkCenterList(params)
-    return response.data
-  },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteWorkCenter(id)))
+      if (field === 'keyword') {
+        const keyword = String(value).trim().toLowerCase()
+        if (!keyword) return true
+        const searchKeys = keywordFields.length ? keywordFields : Object.keys(row)
+        return searchKeys.some((key) =>
+          String(row[key] ?? '')
+            .toLowerCase()
+            .includes(keyword)
+        )
+      }
+
+      const rowValue = row[field]
+      if (Array.isArray(rowValue)) {
+        return rowValue.map((item) => String(item)).includes(String(value))
+      }
+
+      return String(rowValue ?? '') === String(value)
+    })
+  )
+)
+
+const overviewCards = computed(() => {
+  const activeCount = records.value.filter((item) => item.status === 'active').length
+  const disabledCount = records.value.filter((item) => item.status && item.status !== 'active').length
+
+  return [
+    { label: '工作中心总量', value: records.value.length, desc: '当前已纳入静态主数据基线的对象数量' },
+    { label: '启用数量', value: activeCount, desc: '当前可被下游业务模块直接引用的有效主数据' },
+    { label: '非启用数量', value: disabledCount, desc: '用于停用、草稿、冻结等治理状态的对象数量' },
+    { label: '治理定位', value: 'MDM', desc: '先稳定静态字段与页面口径，再进入 mock 和接口阶段' }
+  ]
 })
 
-function createDefaultFormModel(): WorkCenterFormModel {
-  return {
-    id: '',
-    code: '',
-    name: '',
-    workshop: '',
-    shift: '白班',
-    people: 0,
-    efficiency: 0,
-    costPerHour: 0,
-    status: 'running'
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<MasterDataRow>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const start = (page - 1) * size
+    const end = start + size
+    return {
+      list: filteredRecords.value.slice(start, end),
+      total: filteredRecords.value.length
+    }
+  },
+  deleteAPI: async (ids) => {
+    records.value = records.value.filter((item) => !ids.includes(String(item.id)))
   }
-}
+})
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
+function createDefaultFormModel() {
+  return { id: '', code: '', name: '', workshop: '', shift: '白班', people: 0, efficiency: 0, status: 'active' }
 }
 
 function handleReset() {
   Object.assign(queryParams, {
-    keyword: '',
-    workshop: ''
+    'keyword': ''
   })
   search()
-}
-
-function getStatusLabel(status: WorkCenter['status']) {
-  const statusLabelMap: Record<WorkCenter['status'], string> = {
-    running: '运行',
-    idle: '空闲',
-    repair: '维修'
-  }
-  return statusLabelMap[status]
 }
 
 function openAdd() {
@@ -166,26 +332,41 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: WorkCenter) {
+function openEdit(row: MasterDataRow) {
   dialogMode.value = 'edit'
   formModel.value = { ...row }
   dialogVisible.value = true
 }
 
-async function submitDialog() {
-  if (!formModel.value.code || !formModel.value.name || !formModel.value.workshop) {
-    ElMessage.warning('请填写工作中心编码、工作中心名称和所属车间')
+function handleRowAction(action: string, row: MasterDataRow) {
+  if (action === 'edit') {
+    openEdit(row)
     return
   }
 
-  const { id, ...payload } = formModel.value
+  if (action === 'delete') {
+    onDelete(row)
+  }
+}
+
+async function submitDialog() {
+  const rowId = String(formModel.value.id || '')
 
   if (dialogMode.value === 'add') {
-    await createWorkCenter(payload)
-    ElMessage.success('新增成功')
+    records.value.unshift({
+      ...formModel.value,
+      id: rowId || 'MDM-' + Date.now()
+    })
+    ElMessage.success('已新增静态数据')
   } else {
-    await updateWorkCenter(id, payload)
-    ElMessage.success('编辑成功')
+    records.value = records.value.map((item) =>
+      String(item.id) === rowId
+        ? {
+            ...formModel.value
+          }
+        : item
+    )
+    ElMessage.success('已更新静态数据')
   }
 
   dialogVisible.value = false
@@ -194,7 +375,48 @@ async function submitDialog() {
 </script>
 
 <style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
+.page-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.overview-card {
+  padding: 14px 16px;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
+}
+
+.overview-label {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+
+.overview-value {
+  margin-top: 10px;
+  color: var(--el-text-color-primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.overview-desc {
+  margin-top: 8px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1200px) {
+  .page-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .page-overview {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
