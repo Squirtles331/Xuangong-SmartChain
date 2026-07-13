@@ -44,11 +44,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { type LayoutMode, useLayoutStore } from '@/stores/layout'
-
-type AppTheme = 'light' | 'night-shift-dark'
+import { applyAppTheme, getActiveAppTheme, getStoredAppTheme, type AppTheme } from '@/hooks/useAppTheme'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
@@ -60,19 +59,14 @@ const open = computed({
 
 const layoutStore = useLayoutStore()
 const layoutMode = ref<LayoutMode>(layoutStore.mode)
-const currentTheme = ref<AppTheme>((localStorage.getItem('app-theme') as AppTheme | null) ?? 'light')
+const currentTheme = ref<AppTheme>(getStoredAppTheme())
 
 const root = document.documentElement
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const supportsVT = 'startViewTransition' in document
 
 const applyTheme = (val: AppTheme) => {
-  root.classList.remove('night-shift-dark')
-  if (val !== 'light') {
-    root.classList.add(val)
-  }
-  localStorage.setItem('app-theme', val)
-  currentTheme.value = val
+  currentTheme.value = applyAppTheme(val)
 }
 
 const setLayout = (mode: LayoutMode) => {
@@ -106,8 +100,6 @@ const setTheme = (val: AppTheme, event?: MouseEvent) => {
   })
 }
 
-applyTheme(currentTheme.value)
-
 const router = useRouter()
 
 const resetDefaults = () => {
@@ -121,6 +113,36 @@ const clearAndLogout = () => {
   router.replace('/login')
   emit('update:modelValue', false)
 }
+
+watch(
+  () => props.modelValue,
+  (openState) => {
+    if (!openState) return
+    layoutMode.value = layoutStore.mode
+    currentTheme.value = getStoredAppTheme()
+  }
+)
+
+watch(
+  () => layoutStore.mode,
+  (mode) => {
+    layoutMode.value = mode
+  }
+)
+
+let themeObserver: MutationObserver | null = null
+
+onMounted(() => {
+  themeObserver = new MutationObserver(() => {
+    currentTheme.value = getActiveAppTheme()
+  })
+  themeObserver.observe(root, { attributes: true, attributeFilter: ['class'] })
+})
+
+onUnmounted(() => {
+  themeObserver?.disconnect()
+  themeObserver = null
+})
 </script>
 
 <style scoped>
@@ -139,6 +161,15 @@ const clearAndLogout = () => {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.section {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--layout-divider);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--el-bg-color) 96%, transparent) 0%, var(--el-fill-color-lighter) 100%);
+  box-shadow: var(--el-box-shadow-lighter);
 }
 
 .drawer-header {

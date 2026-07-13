@@ -21,6 +21,10 @@ import 'gi-component/dist/gi.css'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import '@/styles/theme/light.scss'
 import '@/styles/theme/night-shift-dark.scss'
+import { initAppTheme } from '@/hooks/useAppTheme'
+
+initAppTheme()
+
 const app = createApp(App)
 Dialog._context = app._context // 继承主应用的上下文
 app.use(createPinia())

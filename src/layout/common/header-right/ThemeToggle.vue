@@ -8,22 +8,18 @@
 <script lang="ts" setup>
 import { Moon, Sunny } from '@element-plus/icons-vue'
 import { ref, onMounted, onUnmounted } from 'vue'
-type AppTheme = 'light' | 'night-shift-dark'
+import { applyAppTheme, getActiveAppTheme, type AppTheme } from '@/hooks/useAppTheme'
+
 const root = document.documentElement
-const hasDarkClass = () => root.classList.contains('night-shift-dark')
-const isDark = ref<boolean>(hasDarkClass())
-const applyTheme = (val: AppTheme) => {
-  root.classList.remove('night-shift-dark')
-  if (val !== 'light') root.classList.add(val)
-  localStorage.setItem('app-theme', val)
-  isDark.value = val !== 'light'
-}
+const isDark = ref<boolean>(getActiveAppTheme() === 'night-shift-dark')
+
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const supportsVT = 'startViewTransition' in document
+
 const toggleTheme = (e?: MouseEvent) => {
   const next = isDark.value ? 'light' : 'night-shift-dark'
   if (!supportsVT || prefersReduced) {
-    applyTheme(next)
+    isDark.value = applyAppTheme(next) !== 'light'
     return
   }
   const vw = innerWidth
@@ -34,7 +30,7 @@ const toggleTheme = (e?: MouseEvent) => {
   const cx = useOppositeOrigin ? vw - clickX : clickX
   const cy = useOppositeOrigin ? vh - clickY : clickY
   const transition = (document as any).startViewTransition(() => {
-    applyTheme(next)
+    isDark.value = applyAppTheme(next) !== 'light'
   })
   transition.ready.then(() => {
     const radius = Math.hypot(Math.max(cx, vw - cx), Math.max(cy, vh - cy))
@@ -46,12 +42,11 @@ const toggleTheme = (e?: MouseEvent) => {
     )
   })
 }
-const savedTheme = localStorage.getItem('app-theme') as AppTheme | null
-if (savedTheme) applyTheme(savedTheme)
+
 let observer: MutationObserver | null = null
 onMounted(() => {
   observer = new MutationObserver(() => {
-    isDark.value = hasDarkClass()
+    isDark.value = getActiveAppTheme() === 'night-shift-dark'
   })
   observer.observe(root, { attributes: true, attributeFilter: ['class'] })
 })
