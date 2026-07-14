@@ -7,7 +7,19 @@
     <template #header>
       <div class="crud-page__header">
         <slot name="headerTop" />
-        <SearchSetting :columns="searchColumns" :required-fields="requiredSearchFields" @update:visible-fields="onSearchFieldsChange">
+
+        <div v-if="showSegmented" class="crud-page__segmented">
+          <slot name="segmented">
+            <el-segmented v-model="segmentedValue" :options="props.segmentedOptions" size="large" v-bind="props.segmentedProps" />
+          </slot>
+        </div>
+
+        <SearchSetting
+          v-if="showSearchSetting"
+          :columns="searchColumns"
+          :required-fields="requiredSearchFields"
+          @update:visible-fields="onSearchFieldsChange"
+        >
           <gi-form
             v-model="searchModel"
             :columns="visibleSearchColumns"
@@ -68,7 +80,7 @@ import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import SearchSetting from '@/components/SearchSetting.vue'
 import TableSetting from '@/components/TableSetting.vue'
 import CrudToolbarActions from '@/components/crud/CrudToolbarActions/index.vue'
-import type { CrudToolbarActionItem } from '../types'
+import type { CrudSegmentedOption, CrudSegmentedValue, CrudToolbarActionItem } from '../types'
 
 defineOptions({
   name: 'CrudPage'
@@ -99,6 +111,9 @@ interface CrudPageProps {
   addText?: string
   refreshText?: string
   toolbarActions?: CrudToolbarActionItem[]
+  segmentedOptions?: CrudSegmentedOption[]
+  segmentedProps?: Record<string, any>
+  segmentedAutoSearch?: boolean
 }
 
 const props = withDefaults(defineProps<CrudPageProps>(), {
@@ -121,10 +136,14 @@ const props = withDefaults(defineProps<CrudPageProps>(), {
   showRefreshButton: true,
   addText: '新增',
   refreshText: '刷新',
-  toolbarActions: () => []
+  toolbarActions: () => [],
+  segmentedOptions: () => [],
+  segmentedProps: () => ({}),
+  segmentedAutoSearch: false
 })
 
 const searchModel = defineModel<Record<string, any>>('searchModel', { required: true })
+const segmentedValue = defineModel<CrudSegmentedValue | ''>('segmentedValue', { default: '' })
 const slots = useSlots()
 
 const emit = defineEmits<{
@@ -134,12 +153,16 @@ const emit = defineEmits<{
   add: []
   toolbarAction: [key: string]
   selectionChange: [rows: T[]]
+  segmentedChange: [value: CrudSegmentedValue | '']
 }>()
 
 const visibleSearchColumns = ref<FormColumnItem[]>([...props.searchColumns])
+const segmentedReady = ref(false)
 
+const showSegmented = computed(() => props.segmentedOptions.length > 0 || Boolean(slots.segmented))
+const showSearchSetting = computed(() => props.searchColumns.length > 0)
 const forwardedSlotNames = computed(() =>
-  Object.keys(slots).filter((name) => !['left', 'tool', 'dialog', 'tableToolbarLeft', 'headerTop', 'beforeTable'].includes(name))
+  Object.keys(slots).filter((name) => !['left', 'tool', 'dialog', 'tableToolbarLeft', 'headerTop', 'beforeTable', 'segmented'].includes(name))
 )
 
 watch(
@@ -149,6 +172,19 @@ watch(
   },
   { deep: true }
 )
+
+watch(segmentedValue, (value) => {
+  if (!segmentedReady.value) {
+    segmentedReady.value = true
+    return
+  }
+
+  emit('segmentedChange', value)
+
+  if (props.segmentedAutoSearch) {
+    emit('search')
+  }
+})
 
 function onSearchFieldsChange(fields: FormColumnItem[]) {
   visibleSearchColumns.value = fields
@@ -164,5 +200,11 @@ function handleSelectionChange(rows: T[]) {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.crud-page__segmented {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
 }
 </style>

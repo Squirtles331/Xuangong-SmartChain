@@ -4,36 +4,50 @@
       <PageOwnershipNotice class="report-ownership" />
 
       <div class="report-header">
-        <h2>工序报工</h2>
-        <div class="report-info">
-          <el-tag type="warning" size="large">{{ statusText }}</el-tag>
+        <div>
+          <h2>工序报工</h2>
+          <p class="report-subtitle">围绕报工记录对象完成数量提交、状态确认与缺陷原因归集。</p>
+        </div>
+        <div class="report-tags">
+          <el-tag size="large" type="warning">当前工序：{{ operationStatusText }}</el-tag>
+          <el-tag size="large" :type="reportStatusMeta.type">最新记录：{{ reportStatusMeta.label }}</el-tag>
         </div>
       </div>
 
-      <el-descriptions :column="2" border style="margin-bottom: 20px">
+      <el-alert
+        type="info"
+        :closable="false"
+        show-icon
+        class="phase-alert"
+        title="静态阶段口径：提交报工后记录进入“已提交”，在下方历史记录中点击“确认入账”后进入“已确认”；本阶段不联动 WMS、QMS、成本接口。"
+      />
+
+      <el-descriptions :column="2" border class="summary-block">
         <el-descriptions-item label="工单编号">{{ report.wo_code || '-' }}</el-descriptions-item>
         <el-descriptions-item label="产品名称">{{ report.material_name || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="工序">{{ report.operation_no ? `${report.operation_no}：${report.operation_name}` : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="工序">
+          {{ report.operation_no ? `${report.operation_no} - ${report.operation_name}` : '-' }}
+        </el-descriptions-item>
         <el-descriptions-item label="工作中心">{{ report.work_center || '-' }}</el-descriptions-item>
         <el-descriptions-item label="开工时间">{{ report.start_time || '-' }}</el-descriptions-item>
         <el-descriptions-item label="已用时长">{{ elapsedDisplay }}</el-descriptions-item>
         <el-descriptions-item label="计划数量">{{ report.planned_qty }} 件</el-descriptions-item>
         <el-descriptions-item label="已报工数量">{{ report.reported_qty }} 件</el-descriptions-item>
-        <el-descriptions-item label="剩余数量">{{ maxReportQty }} 件</el-descriptions-item>
+        <el-descriptions-item label="剩余可报">{{ maxReportQty }} 件</el-descriptions-item>
         <el-descriptions-item label="完成进度">
-          <el-progress :percentage="completionProgress" :stroke-width="8" :color="progressColor" style="width: 200px" />
+          <el-progress :percentage="completionProgress" :stroke-width="8" :color="progressColor" style="width: 220px" />
         </el-descriptions-item>
       </el-descriptions>
 
       <el-card header="本次报工" shadow="never">
-        <el-form :model="form" label-width="120px" style="max-width: 600px">
+        <el-form :model="form" label-width="120px" style="max-width: 640px">
           <el-form-item label="合格数量" required>
-            <el-input-number v-model="form.qualified_qty" :min="0" :max="maxReportQty" style="width: 200px" />
-            <span class="field-tip">最大可报 {{ maxReportQty }} 件</span>
+            <el-input-number v-model="form.qualified_qty" :min="0" :max="maxReportQty" style="width: 220px" />
+            <span class="field-tip">本次提交上限为 {{ maxReportQty }} 件</span>
           </el-form-item>
 
           <el-form-item label="不良数量" required>
-            <el-input-number v-model="form.defective_qty" :min="0" :max="maxReportQty" style="width: 200px" />
+            <el-input-number v-model="form.defective_qty" :min="0" :max="maxReportQty" style="width: 220px" />
           </el-form-item>
 
           <el-form-item v-if="form.defective_qty > 0" label="不良原因" required>
@@ -48,8 +62,8 @@
           </el-form-item>
 
           <el-form-item label="实际工时(分钟)">
-            <el-input-number v-model="form.actual_hours" :min="1" style="width: 200px" />
-            <span class="field-tip">自动计时：{{ elapsedDisplay }}</span>
+            <el-input-number v-model="form.actual_hours" :min="1" style="width: 220px" />
+            <span class="field-tip">当前自动计时：{{ elapsedDisplay }}</span>
           </el-form-item>
 
           <el-form-item label="备注">
@@ -58,6 +72,7 @@
 
           <el-form-item>
             <el-button type="primary" size="large" :disabled="submitDisabled" @click="submitReport">提交报工</el-button>
+            <el-button size="large" @click="resetForm">重置</el-button>
             <el-button size="large" @click="$router.back()">返回</el-button>
           </el-form-item>
         </el-form>
@@ -67,8 +82,17 @@
         <TableSetting title="报工历史" :columns="historyColumns" @refresh="refresh">
           <template #default="{ settingColumns, tableProps }">
             <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border size="small">
+              <template #status="{ row }">
+                <el-tag size="small" :type="getReportStatusMeta(row.status).type">
+                  {{ getReportStatusMeta(row.status).label }}
+                </el-tag>
+              </template>
               <template #defect_reasons="{ row }">
                 <span>{{ row.defect_reasons || '-' }}</span>
+              </template>
+              <template #actions="{ row }">
+                <el-button v-if="row.status === 'submitted'" type="primary" link size="small" @click="confirmRecord(row)">确认入账</el-button>
+                <span v-else>-</span>
               </template>
             </gi-table>
           </template>
@@ -100,6 +124,9 @@ import {
 } from '@/api/work-order'
 import { useTable } from '@/hooks/useTable'
 
+type ReportStatus = 'draft' | 'submitted' | 'confirmed' | 'rejected'
+type ReportTableRow = ReportRecord & { status?: ReportStatus }
+
 const route = useRoute()
 const router = useRouter()
 
@@ -128,7 +155,7 @@ const form = reactive({
   remark: ''
 })
 
-const statusText = computed(() => {
+const operationStatusText = computed(() => {
   const map: Record<string, string> = {
     pending: '待开工',
     assigned: '已派工',
@@ -137,6 +164,11 @@ const statusText = computed(() => {
     in_progress: '生产中'
   }
   return map[report.status] || '生产中'
+})
+
+const reportStatusMeta = computed(() => {
+  const latest = (tableData.value?.[0]?.status || 'draft') as ReportStatus
+  return getReportStatusMeta(latest)
 })
 
 const elapsedDisplay = computed(() => {
@@ -158,16 +190,18 @@ watch(elapsed, (value) => {
   form.actual_hours = Math.max(value, 1)
 })
 
-const historyColumns: TableColumnItem<ReportRecord>[] = [
-  { prop: 'time', label: '时间', width: 160 },
-  { prop: 'qualified_qty', label: '合格数', width: 80, align: 'center' },
-  { prop: 'defective_qty', label: '不良数', width: 80, align: 'center' },
-  { prop: 'defect_reasons', label: '不良原因', minWidth: 150, slotName: 'defect_reasons' },
-  { prop: 'actual_hours', label: '工时(分钟)', width: 100, align: 'center' },
-  { prop: 'worker', label: '操作人', width: 100 }
+const historyColumns: TableColumnItem<ReportTableRow>[] = [
+  { prop: 'time', label: '报工时间', width: 160 },
+  { prop: 'status', label: '记录状态', width: 110, align: 'center', slotName: 'status' },
+  { prop: 'qualified_qty', label: '合格数', width: 90, align: 'center' },
+  { prop: 'defective_qty', label: '不良数', width: 90, align: 'center' },
+  { prop: 'defect_reasons', label: '不良原因', minWidth: 180, slotName: 'defect_reasons' },
+  { prop: 'actual_hours', label: '工时(分钟)', width: 110, align: 'center' },
+  { prop: 'worker', label: '操作人', width: 100 },
+  { prop: 'actions', label: '操作', width: 100, align: 'center', slotName: 'actions', fixed: 'right' }
 ]
 
-const { tableData, pagination, loading, refresh } = useTable<ReportRecord>({
+const { tableData, pagination, loading, refresh } = useTable<ReportTableRow>({
   rowKey: 'time',
   listAPI: async ({ page, size }) => {
     const params: ReportHistoryQuery = {
@@ -247,7 +281,9 @@ async function submitReport() {
     return
   }
 
-  ElMessageBox.confirm(`确认报工：合格 ${form.qualified_qty} 件，不良 ${form.defective_qty} 件？`, '确认报工', { type: 'warning' })
+  ElMessageBox.confirm(`确认提交报工：合格 ${form.qualified_qty} 件，不良 ${form.defective_qty} 件？提交后记录将进入“已提交”状态。`, '确认报工', {
+    type: 'warning'
+  })
     .then(async () => {
       try {
         await reportOperation(report.operationId, {
@@ -261,20 +297,43 @@ async function submitReport() {
         await refresh()
 
         if (report.reported_qty >= report.planned_qty) {
-          ElMessage.success('当前工单已全部完工')
+          ElMessage.success('当前工单已全部报工完成，请返回工单列表继续处理。')
           router.push('/mes/work-order/list')
           return
         }
 
-        ElMessage.success(`报工成功，当前进度 ${completionProgress.value}%`)
+        ElMessage.success(`报工已提交，当前进度 ${completionProgress.value}%，可在下方继续确认入账。`)
+        resetForm()
         form.qualified_qty = maxReportQty.value
-        form.defective_qty = 0
-        form.defect_reasons = []
       } catch {
-        ElMessage.error('报工失败')
+        ElMessage.error('报工提交失败')
       }
     })
     .catch(() => {})
+}
+
+function resetForm() {
+  form.qualified_qty = 0
+  form.defective_qty = 0
+  form.defect_reasons = []
+  form.actual_hours = Math.max(elapsed.value, 1)
+  form.remark = ''
+}
+
+function confirmRecord(row: ReportTableRow) {
+  row.status = 'confirmed'
+  ElMessage.success('静态演示：该报工记录已确认入账。')
+}
+
+function getReportStatusMeta(status?: ReportStatus) {
+  const normalized = status || 'draft'
+  const map: Record<ReportStatus, { label: string; type: 'info' | 'warning' | 'success' | 'danger' }> = {
+    draft: { label: '待提交', type: 'info' },
+    submitted: { label: '已提交', type: 'warning' },
+    confirmed: { label: '已确认', type: 'success' },
+    rejected: { label: '已退回', type: 'danger' }
+  }
+  return map[normalized]
 }
 
 const paretoChartRef = ref<HTMLDivElement>()
@@ -345,22 +404,42 @@ watch(tableData, () => {
 
 <style scoped>
 .report-container {
-  max-width: 900px;
+  max-width: 960px;
 }
 
 .report-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  gap: 16px;
+  align-items: flex-start;
   margin-bottom: 16px;
+}
+
+.report-header h2 {
+  margin: 0;
+}
+
+.report-subtitle {
+  margin: 8px 0 0;
+  color: #606266;
+}
+
+.report-tags {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .report-ownership {
   margin-bottom: 16px;
 }
 
-.report-header h2 {
-  margin: 0;
+.phase-alert {
+  margin-bottom: 16px;
+}
+
+.summary-block {
+  margin-bottom: 20px;
 }
 
 .field-tip {

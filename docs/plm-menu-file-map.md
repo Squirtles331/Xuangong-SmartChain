@@ -6,21 +6,21 @@
 
 ## 菜单映射
 
-| 菜单名称 | 路由 path | 路由 name | 页面文件 |
-| --- | --- | --- | --- |
-| BOM管理 / 产品结构清单 | `plm/bom/list` | `bomList` | `src/views/plm/bom/list/index.vue` |
-| BOM管理 / 新建产品结构 | `plm/bom/create` | `bomCreate` | `src/views/plm/bom/editor/index.vue` |
-| BOM管理 / 产品结构编辑 | `plm/bom/editor/:id` | `bomEditor` | `src/views/plm/bom/editor/index.vue` |
-| BOM管理 / 结构版本比较 | `plm/bom/compare` | `bomCompare` | `src/views/plm/bom/compare/index.vue` |
-| BOM管理 / 用量展开与反查 | `plm/bom/explode` | `bomExplode` | `src/views/plm/bom/explode/index.vue` |
-| BOM管理 / 结构成本估算 | `plm/bom/cost` | `bomCost` | `src/views/plm/bom/cost/index.vue` |
-| 工艺定义 / 工艺路线 | `plm/process/routing` | `plmRoutingList` | `src/views/plm/process/routing-list/index.vue` |
-| 工艺定义 / 工艺路线编辑 | `plm/process/routing/editor/:id` | `routingEditor` | `src/views/plm/process/routing-editor/index.vue` |
-| 工艺定义 / 工序定义 | `plm/process/operation-definition` | `plmOperationDefinition` | `src/views/plm/process/operation-definition/index.vue` |
-| 工艺定义 / 并行工序 | `plm/process/parallel-operation` | `routingParallel` | `src/views/plm/process/parallel-operation/index.vue` |
-| 工艺定义 / 标准工时学习 | `plm/process/standard-time` | `routingAutoTime` | `src/views/plm/process/standard-time/index.vue` |
-| 工程变更 / 工程变更 | `plm/change/ecn/list` | `ecnList` | `src/views/plm/change/ecn/list/index.vue` |
-| 工程变更 / 版本切换 | `plm/change/cutover` | `plmCutover` | `src/views/plm/change/cutover/index.vue` |
+| 菜单名称                 | 路由 path                          | 路由 name                | 页面文件                                               |
+| ------------------------ | ---------------------------------- | ------------------------ | ------------------------------------------------------ |
+| BOM管理 / 产品结构清单   | `plm/bom/list`                     | `bomList`                | `src/views/plm/bom/list/index.vue`                     |
+| BOM管理 / 新建产品结构   | `plm/bom/create`                   | `bomCreate`              | `src/views/plm/bom/editor/index.vue`                   |
+| BOM管理 / 产品结构编辑   | `plm/bom/editor/:id`               | `bomEditor`              | `src/views/plm/bom/editor/index.vue`                   |
+| BOM管理 / 结构版本比较   | `plm/bom/compare`                  | `bomCompare`             | `src/views/plm/bom/compare/index.vue`                  |
+| BOM管理 / 用量展开与反查 | `plm/bom/explode`                  | `bomExplode`             | `src/views/plm/bom/explode/index.vue`                  |
+| BOM管理 / 结构成本估算   | `plm/bom/cost`                     | `bomCost`                | `src/views/plm/bom/cost/index.vue`                     |
+| 工艺定义 / 工艺路线      | `plm/process/routing`              | `plmRoutingList`         | `src/views/plm/process/routing-list/index.vue`         |
+| 工艺定义 / 工艺路线编辑  | `plm/process/routing/editor/:id`   | `routingEditor`          | `src/views/plm/process/routing-editor/index.vue`       |
+| 工艺定义 / 工序定义      | `plm/process/operation-definition` | `plmOperationDefinition` | `src/views/plm/process/operation-definition/index.vue` |
+| 工艺定义 / 并行工序      | `plm/process/parallel-operation`   | `routingParallel`        | `src/views/plm/process/parallel-operation/index.vue`   |
+| 工艺定义 / 标准工时学习  | `plm/process/standard-time`        | `routingAutoTime`        | `src/views/plm/process/standard-time/index.vue`        |
+| 工程变更 / 工程变更      | `plm/change/ecn/list`              | `ecnList`                | `src/views/plm/change/ecn/list/index.vue`              |
+| 工程变更 / 版本切换      | `plm/change/cutover`               | `plmCutover`             | `src/views/plm/change/cutover/index.vue`               |
 
 ## 目录约定
 

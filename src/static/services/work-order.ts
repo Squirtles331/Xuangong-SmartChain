@@ -1,5 +1,8 @@
 import {
+  kanbanOps as kanbanOpsSeed,
+  myTasks as myTasksSeed,
   reportHistory as reportHistorySeed,
+  traceRecords as traceRecordsSeed,
   workOrderOperations as workOrderOperationsSeed,
   workOrders as workOrdersSeed
 } from '@/mock/modules/work-order'
@@ -14,6 +17,9 @@ type ReportHistoryRecord = Record<string, any>
 const workOrders = cloneSeed(workOrdersSeed) as WorkOrderRecord[]
 const workOrderOperations = cloneSeed(workOrderOperationsSeed) as WorkOrderOperationRecord[]
 const reportHistory = cloneSeed(reportHistorySeed) as ReportHistoryRecord[]
+const myTasks = cloneSeed(myTasksSeed) as Record<string, any[]>
+const traceRecords = cloneSeed(traceRecordsSeed) as ReportHistoryRecord[]
+const kanbanOps = cloneSeed(kanbanOpsSeed) as WorkOrderOperationRecord[]
 
 function cloneSeed<T>(seed: T): T {
   if (typeof structuredClone === 'function') {
@@ -58,6 +64,7 @@ export async function getWorkOrderList(params: {
   status?: string
   priority?: string
   workshopId?: string
+  workshopName?: string
   startDate?: string
   endDate?: string
 }) {
@@ -77,6 +84,10 @@ export async function getWorkOrderList(params: {
 
   if (params.workshopId) {
     filtered = filtered.filter((item) => String(item.workshop_id || item.id) === params.workshopId)
+  }
+
+  if (params.workshopName) {
+    filtered = filtered.filter((item) => String(item.workshop_name || '').includes(params.workshopName!))
   }
 
   if (params.startDate) {
@@ -174,6 +185,39 @@ export async function getWorkOrderOperations(workOrderId: string) {
   return wrapDetailResponse(operations)
 }
 
+export async function assignOperation(operationId: string, data: { team_id: string; worker_id?: string; equipment_id?: string }) {
+  const operation = findOperation(operationId)
+
+  if (!operation) {
+    return MockResponse.fail(404, '工序不存在', null)
+  }
+
+  operation.status = 'assigned'
+  operation.team_id = data.team_id
+  operation.worker = data.worker_id || operation.worker
+  operation.equipment_id = data.equipment_id
+
+  return wrapUpdatedResponse(operation, '工序派工成功')
+}
+
+export async function startOperation(operationId: string) {
+  const operation = findOperation(operationId)
+
+  if (operation) {
+    operation.status = 'running'
+    operation.actual_start_time = formatDateTime()
+    return wrapUpdatedResponse(operation, '工序已开工')
+  }
+
+  const task = (myTasks.assigned || []).find((item) => String(item.id) === operationId)
+  if (task) {
+    task.status = 'running'
+    return wrapUpdatedResponse(task, '任务已开工')
+  }
+
+  return MockResponse.fail(404, '工序不存在', null)
+}
+
 export async function reportOperation(
   operationId: string,
   data: { qualified_qty: number; defective_qty: number; defect_reasons?: string[]; actual_hours: number }
@@ -210,6 +254,7 @@ export async function reportOperation(
   reportHistory.unshift({
     wo_code: workOrder?.code || '',
     time: now.slice(0, 16),
+    status: 'submitted',
     qualified_qty: data.qualified_qty,
     defective_qty: data.defective_qty,
     defect_reasons: (data.defect_reasons || []).join(', '),
@@ -232,6 +277,44 @@ export async function getReportHistory(params: {
 
   if (params.workOrderCode) {
     filtered = filtered.filter((item) => String(item.wo_code || '').includes(params.workOrderCode!))
+  }
+
+  if (params.worker) {
+    filtered = filtered.filter((item) => String(item.worker || '').includes(params.worker!))
+  }
+
+  if (params.startDate) {
+    filtered = filtered.filter((item) => String(item.time || '').slice(0, 10) >= params.startDate!)
+  }
+
+  if (params.endDate) {
+    filtered = filtered.filter((item) => String(item.time || '').slice(0, 10) <= params.endDate!)
+  }
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function getKanbanData() {
+  return wrapDetailResponse(kanbanOps)
+}
+
+export async function getMyTasks() {
+  return wrapDetailResponse(myTasks)
+}
+
+export async function getTraceRecords(params: {
+  pageNum: number
+  pageSize: number
+  wo_code?: string
+  worker?: string
+  startDate?: string
+  endDate?: string
+}) {
+  let filtered = [...traceRecords]
+
+  if (params.wo_code) {
+    filtered = filtered.filter((item) => String(item.wo_code || '').includes(params.wo_code!))
   }
 
   if (params.worker) {

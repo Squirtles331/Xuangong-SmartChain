@@ -1,5 +1,12 @@
 export type CrudActionTone = 'primary' | 'secondary' | 'success' | 'warning' | 'danger'
 export type CrudDialogMode = 'add' | 'edit'
+export type CrudSegmentedValue = string | number | boolean
+
+export interface CrudSegmentedOption {
+  label: string
+  value: CrudSegmentedValue
+  disabled?: boolean
+}
 
 export interface CrudToolbarActionItem {
   key: string

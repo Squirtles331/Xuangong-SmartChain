@@ -233,6 +233,7 @@ export const reportHistory = [
   {
     wo_code: 'WO202501150001',
     time: '2025-01-15 14:00',
+    status: 'confirmed',
     qualified_qty: 25,
     defective_qty: 1,
     defect_reasons: '尺寸超差',
@@ -242,6 +243,7 @@ export const reportHistory = [
   {
     wo_code: 'WO202501150001',
     time: '2025-01-15 10:00',
+    status: 'submitted',
     qualified_qty: 20,
     defective_qty: 2,
     defect_reasons: '外观缺陷, 设备精度异常',

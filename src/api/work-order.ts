@@ -10,14 +10,23 @@ export interface WorkOrder {
   material_id: string
   material_code: string
   material_name: string
+  material_spec?: string
   planned_qty: number
   completed_qty: number
   defective_qty: number
   status: 'draft' | 'approved' | 'released' | 'in_progress' | 'completed' | 'closed'
   priority: 'urgent' | 'high' | 'normal' | 'low'
   workshop_name: string
+  line_name?: string
+  current_operation?: string
+  bom_version?: string
+  routing_version?: string
+  customer_po?: string
   planned_start_date: string
   planned_end_date: string
+  actual_start_date?: string
+  created_by?: string
+  created_at?: string
 }
 
 export interface WorkOrderQuery {
@@ -27,6 +36,7 @@ export interface WorkOrderQuery {
   status?: string
   priority?: string
   workshopId?: string
+  workshopName?: string
   startDate?: string
   endDate?: string
 }
@@ -90,11 +100,13 @@ export function getWorkOrderOperations(workOrderId: string) {
 }
 
 export function assignOperation(operationId: string, data: { team_id: string; worker_id?: string; equipment_id?: string }) {
+  if (isStaticMode) return staticService.assignOperation(operationId, data)
   if (isMockMode) return mockService.assignOperation(operationId, data)
   return apiPut<Record<string, never>, { team_id: string; worker_id?: string; equipment_id?: string }>(`/operations/${operationId}/assign`, data)
 }
 
 export function startOperation(operationId: string) {
+  if (isStaticMode) return staticService.startOperation(operationId)
   if (isMockMode) return mockService.startOperation(operationId)
   return apiPut<Record<string, never>>(`/operations/${operationId}/start`)
 }
@@ -129,6 +141,7 @@ export interface KanbanOp {
 }
 
 export function getKanbanData() {
+  if (isStaticMode) return staticService.getKanbanData()
   if (isMockMode) return mockService.getKanbanData()
   return apiGet<KanbanOp[]>('/work-orders/kanban')
 }
@@ -158,6 +171,7 @@ export interface MyTasksData {
 }
 
 export function getMyTasks() {
+  if (isStaticMode) return staticService.getMyTasks()
   if (isMockMode) return mockService.getMyTasks()
   return apiGet<MyTasksData>('/work-orders/my-tasks')
 }
@@ -169,6 +183,7 @@ export interface ReportRecord {
   defect_reasons: string
   actual_hours: number
   worker: string
+  status?: 'draft' | 'submitted' | 'confirmed' | 'rejected'
 }
 
 export interface ReportHistoryQuery {
@@ -230,12 +245,12 @@ export function updateOutsourceOrderStatus(id: string, status: OutsourceOrder['s
 export interface TraceRecord {
   id: string
   wo_code: string
-  op_name: string
+  operation_name: string
   worker: string
-  qualified: number
-  defective: number
-  reasons: string
-  hours: number
+  qualified_qty: number
+  defective_qty: number
+  defect_reasons: string
+  actual_hours: number
   time: string
 }
 
@@ -249,6 +264,31 @@ export interface TraceRecordQuery {
 }
 
 export function getTraceRecords(params: TraceRecordQuery) {
-  if (isMockMode) return mockService.getTraceRecords(params) as Promise<ApiResponse<PaginatedData<TraceRecord>>>
-  return apiGet<PaginatedData<TraceRecord>>('/work-orders/trace-records', { params })
+  if (isStaticMode) return staticService.getTraceRecords(params).then(mapTraceRecordResponse)
+  if (isMockMode) return mockService.getTraceRecords(params).then(mapTraceRecordResponse)
+  return apiGet<PaginatedData<any>>('/work-orders/trace-records', { params }).then(mapTraceRecordResponse)
+}
+
+function mapTraceRecordResponse(response: ApiResponse<PaginatedData<any>>): ApiResponse<PaginatedData<TraceRecord>> {
+  return {
+    ...response,
+    data: {
+      ...response.data,
+      list: (response.data?.list || []).map(mapTraceRecord)
+    }
+  }
+}
+
+function mapTraceRecord(item: any): TraceRecord {
+  return {
+    id: String(item.id || ''),
+    wo_code: item.wo_code || '',
+    operation_name: item.operation_name || item.op_name || '',
+    worker: item.worker || '',
+    qualified_qty: Number(item.qualified_qty ?? item.qualified ?? 0),
+    defective_qty: Number(item.defective_qty ?? item.defective ?? 0),
+    defect_reasons: item.defect_reasons || item.reasons || '',
+    actual_hours: Number(item.actual_hours ?? item.hours ?? 0),
+    time: item.time || ''
+  }
 }

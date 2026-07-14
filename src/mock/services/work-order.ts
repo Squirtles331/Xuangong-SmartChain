@@ -159,6 +159,7 @@ export async function reportOperation(
   reportHistory.unshift({
     wo_code: workOrders.find((item: any) => item.id === operation?.work_order_id)?.code || '',
     time: new Date().toISOString().slice(0, 16).replace('T', ' '),
+    status: 'submitted',
     qualified_qty: data.qualified_qty,
     defective_qty: data.defective_qty,
     defect_reasons: (data.defect_reasons || []).join(', '),

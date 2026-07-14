@@ -5,30 +5,68 @@ import { planned, plannedPage } from '../../helpers'
 export const mesRoute: RouteRecordRaw = {
   path: 'mes',
   name: 'mesCenter',
-  meta: { title: '生产执行', icon: 'Monitor', order: 10, ownerSystem: 'MES', coreObject: '生产执行' },
+  meta: {
+    title: '生产执行',
+    icon: 'Monitor',
+    order: 10,
+    ownerSystem: 'MES',
+    coreObject: '生产执行主链'
+  },
   children: [
     {
       path: 'work-order',
       name: 'mesWorkOrderCenter',
-      meta: { title: '工单', icon: 'Tickets', order: 1, ownerSystem: 'MES', coreObject: '生产工单' },
+      meta: {
+        title: '工单',
+        icon: 'Tickets',
+        order: 1,
+        ownerSystem: 'MES',
+        coreObject: '生产工单'
+      },
       children: [
         {
           path: 'list',
           name: 'workOrderList',
           component: () => import('@/views/mes/work-order/list/index.vue'),
-          meta: { title: '工单列表', icon: 'Tickets', order: 1, ownerSystem: 'MES', coreObject: '生产工单' }
+          meta: {
+            title: '工单列表',
+            icon: 'Tickets',
+            order: 1,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['PLM'],
+            coreObject: '生产工单',
+            boundaryNote: 'MES 维护生产工单真相，BOM 与工艺版本只引用 PLM 已发布结构。'
+          }
         },
         {
           path: 'create',
           name: 'workOrderCreate',
           component: () => import('@/views/mes/work-order/create/index.vue'),
-          meta: { title: '新建工单', icon: 'Plus', order: 2, hidden: true, activeMenu: '/mes/work-order/list' }
+          meta: {
+            title: '新建工单',
+            icon: 'Plus',
+            order: 2,
+            hidden: true,
+            activeMenu: '/mes/work-order/list',
+            ownerSystem: 'MES',
+            collaboratorSystems: ['PLM'],
+            coreObject: '生产工单',
+            boundaryNote: '新建工单只引用 PLM 已发布的 BOM / 工艺版本，不在本页维护上游工程对象。'
+          }
         },
         {
           path: ':id',
           name: 'workOrderDetail',
           component: () => import('@/views/mes/work-order/detail/index.vue'),
-          meta: { title: '工单详情', hidden: true, activeMenu: '/mes/work-order/list', ownerSystem: 'MES', coreObject: '生产工单' }
+          meta: {
+            title: '工单详情',
+            hidden: true,
+            activeMenu: '/mes/work-order/list',
+            ownerSystem: 'MES',
+            collaboratorSystems: ['PLM', 'WMS', 'QMS'],
+            coreObject: '生产工单',
+            boundaryNote: '详情页展示领料、质检等关联上下文，但不成为 WMS 或 QMS 的事务维护入口。'
+          }
         },
         {
           path: 'split',
@@ -40,36 +78,48 @@ export const mesRoute: RouteRecordRaw = {
           path: 'outsource',
           name: 'workOrderOutsource',
           component: () => import('@/views/mes/work-order/outsource/index.vue'),
-          meta: { title: '委外工单', icon: 'Connection', order: 3 }
+          meta: { title: '委外工单', icon: 'Connection', order: 3, hidden: true, activeMenu: '/mes/work-order/list' }
         }
       ]
     },
     {
       path: 'execution',
       name: 'mesExecutionCenter',
-      meta: { title: '工序执行', icon: 'SetUp', order: 2, ownerSystem: 'MES', coreObject: '工序任务 / WIP / 报工 / 消耗' },
+      meta: {
+        title: '工序执行',
+        icon: 'SetUp',
+        order: 2,
+        ownerSystem: 'MES',
+        coreObject: '工序任务 / 报工记录'
+      },
       children: [
         {
           path: 'my-tasks',
           name: 'workOrderMyTasks',
           component: () => import('@/views/mes/work-order/my-tasks/index.vue'),
-          meta: { title: '我的任务', icon: 'User', order: 1, ownerSystem: 'MES', coreObject: '工序任务' }
+          meta: {
+            title: '我的任务',
+            icon: 'User',
+            order: 1,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['PLM'],
+            coreObject: '工序任务',
+            boundaryNote: '本页是现场执行入口，主对象是工序任务，不等同于生产工单主维护页。'
+          }
         },
         {
           path: 'operation-task',
           name: 'mesOperationTask',
-          component: plannedPage,
-          meta: planned(
-            '工序任务',
-            'List',
-            2,
-            '围绕工序任务建立统一的执行调度、依赖跟踪和状态控制入口。',
-            ['任务池', '依赖关系', '状态流转', '异常恢复'],
-            {
-              ownerSystem: 'MES',
-              coreObject: '工序任务'
-            }
-          )
+          component: () => import('@/views/mes/work-order/operation-task/index.vue'),
+          meta: {
+            title: '工序任务',
+            icon: 'List',
+            order: 2,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['PLM', 'QMS'],
+            coreObject: '工序任务池',
+            boundaryNote: '本页从协调视角统一查看任务池与阻塞信号，任务真相仍与“我的任务”保持一致，不单独创造新的执行对象。'
+          }
         },
         {
           path: 'report/:id',
@@ -82,146 +132,147 @@ export const mesRoute: RouteRecordRaw = {
             ownerSystem: 'MES',
             collaboratorSystems: ['QMS'],
             coreObject: '报工记录',
-            boundaryNote: '报工事实由 MES 主责，后续检验与质量裁决不得在报工页面直接替代。'
+            boundaryNote: '报工事实由 MES 主责，后续检验与质量裁决不得在报工页直接替代。'
           }
         },
         {
           path: 'wip',
           name: 'mesWip',
-          component: plannedPage,
-          meta: planned(
-            '在制品',
-            'Grid',
-            3,
-            '统一查看在制品所处工序、批次状态、冻结情况和返工回流。',
-            ['批次台账', '冻结 / 解冻', '流转跟踪', '返工回流'],
-            {
-              ownerSystem: 'MES',
-              coreObject: 'WIP 批次',
-              collaboratorSystems: ['QMS'],
-              boundaryNote: '在制品状态由 MES 主控，不等于 WMS 库存批次。'
-            }
-          )
+          component: () => import('@/views/mes/work-order/wip/index.vue'),
+          meta: {
+            title: 'WIP',
+            icon: 'Grid',
+            order: 3,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['QMS', 'WMS'],
+            coreObject: 'WIP批次',
+            boundaryNote: 'WIP 批次反映生产执行态缓存与冻结/返工信号，不等于 WMS 库存批次或入库事务真相。'
+          }
         },
         {
           path: 'kitting',
           name: 'mesKitting',
-          component: plannedPage,
-          meta: planned(
-            '开工齐套检查',
-            'Select',
-            4,
-            '在开工前统一核对物料、版本、资质和放行条件。',
-            ['物料校验', '版本校验', '资质校验', '放行关口'],
-            {
-              ownerSystem: 'MES',
-              coreObject: '开工放行条件',
-              collaboratorSystems: ['WMS', 'PLM', 'QMS'],
-              boundaryNote: '齐套检查是 MES 的放行关口，不等于仓库备料完成。'
-            }
-          )
+          component: () => import('@/views/mes/work-order/kitting/index.vue'),
+          meta: {
+            title: '开工齐套检查',
+            icon: 'Select',
+            order: 4,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['WMS', 'PLM', 'QMS'],
+            coreObject: '开工放行条件',
+            boundaryNote: '本页聚合开工放行条件，只消费 WMS 备料、PLM 版本和 QMS 放行信号，不接管它们的事务真相。'
+          }
         },
         {
           path: 'consumption',
           name: 'mesConsumption',
-          component: plannedPage,
-          meta: planned(
-            '投料与消耗',
-            'TakeawayBox',
-            5,
-            '记录现场实际投料与消耗事实，并承接补料、退料和替代料审批结果。',
-            ['批次绑定', '实际消耗', '补料 / 退料', '替代料审批'],
-            {
-              ownerSystem: 'MES',
-              coreObject: '投料 / 消耗记录',
-              collaboratorSystems: ['WMS'],
-              boundaryNote: '领料和倒冲属于 WMS 库存移动，实际投料与消耗事实仍以 MES 为准。'
-            }
-          )
+          component: () => import('@/views/mes/work-order/consumption/index.vue'),
+          meta: {
+            title: '投料与消耗',
+            icon: 'TakeawayBox',
+            order: 5,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['WMS'],
+            coreObject: '投料消耗记录',
+            boundaryNote: '本页记录 MES 的实际投料与消耗事实；领料、退料、补料等库存动作仍以 WMS 为准。'
+          }
         }
       ]
     },
     {
       path: 'traceability',
       name: 'mesTraceabilityCenter',
-      meta: { title: '追溯与异常', icon: 'DataBoard', order: 3, ownerSystem: 'MES', coreObject: '追溯 / 异常 / 返工' },
+      meta: {
+        title: '追溯与异常',
+        icon: 'DataBoard',
+        order: 3,
+        ownerSystem: 'MES',
+        coreObject: '报工记录 / 追溯 / 异常'
+      },
       children: [
-        {
-          path: 'kanban',
-          name: 'workOrderKanban',
-          component: () => import('@/views/mes/work-order/kanban/index.vue'),
-          meta: { title: '生产看板', icon: 'DataBoard', order: 1 }
-        },
         {
           path: 'trace-report',
           name: 'workOrderTrace',
           component: () => import('@/views/mes/work-order/trace/index.vue'),
-          meta: { title: '报工记录', icon: 'Clock', order: 2 }
+          meta: {
+            title: '报工记录',
+            icon: 'Clock',
+            order: 1,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['QMS'],
+            coreObject: '报工记录',
+            boundaryNote: '本页查询报工事实历史，不替代产品全链路追溯或最终质量裁决。'
+          }
+        },
+        {
+          path: 'kanban',
+          name: 'workOrderKanban',
+          component: () => import('@/views/mes/work-order/kanban/index.vue'),
+          meta: {
+            title: '生产看板',
+            icon: 'DataBoard',
+            order: 2,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['QMS', 'WMS'],
+            coreObject: '生产监控快照',
+            boundaryNote: '生产看板只消费任务、WIP 与异常事实形成快照，不在本页维护派工、报工、冻结或放行源头。'
+          }
         },
         {
           path: 'product-trace',
           name: 'mesProductTrace',
-          component: plannedPage,
-          meta: planned(
-            '产品追溯',
-            'Connection',
-            3,
-            '建立产品、工单、物料、检验和设备之间的追溯关系链。',
-            ['正向追溯', '反向追溯', '实体关联', '影响范围'],
-            {
-              ownerSystem: 'MES',
-              coreObject: '产品追溯链',
-              collaboratorSystems: ['QMS', 'WMS', 'IoT'],
-              boundaryNote: '追溯主链由 MES 组织，但需要关联质量、库存和设备事实。'
-            }
-          )
+          component: () => import('@/views/mes/work-order/product-trace/index.vue'),
+          meta: {
+            title: '产品追溯',
+            icon: 'Connection',
+            order: 3,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['QMS', 'WMS', 'IoT'],
+            coreObject: '产品追溯链',
+            boundaryNote: '本页组织生产侧追溯链，只消费 QMS、WMS 和 IoT 事实，不接管它们的源头真相。'
+          }
         },
         {
           path: 'production-log',
           name: 'mesProductionLog',
-          component: plannedPage,
-          meta: planned('执行日志', 'Notebook', 4, '按对象和时间轴记录关键执行活动、状态变化和审计痕迹。', [
-            '时间轴',
-            '对象筛选',
-            '状态历史',
-            '审计轨迹'
-          ])
+          component: () => import('@/views/mes/work-order/production-log/index.vue'),
+          meta: {
+            title: '执行日志',
+            icon: 'Notebook',
+            order: 4,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['QMS', 'WMS', 'IoT'],
+            coreObject: '执行审计记录',
+            boundaryNote: '执行日志面向用户展示对象、动作与状态变化，不承接后台调试日志或技术监控输出。'
+          }
         },
         {
           path: 'exception-center',
           name: 'mesExceptionCenter',
-          component: plannedPage,
-          meta: planned(
-            '异常处置',
-            'Warning',
-            5,
-            '集中承接执行异常的锁定、处置、审批放行和恢复过程。',
-            ['异常分级', '锁定范围', '恢复规则', '审批放行'],
-            {
-              ownerSystem: 'MES',
-              coreObject: '执行异常',
-              collaboratorSystems: ['QMS', 'WMS', 'IoT', 'PLM'],
-              boundaryNote: '异常必须先锁定、再处置、再放行，质量结论不得绕过 QMS。'
-            }
-          )
+          component: () => import('@/views/mes/work-order/exception-center/index.vue'),
+          meta: {
+            title: '异常中心',
+            icon: 'Warning',
+            order: 5,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['QMS', 'WMS', 'IoT', 'PLM'],
+            coreObject: '执行异常',
+            boundaryNote: '异常中心负责执行锁定、处理与放行协调；质量判定回 QMS，库存动作回 WMS，工程版本真相回 PLM。'
+          }
         },
         {
           path: 'rework-order',
           name: 'mesReworkOrder',
-          component: plannedPage,
-          meta: planned(
-            '返工执行',
-            'RefreshLeft',
-            6,
-            '承接返工执行链，覆盖来源关联、返工路径和复检衔接。',
-            ['来源关联', '返工路径', '复检衔接', '成本归集'],
-            {
-              ownerSystem: 'MES',
-              coreObject: '返工单',
-              collaboratorSystems: ['QMS'],
-              boundaryNote: 'QMS 负责是否返工的裁决，MES 负责返工执行链和回流。'
-            }
-          )
+          component: () => import('@/views/mes/work-order/rework-order/index.vue'),
+          meta: {
+            title: '返工执行',
+            icon: 'RefreshLeft',
+            order: 6,
+            ownerSystem: 'MES',
+            collaboratorSystems: ['QMS'],
+            coreObject: '返工单',
+            boundaryNote: 'QMS 负责是否允许返工的裁决，MES 负责返工执行链、复检衔接与关闭，不接管质量判定真相。'
+          }
         }
       ]
     }

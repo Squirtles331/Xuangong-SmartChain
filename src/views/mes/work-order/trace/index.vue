@@ -1,7 +1,7 @@
 <template>
   <CrudPage
     v-model:search-model="queryParams"
-    title="生产追溯记录"
+    title="报工记录"
     :search-columns="searchColumns"
     :columns="columns"
     :data="tableData"
@@ -12,6 +12,10 @@
     @reset="handleReset"
     @refresh="refresh"
   >
+    <template #headerTop>
+      <PageOwnershipNotice />
+    </template>
+
     <template #actions="{ row }">
       <CrudRowActions :actions="detailActions" @action="viewDetail(row)" />
     </template>
@@ -25,6 +29,7 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import { getTraceRecords, type TraceRecord, type TraceRecordQuery } from '@/api/work-order'
@@ -51,12 +56,12 @@ const searchColumns: FormColumnItem[] = [
 
 const columns: TableColumnItem<TraceRecord>[] = [
   { prop: 'wo_code', label: '工单号', minWidth: 170 },
-  { prop: 'op_name', label: '工序', minWidth: 130 },
+  { prop: 'operation_name', label: '工序', minWidth: 130 },
   { prop: 'worker', label: '操作人', minWidth: 100 },
-  { prop: 'qualified', label: '合格数', minWidth: 80, align: 'center' },
-  { prop: 'defective', label: '不良数', minWidth: 80, align: 'center' },
-  { prop: 'hours', label: '工时(分钟)', minWidth: 100, align: 'center' },
-  { prop: 'time', label: '时间', minWidth: 150 },
+  { prop: 'qualified_qty', label: '合格数', minWidth: 80, align: 'center' },
+  { prop: 'defective_qty', label: '不良数', minWidth: 80, align: 'center' },
+  { prop: 'actual_hours', label: '工时(分钟)', minWidth: 100, align: 'center' },
+  { prop: 'time', label: '报工时间', minWidth: 150 },
   { label: '操作', minWidth: 80, slotName: 'actions', align: 'center' }
 ]
 

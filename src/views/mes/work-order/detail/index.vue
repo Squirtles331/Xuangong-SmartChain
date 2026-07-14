@@ -18,6 +18,8 @@
       </div>
     </template>
 
+    <PageOwnershipNotice style="margin-bottom: 16px" />
+
     <el-tabs v-model="activeTab">
       <el-tab-pane label="基本信息" name="info">
         <el-descriptions :column="3" border>
@@ -139,6 +141,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute } from 'vue-router'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { WORK_ORDER_PRIORITY, WORK_ORDER_STATUS } from '@/common/status-maps'
 import { approveWorkOrder, closeWorkOrder, getWorkOrderDetail, getWorkOrderOperations, releaseWorkOrder } from '@/api/work-order'
