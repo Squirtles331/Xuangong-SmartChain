@@ -85,8 +85,8 @@ Use this set for:
 
 Open these only when strategic background or integrated-platform reasoning is needed:
 
-- [掘金文章_MES中枢型一体化平台通用版.md](D:/Project/玄工智链/docs/掘金文章_MES中枢型一体化平台通用版.md)
-- [掘金文章_MES为核心的一体化平台设计思路.md](D:/Project/玄工智链/docs/掘金文章_MES为核心的一体化平台设计思路.md)
+- [掘金文章\_MES中枢型一体化平台通用版.md](D:/Project/玄工智链/docs/掘金文章_MES中枢型一体化平台通用版.md)
+- [掘金文章\_MES为核心的一体化平台设计思路.md](D:/Project/玄工智链/docs/掘金文章_MES为核心的一体化平台设计思路.md)
 
 Use this set for:
 

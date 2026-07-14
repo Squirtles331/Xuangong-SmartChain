@@ -97,69 +97,13 @@ export const mdmRoute: RouteRecordRaw = {
       }
     },
     {
-      path: 'bom-master',
-      name: 'mdmBomMaster',
-      component: () => import('@/views/mdm/bom-master/index.vue'),
-      meta: {
-        title: 'BOM',
-        icon: 'DocumentCopy',
-        order: 7,
-        ownerSystem: 'PLM',
-        collaboratorSystems: ['MDM', 'MES', 'ERP', 'WMS'],
-        coreObject: 'BOM 主数据',
-        boundaryNote: '纳入 MDM 统一治理目录，但设计来源、版本生效与变更发布仍由 PLM 主导。'
-      }
-    },
-    {
-      path: 'routing-master',
-      name: 'mdmRoutingMaster',
-      component: () => import('@/views/mdm/routing-master/index.vue'),
-      meta: {
-        title: '工艺路线',
-        icon: 'Connection',
-        order: 8,
-        ownerSystem: 'PLM',
-        collaboratorSystems: ['MDM', 'MES', 'APS'],
-        coreObject: '工艺路线主数据',
-        boundaryNote: '统一路线口径供计划与执行引用，路线定义与变更发布仍由 PLM 负责。'
-      }
-    },
-    {
-      path: 'operation-master',
-      name: 'mdmOperationMaster',
-      component: () => import('@/views/mdm/operation-master/index.vue'),
-      meta: {
-        title: '工序',
-        icon: 'Operation',
-        order: 9,
-        ownerSystem: 'PLM',
-        collaboratorSystems: ['MDM', 'MES', 'QMS'],
-        coreObject: '工序主数据',
-        boundaryNote: '统一工序编码、工时与质量控制点，执行系统按同一工序口径报工与检验。'
-      }
-    },
-    {
-      path: 'process-parameter',
-      name: 'mdmProcessParameter',
-      component: () => import('@/views/mdm/process-parameter/index.vue'),
-      meta: {
-        title: '工艺参数',
-        icon: 'SetUp',
-        order: 10,
-        ownerSystem: 'PLM',
-        collaboratorSystems: ['MDM', 'MES', 'QMS', 'IOT'],
-        coreObject: '工艺参数主数据',
-        boundaryNote: '统一关键参数、标准范围与控制要求，执行层和设备采集按同一参数口径落地。'
-      }
-    },
-    {
       path: 'work-center',
       name: 'mdmWorkCenter',
       component: () => import('@/views/mdm/work-center/index.vue'),
       meta: {
         title: '工作中心',
         icon: 'Grid',
-        order: 11,
+        order: 7,
         ownerSystem: 'MES',
         collaboratorSystems: ['MDM', 'APS', 'ERP'],
         coreObject: '工作中心主数据',
@@ -173,7 +117,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '设备',
         icon: 'Monitor',
-        order: 12,
+        order: 8,
         ownerSystem: 'MES',
         collaboratorSystems: ['MDM', 'EAM', 'IOT'],
         coreObject: '设备主数据',
@@ -187,7 +131,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '产线',
         icon: 'Share',
-        order: 13,
+        order: 9,
         ownerSystem: 'MES',
         collaboratorSystems: ['MDM', 'APS', 'IOT'],
         coreObject: '产线主数据',
@@ -201,7 +145,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '制造资源',
         icon: 'Cpu',
-        order: 14,
+        order: 10,
         ownerSystem: 'MES',
         collaboratorSystems: ['MDM', 'APS', 'EAM'],
         coreObject: '制造资源主数据',
@@ -215,7 +159,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '资源能力',
         icon: 'DataAnalysis',
-        order: 15,
+        order: 11,
         ownerSystem: 'MES',
         collaboratorSystems: ['MDM', 'APS', 'PLM'],
         coreObject: '资源能力主数据',
@@ -229,7 +173,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '仓库',
         icon: 'House',
-        order: 16,
+        order: 12,
         ownerSystem: 'WMS',
         collaboratorSystems: ['MDM', 'ERP', 'MES', 'SRM'],
         coreObject: '仓库主数据',
@@ -243,7 +187,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '库区 / 库位',
         icon: 'Box',
-        order: 17,
+        order: 13,
         ownerSystem: 'WMS',
         collaboratorSystems: ['MDM', 'MES', 'ERP'],
         coreObject: '库区库位主数据',
@@ -257,7 +201,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '客户',
         icon: 'User',
-        order: 18,
+        order: 14,
         ownerSystem: 'CRM',
         collaboratorSystems: ['MDM', 'ERP'],
         coreObject: '客户基础主数据',
@@ -271,7 +215,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '供应商',
         icon: 'Avatar',
-        order: 19,
+        order: 15,
         ownerSystem: 'SRM',
         collaboratorSystems: ['MDM', 'ERP', 'QMS'],
         coreObject: '供应商基础主数据',
@@ -285,7 +229,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '检验标准',
         icon: 'CircleCheck',
-        order: 20,
+        order: 16,
         ownerSystem: 'QMS',
         collaboratorSystems: ['MDM', 'MES', 'ERP'],
         coreObject: '检验标准主数据',
@@ -299,11 +243,11 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '检验项目',
         icon: 'List',
-        order: 21,
+        order: 17,
         ownerSystem: 'QMS',
         collaboratorSystems: ['MDM', 'MES'],
         coreObject: '检验项目主数据',
-        boundaryNote: '统一维护检验方法、判定标准与项目编码，现场检验与追溯按统一项执行。'
+        boundaryNote: '统一维护检验方法、判定标准与项目编码，现场检验与追溯按统一项目执行。'
       }
     },
     {
@@ -313,11 +257,11 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '编码规则',
         icon: 'Postcard',
-        order: 22,
+        order: 18,
         ownerSystem: 'MDM',
         collaboratorSystems: ['PLM', 'MES', 'ERP', 'WMS', 'QMS'],
         coreObject: '编码规则',
-        boundaryNote: '统一规范物料、BOM、变更单等关键对象编码生成方式，避免跨系统重复建码。'
+        boundaryNote: '统一规范物料、BOM、工艺路线、工序、变更单等对象的编码规则；具体编码实例生成、占用与唯一性校验由对象所属系统负责。'
       }
     },
     {
@@ -327,7 +271,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '状态字典',
         icon: 'Tickets',
-        order: 23,
+        order: 19,
         ownerSystem: 'MDM',
         collaboratorSystems: ['PLM', 'MES', 'ERP', 'WMS', 'QMS'],
         coreObject: '状态字典',
@@ -341,7 +285,7 @@ export const mdmRoute: RouteRecordRaw = {
       meta: {
         title: '模具',
         icon: 'Box',
-        order: 24,
+        order: 20,
         ownerSystem: 'PLM',
         collaboratorSystems: ['MDM', 'MES', 'EAM'],
         coreObject: '模具主数据',
