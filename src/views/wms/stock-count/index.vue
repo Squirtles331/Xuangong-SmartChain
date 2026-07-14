@@ -1,7 +1,7 @@
 <template>
   <CrudPage
     v-model:search-model="queryParams"
-    title="盘点计划"
+    title="库存盘点计划"
     :search-columns="searchColumns"
     :columns="planColumns"
     :data="tableData"
@@ -13,6 +13,10 @@
     @refresh="refresh"
     @add="openCreate"
   >
+    <template #headerTop>
+      <PageOwnershipNotice />
+    </template>
+
     <template #beforeTable>
       <el-row :gutter="16" class="diff-summary">
         <el-col v-for="item in diffSummary" :key="item.label" :span="6">
@@ -51,9 +55,10 @@
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
-import { getStockCountDiff, getStockCountList } from '@/api/wms'
+import { completeStockCountPlan, getStockCountDiff, getStockCountList, updateStockCountDiffDispositions } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import StockCountExecuteDialog, { type StockCountExecuteItem } from './StockCountExecuteDialog.vue'
 import StockCountDiffDialog, { type StockCountDiffItem } from './StockCountDiffDialog.vue'
@@ -265,16 +270,21 @@ function startCount(plan: PlanRow) {
   execVisible.value = true
 }
 
-function submitCount() {
+async function submitCount() {
+  await completeStockCountPlan(currentPlanCode.value, execItems.value)
+
   const plan = tableData.value.find((item) => item.code === currentPlanCode.value)
   if (plan) {
     plan.status = 'completed'
   }
+
   execVisible.value = false
   ElMessage.success('盘点结果已提交')
+  await refresh()
 }
 
 function viewDiff(plan: PlanRow) {
+  currentPlanCode.value = plan.code
   diffItems.value = rawDiffLines.value
     .filter((item) => item.plan_code === plan.code)
     .map((item) => ({
@@ -287,9 +297,18 @@ function viewDiff(plan: PlanRow) {
   diffVisible.value = true
 }
 
-function confirmDiff() {
+async function confirmDiff() {
+  await updateStockCountDiffDispositions(
+    currentPlanCode.value,
+    diffItems.value.map((item) => ({
+      material: item.material,
+      disposition: item.disposition
+    }))
+  )
+
   diffVisible.value = false
   ElMessage.success('差异处理已确认')
+  await refresh()
 }
 </script>
 

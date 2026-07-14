@@ -13,6 +13,10 @@
     @reset="handleReset"
     @refresh="search"
   >
+    <template #headerTop>
+      <PageOwnershipNotice />
+    </template>
+
     <template #qty="{ row }">
       <div class="qty-cell">
         <span :class="{ 'qty-warn': row.qty < row.safety }">{{ row.qty }}</span>
@@ -33,6 +37,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import { getInventoryList } from '@/api/wms'

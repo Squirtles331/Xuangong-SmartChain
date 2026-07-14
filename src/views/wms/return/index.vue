@@ -1,19 +1,23 @@
 <template>
   <CrudPage
     v-model:search-model="queryParams"
-    title="退料/退货单列表"
+    title="退料退货单列表"
     :search-columns="searchColumns"
     :search-grid-item-props="searchGridItemProps"
     :columns="columns"
     :data="tableData"
     :pagination="pagination"
     :loading="loading"
-    add-text="新建退料/退货单"
+    add-text="新建退料退货单"
     @search="search"
     @reset="handleReset"
     @refresh="refresh"
     @add="openAdd"
   >
+    <template #headerTop>
+      <PageOwnershipNotice />
+    </template>
+
     <template #type="{ row }">
       <el-tag :type="row.type === 'return' ? 'danger' : 'warning'" size="small">
         {{ row.type === 'return' ? '生产退料' : '采购退货' }}
@@ -39,11 +43,12 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import type { CrudRowActionItem } from '@/components/crud/types'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import { getReturnList } from '@/api/wms'
+import { createReturn, getReturnList, updateReturn } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import ReturnFormDialog, { type ReturnFormModel } from './ReturnFormDialog.vue'
 
@@ -99,16 +104,17 @@ const columns: TableColumnItem<ReturnRow>[] = [
 const { tableData, pagination, loading, search, refresh } = useTable<ReturnRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getReturnList({
+    const response = await getReturnList({
       pageNum: page,
       pageSize: size,
       code: queryParams.code || undefined,
       reason: queryParams.reason || undefined,
       status: queryParams.status || undefined
     })
+
     return {
-      list: res.data.list.map(mapRow),
-      total: res.data.total
+      list: response.data.list.map(mapRow),
+      total: response.data.total
     }
   }
 })
@@ -135,7 +141,13 @@ function handleReset() {
 }
 
 function createDefaultForm(): ReturnFormModel {
-  return { type: 'return', source: '', material: '', qty: 1, reason: '多余退料' }
+  return {
+    type: 'return',
+    source: '',
+    material: '',
+    qty: 1,
+    reason: '多余退料'
+  }
 }
 
 function openAdd() {
@@ -149,14 +161,12 @@ function getRowActions(row: ReturnRow): CrudRowActionItem[] {
 
 function handleRowAction(action: string, row: ReturnRow) {
   if (action === 'confirm') {
-    confirmReturn(row)
+    void confirmReturn(row)
   }
 }
 
 async function submitDialog() {
-  tableData.value.unshift({
-    id: `${Date.now()}`,
-    code: `RT${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${String(Date.now()).slice(-4)}`,
+  await createReturn({
     type: formModel.value.type,
     source: formModel.value.source,
     material: formModel.value.material,
@@ -164,11 +174,14 @@ async function submitDialog() {
     reason: formModel.value.reason,
     status: 'pending'
   })
+
   dialogVisible.value = false
-  ElMessage.success('退料/退货单已创建')
+  ElMessage.success('退料退货单已创建')
+  await refresh()
 }
 
-function confirmReturn(row: ReturnRow) {
+async function confirmReturn(row: ReturnRow) {
+  await updateReturn(row.id, { status: 'completed' })
   row.status = 'completed'
   ElMessage.success(row.type === 'return' ? '生产退料处理成功' : '采购退货处理成功')
 }

@@ -1,19 +1,23 @@
 <template>
   <CrudPage
     v-model:search-model="queryParams"
-    title="调拨单列表"
+    title="库存调拨单列表"
     :search-columns="searchColumns"
     :search-grid-item-props="searchGridItemProps"
     :columns="columns"
     :data="tableData"
     :pagination="pagination"
     :loading="loading"
-    add-text="新建调拨单"
+    add-text="新建库存调拨单"
     @search="search"
     @reset="handleReset"
     @refresh="refresh"
     @add="openAdd"
   >
+    <template #headerTop>
+      <PageOwnershipNotice />
+    </template>
+
     <template #beforeTable>
       <el-card header="在途库存概览" shadow="never" style="margin-bottom: 16px">
         <el-row :gutter="16">
@@ -54,11 +58,12 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import type { CrudRowActionItem } from '@/components/crud/types'
-import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import { getTransferList } from '@/api/wms'
+import { createTransfer, getTransferList, updateTransfer } from '@/api/wms'
 import { useTable } from '@/hooks/useTable'
 import TransferFormDialog, { type TransferFormModel } from './TransferFormDialog.vue'
 
@@ -80,7 +85,7 @@ const queryParams = reactive({
   status: ''
 })
 
-const warehouseOptions = ['原材料仓', '标准件仓', '半成品仓', '成品仓', '机加工线边仓', '装配线边仓', '发货暂存区'].map((item) => ({
+const warehouseOptions = ['原材料仓', '标准件仓', '半成品仓', '成品仓', '机加线边仓', '装配线边仓', '发货暂存区'].map((item) => ({
   label: item,
   value: item
 }))
@@ -111,7 +116,7 @@ const searchGridItemProps = {
 const { tableData, pagination, loading, search, refresh } = useTable<TransferRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const res = await getTransferList({
+    const response = await getTransferList({
       pageNum: page,
       pageSize: size,
       code: queryParams.code || undefined,
@@ -119,9 +124,10 @@ const { tableData, pagination, loading, search, refresh } = useTable<TransferRow
       toWarehouse: queryParams.toWarehouse || undefined,
       status: queryParams.status || undefined
     })
+
     return {
-      list: res.data.list.map(mapRow),
-      total: res.data.total
+      list: response.data.list.map(mapRow),
+      total: response.data.total
     }
   }
 })
@@ -147,15 +153,20 @@ function mapRow(item: any): TransferRow {
     code: item.code || '',
     material: item.material || '',
     qty: Number(item.qty ?? 0),
-    from_wh: item.from_wh || item.from_warehouse || '',
-    to_wh: item.to_wh || item.to_warehouse || '',
+    from_wh: item.from_wh || '',
+    to_wh: item.to_wh || '',
     status: item.status || '',
     out_time: item.out_time || ''
   }
 }
 
 function createDefaultForm(): TransferFormModel {
-  return { material: '', qty: 1, from_wh: '原材料仓', to_wh: '机加工线边仓' }
+  return {
+    material: '',
+    qty: 1,
+    from_wh: '原材料仓',
+    to_wh: '机加线边仓'
+  }
 }
 
 function handleReset() {
@@ -177,19 +188,17 @@ function getRowActions(row: TransferRow): CrudRowActionItem[] {
 
 function handleRowAction(action: string, row: TransferRow) {
   if (action === 'out') {
-    confirmOut(row)
+    void confirmOut(row)
     return
   }
 
   if (action === 'in') {
-    confirmIn(row)
+    void confirmIn(row)
   }
 }
 
 async function submitDialog() {
-  tableData.value.unshift({
-    id: `${Date.now()}`,
-    code: `DB${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${String(Date.now()).slice(-4)}`,
+  await createTransfer({
     material: formModel.value.material,
     qty: formModel.value.qty,
     from_wh: formModel.value.from_wh,
@@ -197,17 +206,22 @@ async function submitDialog() {
     status: 'pending',
     out_time: ''
   })
+
   dialogVisible.value = false
   ElMessage.success('调拨单已创建')
+  await refresh()
 }
 
-function confirmOut(row: TransferRow) {
+async function confirmOut(row: TransferRow) {
+  const outTime = new Date().toLocaleString('zh-CN')
+  await updateTransfer(row.id, { status: 'transit', out_time: outTime })
   row.status = 'transit'
-  row.out_time = new Date().toLocaleString('zh-CN')
+  row.out_time = outTime
   ElMessage.success('调出确认成功')
 }
 
-function confirmIn(row: TransferRow) {
+async function confirmIn(row: TransferRow) {
+  await updateTransfer(row.id, { status: 'completed' })
   row.status = 'completed'
   ElMessage.success('调入确认成功，库存已更新')
 }

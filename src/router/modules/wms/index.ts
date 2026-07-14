@@ -1,17 +1,29 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-import { planned, plannedPage } from '../../helpers'
-
 export const wmsRoute: RouteRecordRaw = {
   path: 'wms',
   name: 'wmsCollaboration',
-  meta: { title: '仓储物流', icon: 'Box', order: 40, ownerSystem: 'WMS', coreObject: '库存批次 / 领料单' },
+  meta: {
+    title: '仓储物流',
+    icon: 'Box',
+    order: 40,
+    ownerSystem: 'WMS',
+    coreObject: '仓储事务'
+  },
   children: [
     {
       path: 'inventory',
       name: 'wmsInventory',
       component: () => import('@/views/wms/inventory/index.vue'),
-      meta: { title: '库存台账', icon: 'List', order: 1, ownerSystem: 'WMS', coreObject: '库存批次' }
+      meta: {
+        title: '库存台账',
+        icon: 'List',
+        order: 1,
+        ownerSystem: 'WMS',
+        collaboratorSystems: ['MES', 'ERP'],
+        coreObject: '库存台账',
+        boundaryNote: '库存余额与库存批次真相由 WMS 维护，MES 只消费执行上下文，ERP 只消费核算承接口径。'
+      }
     },
     {
       path: 'picking',
@@ -31,7 +43,15 @@ export const wmsRoute: RouteRecordRaw = {
       path: 'receipt',
       name: 'wmsReceipt',
       component: () => import('@/views/wms/receipt/index.vue'),
-      meta: { title: '入库', icon: 'Download', order: 3 }
+      meta: {
+        title: '收货入库',
+        icon: 'Download',
+        order: 3,
+        ownerSystem: 'WMS',
+        collaboratorSystems: ['MES', 'SRM'],
+        coreObject: '入库单',
+        boundaryNote: '入库只表达仓储事务完成，不替代生产完工判定或质量裁决结论。'
+      }
     },
     {
       path: 'delivery',
@@ -43,19 +63,43 @@ export const wmsRoute: RouteRecordRaw = {
       path: 'return',
       name: 'wmsReturn',
       component: () => import('@/views/wms/return/index.vue'),
-      meta: { title: '退料退货', icon: 'Refresh', order: 5 }
+      meta: {
+        title: '退料退货',
+        icon: 'Refresh',
+        order: 5,
+        ownerSystem: 'WMS',
+        collaboratorSystems: ['MES', 'SRM'],
+        coreObject: '退料退货单',
+        boundaryNote: '退料退货只维护仓储回退事务，不替代 MES 投料消耗真相或 QMS 质量裁决真相。'
+      }
     },
     {
       path: 'stock-count',
       name: 'wmsStockCount',
       component: () => import('@/views/wms/stock-count/index.vue'),
-      meta: { title: '库存盘点', icon: 'Checked', order: 6 }
+      meta: {
+        title: '库存盘点',
+        icon: 'Checked',
+        order: 6,
+        ownerSystem: 'WMS',
+        collaboratorSystems: ['ERP'],
+        coreObject: '盘点单',
+        boundaryNote: '盘点调整由 WMS 维护库存实物真相，不替代 QMS 质量裁决或 ERP 财务校正口径。'
+      }
     },
     {
       path: 'transfer',
       name: 'wmsTransfer',
       component: () => import('@/views/wms/transfer/index.vue'),
-      meta: { title: '库存调拨', icon: 'Connection', order: 7 }
+      meta: {
+        title: '库存调拨',
+        icon: 'Connection',
+        order: 7,
+        ownerSystem: 'WMS',
+        collaboratorSystems: ['MES'],
+        coreObject: '调拨单',
+        boundaryNote: '调拨只表达库存位置移动真相，不等同现场投料、完工或质量放行流转。'
+      }
     },
     {
       path: 'backflush',
@@ -92,20 +136,16 @@ export const wmsRoute: RouteRecordRaw = {
     {
       path: 'batch-quarantine',
       name: 'wmsBatchQuarantine',
-      component: plannedPage,
-      meta: planned(
-        '批次隔离',
-        'Lock',
-        12,
-        '管理批次隔离、冻结放行和质量裁决联动下的库存控制。',
-        ['隔离清单', '冻结 / 放行', '裁决联动', '库存控制'],
-        {
-          ownerSystem: 'WMS',
-          collaboratorSystems: ['QMS'],
-          coreObject: '库存批次隔离',
-          boundaryNote: '库存隔离由 WMS 控制，质量放行或处置结论由 QMS 决策。'
-        }
-      )
+      component: () => import('@/views/wms/batch-quarantine/index.vue'),
+      meta: {
+        title: '批次隔离',
+        icon: 'Lock',
+        order: 12,
+        ownerSystem: 'WMS',
+        collaboratorSystems: ['QMS'],
+        coreObject: '库存批次隔离',
+        boundaryNote: '库存隔离由 WMS 控制，质量放行或处置结论由 QMS 决策。'
+      }
     }
   ]
 }
