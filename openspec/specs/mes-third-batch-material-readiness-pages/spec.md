@@ -1,8 +1,11 @@
 # mes-third-batch-material-readiness-pages Specification
 
 ## Purpose
+
 TBD - created by archiving change mes-third-batch-material-readiness-pages. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: The third-batch MES pages SHALL freeze the readiness and material-fact scope after the control/visibility batch
 
 The system SHALL define a formal third-batch `MES` static-page scope for the readiness and actual-consumption layer that follows the first two `MES` batches without redefining them.
@@ -42,4 +45,3 @@ The system SHALL define third-batch state semantics that clarify readiness and c
 - **WHEN** `投料与消耗` is implemented in the static phase
 - **THEN** its approved lifecycle MUST be `draft -> in_use -> reconciled -> closed`
 - **AND** the page MUST preserve `MES` ownership of actual consumption facts while keeping `WMS` as the owner of issue, return, and stock movement truth
-

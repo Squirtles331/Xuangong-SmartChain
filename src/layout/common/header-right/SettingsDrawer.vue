@@ -49,9 +49,9 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { applyAppTheme, getActiveAppTheme, getStoredAppTheme, type AppTheme } from '@/hooks/useAppTheme'
 import { type LayoutMode, useLayoutStore } from '@/stores/layout'
+import { useUserStore } from '@/stores/user'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
@@ -108,7 +108,7 @@ const setTheme = (value: AppTheme, event?: MouseEvent) => {
   })
 }
 
-const router = useRouter()
+const userStore = useUserStore()
 
 const resetDefaults = () => {
   setTheme('light')
@@ -116,9 +116,7 @@ const resetDefaults = () => {
 }
 
 const clearAndLogout = () => {
-  localStorage.clear()
-  sessionStorage.clear()
-  router.replace('/login')
+  userStore.clearAuth({ clearPreferences: true })
   emit('update:modelValue', false)
 }
 

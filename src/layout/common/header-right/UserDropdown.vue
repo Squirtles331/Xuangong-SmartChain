@@ -69,12 +69,14 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, type FormInstance } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { Lock, Setting } from '@element-plus/icons-vue'
+
 import SettingsDrawer from '@/layout/common/header-right/SettingsDrawer.vue'
 import { useLockStore } from '@/stores/lock'
+import { useUserStore } from '@/stores/user'
 
 const user = reactive({
   name: '系统管理员',
@@ -89,11 +91,20 @@ const lockFormRef = ref<FormInstance>()
 
 const router = useRouter()
 const lockStore = useLockStore()
+const userStore = useUserStore()
 
-const logout = () => {
-  localStorage.removeItem('access-token')
-  sessionStorage.clear()
-  router.replace('/login')
+const logout = async () => {
+  try {
+    await ElMessageBox.confirm('退出后将返回登录页，当前未保存的内容可能丢失。是否继续退出？', '退出登录', {
+      type: 'warning',
+      confirmButtonText: '退出',
+      cancelButtonText: '取消'
+    })
+
+    await userStore.doLogout()
+  } catch {
+    // user cancelled
+  }
 }
 
 const doLock = async () => {
@@ -115,13 +126,24 @@ const handleGlobalLockOpen = () => {
   lockOpen.value = true
 }
 
+const handleGlobalLogoutOpen = () => {
+  void logout()
+}
+
 const onCancel = () => {
   lockForm.pwd = ''
   lockOpen.value = false
 }
 
-onMounted(() => window.addEventListener('lock-open', handleGlobalLockOpen))
-onUnmounted(() => window.removeEventListener('lock-open', handleGlobalLockOpen))
+onMounted(() => {
+  window.addEventListener('lock-open', handleGlobalLockOpen)
+  window.addEventListener('logout-open', handleGlobalLogoutOpen)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('lock-open', handleGlobalLockOpen)
+  window.removeEventListener('logout-open', handleGlobalLogoutOpen)
+})
 </script>
 
 <style scoped>

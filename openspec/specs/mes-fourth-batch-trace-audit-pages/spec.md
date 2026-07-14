@@ -1,8 +1,11 @@
 # mes-fourth-batch-trace-audit-pages Specification
 
 ## Purpose
+
 TBD - created by archiving change mes-fourth-batch-trace-audit-pages. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: The fourth-batch MES pages SHALL freeze the traceability and audit scope after the readiness/material batch
 
 The system SHALL define a formal fourth-batch `MES` static-page scope for the traceability and execution-audit layer that follows the first three `MES` batches without redefining them.
@@ -42,4 +45,3 @@ The system SHALL define fourth-batch state semantics that clarify trace complete
 - **WHEN** `执行日志` is implemented in the static phase
 - **THEN** its approved lifecycle MUST be `captured -> highlighted -> archived`
 - **AND** the page MUST preserve its role as an operator-facing audit page rather than a backend debugging console
-

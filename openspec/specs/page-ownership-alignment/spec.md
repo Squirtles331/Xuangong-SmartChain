@@ -3,7 +3,9 @@
 ## Purpose
 
 TBD - created by archiving change realign-menu-naming-and-ownership. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Every navigable page SHALL declare ownership metadata
 
 The system SHALL define ownership metadata for every navigable page, including at minimum the primary owner system, collaborator systems, related core object, and final truth boundary. This metadata MUST be maintained in route definitions, documentation, or other internal artifacts and MUST NOT rely on runtime page copy for expression.
@@ -207,4 +209,3 @@ The system SHALL keep ownership metadata available for internal governance but M
 
 - **WHEN** a shared placeholder or planned page consumes route metadata with ownership fields
 - **THEN** the runtime page MUST NOT render an ownership-specific side card or explanatory ownership section
-

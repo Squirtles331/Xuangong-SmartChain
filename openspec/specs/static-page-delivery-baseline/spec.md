@@ -3,7 +3,9 @@
 ## Purpose
 
 Define the baseline delivery contract for first-phase static pages so page structure, review order, and later mock/API handoff remain consistent across the product.
+
 ## Requirements
+
 ### Requirement: Static pages SHALL be completed before mock integration begins
 
 The system delivery process SHALL require static-page completion before mock integration for any new page included in this change scope.
@@ -51,4 +53,3 @@ When mock integration begins, mock responses SHALL inherit the approved static-p
 - **WHEN** a page exposes detail drawers, dialogs, or sub-tables
 - **THEN** the mock payload MUST preserve the approved header, line-item, relation, and audit block structure
 - **AND** downstream API design MUST inherit that approved shape unless the object baseline itself is revised
-

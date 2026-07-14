@@ -1,8 +1,11 @@
 # mes-fifth-batch-rework-execution-page Specification
 
 ## Purpose
+
 TBD - created by archiving change mes-fifth-batch-rework-execution-page. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: The fifth-batch MES page SHALL freeze the rework-execution scope after the trace/audit batch
 
 The system SHALL define a formal fifth-batch `MES` static-page scope for the rework-execution page that follows the first four `MES` batches without redefining them.
@@ -31,4 +34,3 @@ The system SHALL define fifth-batch state semantics that keep decision and execu
 - **WHEN** `返工执行` is implemented in the static phase
 - **THEN** its approved lifecycle MUST be `pending_decision -> released -> executing -> pending_recheck -> closed`
 - **AND** `QMS` rework permission MUST be consumed as a collaborator decision reference rather than re-owned by `MES`
-

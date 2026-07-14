@@ -27,6 +27,14 @@ export function login(params: LoginParams) {
 }
 
 export function logout() {
+  if (isMockMode) {
+    return Promise.resolve({
+      code: 0,
+      msg: '退出成功',
+      data: null
+    }) as Promise<ApiResponse<null>>
+  }
+
   return apiPost<null>('/auth/logout')
 }
 

@@ -20,10 +20,12 @@ import { useRouter } from 'vue-router'
 import { Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useLockStore } from '@/stores/lock'
+import { useUserStore } from '@/stores/user'
 
 const pwd = ref('')
 const router = useRouter()
 const lockStore = useLockStore()
+const userStore = useUserStore()
 
 const unlock = () => {
   if (lockStore.tryUnlock(pwd.value)) {
@@ -35,9 +37,7 @@ const unlock = () => {
 
 const toLogin = () => {
   lockStore.forceUnlock()
-  localStorage.clear()
-  sessionStorage.clear()
-  router.replace('/login')
+  userStore.clearAuth()
 }
 </script>
 

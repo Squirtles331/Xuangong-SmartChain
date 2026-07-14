@@ -2,6 +2,16 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { login as loginApi, logout as logoutApi, type LoginParams, type LoginResult } from '@/api/system'
 import router from '@/router'
+import { useLockStore } from '@/stores/lock'
+import { usePermissionStore } from '@/stores/permission'
+
+type LogoutOptions = {
+  clearPreferences?: boolean
+  redirectTo?: string
+}
+
+const AUTH_STORAGE_KEYS = ['access_token', 'refresh_token', 'user_info', 'mock_login', 'tenant_id'] as const
+const PREFERENCE_STORAGE_KEYS = ['app-theme', 'app-layout-mode', 'app-lang'] as const
 
 export const useUserStore = defineStore('user', () => {
   // ==================== State ====================
@@ -63,16 +73,20 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  async function doLogout() {
+  async function doLogout(options: LogoutOptions = {}) {
     try {
       await logoutApi()
     } catch {
       // 即使后端登出失败，前端也清除状态
     }
-    clearAuth()
+    clearAuth(options)
   }
 
-  function clearAuth() {
+  function clearAuth(options: LogoutOptions = {}) {
+    const { clearPreferences = false, redirectTo = '/login' } = options
+    const lockStore = useLockStore()
+    const permissionStore = usePermissionStore()
+
     token.value = ''
     refreshToken.value = ''
     userId.value = ''
@@ -81,10 +95,16 @@ export const useUserStore = defineStore('user', () => {
     avatar.value = ''
     roles.value = []
     permissions.value = []
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
-    localStorage.removeItem('user_info')
-    router.push('/login')
+    AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key))
+
+    if (clearPreferences) {
+      PREFERENCE_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key))
+    }
+
+    sessionStorage.clear()
+    lockStore.forceUnlock()
+    permissionStore.reset()
+    router.replace(redirectTo)
   }
 
   // 初始化时尝试恢复用户信息

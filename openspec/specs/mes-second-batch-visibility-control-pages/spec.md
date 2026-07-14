@@ -1,8 +1,11 @@
 # mes-second-batch-visibility-control-pages Specification
 
 ## Purpose
+
 TBD - created by archiving change mes-second-batch-visibility-control-pages. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: The second-batch MES pages SHALL freeze the control and visibility scope after the first execution batch
 
 The system SHALL define a formal second-batch `MES` static-page scope for the coordination and visibility layer that extends the first-batch execution chain without reopening it.
@@ -55,4 +58,3 @@ The system SHALL define second-batch state semantics that extend, but do not con
 
 - **WHEN** `异常中心` is implemented in the static phase
 - **THEN** its approved exception lifecycle MUST be `identified -> locked -> processing -> awaiting_release -> released -> closed`
-

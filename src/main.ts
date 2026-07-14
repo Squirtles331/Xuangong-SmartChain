@@ -39,8 +39,16 @@ app.mount('#app')
 
 window.addEventListener('keydown', (e) => {
   const isAltL = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.toLowerCase() === 'l'
+  const isAltQ = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.toLowerCase() === 'q'
+
   if (isAltL) {
     e.preventDefault()
     window.dispatchEvent(new Event('lock-open'))
+    return
+  }
+
+  if (isAltQ) {
+    e.preventDefault()
+    window.dispatchEvent(new Event('logout-open'))
   }
 })

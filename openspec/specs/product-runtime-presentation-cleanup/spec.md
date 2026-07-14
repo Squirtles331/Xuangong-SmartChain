@@ -1,8 +1,11 @@
 # product-runtime-presentation-cleanup Specification
 
 ## Purpose
+
 TBD - created by archiving change remove-ui-ownership-and-intro-cards. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Runtime pages SHALL NOT expose internal ownership explanation
 
 The system SHALL keep ownership, collaborator, core-object, and truth-boundary reasoning in internal metadata and documentation only, and MUST NOT expose those concepts as user-facing runtime page content.
@@ -44,4 +47,3 @@ The system SHALL keep the login page focused on authentication, concise brand id
 
 - **WHEN** introduction-style blocks are removed from the login page
 - **THEN** the page MUST still preserve the authentication form, minimal brand identity, and direct login-related actions
-

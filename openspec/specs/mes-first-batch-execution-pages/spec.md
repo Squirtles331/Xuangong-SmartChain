@@ -1,8 +1,11 @@
 # mes-first-batch-execution-pages Specification
 
 ## Purpose
+
 TBD - created by archiving change 2026-07-14-stabilize-mes-first-batch-execution-pages. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: MES SHALL expose a formal first-batch execution-page baseline
 
 The system SHALL define a formal first-batch `MES` execution-page scope so that execution truth is stabilized before inventory, quality, or later business-collaboration pages expand downstream.
@@ -64,4 +67,3 @@ The first-batch `MES` execution pages SHALL make clear that `MES` consumes upstr
 - **WHEN** a user views material-issue, inbound, or quality-related sections from a first-batch `MES` page
 - **THEN** those sections MUST be expressed as relation or overview blocks
 - **AND** the page MUST NOT become the truth owner for warehouse transactions or inspection-judgment transactions
-
