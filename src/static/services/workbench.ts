@@ -62,7 +62,7 @@ const workbenchData: WorkbenchHomepageData = {
       count: 1,
       severity: 'info',
       ownerSystem: 'PLM / MES',
-      targetRoute: '/engineering-plan/plm/cutover',
+      targetRoute: '/engineering-plan/plm/change/cutover',
       targetLabel: '进入版本切换',
       helperText: '新旧版本现场切换待确认收口'
     }
@@ -230,7 +230,7 @@ const workbenchData: WorkbenchHomepageData = {
       targetRoute: '/engineering-plan/planning/aps/schedule',
       summaryItems: [
         { label: '待齐套', value: 3, level: 'warning', targetRoute: '/mes/execution/kitting' },
-        { label: '待切换', value: 1, level: 'info', targetRoute: '/engineering-plan/plm/cutover' },
+        { label: '待切换', value: 1, level: 'info', targetRoute: '/engineering-plan/plm/change/cutover' },
         { label: '计划例外', value: 2, level: 'danger', targetRoute: '/engineering-plan/planning/mrp/result' }
       ]
     },

@@ -1,4 +1,4 @@
-import type { Plugin } from 'vite'
+﻿import type { Plugin } from 'vite'
 import compressPlugin from 'vite-plugin-compression'
 
 /**
@@ -14,8 +14,8 @@ export const configCompressPlugin = (compress: ViteCompression): Plugin | Plugin
     ext: '.gz',
     // 体积大于 threshold 才会被压缩
     threshold: 0,
-    // 默认压缩 .js|mjs|json|css|html 后缀文件，设置成 true，压缩全部文件
-    filter: () => true,
+    // 跳过已经压缩过的产物，避免递归生成 .gz.gz
+    filter: (file: string) => !file.endsWith('.gz') && !file.endsWith('.br'),
     // 压缩后是否删除原始文件
     deleteOriginFile: false
   }
@@ -23,7 +23,7 @@ export const configCompressPlugin = (compress: ViteCompression): Plugin | Plugin
     ext: '.br',
     algorithm: 'brotliCompress',
     threshold: 0,
-    filter: () => true,
+    filter: (file: string) => !file.endsWith('.gz') && !file.endsWith('.br'),
     deleteOriginFile: false
   }
 
