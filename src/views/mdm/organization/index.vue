@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <CrudPage
     v-model:search-model="queryParams"
     title="组织主数据"
@@ -50,20 +50,6 @@
       </div>
     </template>
 
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
-    <template #beforeTable>
-      <div class="page-overview">
-        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
-          <div class="overview-label">{{ card.label }}</div>
-          <div class="overview-value">{{ card.value }}</div>
-          <div class="overview-desc">{{ card.desc }}</div>
-        </div>
-      </div>
-    </template>
-
     <template #index="{ $index }">
       {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
     </template>
@@ -85,12 +71,11 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { ElTree } from 'element-plus'
 import { CaretBottom, CaretRight, Grid, HomeFilled, Location, OfficeBuilding } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import type { CrudRowActionItem } from '@/components/crud/types'
@@ -173,17 +158,6 @@ const rowActions: CrudRowActionItem[] = [
   { key: 'delete', label: '删除', tone: 'danger' }
 ]
 
-const overviewCards = computed(() => {
-  const nodes = flattenOrgNodes(orgTree.value)
-
-  return [
-    { label: '组织节点总量', value: nodes.length, desc: '当前统一组织层级下已纳入治理的节点数量' },
-    { label: '工厂数量', value: nodes.filter((item) => item.type === 'plant').length, desc: '作为计划、库存和制造执行的核心经营主体' },
-    { label: '车间数量', value: nodes.filter((item) => item.type === 'workshop').length, desc: '用于承接工作中心、设备和报工的执行单元' },
-    { label: '产线数量', value: nodes.filter((item) => item.type === 'line').length, desc: '用于细化节拍、排产和现场采集边界' }
-  ]
-})
-
 init()
 
 async function init() {
@@ -239,10 +213,6 @@ function getTypeTagType(type: OrgType) {
   if (type === 'company') return 'primary'
   if (type === 'plant') return 'success'
   return 'warning'
-}
-
-function flattenOrgNodes(nodes: OrgNode[]): OrgNode[] {
-  return nodes.flatMap((node) => [node, ...flattenOrgNodes(node.children || [])])
 }
 
 function openAdd() {
@@ -388,50 +358,5 @@ async function deleteOrgNodes(ids: string[]) {
 
 .tree-icon {
   margin-right: 4px;
-}
-
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-@media (max-width: 1200px) {
-  .page-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .page-overview {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

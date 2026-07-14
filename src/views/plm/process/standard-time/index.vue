@@ -14,20 +14,6 @@
     @reset="handleReset"
     @refresh="refresh"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
-    <template #beforeTable>
-      <div class="page-overview">
-        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
-          <div class="overview-label">{{ card.label }}</div>
-          <div class="overview-value">{{ card.value }}</div>
-          <div class="overview-desc">{{ card.desc }}</div>
-        </div>
-      </div>
-    </template>
-
     <template #deviation="{ row }">
       <el-tag :type="getDeviationType(row.deviation)" effect="light" round>{{ row.deviation }}%</el-tag>
     </template>
@@ -42,7 +28,6 @@
 import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import type { CrudRowActionItem } from '@/components/crud/types'
@@ -93,19 +78,6 @@ const queryParams = reactive<{
 
 const loadedRecords = ref<RoutingAutoTimeRecord[]>([])
 
-const overviewCards = computed(() => {
-  const highDeviationCount = loadedRecords.value.filter((item) => item.deviation > 20).length
-  const midDeviationCount = loadedRecords.value.filter((item) => item.deviation > 10 && item.deviation <= 20).length
-  const sampleCount = loadedRecords.value.reduce((sum, item) => sum + item.samples, 0)
-
-  return [
-    { label: '学习记录数', value: loadedRecords.value.length, desc: '当前从 MES 实绩样本沉淀出的工时建议数量' },
-    { label: '高偏差建议', value: highDeviationCount, desc: '偏差超过 20%，需要优先复核的工序建议' },
-    { label: '中偏差建议', value: midDeviationCount, desc: '偏差介于 10%-20%，适合纳入批量评审' },
-    { label: '样本总量', value: sampleCount, desc: '支撑当前标准工时学习结果的实绩样本数' }
-  ]
-})
-
 const { tableData, pagination, loading, search, refresh } = useTable<RoutingAutoTimeRecord>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
@@ -148,49 +120,4 @@ async function handleRowAction(action: string, row: RoutingAutoTimeRecord) {
 }
 </script>
 
-<style scoped>
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-@media (max-width: 1200px) {
-  .page-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .page-overview {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+<style scoped></style>

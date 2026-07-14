@@ -12,10 +12,6 @@
     @reset="handleReset"
     @refresh="refresh"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
     <template #actions="{ row }">
       <CrudRowActions :actions="detailActions" @action="viewDetail(row)" />
     </template>
@@ -29,7 +25,6 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import { getTraceRecords, type TraceRecord, type TraceRecordQuery } from '@/api/work-order'

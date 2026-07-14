@@ -14,31 +14,6 @@
     @refresh="refresh"
     @add="openAdd"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
-    <template #beforeTable>
-      <el-card header="在途库存概览" shadow="never" style="margin-bottom: 16px">
-        <el-row :gutter="16">
-          <el-col v-for="item in transitItems" :key="item.code" :span="8">
-            <el-card shadow="hover" class="transit-card">
-              <div class="transit-header">
-                <span class="transit-code">{{ item.code }}</span>
-                <el-tag type="primary" size="small">在途</el-tag>
-              </div>
-              <div class="transit-body">
-                <div class="transit-info"><span>物料：</span>{{ item.material }}</div>
-                <div class="transit-info"><span>数量：</span>{{ item.qty }}</div>
-                <div class="transit-info"><span>路线：</span>{{ item.from_wh }} -> {{ item.to_wh }}</div>
-                <div class="transit-info"><span>发出时间：</span>{{ item.out_time || '-' }}</div>
-              </div>
-            </el-card>
-          </el-col>
-        </el-row>
-      </el-card>
-    </template>
-
     <template #status="{ row }">
       <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'transit' ? 'primary' : 'success'" size="small">
         {{ row.status === 'pending' ? '待调出' : row.status === 'transit' ? '在途' : '已完成' }}
@@ -56,10 +31,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import type { CrudRowActionItem } from '@/components/crud/types'
@@ -131,8 +105,6 @@ const { tableData, pagination, loading, search, refresh } = useTable<TransferRow
     }
   }
 })
-
-const transitItems = computed(() => tableData.value.filter((item) => item.status === 'transit'))
 
 const columns: TableColumnItem<TransferRow>[] = [
   { prop: 'code', label: '调拨单号', width: 160 },
@@ -226,34 +198,3 @@ async function confirmIn(row: TransferRow) {
   ElMessage.success('调入确认成功，库存已更新')
 }
 </script>
-
-<style scoped>
-.transit-card :deep(.el-card__body) {
-  padding: 12px 16px;
-}
-
-.transit-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.transit-code {
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.transit-body {
-  font-size: 12px;
-  color: #606266;
-}
-
-.transit-info {
-  line-height: 22px;
-}
-
-.transit-info span {
-  color: #909399;
-}
-</style>

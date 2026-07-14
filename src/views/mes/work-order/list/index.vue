@@ -14,10 +14,6 @@
     @refresh="refresh"
     @add="$router.push('/mes/work-order/create')"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
     <template #priority="{ row }">
       <StatusTag :value="row.priority" :options="WORK_ORDER_PRIORITY" />
     </template>
@@ -61,7 +57,6 @@ import { reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { WORK_ORDER_PRIORITY, WORK_ORDER_STATUS } from '@/common/status-maps'

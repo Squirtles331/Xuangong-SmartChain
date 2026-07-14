@@ -14,9 +14,6 @@
         </div>
       </div>
     </template>
-
-    <PageOwnershipNotice style="margin-bottom: 16px" />
-
     <el-alert
       type="info"
       :closable="false"
@@ -114,7 +111,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import {
   EXCEPTION_STATUS_OPTIONS,

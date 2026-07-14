@@ -3,12 +3,10 @@
 ## Purpose
 
 TBD - created by archiving change realign-menu-naming-and-ownership. Update Purpose after archive.
-
 ## Requirements
-
 ### Requirement: Product navigation SHALL use user-oriented business language
 
-The system SHALL present visible menu names, group names, page titles, and placeholder descriptions using business object language or user task language that a product user can understand without first knowing the internal system topology.
+The system SHALL present visible menu names, group names, page titles, subtitles, login-entry copy, and placeholder descriptions using business object language or user task language that a product user can understand without first knowing the internal system topology. Visible runtime copy MUST avoid ownership exposition, system-authorship narration, and architecture-introduction phrasing.
 
 #### Scenario: Replace system-centric labels with user-facing labels
 
@@ -19,6 +17,11 @@ The system SHALL present visible menu names, group names, page titles, and place
 
 - **WHEN** a page belongs to a domain such as `PLM`, `QMS`, `WMS`, or `MDM`
 - **THEN** the visible navigation MUST prioritize Chinese business wording, and any acronym MUST be treated as supporting context rather than the primary label
+
+#### Scenario: Avoid ownership exposition in visible runtime copy
+
+- **WHEN** a runtime page, login surface, or placeholder description introduces the page or platform
+- **THEN** the visible copy MUST NOT present ownership labels, truth-boundary notes, or architecture-authorship explanation as product guidance
 
 ### Requirement: Product navigation SHALL organize pages by object lifecycle or user task flow
 
@@ -69,3 +72,4 @@ The system SHALL define the visible homepage workbench as the post-login action 
 - **WHEN** homepage content spans `MES`、`WMS`、`QMS`、`APS`、`设备/IoT` or `CRM`
 - **THEN** the homepage MUST act only as an aggregation and navigation layer
 - **AND** it MUST NOT redefine ownership or maintain object truth for any underlying domain object
+

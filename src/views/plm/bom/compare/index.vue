@@ -16,19 +16,7 @@
     @refresh="handleRefresh"
     @toolbar-action="handleToolbarAction"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
     <template #beforeTable>
-      <div class="page-overview">
-        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
-          <div class="overview-label">{{ card.label }}</div>
-          <div class="overview-value">{{ card.value }}</div>
-          <div class="overview-desc">{{ card.desc }}</div>
-        </div>
-      </div>
-
       <div class="compare-context">
         <div class="compare-context__item">
           <span>对比对象</span>
@@ -153,7 +141,6 @@
 import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
@@ -472,20 +459,6 @@ const filteredRows = computed(() =>
   })
 )
 
-const overviewCards = computed(() => {
-  const changedCount = compareRows.value.filter((item) => item.changeType !== 'unchanged').length
-  const addedCount = compareRows.value.filter((item) => item.changeType === 'added').length
-  const removedCount = compareRows.value.filter((item) => item.changeType === 'removed').length
-  const affectedRoutes = new Set(compareRows.value.map((item) => item.routeBinding)).size
-
-  return [
-    { label: '差异条目数', value: compareRows.value.length, desc: '当前版本对比中纳入静态分析的结构条目数量' },
-    { label: '发生变化', value: changedCount, desc: '新增、删除、修改的结构条目总数' },
-    { label: '新增 / 删除', value: `${addedCount} / ${removedCount}`, desc: '用于快速判断投料与库存收口压力' },
-    { label: '影响路线', value: affectedRoutes, desc: '需要同步确认工艺路线或执行口径的版本数量' }
-  ]
-})
-
 const { tableData, pagination, loading, search, refresh } = useTable<CompareRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
@@ -637,39 +610,6 @@ function handleRowAction(action: string, row: CompareRow) {
 </script>
 
 <style scoped>
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
 .compare-context {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -784,7 +724,6 @@ function handleRowAction(action: string, row: CompareRow) {
 }
 
 @media (max-width: 1200px) {
-  .page-overview,
   .compare-context,
   .detail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -792,7 +731,6 @@ function handleRowAction(action: string, row: CompareRow) {
 }
 
 @media (max-width: 768px) {
-  .page-overview,
   .compare-context,
   .detail-grid {
     grid-template-columns: 1fr;

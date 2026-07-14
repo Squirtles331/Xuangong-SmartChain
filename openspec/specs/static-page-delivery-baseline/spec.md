@@ -1,5 +1,9 @@
-## ADDED Requirements
+# static-page-delivery-baseline Specification
 
+## Purpose
+
+Define the baseline delivery contract for first-phase static pages so page structure, review order, and later mock/API handoff remain consistent across the product.
+## Requirements
 ### Requirement: Static pages SHALL be completed before mock integration begins
 
 The system delivery process SHALL require static-page completion before mock integration for any new page included in this change scope.
@@ -17,18 +21,20 @@ The system delivery process SHALL require static-page completion before mock int
 
 ### Requirement: Static pages SHALL expose a standard page structure contract
 
-Every first-phase static page SHALL expose a standard structure contract covering at minimum page identity, search region, toolbar region, list region, detail or drawer region, state presentation, and action presentation.
+Every first-phase static page SHALL expose a standard structure contract covering at minimum page identity, search region, toolbar region, list region, detail or drawer region, state presentation, and action presentation. Ownership notices, introductory overview cards, and bridge-explanation panels MUST NOT be treated as required parts of the shipped page structure contract.
 
 #### Scenario: CRUD page follows standard composition
 
 - **WHEN** a page is delivered as a standard management or execution page
 - **THEN** the page MUST include a consistent set of structural regions for search, toolbar, list, and detail presentation
 - **AND** action visibility MUST align with object status and page purpose
+- **AND** introductory overview or ownership-exposition blocks MUST NOT be required structural regions
 
 #### Scenario: Detail structure is reserved before dynamic behavior
 
 - **WHEN** a page includes object details, line items, or upstream/downstream relations
 - **THEN** those zones MUST be structurally expressed in the static page even if the data is still hard-coded
+- **AND** architecture-introduction or bridge-narration cards MUST NOT be used as substitutes for the actual working structure
 
 ### Requirement: Mock data SHALL inherit static-page data shape rather than redefine it
 
@@ -45,3 +51,4 @@ When mock integration begins, mock responses SHALL inherit the approved static-p
 - **WHEN** a page exposes detail drawers, dialogs, or sub-tables
 - **THEN** the mock payload MUST preserve the approved header, line-item, relation, and audit block structure
 - **AND** downstream API design MUST inherit that approved shape unless the object baseline itself is revised
+

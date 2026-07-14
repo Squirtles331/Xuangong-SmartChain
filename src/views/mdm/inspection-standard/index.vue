@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <CrudPage
     v-model:search-model="queryParams"
     title="检验标准"
@@ -15,20 +15,6 @@
     @refresh="refresh"
     @add="openAdd"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
-    <template #beforeTable>
-      <div class="page-overview">
-        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
-          <div class="overview-label">{{ card.label }}</div>
-          <div class="overview-value">{{ card.value }}</div>
-          <div class="overview-desc">{{ card.desc }}</div>
-        </div>
-      </div>
-    </template>
-
     <template #status="{ row }">
       <StatusTag v-if="statusOptions.length" :value="row.status" :options="statusOptions" />
       <span v-else>{{ row.status ?? '-' }}</span>
@@ -56,7 +42,6 @@
 import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import CrudFormDialog from '@/components/crud/CrudFormDialog/index.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
@@ -273,18 +258,6 @@ const filteredRecords = computed(() =>
   )
 )
 
-const overviewCards = computed(() => {
-  const activeCount = records.value.filter((item) => item.status === 'active').length
-  const disabledCount = records.value.filter((item) => item.status && item.status !== 'active').length
-
-  return [
-    { label: '检验标准总量', value: records.value.length, desc: '当前已纳入静态主数据基线的对象数量' },
-    { label: '启用数量', value: activeCount, desc: '当前可被下游业务模块直接引用的有效主数据' },
-    { label: '非启用数量', value: disabledCount, desc: '用于停用、草稿、冻结等治理状态的对象数量' },
-    { label: '治理定位', value: 'MDM', desc: '先稳定静态字段与页面口径，再进入 mock 和接口阶段' }
-  ]
-})
-
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<MasterDataRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
@@ -359,49 +332,4 @@ async function submitDialog() {
 }
 </script>
 
-<style scoped>
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-@media (max-width: 1200px) {
-  .page-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .page-overview {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+<style scoped></style>

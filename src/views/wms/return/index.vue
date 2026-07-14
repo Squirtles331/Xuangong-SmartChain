@@ -14,10 +14,6 @@
     @refresh="refresh"
     @add="openAdd"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
     <template #type="{ row }">
       <el-tag :type="row.type === 'return' ? 'danger' : 'warning'" size="small">
         {{ row.type === 'return' ? '生产退料' : '采购退货' }}
@@ -44,7 +40,6 @@
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import type { CrudRowActionItem } from '@/components/crud/types'

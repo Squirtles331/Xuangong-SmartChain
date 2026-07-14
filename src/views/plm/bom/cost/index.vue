@@ -16,19 +16,7 @@
     @refresh="handleRefresh"
     @toolbar-action="handleToolbarAction"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
     <template #beforeTable>
-      <div class="page-overview">
-        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
-          <div class="overview-label">{{ card.label }}</div>
-          <div class="overview-value">{{ card.value }}</div>
-          <div class="overview-desc">{{ card.desc }}</div>
-        </div>
-      </div>
-
       <div class="cost-context">
         <div class="cost-context__item">
           <span>估算对象</span>
@@ -132,7 +120,9 @@
               <section class="detail-card">
                 <div class="detail-card__title">下游消费影响</div>
                 <div class="detail-tags">
-                  <el-tag v-for="item in currentDetail.downstreamConsumers" :key="item" type="warning" effect="light" round>{{ item }}</el-tag>
+                  <el-tag v-for="item in currentDetail.downstreamConsumers" :key="item" type="warning" effect="light" round>
+                    {{ item }}
+                  </el-tag>
                 </div>
                 <p class="detail-description">{{ currentDetail.impactSummary }}</p>
               </section>
@@ -148,7 +138,6 @@
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import * as echarts from 'echarts'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
@@ -525,21 +514,6 @@ const activeRows = computed(() => {
 
 const summaryRow = computed(() => activeRows.value.find((item) => item.costSource === 'summary') || null)
 
-const overviewCards = computed(() => {
-  const total = summaryRow.value?.totalCost || 0
-  const material = summaryRow.value?.materialCost || 0
-  const labor = summaryRow.value?.laborCost || 0
-  const overhead = summaryRow.value?.overheadCost || 0
-  const highImpactCount = activeRows.value.filter((item) => item.totalCost >= 1000 && item.costSource !== 'summary').length
-
-  return [
-    { label: '估算总成本', value: formatCost(total), desc: '当前结构版本在所选口径下的静态估算合计' },
-    { label: '材料 / 人工', value: `${formatCost(material)} / ${formatCost(labor)}`, desc: '用于快速判断成本主要受结构还是工时驱动' },
-    { label: '制造费用', value: formatCost(overhead), desc: '体现工艺路线、节拍和制造约束带来的额外成本' },
-    { label: '高影响项', value: highImpactCount, desc: '总成本超过 1000 元的主要驱动结构项数量' }
-  ]
-})
-
 const { tableData, pagination, loading, search, refresh } = useTable<CostRow>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
@@ -671,39 +645,6 @@ function handleRowAction(action: string, row: CostRow) {
 </script>
 
 <style scoped>
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
 .cost-context {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -814,7 +755,6 @@ function handleRowAction(action: string, row: CostRow) {
 }
 
 @media (max-width: 1200px) {
-  .page-overview,
   .cost-context,
   .detail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -822,7 +762,6 @@ function handleRowAction(action: string, row: CostRow) {
 }
 
 @media (max-width: 768px) {
-  .page-overview,
   .cost-context,
   .detail-grid {
     grid-template-columns: 1fr;

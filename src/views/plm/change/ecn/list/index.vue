@@ -15,20 +15,6 @@
     @refresh="refresh"
     @add="openAdd"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
-    <template #beforeTable>
-      <div class="page-overview">
-        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
-          <div class="overview-label">{{ card.label }}</div>
-          <div class="overview-value">{{ card.value }}</div>
-          <div class="overview-desc">{{ card.desc }}</div>
-        </div>
-      </div>
-    </template>
-
     <template #urgency="{ row }">
       <StatusTag :value="row.urgency" :options="ecnUrgencyOptions" />
     </template>
@@ -52,7 +38,6 @@
 import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
@@ -235,19 +220,6 @@ const filteredRecords = computed(() =>
   })
 )
 
-const overviewCards = computed(() => {
-  const approvalCount = ecnRecords.value.filter((item) => item.status === 'pending_approval').length
-  const approvedCount = ecnRecords.value.filter((item) => item.status === 'approved').length
-  const executingCount = ecnRecords.value.filter((item) => item.status === 'executing').length
-
-  return [
-    { label: '变更单总量', value: ecnRecords.value.length, desc: '产品结构与工艺版本切换的统一入口' },
-    { label: '待审批', value: approvalCount, desc: '等待正式评审与放行决策的变更单' },
-    { label: '待执行', value: approvedCount, desc: '已批准但尚未现场切换落地的变更单' },
-    { label: '执行中', value: executingCount, desc: '已进入现场切换与验证闭环的变更单' }
-  ]
-})
-
 const { tableData, pagination, loading, search, refresh } = useTable<ECNOrder>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
@@ -421,49 +393,4 @@ function handleRowAction(action: string, row: ECNOrder) {
 }
 </script>
 
-<style scoped>
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-@media (max-width: 1200px) {
-  .page-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .page-overview {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+<style scoped></style>

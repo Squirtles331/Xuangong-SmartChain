@@ -13,21 +13,6 @@
     @refresh="refresh"
     @add="openCreate"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
-    <template #beforeTable>
-      <el-row :gutter="16" class="diff-summary">
-        <el-col v-for="item in diffSummary" :key="item.label" :span="6">
-          <el-card shadow="hover" class="diff-card">
-            <div class="diff-label">{{ item.label }}</div>
-            <div class="diff-value" :style="{ color: item.color }">{{ item.value }}</div>
-          </el-card>
-        </el-col>
-      </el-row>
-    </template>
-
     <template #type="{ row }">
       <el-tag :type="row.type === 'full' ? 'danger' : 'warning'" size="small">
         {{ row.type === 'full' ? '全盘' : '循环盘点' }}
@@ -52,10 +37,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import { completeStockCountPlan, getStockCountDiff, getStockCountList, updateStockCountDiffDispositions } from '@/api/wms'
@@ -149,21 +133,6 @@ const planColumns: TableColumnItem<PlanRow>[] = [
   { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 140, slotName: 'actions', align: 'center' }
 ]
-
-const diffSummary = computed(() => {
-  const totalItems = rawDiffLines.value.length
-  const changedItems = rawDiffLines.value.filter((item) => Number(item.diff || 0) !== 0).length
-  const totalBookQty = rawDiffLines.value.reduce((sum, item) => sum + Number(item.book_qty || 0), 0)
-  const totalDiff = rawDiffLines.value.reduce((sum, item) => sum + Math.abs(Number(item.diff || 0)), 0)
-  const diffRate = totalBookQty > 0 ? `${((totalDiff / totalBookQty) * 100).toFixed(2)}%` : '0.00%'
-
-  return [
-    { label: '盘点项数', value: String(totalItems), color: '#409eff' },
-    { label: '差异项数', value: String(changedItems), color: '#e6a23c' },
-    { label: '差异率', value: diffRate, color: '#f56c6c' },
-    { label: '总差异数', value: String(totalDiff), color: '#67c23a' }
-  ]
-})
 
 const { tableData, pagination, loading, search, refresh } = useTable<PlanRow>({
   rowKey: 'id',
@@ -311,25 +280,3 @@ async function confirmDiff() {
   await refresh()
 }
 </script>
-
-<style scoped>
-.diff-summary {
-  margin-bottom: 16px;
-}
-
-.diff-card :deep(.el-card__body) {
-  padding: 16px;
-  text-align: center;
-}
-
-.diff-label {
-  font-size: 13px;
-  color: #909399;
-  margin-bottom: 8px;
-}
-
-.diff-value {
-  font-size: 28px;
-  font-weight: 700;
-}
-</style>

@@ -14,19 +14,7 @@
     @reset="handleReset"
     @refresh="handleRefresh"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
     <template #beforeTable>
-      <div class="page-overview">
-        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
-          <div class="overview-label">{{ card.label }}</div>
-          <div class="overview-value">{{ card.value }}</div>
-          <div class="overview-desc">{{ card.desc }}</div>
-        </div>
-      </div>
-
       <div class="analysis-switch">
         <span class="analysis-switch__label">视图模式</span>
         <el-radio-group v-model="activeMode" @change="handleModeChange">
@@ -137,7 +125,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
@@ -457,35 +444,6 @@ const activeRows = computed(() => {
   })
 })
 
-const overviewCards = computed(() => {
-  if (activeMode.value === 'explode') {
-    const topLevelCount = activeRows.value.filter((item) => item.level === 1 || item.level === 0).length
-    const purchaseCount = activeRows.value.filter((item) => item.supplyMode === 'purchase').length
-    const outsourceCount = activeRows.value.filter((item) => item.supplyMode === 'outsource').length
-
-    return [
-      { label: '结构节点数', value: activeRows.value.length, desc: '当前版本展开后纳入静态分析的结构节点数量' },
-      {
-        label: '顶层 / 子层',
-        value: `${topLevelCount} / ${Math.max(activeRows.value.length - topLevelCount, 0)}`,
-        desc: '用于快速判断结构层次与追溯深度'
-      },
-      { label: '采购件', value: purchaseCount, desc: '会直接影响来料、领料和库存预留口径的节点数量' },
-      { label: '委外件', value: outsourceCount, desc: '需要同步约束委外协同和回厂检验的节点数量' }
-    ]
-  }
-
-  const activeRefCount = activeRows.value.filter((item) => item.effectiveStatus === 'active').length
-  const pendingRefCount = activeRows.value.filter((item) => item.effectiveStatus === 'pending').length
-
-  return [
-    { label: '引用父项数', value: activeRows.value.length, desc: '当前版本被上游对象引用的关系数量' },
-    { label: '已生效引用', value: activeRefCount, desc: '已经落到执行或交付链路中的引用关系' },
-    { label: '待切换引用', value: pendingRefCount, desc: '仍需在现场完成版本切换确认的引用关系' },
-    { label: '统一来源', value: currentBomLabel.value, desc: '当前所有引用关系都来自同一 BOM 版本上下文' }
-  ]
-})
-
 const tableColumns = computed(() => (activeMode.value === 'explode' ? explodeColumns : whereUsedColumns))
 
 const { tableData, pagination, loading, search, refresh } = useTable<AnalysisRow>({
@@ -542,39 +500,6 @@ function handleRowAction(action: string, row: AnalysisRow) {
 </script>
 
 <style scoped>
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
 .analysis-switch {
   display: flex;
   align-items: center;
@@ -665,14 +590,12 @@ function handleRowAction(action: string, row: AnalysisRow) {
 }
 
 @media (max-width: 1200px) {
-  .page-overview,
   .detail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .page-overview,
   .detail-grid {
     grid-template-columns: 1fr;
   }

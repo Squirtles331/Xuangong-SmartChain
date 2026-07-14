@@ -15,20 +15,6 @@
     @refresh="refresh"
     @add="openAdd"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
-    <template #beforeTable>
-      <div class="page-overview">
-        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
-          <div class="overview-label">{{ card.label }}</div>
-          <div class="overview-value">{{ card.value }}</div>
-          <div class="overview-desc">{{ card.desc }}</div>
-        </div>
-      </div>
-    </template>
-
     <template #status="{ row }">
       <StatusTag :value="row.status" :options="routingStatusOptions" />
     </template>
@@ -44,7 +30,6 @@ import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
@@ -165,19 +150,6 @@ const filteredRecords = computed(() =>
   })
 )
 
-const overviewCards = computed(() => {
-  const activeCount = routingRecords.value.filter((item) => item.status === 'active').length
-  const totalOps = routingRecords.value.reduce((sum, item) => sum + item.operation_count, 0)
-  const totalQc = routingRecords.value.reduce((sum, item) => sum + item.qc_gate_count, 0)
-
-  return [
-    { label: '路线版本总量', value: routingRecords.value.length, desc: '已纳入静态阶段的一体化工艺路线版本' },
-    { label: '已生效路线', value: activeCount, desc: '可直接被排产、派工和执行页引用' },
-    { label: '工序总数', value: totalOps, desc: '用于检视当前版本覆盖的工序颗粒度' },
-    { label: '质检关卡', value: totalQc, desc: '用于表达工序级质量裁决插入点' }
-  ]
-})
-
 const { tableData, pagination, loading, search, refresh } = useTable<RoutingRecord>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
@@ -228,49 +200,4 @@ function handleRowAction(action: string, row: RoutingRecord) {
 }
 </script>
 
-<style scoped>
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-@media (max-width: 1200px) {
-  .page-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .page-overview {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+<style scoped></style>

@@ -15,56 +15,6 @@
     @add="openAdd"
     @toolbar-action="handleToolbarAction"
   >
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
-    <template #beforeTable>
-      <el-row :gutter="16" class="summary-row">
-        <el-col v-for="item in summaryCards" :key="item.label" :xs="24" :sm="12" :lg="6">
-          <el-card shadow="hover" class="summary-card">
-            <div class="summary-card__label">{{ item.label }}</div>
-            <div class="summary-card__value" :style="{ color: item.color }">{{ item.value }}</div>
-          </el-card>
-        </el-col>
-      </el-row>
-
-      <el-card header="QMS / WMS 裁决桥接" shadow="never" class="bridge-card">
-        <div class="bridge-note">WMS 负责批次冻结、隔离范围和库存控制，QMS 负责质量裁决结论。当前页面只消费质量裁决结果，不在这里定义质量真相。</div>
-
-        <el-row :gutter="16">
-          <el-col :xs="24" :lg="14">
-            <div class="bridge-section">
-              <div v-for="item in bridgeSteps" :key="item.title" class="bridge-step">
-                <div class="bridge-step__header">
-                  <span class="bridge-step__title">{{ item.title }}</span>
-                  <el-tag size="small" :type="item.type">{{ item.owner }}</el-tag>
-                </div>
-                <div class="bridge-step__desc">{{ item.description }}</div>
-              </div>
-            </div>
-          </el-col>
-
-          <el-col :xs="24" :lg="10">
-            <div class="bridge-section">
-              <div class="bridge-section__title">待处理桥接批次</div>
-              <div v-for="item in bridgeRows" :key="item.id" class="bridge-row">
-                <div class="bridge-row__header">
-                  <span class="bridge-row__code">{{ item.code }}</span>
-                  <span class="bridge-row__batch">{{ item.batchCode }}</span>
-                </div>
-                <div class="bridge-row__name">{{ item.materialName }}</div>
-                <div class="bridge-row__tags">
-                  <el-tag size="small" :type="getStatusTagType(item.status)">{{ statusLabelMap[item.status] }}</el-tag>
-                  <el-tag size="small" :type="getDecisionTagType(item.qualityDecision)">{{ decisionLabelMap[item.qualityDecision] }}</el-tag>
-                </div>
-              </div>
-            </div>
-          </el-col>
-        </el-row>
-      </el-card>
-    </template>
-
     <template #quarantineType="{ row }">
       <el-tag size="small" effect="light" type="info">
         {{ quarantineTypeLabelMap[row.quarantineType] || row.quarantineType }}
@@ -94,10 +44,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
 import type { CrudRowActionItem, CrudToolbarActionItem } from '@/components/crud/types'
@@ -283,41 +232,6 @@ const queryParams = ref({
   status: '',
   qualityDecision: ''
 })
-
-const summaryCards = computed(() => {
-  const rows = quarantineRows.value
-  return [
-    { label: '隔离中批次', value: String(rows.filter((item) => item.status === 'quarantined').length), color: '#e6a23c' },
-    { label: '冻结中批次', value: String(rows.filter((item) => item.status === 'frozen').length), color: '#f56c6c' },
-    { label: '待质量回写', value: String(rows.filter((item) => item.qualityDecision === 'pending').length), color: '#409eff' },
-    { label: '已完成处置', value: String(rows.filter((item) => ['released', 'disposed'].includes(item.status)).length), color: '#67c23a' }
-  ]
-})
-
-const bridgeSteps = [
-  {
-    title: 'WMS 发起隔离',
-    owner: 'WMS',
-    type: 'primary' as const,
-    description: '在仓储侧冻结批次、限定库存可用范围，并记录隔离位置与来源单据。'
-  },
-  {
-    title: 'QMS 输出裁决',
-    owner: 'QMS',
-    type: 'success' as const,
-    description: 'QMS 给出允收放行、继续隔离或报废处置等质量结论，WMS 不在此页定义结论。'
-  },
-  {
-    title: 'WMS 执行放行 / 处置',
-    owner: 'WMS',
-    type: 'warning' as const,
-    description: 'WMS 根据 QMS 已输出的结论执行解冻放行、继续冻结或库存处置动作。'
-  }
-]
-
-const bridgeRows = computed(() =>
-  quarantineRows.value.filter((item) => ['quarantined', 'frozen', 'waiting_release'].includes(item.status)).slice(0, 4)
-)
 
 const { tableData, pagination, loading, search, refresh } = useTable<QuarantineRow>({
   rowKey: 'id',
@@ -527,97 +441,3 @@ async function submitDialog() {
   await refresh()
 }
 </script>
-
-<style scoped>
-.summary-row {
-  margin-bottom: 16px;
-}
-
-.summary-card :deep(.el-card__body) {
-  padding: 16px;
-  text-align: center;
-}
-
-.summary-card__label {
-  font-size: 13px;
-  color: #64748b;
-  margin-bottom: 8px;
-}
-
-.summary-card__value {
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.bridge-card {
-  margin-bottom: 16px;
-}
-
-.bridge-note {
-  margin-bottom: 16px;
-  color: #475569;
-  line-height: 1.7;
-}
-
-.bridge-section {
-  height: 100%;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #fbfdff;
-}
-
-.bridge-section__title {
-  margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.bridge-step + .bridge-step,
-.bridge-row + .bridge-row {
-  margin-top: 12px;
-}
-
-.bridge-step,
-.bridge-row {
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-}
-
-.bridge-step__header,
-.bridge-row__header,
-.bridge-row__tags {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.bridge-step__header {
-  justify-content: space-between;
-}
-
-.bridge-step__title,
-.bridge-row__code {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.bridge-step__desc,
-.bridge-row__name,
-.bridge-row__batch {
-  margin-top: 6px;
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-@media (max-width: 768px) {
-  .bridge-section {
-    margin-bottom: 12px;
-  }
-}
-</style>

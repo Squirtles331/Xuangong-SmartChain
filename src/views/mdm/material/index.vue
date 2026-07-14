@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <CrudPage
     v-model:search-model="queryParams"
     title="物料主数据"
@@ -30,20 +30,6 @@
       </div>
     </template>
 
-    <template #headerTop>
-      <PageOwnershipNotice />
-    </template>
-
-    <template #beforeTable>
-      <div class="page-overview">
-        <div v-for="card in overviewCards" :key="card.label" class="overview-card">
-          <div class="overview-label">{{ card.label }}</div>
-          <div class="overview-value">{{ card.value }}</div>
-          <div class="overview-desc">{{ card.desc }}</div>
-        </div>
-      </div>
-    </template>
-
     <template #index="{ $index }">
       {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
     </template>
@@ -70,7 +56,6 @@
 import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
@@ -316,19 +301,6 @@ const filteredRecords = computed(() =>
   })
 )
 
-const overviewCards = computed(() => {
-  const activeCount = materialRecords.value.filter((item) => item.status === 'active').length
-  const draftCount = materialRecords.value.filter((item) => item.status === 'draft').length
-  const purchasedCount = materialRecords.value.filter((item) => item.type === 'purchased').length
-
-  return [
-    { label: '主数据总量', value: materialRecords.value.length, desc: '当前静态基线已纳入的物料对象数' },
-    { label: '已生效物料', value: activeCount, desc: '可被 BOM、工单、库存事务直接引用' },
-    { label: '待完善草稿', value: draftCount, desc: '字段未完成或尚未进入评审的主数据' },
-    { label: '外购物料', value: purchasedCount, desc: '可直接衔接 SRM / ERP 采购协同' }
-  ]
-})
-
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<MaterialRecord>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
@@ -499,50 +471,5 @@ async function submitDialog() {
   font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
-}
-
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-@media (max-width: 1200px) {
-  .page-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .page-overview {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

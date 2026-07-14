@@ -1,7 +1,5 @@
 <template>
   <gi-page-layout>
-    <PageOwnershipNotice style="margin-bottom: 16px" />
-
     <el-tabs v-model="activeTab">
       <el-tab-pane label="待开工" name="assigned">
         <div class="search-bar">
@@ -91,7 +89,6 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { TableColumnItem } from 'gi-component'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 import TableSetting from '@/components/TableSetting.vue'
 import { getMyTasks, startOperation, type MyTask } from '@/api/work-order'
 import ExceptionFormDialog, { type ExceptionFormModel } from './ExceptionFormDialog.vue'

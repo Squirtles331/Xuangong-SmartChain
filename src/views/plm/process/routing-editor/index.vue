@@ -14,31 +14,6 @@
     </template>
 
     <div class="page-shell">
-      <PageOwnershipNotice />
-
-      <div class="page-overview">
-        <div class="overview-card">
-          <div class="overview-label">工序数</div>
-          <div class="overview-value">{{ operations.length }}</div>
-          <div class="overview-desc">当前路线中已维护的工序节点数量</div>
-        </div>
-        <div class="overview-card">
-          <div class="overview-label">质检关卡</div>
-          <div class="overview-value">{{ qcGateCount }}</div>
-          <div class="overview-desc">需要过程质量裁决的工序数量</div>
-        </div>
-        <div class="overview-card">
-          <div class="overview-label">工作中心数</div>
-          <div class="overview-value">{{ workCenterCount }}</div>
-          <div class="overview-desc">覆盖的主要制造资源类型</div>
-        </div>
-        <div class="overview-card">
-          <div class="overview-label">总工时</div>
-          <div class="overview-value">{{ totalDuration }} 分钟</div>
-          <div class="overview-desc">用于后续 APS / MES 链路的静态口径</div>
-        </div>
-      </div>
-
       <div class="editor-layout">
         <div class="left-panel">
           <el-card shadow="never" class="summary-card">
@@ -188,7 +163,6 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute } from 'vue-router'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
 
 interface RoutingOperation {
   id: string
@@ -412,8 +386,6 @@ const totalSetup = computed(() => operations.value.reduce((sum, item) => sum + N
 const totalRun = computed(() => operations.value.reduce((sum, item) => sum + Number(item.run_hours || 0), 0))
 const totalFlow = computed(() => operations.value.reduce((sum, item) => sum + Number(item.queue_hours || 0) + Number(item.move_hours || 0), 0))
 const totalDuration = computed(() => totalSetup.value + totalRun.value + totalFlow.value)
-const qcGateCount = computed(() => operations.value.filter((item) => item.is_qc_gate).length)
-const workCenterCount = computed(() => new Set(operations.value.map((item) => item.work_center)).size)
 
 function createOperation(): RoutingOperation {
   const nextNo = operations.value.length ? Math.max(...operations.value.map((item) => item.operation_no)) + 10 : 10
@@ -541,38 +513,6 @@ onMounted(() => {
   gap: 8px;
 }
 
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
 .editor-layout {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
@@ -622,20 +562,12 @@ onMounted(() => {
 }
 
 @media (max-width: 1200px) {
-  .page-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .editor-layout {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .page-overview {
-    grid-template-columns: 1fr;
-  }
-
   .editor-header {
     flex-direction: column;
     align-items: flex-start;

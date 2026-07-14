@@ -16,31 +16,6 @@
     </template>
 
     <div class="page-shell">
-      <PageOwnershipNotice />
-
-      <div class="page-overview">
-        <div class="overview-card">
-          <div class="overview-label">结构节点数</div>
-          <div class="overview-value">{{ totalNodeCount }}</div>
-          <div class="overview-desc">当前静态结构中已维护的节点总量</div>
-        </div>
-        <div class="overview-card">
-          <div class="overview-label">关键件数量</div>
-          <div class="overview-value">{{ criticalNodeCount }}</div>
-          <div class="overview-desc">需要重点变更评估与替代控制的节点</div>
-        </div>
-        <div class="overview-card">
-          <div class="overview-label">虚拟/辅料节点</div>
-          <div class="overview-value">{{ phantomNodeCount + auxiliaryNodeCount }}</div>
-          <div class="overview-desc">用于装配聚合或工艺消耗表达的节点</div>
-        </div>
-        <div class="overview-card">
-          <div class="overview-label">版本状态</div>
-          <div class="overview-value"><StatusTag :value="bomMeta.status" :options="bomStatusOptions" /></div>
-          <div class="overview-desc">静态阶段先校准结构与状态，再进入 mock</div>
-        </div>
-      </div>
-
       <div class="editor-container">
         <div class="tree-panel">
           <div class="tree-toolbar">
@@ -167,8 +142,6 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute } from 'vue-router'
-import PageOwnershipNotice from '@/components/PageOwnershipNotice.vue'
-import StatusTag from '@/components/StatusTag.vue'
 
 interface TreeNode {
   id: string
@@ -346,11 +319,6 @@ const bomTemplates: Record<string, { meta: BOMMeta; tree: TreeNode[] }> = {
 
 const isCreateMode = computed(() => route.name === 'bomCreate')
 
-const totalNodeCount = computed(() => flattenNodes(treeData.value).length)
-const criticalNodeCount = computed(() => flattenNodes(treeData.value).filter((item) => item.is_critical).length)
-const phantomNodeCount = computed(() => flattenNodes(treeData.value).filter((item) => item.material_type === 'phantom').length)
-const auxiliaryNodeCount = computed(() => flattenNodes(treeData.value).filter((item) => item.material_type === 'auxiliary').length)
-
 watch(treeFilter, (value) => {
   treeRef.value?.filter(value)
 })
@@ -371,10 +339,6 @@ function cloneTree(nodes: TreeNode[]): TreeNode[] {
     ...node,
     children: node.children ? cloneTree(node.children) : []
   }))
-}
-
-function flattenNodes(nodes: TreeNode[]): TreeNode[] {
-  return nodes.flatMap((node) => [node, ...(node.children ? flattenNodes(node.children) : [])])
 }
 
 function resetNodeForm() {
@@ -579,38 +543,6 @@ onMounted(() => {
   gap: 8px;
 }
 
-.page-overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.overview-card {
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f7faff 100%);
-}
-
-.overview-label {
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.overview-value {
-  margin-top: 10px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.overview-desc {
-  margin-top: 8px;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
 .editor-container {
   display: grid;
   grid-template-columns: 420px minmax(0, 1fr);
@@ -672,20 +604,12 @@ onMounted(() => {
 }
 
 @media (max-width: 1200px) {
-  .page-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .editor-container {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .page-overview {
-    grid-template-columns: 1fr;
-  }
-
   .editor-header {
     flex-direction: column;
     align-items: flex-start;
