@@ -1,0 +1,42 @@
+.dashboard-v2[data-v-11fda88a] {
+  padding: 0;
+}
+.top-row[data-v-11fda88a] {
+  margin-bottom: 0;
+}
+.top-card[data-v-11fda88a] .el-card__body {
+  padding: 20px;
+}
+.top-title[data-v-11fda88a] {
+  color: #909399;
+  font-size: 13px;
+}
+.top-value[data-v-11fda88a] {
+  margin: 8px 0;
+  font-size: 32px;
+  font-weight: 700;
+}
+.top-unit[data-v-11fda88a] {
+  color: #909399;
+  margin-left: 4px;
+  font-size: 14px;
+}
+.top-trend[data-v-11fda88a] {
+  color: #909399;
+  font-size: 12px;
+}
+[data-v-11fda88a] .el-card {
+  border-radius: 4px;
+  transition: box-shadow 0.2s;
+  box-shadow: 0 1px 4px #0000000f;
+}
+[data-v-11fda88a] .el-card:hover {
+  box-shadow: 0 2px 8px #0000001a;
+}
+[data-v-11fda88a] .el-card__header {
+  color: #303133;
+  border-bottom: 1px solid #ebeef5;
+  padding: 16px 20px;
+  font-size: 14px;
+  font-weight: 600;
+}

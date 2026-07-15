@@ -1,0 +1,21 @@
+.empty-preview[data-v-6d128357] {
+  color: #c0c4cc;
+  text-align: center;
+  padding: 60px 0;
+}
+.barcode-preview[data-v-6d128357] {
+  text-align: center;
+}
+.barcode-img[data-v-6d128357] {
+  letter-spacing: 2px;
+  color: #303133;
+  background: #f5f7fa;
+  border: 2px dashed #dcdfe6;
+  border-radius: 8px;
+  padding: 20px;
+  font-family:
+    Courier New,
+    monospace;
+  font-size: 22px;
+  font-weight: 700;
+}

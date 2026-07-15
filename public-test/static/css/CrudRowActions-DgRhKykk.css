@@ -1,0 +1,14 @@
+.crud-row-actions[data-v-69dd4bc6] {
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  display: inline-flex;
+}
+.crud-row-actions[data-v-69dd4bc6] .el-button + .el-button {
+  margin-left: 0;
+}
+.crud-row-actions[data-v-69dd4bc6] .el-button {
+  padding-inline: 2px;
+}

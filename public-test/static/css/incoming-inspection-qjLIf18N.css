@@ -1,0 +1,21 @@
+.result-panel[data-v-f20e3f53] {
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  display: flex;
+}
+.result-label[data-v-f20e3f53] {
+  color: var(--el-text-color-secondary);
+}
+.source-cell[data-v-3c3bcf85] {
+  flex-direction: column;
+  gap: 4px;
+  display: flex;
+}
+.source-main[data-v-3c3bcf85] {
+  color: var(--el-text-color-primary);
+}
+.source-sub[data-v-3c3bcf85] {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}

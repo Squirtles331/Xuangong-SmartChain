@@ -1,0 +1,39 @@
+.tree-wrapper[data-v-0687a64f] {
+  flex-direction: column;
+  height: 100%;
+  display: flex;
+}
+.tree-header[data-v-0687a64f] {
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  display: flex;
+}
+.tree-title[data-v-0687a64f] {
+  color: #1f2d3d;
+  font-size: 14px;
+  font-weight: 600;
+}
+.tree-wrapper[data-v-0687a64f] .el-tree {
+  flex: 1;
+  overflow: auto;
+}
+.tree-node[data-v-0687a64f] {
+  align-items: center;
+  font-size: 13px;
+  display: inline-flex;
+}
+.tree-toggle[data-v-0687a64f] {
+  color: #606266;
+  cursor: pointer;
+  width: 16px;
+  margin-right: 4px;
+  display: inline-flex;
+}
+.tree-toggle--empty[data-v-0687a64f] {
+  cursor: default;
+}
+.tree-icon[data-v-0687a64f] {
+  margin-right: 4px;
+}

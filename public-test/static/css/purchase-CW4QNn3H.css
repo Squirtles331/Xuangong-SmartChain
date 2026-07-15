@@ -1,0 +1,20 @@
+[data-v-07ff9dd9] .gi-page-layout__tool {
+  gap: 8px;
+}
+.progress-cell[data-v-07ff9dd9] {
+  align-items: center;
+  gap: 8px;
+  display: flex;
+}
+.progress-text[data-v-07ff9dd9] {
+  color: #909399;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.overdue[data-v-07ff9dd9] {
+  color: #f56c6c;
+  font-weight: 600;
+}
+.delivery-tag[data-v-07ff9dd9] {
+  margin-left: 6px;
+}

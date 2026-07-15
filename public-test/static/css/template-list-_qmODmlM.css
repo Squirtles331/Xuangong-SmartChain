@@ -1,0 +1,19 @@
+.tree-wrapper[data-v-01d5663f] {
+  flex-direction: column;
+  height: 100%;
+  display: flex;
+}
+.tree-header[data-v-01d5663f] {
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  display: flex;
+}
+.tree-title[data-v-01d5663f] {
+  font-size: 14px;
+  font-weight: 600;
+}
+.tree-wrapper[data-v-01d5663f] .el-tree {
+  flex: 1;
+  overflow: auto;
+}

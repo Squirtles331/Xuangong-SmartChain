@@ -1,0 +1,36 @@
+.barcode-grid[data-v-c7a68f7a] {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 16px;
+  display: flex;
+}
+.barcode-item[data-v-c7a68f7a] {
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  min-width: 200px;
+  padding: 16px 24px;
+}
+.barcode-lines[data-v-c7a68f7a] {
+  justify-content: center;
+  align-items: flex-end;
+  gap: 1px;
+  height: 60px;
+  margin-bottom: 8px;
+  display: flex;
+}
+.barcode-bar[data-v-c7a68f7a] {
+  background: #000;
+  height: 100%;
+}
+.barcode-text[data-v-c7a68f7a] {
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+  font-family: monospace;
+  font-size: 14px;
+}
+.barcode-info[data-v-c7a68f7a] {
+  color: #666;
+  font-size: 12px;
+}

@@ -1,0 +1,13 @@
+.qty-cell[data-v-d3cbe85e] {
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  display: flex;
+}
+.qty-warn[data-v-d3cbe85e] {
+  color: #f56c6c;
+  font-weight: 700;
+}
+.qty-tag[data-v-d3cbe85e] {
+  flex-shrink: 0;
+}

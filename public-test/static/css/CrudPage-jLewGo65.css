@@ -1,0 +1,15 @@
+.crud-toolbar-actions[data-v-bdb78408] {
+  flex-wrap: wrap;
+  gap: 8px;
+  display: flex;
+}
+.crud-page__header[data-v-fb394d55] {
+  flex-direction: column;
+  gap: 12px;
+  display: flex;
+}
+.crud-page__segmented[data-v-fb394d55] {
+  align-items: center;
+  display: flex;
+  overflow-x: auto;
+}

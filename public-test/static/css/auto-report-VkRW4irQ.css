@@ -1,0 +1,21 @@
+.stat-card[data-v-33b0fe12] .el-card__body {
+  text-align: center;
+  padding: 16px;
+}
+.stat-label[data-v-33b0fe12] {
+  color: #909399;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.stat-value[data-v-33b0fe12] {
+  font-size: 28px;
+  font-weight: 700;
+}
+.stat-unit[data-v-33b0fe12] {
+  color: #909399;
+  margin-left: 4px;
+  font-size: 14px;
+}
+[data-v-33b0fe12] .gi-page-layout__tool {
+  gap: 8px;
+}

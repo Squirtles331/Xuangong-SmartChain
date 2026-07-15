@@ -1,0 +1,13 @@
+.trace-nodes[data-v-27bfe928] {
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  display: flex;
+}
+.trace-node[data-v-27bfe928] {
+  color: #334155;
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  padding: 10px 12px;
+}

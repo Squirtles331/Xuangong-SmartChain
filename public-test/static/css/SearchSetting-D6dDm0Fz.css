@@ -1,0 +1,99 @@
+.search-setting[data-v-707219ae] {
+  position: relative;
+}
+.search-setting__body[data-v-707219ae] {
+  flex: 1;
+}
+.search-setting__actions[data-v-707219ae] {
+  z-index: 10;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.search-setting__icon-btn[data-v-707219ae] {
+  color: var(--el-color-primary);
+}
+.search-setting__drawer[data-v-707219ae] {
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  display: flex;
+}
+.search-setting__drawer-header[data-v-707219ae] {
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  display: flex;
+}
+.search-setting__drawer-title[data-v-707219ae] {
+  color: var(--el-text-color-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.search-setting__drawer-actions[data-v-707219ae] {
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  display: flex;
+}
+.search-setting__drawer-tip[data-v-707219ae] {
+  margin-bottom: 4px;
+}
+.search-setting__draggable[data-v-707219ae] {
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  padding: 2px 0;
+}
+.search-setting__draggable[data-v-707219ae] .el-scrollbar__wrap {
+  overflow-x: hidden !important;
+}
+.search-setting__draggable[data-v-707219ae] .el-scrollbar__view {
+  box-sizing: border-box;
+  min-width: 0;
+  overflow-x: hidden;
+}
+.search-setting__draggable-item[data-v-707219ae] {
+  border-radius: var(--el-border-radius-small);
+  border: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-blank);
+  box-sizing: border-box;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  display: flex;
+}
+.search-setting__draggable-item[data-v-707219ae]:hover {
+  background-color: var(--el-fill-color-light);
+}
+.search-setting__drag-handle[data-v-707219ae] {
+  box-sizing: border-box;
+  color: var(--el-text-color-secondary);
+  cursor: move;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  padding: 0 4px;
+  display: inline-flex;
+}
+.search-setting__checkbox[data-v-707219ae] {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+}
+.search-setting__checkbox[data-v-707219ae] .el-checkbox__label {
+  color: var(--el-text-color-regular);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  overflow: hidden;
+}
+.search-setting[data-v-707219ae] .el-checkbox.is-disabled .el-checkbox__label {
+  color: var(--el-text-color-placeholder);
+}
+.search-setting__drawer-footer[data-v-707219ae] {
+  justify-content: flex-end;
+  gap: 8px;
+  display: flex;
+}

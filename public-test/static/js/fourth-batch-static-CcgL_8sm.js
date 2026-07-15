@@ -1,0 +1,171 @@
+var a = [
+    { value: 'linked', label: '链路完整', type: 'success' },
+    { value: 'partial', label: '部分缺口', type: 'warning' },
+    { value: 'isolated', label: '待补链', type: 'danger' }
+  ],
+  t = [
+    { value: 'forward', label: '正向追溯', type: 'primary' },
+    { value: 'reverse', label: '反向追溯', type: 'info' }
+  ],
+  r = [
+    { value: 'captured', label: '已记录', type: 'info' },
+    { value: 'highlighted', label: '重点关注', type: 'warning' },
+    { value: 'archived', label: '已归档', type: 'success' }
+  ],
+  o = [
+    { value: 'dispatch', label: '派工', type: 'primary' },
+    { value: 'report', label: '报工', type: 'success' },
+    { value: 'release', label: '放行', type: 'warning' },
+    { value: 'exception', label: '异常', type: 'danger' },
+    { value: 'material', label: '物料', type: 'info' }
+  ],
+  c = [
+    {
+      id: 'trace-chain-1',
+      trace_code: 'TRC-20260714-001',
+      trace_direction: 'forward',
+      status: 'linked',
+      product_code: '04.01.001-00001',
+      product_name: '离心泵 XJP-100',
+      serial_code: 'SN-XJP100-240714-01',
+      wo_code: 'WO202501150001',
+      material_batch: 'LOT-240714-01',
+      report_ref: 'REP-20260714-001',
+      inspection_ref: 'IPQC-20260714-003',
+      warehouse_ref: 'WMS-ISSUE-240714-001',
+      equipment_ref: 'CNC-TURN-02',
+      impact_scope: '关联 1 个工单、2 笔报工、1 笔首件复核',
+      workshop_name: '机加一车间',
+      latest_time: '2026-07-14 11:20',
+      chain_nodes: ['工单下达', '工序30精车', '报工入链', '首件复核', 'WIP冻结解除']
+    },
+    {
+      id: 'trace-chain-2',
+      trace_code: 'TRC-20260714-002',
+      trace_direction: 'reverse',
+      status: 'partial',
+      product_code: '04.02.001-00001',
+      product_name: '齿轮箱 GBX-200',
+      serial_code: 'SN-GBX200-240714-08',
+      wo_code: 'WO202501150002',
+      material_batch: 'LOT-240714-08',
+      report_ref: 'REP-20260714-004',
+      inspection_ref: 'IPQC-20260714-006',
+      warehouse_ref: 'WMS-ISSUE-240714-006',
+      equipment_ref: 'CUT-LINE-01',
+      impact_scope: '待补齐设备点检记录后闭环',
+      workshop_name: '机加二车间',
+      latest_time: '2026-07-14 10:05',
+      chain_nodes: ['成品序列号', '工单反查', '下料报工', '设备异常', '缺少点检附件']
+    },
+    {
+      id: 'trace-chain-3',
+      trace_code: 'TRC-20260714-003',
+      trace_direction: 'forward',
+      status: 'isolated',
+      product_code: '04.01.002-00001',
+      product_name: '离心泵 XJP-200',
+      serial_code: 'SN-XJP200-240714-03',
+      wo_code: 'WO202501140003',
+      material_batch: 'LOT-240714-11',
+      report_ref: 'REP-20260714-007',
+      inspection_ref: '',
+      warehouse_ref: 'WMS-ISSUE-240714-010',
+      equipment_ref: 'GRIND-01',
+      impact_scope: '返工链尚缺复检归档结论',
+      workshop_name: '装配车间',
+      latest_time: '2026-07-14 09:15',
+      chain_nodes: ['返工工单', '返工磨削', '替代料引用', '待补复检结论']
+    }
+  ],
+  _ = [
+    {
+      id: 'log-1',
+      log_code: 'AUD-20260714-001',
+      status: 'captured',
+      category: 'dispatch',
+      object_type: '工序任务',
+      object_code: 'OPT-20260714-002',
+      action_name: '班组派工',
+      before_status: '待排产',
+      after_status: '已派工',
+      operator_name: '计划员 张敏',
+      workshop_name: '机加二车间',
+      shift_name: '乙班',
+      source_page: '工序任务',
+      happened_at: '2026-07-14 08:40',
+      remark: '已分配下料组与设备占用窗口'
+    },
+    {
+      id: 'log-2',
+      log_code: 'AUD-20260714-002',
+      status: 'highlighted',
+      category: 'exception',
+      object_type: '执行异常',
+      object_code: 'EX-20260714-001',
+      action_name: '异常锁定',
+      before_status: '已识别',
+      after_status: '已锁定',
+      operator_name: '工艺工程师 周舟',
+      workshop_name: '机加一车间',
+      shift_name: '甲班',
+      source_page: '异常中心',
+      happened_at: '2026-07-14 10:50',
+      remark: '锁定首件偏差批次，阻止后续工序前推'
+    },
+    {
+      id: 'log-3',
+      log_code: 'AUD-20260714-003',
+      status: 'captured',
+      category: 'report',
+      object_type: '报工记录',
+      object_code: 'REP-20260714-001',
+      action_name: '提交报工',
+      before_status: '待提交',
+      after_status: '已提交',
+      operator_name: '赵六',
+      workshop_name: '机加一车间',
+      shift_name: '甲班',
+      source_page: '工序报工',
+      happened_at: '2026-07-14 10:20',
+      remark: '合格 25 件，不良 1 件'
+    },
+    {
+      id: 'log-4',
+      log_code: 'AUD-20260714-004',
+      status: 'archived',
+      category: 'release',
+      object_type: '开工放行条件',
+      object_code: 'KIT-20260714-003',
+      action_name: '返工放行',
+      before_status: '已就绪',
+      after_status: '已放行',
+      operator_name: '质量工程师 李娜',
+      workshop_name: '装配车间',
+      shift_name: '丙班',
+      source_page: '开工齐套检查',
+      happened_at: '2026-07-14 08:35',
+      remark: '返工批次允许继续执行'
+    },
+    {
+      id: 'log-5',
+      log_code: 'AUD-20260714-005',
+      status: 'highlighted',
+      category: 'material',
+      object_type: '投料消耗记录',
+      object_code: 'MAT-20260714-001',
+      action_name: '实耗偏差预警',
+      before_status: '使用中',
+      after_status: '重点关注',
+      operator_name: '赵六',
+      workshop_name: '机加一车间',
+      shift_name: '甲班',
+      source_page: '投料与消耗',
+      happened_at: '2026-07-14 10:25',
+      remark: '泵体毛坯超耗 2 件，已挂补料引用'
+    }
+  ]
+function s(e) {
+  return typeof structuredClone == 'function' ? structuredClone(e) : JSON.parse(JSON.stringify(e))
+}
+export { s as a, a as i, r as n, c as o, t as r, _ as s, o as t }
