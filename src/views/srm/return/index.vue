@@ -1,86 +1,68 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="采购退货"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :table-attrs="{ border: true, stripe: true, rowKey: 'id', style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #status="{ row }">
+      <StatusTag :value="row.status" :options="statusOptions" />
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
     </template>
 
-    <TableSetting title="采购退货单" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          stripe
-          style="height: 100%"
-        >
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'pending' ? 'warning' : 'success'" size="small">
-              {{ row.status === 'pending' ? '待退货' : '已退货' }}
-            </el-tag>
-          </template>
-
-          <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button v-if="row.status === 'pending'" type="success" link size="small" @click="confirmReturn(row)">确认退货</el-button>
-            <el-button v-if="row.status === 'pending'" type="danger" link size="small" @click="onDelete(row)">删除</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <ReturnFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <ReturnFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudDialogMode, CrudRowActionItem } from '@/components/crud/types'
+import { useTable } from '@/hooks/useTable'
 import {
   createPurchaseReturn,
   deletePurchaseReturn,
   getPurchaseReturnList,
   updatePurchaseReturn,
-  type PurchaseReturn,
-  type PurchaseReturnQuery
-} from '@/api/scm'
-import { useTable } from '@/hooks/useTable'
+  type PurchaseReturnQuery,
+  type PurchaseReturnRecord
+} from '@/static/services/srm'
 import ReturnFormDialog, { type ReturnFormModel } from './ReturnFormDialog.vue'
 
-type PurchaseReturnRow = PurchaseReturn
+defineOptions({
+  name: 'SrmPurchaseReturnPage'
+})
+
+const statusOptions = [
+  { value: 'pending', label: '待退货', type: 'warning' as const },
+  { value: 'done', label: '已完成', type: 'success' as const }
+]
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '退货单号', field: 'code', props: { clearable: true } as any },
+  { type: 'input', label: '退货单号', field: 'code', props: { clearable: true, placeholder: '退货单号 / 采购单号 / 质检来源' } as never },
   {
     type: 'select-v2',
     label: '状态',
     field: 'status',
-    props: {
-      clearable: true,
-      options: [
-        { label: '待退货', value: 'pending' },
-        { label: '已退货', value: 'done' }
-      ]
-    } as any
+    props: { clearable: true, options: statusOptions.map((item) => ({ label: item.label, value: item.value })) } as never
   }
 ]
 
@@ -88,28 +70,32 @@ const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
-const columns: TableColumnItem<PurchaseReturnRow>[] = [
-  { prop: 'code', label: '退货单号', minWidth: 160 },
-  { prop: 'po_code', label: '采购订单', minWidth: 160 },
-  { prop: 'supplier', label: '供应商', minWidth: 150 },
-  { prop: 'material', label: '物料名称', minWidth: 150 },
-  { prop: 'qty', label: '数量', minWidth: 90, align: 'center' },
-  { prop: 'reason', label: '退货原因', minWidth: 130 },
-  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
+const columns: TableColumnItem<PurchaseReturnRecord>[] = [
+  { prop: 'code', label: '退货单号', minWidth: 150 },
+  { prop: 'po_code', label: '采购订单', minWidth: 150 },
+  { prop: 'supplier', label: '供应商', minWidth: 170 },
+  { prop: 'material', label: '退货物料', minWidth: 160 },
+  { prop: 'qty', label: '退货数量', minWidth: 90, align: 'center' },
+  { prop: 'reason', label: '退货原因', minWidth: 160 },
+  { prop: 'quality_source', label: '质量来源', minWidth: 170 },
+  { prop: 'created_at', label: '创建日期', minWidth: 120, align: 'center' },
+  { label: '状态', minWidth: 100, slotName: 'status', align: 'center' },
   { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
-const queryParams = reactive({
+const queryParams = reactive<{
+  code: string
+  status: '' | PurchaseReturnRecord['status']
+}>({
   code: '',
   status: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
+const dialogMode = ref<CrudDialogMode>('add')
 const formModel = ref<ReturnFormModel>(createDefaultFormModel())
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<PurchaseReturnRow>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<PurchaseReturnRecord>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: PurchaseReturnQuery = {
@@ -137,10 +123,6 @@ function createDefaultFormModel(): ReturnFormModel {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
-}
-
 function handleReset() {
   Object.assign(queryParams, {
     code: '',
@@ -155,47 +137,80 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: PurchaseReturnRow) {
+function openEdit(row: PurchaseReturnRecord) {
   dialogMode.value = 'edit'
-  formModel.value = { ...row }
+  formModel.value = {
+    id: row.id,
+    code: row.code,
+    po_code: row.po_code,
+    supplier: row.supplier,
+    material: row.material,
+    qty: row.qty,
+    reason: row.reason,
+    status: row.status
+  }
   dialogVisible.value = true
+}
+
+function getRowActions(row: PurchaseReturnRecord): CrudRowActionItem[] {
+  return [
+    { key: 'edit', label: '编辑', tone: 'primary' },
+    { key: 'confirm', label: '确认退货', tone: 'success', hidden: row.status !== 'pending' },
+    { key: 'delete', label: '删除', tone: 'danger', hidden: row.status !== 'pending' }
+  ]
+}
+
+function handleRowAction(action: string, row: PurchaseReturnRecord) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'confirm') {
+    void confirmReturn(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
 }
 
 async function submitDialog() {
   if (!formModel.value.code || !formModel.value.po_code || !formModel.value.material) {
-    ElMessage.warning('请填写退货单号、采购订单和物料名称')
+    ElMessage.warning('请填写退货单号、采购订单和退货物料')
     return
   }
 
-  const payload: Partial<PurchaseReturn> = {
+  const payload: Partial<PurchaseReturnRecord> = {
     code: formModel.value.code,
     po_code: formModel.value.po_code,
     supplier: formModel.value.supplier,
     material: formModel.value.material,
     qty: Number(formModel.value.qty || 0),
     reason: formModel.value.reason,
-    status: formModel.value.status as PurchaseReturn['status']
+    status: formModel.value.status as PurchaseReturnRecord['status'],
+    quality_source: 'QMS-STATIC-LINK',
+    created_at: new Date().toISOString().slice(0, 10)
   }
 
   if (dialogMode.value === 'add') {
     await createPurchaseReturn(payload)
+    ElMessage.success('采购退货已新增')
   } else {
     await updatePurchaseReturn(formModel.value.id, payload)
+    ElMessage.success('采购退货已更新')
   }
 
   dialogVisible.value = false
   await refresh()
 }
 
-async function confirmReturn(row: PurchaseReturnRow) {
+async function confirmReturn(row: PurchaseReturnRecord) {
   await updatePurchaseReturn(row.id, { status: 'done' })
-  ElMessage.success('采购退货已完成')
+  ElMessage.success('采购退货协同已确认')
   await refresh()
 }
 </script>
 
-<style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-</style>
+<style scoped></style>
