@@ -1,4 +1,49 @@
-node_modules
-dist
-.tmp
-.claude
+# Dependencies
+node_modules/
+.npm/
+
+# Build outputs
+dist/
+public/
+public-test/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Temporary files
+.tmp/
+tmp/
+temp/
+.cache/
+build-capture.log
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# IDE / editor
+.idea/
+.vscode/
+.history/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local environment overrides
+.env.local
+.env.*.local
+
+# Local-only folders for notes / exports / attachments
+drafts/
+docs-private/
+notes/
+screenshots/
+exports/
+artifacts/
+
+# Local tool state
+.claude/
