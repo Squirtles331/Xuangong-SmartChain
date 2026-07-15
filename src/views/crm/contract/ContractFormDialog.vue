@@ -4,7 +4,7 @@
     :title="mode === 'add' ? '新增合同' : '编辑合同'"
     :footer="true"
     :lock-scroll="false"
-    width="650px"
+    width="720px"
     :on-before-ok="handleSubmit"
     :on-cancel="handleCancel"
   >
@@ -13,24 +13,29 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
+import type { ContractStatus } from '@/static/services/crm'
 
 export interface ContractFormModel {
   id: string
   code: string
-  customer: string
+  customer_code: string
+  order_code: string
   amount: number
+  payment_terms: string
   sign_date: string
   start_date: string
   end_date: string
-  status: string
+  status: ContractStatus
 }
 
 interface Props {
   mode: 'add' | 'edit'
+  customerOptions: Array<{ label: string; value: string }>
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<ContractFormModel>('form', { required: true })
@@ -39,13 +44,21 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '合同编号', field: 'code', required: true },
-  { type: 'input', label: '客户名称', field: 'customer', required: true },
-  { type: 'input-number', label: '合同金额', field: 'amount', props: { min: 0 } as any },
-  { type: 'date-picker', label: '签订日期', field: 'sign_date' },
-  { type: 'date-picker', label: '生效日期', field: 'start_date' },
-  { type: 'date-picker', label: '到期日期', field: 'end_date' },
+  {
+    type: 'select-v2',
+    label: '客户',
+    field: 'customer_code',
+    required: true,
+    props: { options: props.customerOptions, clearable: false } as never
+  },
+  { type: 'input', label: '关联订单', field: 'order_code' },
+  { type: 'input-number', label: '合同金额', field: 'amount', props: { min: 0 } as never },
+  { type: 'input', label: '付款条款', field: 'payment_terms' },
+  { type: 'date-picker', label: '签订日期', field: 'sign_date', props: { valueFormat: 'YYYY-MM-DD' } as never },
+  { type: 'date-picker', label: '生效日期', field: 'start_date', props: { valueFormat: 'YYYY-MM-DD' } as never },
+  { type: 'date-picker', label: '到期日期', field: 'end_date', props: { valueFormat: 'YYYY-MM-DD' } as never },
   {
     type: 'select-v2',
     label: '状态',
@@ -54,12 +67,12 @@ const formColumns: FormColumnItem[] = [
       options: [
         { label: '草稿', value: 'draft' },
         { label: '生效中', value: 'active' },
-        { label: '已过期', value: 'expired' },
-        { label: '已终止', value: 'terminated' }
+        { label: '临近到期', value: 'expiring' },
+        { label: '已关闭', value: 'closed' }
       ]
-    } as any
+    } as never
   }
-]
+])
 
 function handleCancel() {
   visible.value = false

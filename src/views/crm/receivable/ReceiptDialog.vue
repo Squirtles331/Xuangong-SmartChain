@@ -1,16 +1,16 @@
 <template>
   <el-dialog v-model="visible" title="登记回款" width="500px" :lock-scroll="false">
     <el-form :model="formData" label-width="100px">
-      <el-form-item label="客户名称" required>
+      <el-form-item label="客户" required>
         <el-select v-model="formData.customer" style="width: 100%">
-          <el-option v-for="item in customerNames" :key="item" :label="item" :value="item" />
+          <el-option v-for="item in customerOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="回款金额" required>
         <el-input-number v-model="formData.amount" :min="0" style="width: 100%" />
       </el-form-item>
       <el-form-item label="回款日期" required>
-        <el-date-picker v-model="formData.date" style="width: 100%" />
+        <el-date-picker v-model="formData.date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="回款方式" required>
         <el-select v-model="formData.method" style="width: 100%">
@@ -36,7 +36,7 @@ export interface ReceiptFormModel {
 }
 
 interface Props {
-  customerNames: string[]
+  customerOptions: Array<{ label: string; value: string }>
 }
 
 defineProps<Props>()

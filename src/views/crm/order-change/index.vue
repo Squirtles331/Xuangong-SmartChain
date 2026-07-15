@@ -1,15 +1,15 @@
 <template>
   <gi-page-layout>
     <template #header>
-      <h3>销售订单变更 - {{ order?.code || '--' }}</h3>
+      <h3>客户订单变更请求 - {{ order?.code || '--' }}</h3>
     </template>
 
     <el-descriptions :column="2" border style="margin-bottom: 16px">
       <el-descriptions-item label="订单编号">{{ order?.code || '-' }}</el-descriptions-item>
       <el-descriptions-item label="客户名称">{{ order?.customer_name || '-' }}</el-descriptions-item>
-      <el-descriptions-item label="产品名称">{{ order?.material_name || '-' }}</el-descriptions-item>
+      <el-descriptions-item label="产品名称">{{ order?.product_name || '-' }}</el-descriptions-item>
       <el-descriptions-item label="原数量">{{ order?.qty || 0 }} 件</el-descriptions-item>
-      <el-descriptions-item label="原交期">{{ order?.delivery_date || '-' }}</el-descriptions-item>
+      <el-descriptions-item label="原交期">{{ order?.promised_date || '-' }}</el-descriptions-item>
       <el-descriptions-item label="当前状态">{{ currentStatusText }}</el-descriptions-item>
     </el-descriptions>
 
@@ -42,7 +42,7 @@
           <el-input-number v-model="form.new_qty" :min="1" style="width: 100%" />
         </el-form-item>
         <el-form-item v-if="form.type !== 'qty'" label="新交期" required>
-          <el-date-picker v-model="form.new_date" style="width: 100%" />
+          <el-date-picker v-model="form.new_date" value-format="YYYY-MM-DD" style="width: 100%" />
         </el-form-item>
         <el-form-item label="变更原因" required>
           <el-input v-model="form.reason" type="textarea" :rows="3" />
@@ -61,19 +61,19 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
-import { getSalesOrderDetail, updateSalesOrder, type SalesOrder } from '@/api/crm'
+import { createSalesOrderChangeRequest, getSalesOrderDetail, type SalesOrderRecord } from '@/static/services/crm'
 
 const route = useRoute()
 const router = useRouter()
 
-const statusTextMap: Record<SalesOrder['status'], string> = {
-  approved: '已审批',
-  in_production: '生产中',
-  pending_delivery: '待发货',
-  completed: '已完成'
+const statusTextMap: Record<SalesOrderRecord['status'], string> = {
+  confirmed: '已确认',
+  coordinating: '承接协同中',
+  delivering: '发运推进中',
+  completed: '协同完成'
 }
 
-const order = ref<SalesOrder | null>(null)
+const order = ref<SalesOrderRecord | null>(null)
 const showDiff = ref(false)
 const diffData = ref<Array<{ field: string; old: string | number; new: string | number }>>([])
 
@@ -97,7 +97,7 @@ onMounted(async () => {
   if (response.data) {
     order.value = response.data
     form.new_qty = response.data.qty
-    form.new_date = response.data.delivery_date
+    form.new_date = response.data.promised_date
   }
 })
 
@@ -109,7 +109,7 @@ function previewChange() {
     items.push({ field: '数量', old: `${order.value.qty} 件`, new: `${form.new_qty} 件` })
   }
   if (form.type !== 'qty') {
-    items.push({ field: '交期', old: order.value.delivery_date, new: form.new_date })
+    items.push({ field: '交期', old: order.value.promised_date, new: form.new_date })
   }
   diffData.value = items
   showDiff.value = true
@@ -122,12 +122,14 @@ async function submitChange() {
     return
   }
 
-  const payload: Partial<SalesOrder> = {}
-  if (form.type !== 'date') payload.qty = form.new_qty
-  if (form.type !== 'qty') payload.delivery_date = form.new_date
-
-  await updateSalesOrder(order.value.id, payload)
-  ElMessage.success('订单变更已提交')
+  await createSalesOrderChangeRequest({
+    orderId: order.value.id,
+    type: form.type,
+    new_qty: form.type === 'date' ? undefined : form.new_qty,
+    new_date: form.type === 'qty' ? undefined : form.new_date,
+    reason: form.reason
+  })
+  ElMessage.success('订单变更请求已提交')
   router.push('/customer-business/crm/order')
 }
 </script>
