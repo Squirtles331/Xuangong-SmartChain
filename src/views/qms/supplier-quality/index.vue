@@ -1,56 +1,53 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
-          search
-          @reset="handleReset"
-          @search="search"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="供应商质量"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :toolbar-actions="toolbarActions"
+    :table-attrs="{ border: true, stripe: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+    @toolbar-action="handleToolbarAction"
+  >
+    <template #passRate="{ row }">
+      <el-progress :percentage="row.pass_rate" :stroke-width="8" :color="progressColor(row.pass_rate)" />
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    <template #actions="{ row }">
+      <CrudRowActions :actions="rowActions" @action="handleRowAction($event, row)" />
     </template>
 
-    <TableSetting title="供应商质量" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
-          <template #pass_rate="{ row }">
-            <el-progress
-              :percentage="row.pass_rate"
-              :stroke-width="8"
-              :color="row.pass_rate >= 95 ? '#67c23a' : row.pass_rate >= 80 ? '#e6a23c' : '#f56c6c'"
-            />
-          </template>
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <SupplierQualityFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <SupplierQualityFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
-import { createSupplierQuality, deleteSupplierQuality, getSupplierQualityList, updateSupplierQuality, type SupplierQuality } from '@/api/qms'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem, CrudToolbarActionItem } from '@/components/crud/types'
 import { useTable } from '@/hooks/useTable'
+import { createSupplierQuality, deleteSupplierQuality, getSupplierQualityList, updateSupplierQuality } from '@/static/services/qms'
+import type { SupplierQuality } from '@/types/qms'
 import SupplierQualityFormDialog, { type SupplierQualityFormModel } from './SupplierQualityFormDialog.vue'
 
-const queryParams = reactive({
+const toolbarActions: CrudToolbarActionItem[] = [{ key: 'export', label: '导出' }]
+const rowActions: CrudRowActionItem[] = [
+  { key: 'edit', label: '编辑', tone: 'primary' },
+  { key: 'delete', label: '删除', tone: 'danger' }
+]
+
+const queryParams = ref({
   supplier: ''
 })
 
@@ -58,17 +55,16 @@ const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<SupplierQualityFormModel>(createDefaultFormModel())
 
-const searchColumns: FormColumnItem[] = [{ type: 'input', label: '供应商', field: 'supplier' }]
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
+const searchColumns: FormColumnItem[] = [{ type: 'input', label: '供应商', field: 'supplier', props: { clearable: true } as any }]
 
 const columns: TableColumnItem<SupplierQuality>[] = [
   { prop: 'supplier', label: '供应商', minWidth: 180 },
   { prop: 'total_batches', label: '总批次数', minWidth: 100, align: 'center' },
   { prop: 'pass_batches', label: '合格批次', minWidth: 100, align: 'center' },
-  { label: '合格率', minWidth: 180, slotName: 'pass_rate' },
+  { label: '合格率', minWidth: 180, slotName: 'passRate' },
   { prop: 'repeat_issues', label: '重复问题', minWidth: 90, align: 'center' },
   { prop: 'last_inspection', label: '最近检验', width: 120 },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { label: '操作', minWidth: 160, fixed: 'right', slotName: 'actions', align: 'center' }
 ]
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<SupplierQuality>({
@@ -77,7 +73,7 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<S
     const response = await getSupplierQualityList({
       pageNum: page,
       pageSize: size,
-      supplier: queryParams.supplier || undefined
+      supplier: queryParams.value.supplier || undefined
     })
     return response.data
   },
@@ -96,13 +92,15 @@ function createDefaultFormModel(): SupplierQualityFormModel {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
+function handleReset() {
+  queryParams.value = { supplier: '' }
+  search()
 }
 
-function handleReset() {
-  Object.assign(queryParams, { supplier: '' })
-  search()
+function handleToolbarAction(action: string) {
+  if (action === 'export') {
+    ElMessage.success('供应商质量静态数据已导出')
+  }
 }
 
 function openAdd() {
@@ -115,6 +113,23 @@ function openEdit(row: SupplierQuality) {
   dialogMode.value = 'edit'
   formModel.value = { ...row }
   dialogVisible.value = true
+}
+
+function handleRowAction(action: string, row: SupplierQuality) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
+}
+
+function progressColor(passRate: number) {
+  if (passRate >= 95) return '#67c23a'
+  if (passRate >= 80) return '#e6a23c'
+  return '#f56c6c'
 }
 
 async function submitDialog() {

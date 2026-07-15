@@ -50,18 +50,14 @@
 
 <script lang="ts" setup>
 import type { FormColumnItem } from 'gi-component'
+import type { QCTemplate, QCTemplateItem } from '@/types/qms'
 
-export interface TemplateItem {
-  name: string
-  type: string
-  standard: string
-  required: boolean
-}
+export type TemplateItem = QCTemplateItem
 
 export interface TemplateFormModel {
   id: string
   name: string
-  category: string
+  category: QCTemplate['category']
   items: TemplateItem[]
 }
 

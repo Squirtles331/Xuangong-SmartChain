@@ -1,89 +1,88 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="{ span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 } }"
-          search
-          @reset="handleReset"
-          @search="search"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="检验模板列表"
+    :search-columns="searchColumns"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :toolbar-actions="toolbarActions"
+    :table-attrs="{ border: true, stripe: true, style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+    @toolbar-action="handleToolbarAction"
+  >
+    <template #category="{ row }">
+      <StatusTag :value="row.category" :options="categoryOptions" />
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    <template #actions="{ row }">
+      <CrudRowActions :actions="rowActions" @action="handleRowAction($event, row)" />
     </template>
 
-    <TableSetting title="检验模板" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table :columns="settingColumns" :data="tableData" :pagination="pagination" :loading="loading" v-bind="tableProps" border stripe>
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <gi-button style="margin-left: 8px" type="delete" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <TemplateFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      v-model:items="formItems"
-      :mode="dialogMode"
-      @submit="submitDialog"
-    />
-  </gi-page-layout>
+    <template #dialog>
+      <TemplateFormDialog
+        v-model:visible="dialogVisible"
+        v-model:form="formModel"
+        v-model:items="formItems"
+        :mode="dialogMode"
+        @submit="submitDialog"
+      />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
-import { createQCTemplate, deleteQCTemplate, getQCTemplateList, updateQCTemplate, type QCTemplate } from '@/api/qms'
+import StatusTag from '@/components/StatusTag.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem, CrudToolbarActionItem } from '@/components/crud/types'
+import { createQCTemplate, deleteQCTemplate, getQCTemplateList, updateQCTemplate } from '@/static/services/qms'
 import { useTable } from '@/hooks/useTable'
+import type { QCTemplate } from '@/types/qms'
 import TemplateFormDialog, { type TemplateFormModel, type TemplateItem } from './TemplateFormDialog.vue'
 
-const queryParams = reactive({
+const toolbarActions: CrudToolbarActionItem[] = [{ key: 'export', label: '导出' }]
+const rowActions: CrudRowActionItem[] = [
+  { key: 'edit', label: '编辑', tone: 'primary' },
+  { key: 'delete', label: '删除', tone: 'danger' }
+]
+const categoryOptions = [
+  { value: 'raw', label: '原材料', type: 'warning' as const },
+  { value: 'purchased', label: '外购件', type: 'primary' as const },
+  { value: 'semi-finished', label: '半成品', type: 'success' as const },
+  { value: 'finished', label: '成品', type: 'info' as const }
+]
+
+const queryParams = ref({
   keyword: '',
   category: ''
 })
 
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-const formModel = ref<TemplateFormModel>(createDefaultFormModel())
-const formItems = ref<TemplateItem[]>([])
-
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '模板名称', field: 'keyword' },
+  { type: 'input', label: '模板名称', field: 'keyword', props: { clearable: true } as any },
   {
     type: 'select-v2',
     label: '类别',
     field: 'category',
     props: {
-      options: [
-        { label: '全部', value: '' },
-        { label: '原材料', value: 'raw' },
-        { label: '外购件', value: 'purchased' },
-        { label: '半成品', value: 'semi-finished' },
-        { label: '成品', value: 'finished' }
-      ]
+      options: categoryOptions.map((item) => ({ label: item.label, value: item.value })),
+      clearable: true
     } as any
   }
 ]
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
-
 const columns: TableColumnItem<QCTemplate>[] = [
   { prop: 'name', label: '模板名称', minWidth: 220 },
-  { prop: 'category', label: '类别', width: 140 },
-  { prop: 'itemCount', label: '项目数', minWidth: 100, align: 'center' },
-  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
+  { label: '类别', width: 120, slotName: 'category', align: 'center' },
+  { prop: 'itemCount', label: '检验项目数', width: 120, align: 'center' },
+  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center', fixed: 'right' }
 ]
 
 const { tableData, pagination, loading, search, refresh, onDelete } = useTable<QCTemplate>({
@@ -92,13 +91,18 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<Q
     const response = await getQCTemplateList({
       pageNum: page,
       pageSize: size,
-      keyword: queryParams.keyword || undefined,
-      category: queryParams.category || undefined
+      keyword: queryParams.value.keyword || undefined,
+      category: queryParams.value.category || undefined
     })
     return response.data
   },
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteQCTemplate(id)))
 })
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formModel = ref<TemplateFormModel>(createDefaultFormModel())
+const formItems = ref<TemplateItem[]>([])
 
 function createDefaultItems(count = 1): TemplateItem[] {
   return Array.from({ length: count }, (_, index) => ({
@@ -118,13 +122,18 @@ function createDefaultFormModel(): TemplateFormModel {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
+function handleReset() {
+  queryParams.value = {
+    keyword: '',
+    category: ''
+  }
+  search()
 }
 
-function handleReset() {
-  Object.assign(queryParams, { keyword: '', category: '' })
-  search()
+function handleToolbarAction(action: string) {
+  if (action === 'export') {
+    ElMessage.success('检验模板静态数据已导出')
+  }
 }
 
 function openAdd() {
@@ -144,6 +153,17 @@ function openEdit(row: QCTemplate) {
   }
   formItems.value = row.items?.length ? row.items.map((item) => ({ ...item })) : createDefaultItems(Math.max(1, row.itemCount))
   dialogVisible.value = true
+}
+
+function handleRowAction(action: string, row: QCTemplate) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
 }
 
 async function submitDialog() {

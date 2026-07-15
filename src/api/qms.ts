@@ -2,42 +2,8 @@ import * as staticService from '@/static/services/qms'
 import { isMockMode, isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
 import * as mockService from '@/mock/services/qms'
-
-export interface InspectionTask {
-  id: string
-  code: string
-  type: string
-  material: string
-  lot: string
-  qty: number
-  status: string
-  verdict?: string
-}
-
-export interface QCTemplateItem {
-  name: string
-  type: string
-  standard: string
-  required: boolean
-}
-
-export interface QCTemplate {
-  id: string
-  name: string
-  category: string
-  itemCount: number
-  items: QCTemplateItem[]
-}
-
-export interface SupplierQuality {
-  id: string
-  supplier: string
-  total_batches: number
-  pass_batches: number
-  pass_rate: number
-  repeat_issues: number
-  last_inspection: string
-}
+export type { InspectionTask, QCTemplate, QCTemplateItem, SupplierQuality } from '@/types/qms'
+import type { InspectionTask, QCTemplate, SupplierQuality } from '@/types/qms'
 
 export function getInspectionTaskList(params: {
   pageNum: number
