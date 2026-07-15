@@ -1,45 +1,20 @@
 <template>
   <div class="login-container">
-    <!-- 左侧品牌展示区域 -->
-    <div class="login-left-panel">
-      <div class="brand-header">
-        <div class="logo">
-          <div class="logo-icon"></div>
-          <span class="logo-text">玄工智链 · XIC 平台</span>
-        </div>
-      </div>
-
-      <div class="hero-content">
-        <div class="hero-illustration">
-          <!-- 3D等距插图区域 -->
-          <div class="isometric-platform">
-            <div class="platform-element element-1"></div>
-            <div class="platform-element element-2"></div>
-            <div class="platform-element element-3"></div>
-            <div class="platform-element element-4"></div>
-            <div class="floating-element float-1"></div>
-            <div class="floating-element float-2"></div>
-            <div class="floating-element float-3"></div>
-          </div>
-        </div>
-
-        <div class="hero-text">
-          <h1 class="hero-title">制造业一体化数字平台门户</h1>
-          <p class="hero-subtitle">统一身份与门户 · 主数据唯一 · 流程引擎统一</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 右侧登录表单区域 -->
-    <div class="login-right-panel">
+    <section class="login-left-panel" aria-label="登录区域">
       <div class="login-card">
+        <header class="brand-header">
+          <div class="logo">
+            <span class="logo-icon" aria-hidden="true"></span>
+            <span class="logo-text">玄工智链 · XIC 平台</span>
+          </div>
+        </header>
+
         <div class="login-header">
-          <h2 class="login-title">登录玄工智链门户</h2>
-          <p class="login-subtitle">使用邮箱/手机号 + 密码登录，支持单点登录</p>
+          <h1 class="welcome-title">欢迎来到玄工智链</h1>
+          <p class="login-hint">使用邮箱/手机号登录</p>
         </div>
 
         <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" class="login-form">
-          <!-- 公司选择器 -->
           <el-form-item prop="company">
             <el-select v-model="loginForm.company" placeholder="请选择租户/组织" class="form-select">
               <el-option label="XXX有限公司" value="company1" />
@@ -47,12 +22,10 @@
             </el-select>
           </el-form-item>
 
-          <!-- 用户名 -->
           <el-form-item prop="username">
             <el-input v-model="loginForm.username" placeholder="请输入邮箱/手机号" prefix-icon="User" class="form-input" />
           </el-form-item>
 
-          <!-- 密码 -->
           <el-form-item prop="password">
             <el-input
               v-model="loginForm.password"
@@ -64,49 +37,50 @@
             />
           </el-form-item>
 
-          <!-- 验证码 -->
           <el-form-item prop="captcha" class="captcha-item">
-            <div class="captcha-container">
+            <div class="captcha-wrapper">
               <el-input v-model="loginForm.captcha" placeholder="请输入验证码" class="captcha-input" />
-              <div class="captcha-image" @click="refreshCaptcha">
+              <button type="button" class="captcha-box" aria-label="刷新验证码" @click="refreshCaptcha">
                 <span class="captcha-text">{{ captchaText }}</span>
                 <el-icon class="refresh-icon"><Refresh /></el-icon>
-              </div>
+              </button>
             </div>
           </el-form-item>
 
-          <!-- 记住账号和忘记密码 -->
           <div class="form-options">
             <el-checkbox v-model="loginForm.remember" class="remember-checkbox">记住我</el-checkbox>
             <el-link type="primary" class="forgot-link">找回密码</el-link>
           </div>
 
-          <!-- 登录按钮 -->
-          <el-button type="primary" class="login-button" @click="handleLogin"> 登录 </el-button>
+          <el-button type="primary" class="login-button" :loading="loading" @click="handleLogin">登录</el-button>
 
-          <!-- 其他登录方式 -->
-          <div class="alternative-login">
-            <el-button class="alt-button">短信验证码登录</el-button>
-            <el-button class="alt-button">OIDC 单点登录</el-button>
-          </div>
-
-          <!-- 社交登录 -->
           <div class="social-login">
             <p class="social-title">第三方登录（钉钉 / 企业微信 / AD）</p>
-            <div class="social-icons">
-              <div class="social-icon icon-wechat"></div>
-              <div class="social-icon icon-github"></div>
-              <div class="social-icon icon-google"></div>
-              <div class="social-icon icon-qq"></div>
+            <div class="social-icons" aria-label="第三方登录方式">
+              <button type="button" class="social-icon icon-wechat" aria-label="企业微信登录">W</button>
+              <button type="button" class="social-icon icon-github" aria-label="钉钉登录">D</button>
+              <button type="button" class="social-icon icon-google" aria-label="AD 登录">A</button>
             </div>
           </div>
         </el-form>
 
-        <div class="login-footer">
-          <p class="copyright">© 2025 玄工智链 · XIC Platform｜遵循等保三级，HTTPS+JWT，密码国密 SM4</p>
+        <footer class="login-footer">
+          <p class="copyright">© 2026 玄工智链 · XIC Platform｜遵循等保三级，HTTPS+JWT，密码国密 SM4</p>
+        </footer>
+      </div>
+    </section>
+
+    <aside class="login-right-panel" aria-label="平台介绍">
+      <div class="right-content">
+        <div class="promo-header">
+          <h2 class="promo-title">面向离散制造的 MES 中枢型一体化平台</h2>
+          <p class="promo-subtitle">以事件驱动和状态控制为核心 · 实现多系统协同闭环</p>
+        </div>
+        <div class="illustration-wrapper">
+          <img :src="loginImage" alt="玄工智链一体化平台" class="illustration-image" />
         </div>
       </div>
-    </div>
+    </aside>
   </div>
 </template>
 
@@ -115,6 +89,7 @@ import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Refresh } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import loginImage from '@/assets/images/login.png'
 
 const router = useRouter()
 const loginFormRef = ref()
@@ -147,7 +122,6 @@ const handleLogin = async () => {
     await loginFormRef.value.validate()
     loading.value = true
 
-    // 开发模式：Mock 登录，跳过真实 API
     const success = await mockLogin()
 
     if (success) {
@@ -166,11 +140,9 @@ const handleLogin = async () => {
   }
 }
 
-// Mock 登录：验证码校验 + 模拟 0.5 秒延迟
 function mockLogin(): Promise<boolean> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      // 验证码校验（去除空格后比较）
       const inputCaptcha = loginForm.captcha.replace(/\s/g, '')
       const expectedCaptcha = captchaText.value.replace(/\s/g, '')
       if (inputCaptcha !== expectedCaptcha) {
@@ -178,9 +150,7 @@ function mockLogin(): Promise<boolean> {
         resolve(false)
         return
       }
-      // 账号密码校验
       if (loginForm.username && loginForm.password) {
-        // 设置用户信息到 localStorage，模拟登录态
         localStorage.setItem('access_token', 'mock_token_' + Date.now())
         localStorage.setItem('refresh_token', 'mock_refresh_token')
         localStorage.setItem(
@@ -204,343 +174,226 @@ function mockLogin(): Promise<boolean> {
 </script>
 
 <style scoped lang="scss">
-.login-container {
-  display: flex;
-  height: 100vh;
-  background: #0a0e1a;
-  overflow: hidden;
+* {
+  box-sizing: border-box;
 }
 
-// 左侧品牌展示区域
-.login-left-panel {
-  flex: 1.2;
-  background: linear-gradient(135deg, #1a1f3a 0%, #0f1629 50%, #1a1f3a 100%);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: 40px;
+.login-container {
+  display: grid;
+  grid-template-columns: minmax(420px, 0.9fr) minmax(560px, 1.3fr);
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #ffffff;
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-      radial-gradient(circle at 30% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 70% 30%, rgba(147, 51, 234, 0.1) 0%, transparent 50%);
-    pointer-events: none;
-  }
+.login-left-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 40px 32px;
+  scrollbar-gutter: stable;
+  background: #ffffff;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 525px;
 }
 
 .brand-header {
-  position: relative;
-  z-index: 10;
+  margin-bottom: 28px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .logo-icon {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%);
-  border-radius: 8px;
   position: relative;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3f79f5 0%, #2a63e8 100%);
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    width: 8px;
-    height: 8px;
-    background: white;
-    border-radius: 2px;
-  }
+.logo-icon::before,
+.logo-icon::after {
+  position: absolute;
+  content: '';
+  background: #ffffff;
+  border-radius: 2px;
+}
 
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 6px;
-    right: 6px;
-    width: 12px;
-    height: 12px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 3px;
-  }
+.logo-icon::before {
+  top: 10px;
+  left: 10px;
+  width: 8px;
+  height: 8px;
+}
+
+.logo-icon::after {
+  right: 8px;
+  bottom: 8px;
+  width: 14px;
+  height: 14px;
+  opacity: 0.9;
+  border-radius: 3px;
 }
 
 .logo-text {
-  color: white;
+  color: #172033;
   font-size: 20px;
   font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.hero-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  z-index: 10;
-}
-
-.hero-illustration {
-  margin-bottom: 48px;
-}
-
-.isometric-platform {
-  width: 320px;
-  height: 240px;
-  position: relative;
-  transform-style: preserve-3d;
-  transform: rotateX(60deg) rotateZ(-45deg);
-}
-
-.platform-element {
-  position: absolute;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
-
-  &.element-1 {
-    width: 120px;
-    height: 8px;
-    bottom: 0;
-    left: 0;
-    transform: translateZ(20px);
-  }
-
-  &.element-2 {
-    width: 80px;
-    height: 8px;
-    bottom: 20px;
-    left: 20px;
-    transform: translateZ(40px);
-    background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
-  }
-
-  &.element-3 {
-    width: 60px;
-    height: 8px;
-    bottom: 40px;
-    left: 40px;
-    transform: translateZ(60px);
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  }
-
-  &.element-4 {
-    width: 40px;
-    height: 8px;
-    bottom: 60px;
-    left: 60px;
-    transform: translateZ(80px);
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  }
-}
-
-.floating-element {
-  position: absolute;
-  background: rgba(59, 130, 246, 0.2);
-  border-radius: 50%;
-  animation: float 6s ease-in-out infinite;
-
-  &.float-1 {
-    width: 16px;
-    height: 16px;
-    top: 20px;
-    right: 40px;
-    animation-delay: 0s;
-  }
-
-  &.float-2 {
-    width: 12px;
-    height: 12px;
-    top: 60px;
-    right: 80px;
-    animation-delay: 2s;
-  }
-
-  &.float-3 {
-    width: 20px;
-    height: 20px;
-    top: 100px;
-    right: 20px;
-    animation-delay: 4s;
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-20px) rotate(180deg);
-  }
-}
-
-.hero-text {
-  text-align: center;
-  max-width: 480px;
-}
-
-.hero-title {
-  color: white;
-  font-size: 32px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  line-height: 1.3;
-}
-
-.hero-subtitle {
-  color: #9ca3af;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-// 右侧登录表单区域
-.login-right-panel {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  background: rgba(15, 17, 24, 0.8);
-  backdrop-filter: blur(10px);
-}
-
-.login-card {
-  width: 100%;
-  max-width: 400px;
-  background: rgba(20, 22, 28, 0.9);
-  border-radius: 16px;
-  padding: 40px;
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  line-height: 1.2;
 }
 
 .login-header {
-  margin-bottom: 32px;
-  text-align: center;
-}
-
-.login-title {
-  color: white;
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.login-subtitle {
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.login-form {
   margin-bottom: 24px;
 }
 
-:deep(.el-form-item) {
-  margin-bottom: 20px;
+.welcome-title {
+  margin: 0 0 8px;
+  color: #172033;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
-:deep(.el-input__wrapper) {
-  background: rgba(31, 41, 55, 0.8);
-  border: 1px solid rgba(75, 85, 99, 0.3);
-  border-radius: 8px;
-  padding: 12px 16px;
-
-  &:hover {
-    border-color: rgba(59, 130, 246, 0.5);
-  }
-
-  &.is-focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-  }
-}
-
-:deep(.el-input__inner) {
-  color: white;
+.login-hint {
+  margin: 0;
+  color: #52617a;
   font-size: 14px;
-
-  &::placeholder {
-    color: #6b7280;
-  }
+  line-height: 1.5;
 }
 
-:deep(.el-select .el-input__wrapper) {
-  background: rgba(31, 41, 55, 0.8);
-  border: 1px solid rgba(75, 85, 99, 0.3);
-  border-radius: 8px;
-}
-
-.captcha-item {
+.login-form {
   margin-bottom: 16px;
 }
 
-.captcha-container {
+:deep(.el-form-item) {
+  margin-bottom: 14px;
+}
+
+:deep(.el-form-item__error) {
+  padding-top: 3px;
+}
+
+.form-select,
+.form-input,
+.captcha-input {
+  width: 100%;
+}
+
+.form-select :deep(.el-input__wrapper),
+.form-input :deep(.el-input__wrapper),
+.captcha-input :deep(.el-input__wrapper) {
+  min-height: 52px;
+  padding: 1px 16px;
+  border: 1px solid #d9e0ea;
+  border-radius: 10px;
+  box-shadow: none;
+  background: #ffffff;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-select :deep(.el-input__wrapper:hover),
+.form-input :deep(.el-input__wrapper:hover),
+.captcha-input :deep(.el-input__wrapper:hover) {
+  border-color: #aebbd0;
+}
+
+.form-select :deep(.el-input__wrapper.is-focus),
+.form-input :deep(.el-input__wrapper.is-focus),
+.captcha-input :deep(.el-input__wrapper.is-focus) {
+  border-color: #3f79f5;
+  box-shadow: 0 0 0 3px rgba(63, 121, 245, 0.1);
+}
+
+.form-input :deep(.el-input__inner),
+.form-select :deep(.el-input__inner),
+.captcha-input :deep(.el-input__inner) {
+  color: #26344a;
+  font-size: 15px;
+}
+
+.captcha-item {
+  margin-bottom: 14px;
+}
+
+.captcha-wrapper {
   display: flex;
-  gap: 12px;
   align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
 .captcha-input {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.captcha-image {
-  width: 100px;
-  height: 40px;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border-radius: 6px;
+.captcha-box {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  position: relative;
+  width: 100px;
+  height: 52px;
+  flex: 0 0 100px;
   overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f1f4f8 0%, #e2e7ef 100%);
+  cursor: pointer;
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-    animation: shimmer 2s infinite;
-  }
+.captcha-box::before {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  animation: shimmer 2s infinite;
+}
+
+.captcha-box:focus-visible {
+  outline: 3px solid rgba(63, 121, 245, 0.22);
+  outline-offset: 2px;
 }
 
 .captcha-text {
+  position: relative;
+  z-index: 1;
+  color: #26344a;
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
   letter-spacing: 4px;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .refresh-icon {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  z-index: 1;
+  top: 5px;
+  right: 5px;
+  color: #6d7a8f;
   font-size: 12px;
-  color: #6b7280;
 }
 
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -548,13 +401,13 @@ function mockLogin(): Promise<boolean> {
 
 .form-options {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  justify-content: space-between;
+  margin-bottom: 18px;
 }
 
-:deep(.el-checkbox__label) {
-  color: #6b7280;
+:deep(.remember-checkbox .el-checkbox__label) {
+  color: #52617a;
   font-size: 14px;
 }
 
@@ -565,223 +418,219 @@ function mockLogin(): Promise<boolean> {
 .login-button {
   width: 100%;
   height: 48px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  border: none;
-  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3f79f5 0%, #2a63e8 100%);
+  color: #ffffff;
   font-size: 16px;
   font-weight: 500;
-  margin-bottom: 16px;
-
-  &:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
-.alternative-login {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+.login-button:hover {
+  background: linear-gradient(135deg, #2f6bed 0%, #1d4ed8 100%);
+  box-shadow: 0 6px 20px rgba(63, 121, 245, 0.28);
+  transform: translateY(-1px);
 }
 
-.alt-button {
-  flex: 1;
-  height: 40px;
-  background: rgba(31, 41, 55, 0.8);
-  border: 1px solid rgba(75, 85, 99, 0.3);
-  border-radius: 8px;
-  color: white;
-  font-size: 14px;
-
-  &:hover {
-    background: rgba(55, 65, 81, 0.8);
-    border-color: rgba(107, 114, 128, 0.5);
-  }
+.login-button:active {
+  transform: translateY(0);
 }
 
 .social-login {
+  margin-bottom: 20px;
   text-align: center;
 }
 
 .social-title {
-  color: #6b7280;
-  font-size: 12px;
-  margin-bottom: 16px;
   position: relative;
+  margin: 0 0 12px;
+  color: #7b8798;
+  font-size: 12px;
+  line-height: 1.5;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 60px;
-    height: 1px;
-    background: rgba(75, 85, 99, 0.3);
-  }
+.social-title::before,
+.social-title::after {
+  position: absolute;
+  top: 50%;
+  width: 24%;
+  height: 1px;
+  content: '';
+  background: #e1e6ee;
+}
 
-  &::before {
-    left: 0;
-  }
+.social-title::before {
+  left: 0;
+}
 
-  &::after {
-    right: 0;
-  }
+.social-title::after {
+  right: 0;
 }
 
 .social-icons {
   display: flex;
   justify-content: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
+  color: #ffffff;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-size: 15px;
+  font-weight: 600;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
+.social-icon:hover {
+  box-shadow: 0 4px 12px rgba(23, 32, 51, 0.14);
+  transform: translateY(-2px);
+}
 
-  &.icon-wechat {
-    background: #07c160;
-    position: relative;
+.social-icon:focus-visible {
+  outline: 3px solid rgba(63, 121, 245, 0.22);
+  outline-offset: 2px;
+}
 
-    &::before {
-      content: 'W';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-weight: 600;
-      font-size: 16px;
-    }
-  }
+.icon-wechat {
+  background: #07c160;
+}
 
-  &.icon-github {
-    background: #333;
-    position: relative;
+.icon-github {
+  background: #2f3540;
+}
 
-    &::before {
-      content: 'G';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-weight: 600;
-      font-size: 16px;
-    }
-  }
-
-  &.icon-google {
-    background: #fff;
-    border: 1px solid #dadce0;
-    position: relative;
-
-    &::before {
-      content: 'G';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #4285f4;
-      font-weight: 600;
-      font-size: 16px;
-    }
-  }
-
-  &.icon-qq {
-    background: #12b7f5;
-    position: relative;
-
-    &::before {
-      content: 'Q';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-weight: 600;
-      font-size: 16px;
-    }
-  }
+.icon-google {
+  border: 1px solid #d7dde7;
+  background: #ffffff;
+  color: #4285f4;
 }
 
 .login-footer {
   text-align: center;
-  margin-top: 32px;
 }
 
 .copyright {
-  color: #6b7280;
+  margin: 0;
+  color: #a0a9b7;
   font-size: 12px;
+  line-height: 1.6;
 }
 
-// 响应式设计
-@media (max-width: 1024px) {
-  .login-container {
-    flex-direction: column;
-  }
-
-  .login-left-panel {
-    flex: none;
-    height: 40vh;
-    padding: 24px;
-  }
-
-  .hero-content {
-    padding: 0 20px;
-  }
-
-  .hero-title {
-    font-size: 24px;
-  }
-
-  .isometric-platform {
-    width: 240px;
-    height: 180px;
-  }
-
-  .login-right-panel {
-    flex: 1;
-    padding: 24px;
-  }
-
-  .login-card {
-    max-width: 100%;
-    padding: 24px;
-  }
+.login-right-panel {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 48px 56px;
+  background: linear-gradient(135deg, #f1f5ff 0%, #e4ecff 52%, #dce8ff 100%);
 }
 
-@media (max-width: 640px) {
+.login-right-panel::before,
+.login-right-panel::after {
+  position: absolute;
+  content: '';
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.login-right-panel::before {
+  top: -180px;
+  left: -140px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(63, 121, 245, 0.1) 0%, transparent 70%);
+}
+
+.login-right-panel::after {
+  right: -180px;
+  bottom: -220px;
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(94, 126, 194, 0.1) 0%, transparent 70%);
+}
+
+.right-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 700px;
+  min-height: 0;
+  text-align: center;
+}
+
+.promo-header {
+  margin-bottom: 28px;
+}
+
+.promo-title {
+  margin: 0 0 10px;
+  color: #172033;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.promo-subtitle {
+  margin: 0;
+  color: #687790;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.illustration-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+}
+
+.illustration-image {
+  display: block;
+  width: min(100%, 640px);
+  max-height: calc(100vh - 240px);
+  height: auto;
+  object-fit: contain;
+}
+
+@media (max-height: 820px) {
   .login-left-panel {
-    height: 30vh;
+    padding-top: 32px;
+    padding-bottom: 24px;
   }
 
-  .hero-illustration {
-    display: none;
+  .brand-header {
+    margin-bottom: 20px;
   }
 
-  .hero-title {
-    font-size: 20px;
+  .login-header {
+    margin-bottom: 18px;
   }
 
-  .alternative-login {
-    flex-direction: column;
+  .promo-header {
+    margin-bottom: 20px;
   }
 
-  .social-icons {
-    flex-wrap: wrap;
+  .illustration-image {
+    max-height: calc(100vh - 190px);
   }
 }
 </style>
