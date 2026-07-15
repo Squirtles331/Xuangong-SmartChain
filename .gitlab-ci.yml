@@ -17,7 +17,7 @@ cache:
 pages:
   stage: deploy
   script:
-    - npm ci --prefer-offline
+    - npm install --prefer-offline
     - |
       export VITE_BASE_URL="$(node -e "const raw = process.env.CI_PAGES_URL || ''; if (!raw) { const name = (process.env.CI_PROJECT_NAME || '').replace(/^\/+|\/+$/g, ''); process.stdout.write(name ? '/' + name + '/' : '/'); process.exit(0); } const pathname = new URL(raw).pathname.replace(/\/+$/, ''); process.stdout.write(pathname ? pathname + '/' : '/');")"
       export VITE_OUT_DIR=public
