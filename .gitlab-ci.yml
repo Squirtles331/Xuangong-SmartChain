@@ -4,7 +4,6 @@ stages:
   - deploy
 
 variables:
-  NODE_ENV: production
   NPM_CONFIG_CACHE: .npm
 
 cache:
@@ -17,12 +16,12 @@ cache:
 pages:
   stage: deploy
   script:
-    - npm install --prefer-offline
+    - npm install --prefer-offline --include=dev
     - |
       export VITE_BASE_URL="$(node -e "const raw = process.env.CI_PAGES_URL || ''; if (!raw) { const name = (process.env.CI_PROJECT_NAME || '').replace(/^\/+|\/+$/g, ''); process.stdout.write(name ? '/' + name + '/' : '/'); process.exit(0); } const pathname = new URL(raw).pathname.replace(/\/+$/, ''); process.stdout.write(pathname ? pathname + '/' : '/');")"
       export VITE_OUT_DIR=public
       echo "GitLab Pages base path: ${VITE_BASE_URL}"
-    - npm run build -- --mode gitlab-pages
+    - NODE_ENV=production npm run build -- --mode gitlab-pages
     - cp public/index.html public/404.html
   artifacts:
     paths:
