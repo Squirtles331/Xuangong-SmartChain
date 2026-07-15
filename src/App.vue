@@ -6,7 +6,7 @@
 
 <style>
 #app {
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
 }
@@ -20,8 +20,6 @@ body {
   padding: 0;
   min-height: 100vh;
   color: var(--el-text-color-primary);
-  background:
-    radial-gradient(circle at top left, rgba(31, 94, 122, 0.08), transparent 22%), linear-gradient(180deg, #f7fafc 0%, var(--el-bg-color-page) 100%);
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
