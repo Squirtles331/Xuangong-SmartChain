@@ -26,6 +26,17 @@
           </el-dropdown-item>
         </div>
 
+        <div class="repo-section">
+          <div class="repo-title">仓库地址</div>
+          <el-dropdown-item v-for="repo in repoLinks" :key="repo.name" @click="openRepo(repo.url)">
+            <el-icon><Link /></el-icon>
+            <div class="repo-item">
+              <span class="repo-name">{{ repo.name }}</span>
+              <span class="repo-desc">{{ repo.desc }}</span>
+            </div>
+          </el-dropdown-item>
+        </div>
+
         <el-dropdown-item class="user-bottom" divided @click="logout">
           <span>退出登录</span>
           <span class="shortcut">Alt + Q</span>
@@ -72,7 +83,7 @@
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
-import { Lock, Setting } from '@element-plus/icons-vue'
+import { Link, Lock, Setting } from '@element-plus/icons-vue'
 
 import SettingsDrawer from '@/layout/common/header-right/SettingsDrawer.vue'
 import { useLockStore } from '@/stores/lock'
@@ -88,6 +99,24 @@ const open = ref(false)
 const lockOpen = ref(false)
 const lockForm = reactive({ pwd: '' })
 const lockFormRef = ref<FormInstance>()
+
+const repoLinks = [
+  {
+    name: 'Gitee 仓库',
+    desc: '国内代码仓库',
+    url: 'https://gitee.com/songtonngxue/xuanlian'
+  },
+  {
+    name: 'GitHub 仓库',
+    desc: '国际代码仓库',
+    url: 'https://github.com/Squirtles331/Xuangong-SmartChain'
+  },
+  {
+    name: '极狐 GitLab 仓库',
+    desc: '国内协作仓库',
+    url: 'https://jihulab.com/Squirtles331/xuanlian'
+  }
+] as const
 
 const router = useRouter()
 const lockStore = useLockStore()
@@ -120,6 +149,10 @@ const doLock = async () => {
   lockOpen.value = false
   lockForm.pwd = ''
   router.push('/lock')
+}
+
+const openRepo = (url: string) => {
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 
 const handleGlobalLockOpen = () => {
@@ -210,6 +243,42 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.repo-section {
+  padding: 4px 6px 8px;
+  border-top: 1px solid var(--layout-divider);
+}
+
+.repo-title {
+  padding: 8px 10px 6px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.repo-section :deep(.el-dropdown-menu__item) {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.repo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.repo-name {
+  font-size: 13px;
+  color: var(--el-text-color-primary);
+}
+
+.repo-desc {
+  font-size: 12px;
+  color: var(--el-text-color-tertiary);
 }
 
 .user-bottom {
