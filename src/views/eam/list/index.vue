@@ -1,113 +1,86 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @reset="handleReset"
-          @search="search"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="设备台账"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :table-attrs="{ border: true, stripe: true, rowKey: 'id', style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #status="{ row }">
+      <StatusTag :value="row.status" :options="statusOptions" />
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    <template #runtime_hours="{ row }"> {{ Number(row.runtime_hours ?? 0).toLocaleString('zh-CN') }} h </template>
+
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
     </template>
 
-    <div class="stats-row">
-      <el-card shadow="hover" class="stat-card">
-        <div class="stat-value">{{ totalCount }}</div>
-        <div class="stat-label">设备总数</div>
-      </el-card>
-      <el-card shadow="hover" class="stat-card stat-running">
-        <div class="stat-value">{{ runningCount }}</div>
-        <div class="stat-label">运行中</div>
-      </el-card>
-      <el-card shadow="hover" class="stat-card stat-idle">
-        <div class="stat-value">{{ idleCount }}</div>
-        <div class="stat-label">空闲</div>
-      </el-card>
-      <el-card shadow="hover" class="stat-card stat-repair">
-        <div class="stat-value">{{ repairCount }}</div>
-        <div class="stat-label">维修/保养</div>
-      </el-card>
-    </div>
-
-    <TableSetting title="设备台账" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #status="{ row }">
-            <StatusTag :value="row.status" :options="equipmentStatusOptions" />
-          </template>
-
-          <template #actions="{ row }">
-            <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button type="warning" link size="small" @click="openCheckPlan(row)">点检</el-button>
-            <el-button type="success" link size="small" @click="openMaintainPlan(row)">保养</el-button>
-            <gi-button type="delete" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <EquipmentFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <EquipmentFormDialog
+        v-model:visible="dialogVisible"
+        v-model:form="formModel"
+        :mode="dialogMode"
+        :workshop-options="workshopOptions"
+        :status-options="statusSelectOptions"
+        @submit="submitDialog"
+      />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import TableSetting from '@/components/TableSetting.vue'
-import { EQUIPMENT_STATUS as equipmentStatusOptions } from '@/common/status-maps'
-import { createEquipment, deleteEquipment, getEquipmentList, updateEquipment, type Equipment, type EquipmentQuery } from '@/api/mdm'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudDialogMode, CrudRowActionItem } from '@/components/crud/types'
 import { useTable } from '@/hooks/useTable'
+import {
+  createEquipment,
+  deleteEquipment,
+  eamEquipmentStatusOptions,
+  eamWorkshopOptions,
+  getEquipmentList,
+  updateEquipment,
+  type EquipmentAssetQuery,
+  type EquipmentAssetRecord
+} from '@/static/services/eam'
 import EquipmentFormDialog, { type EquipmentFormModel } from './EquipmentFormDialog.vue'
 
+defineOptions({
+  name: 'EamAssetPage'
+})
+
 const router = useRouter()
+const workshopOptions = [...eamWorkshopOptions]
+const statusOptions = [...eamEquipmentStatusOptions]
+const statusSelectOptions = statusOptions.map((item) => ({ label: item.label, value: item.value }))
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword' },
+  { type: 'input', label: '设备关键字', field: 'keyword', props: { clearable: true, placeholder: '设备编码 / 设备名称 / 型号 / 产线' } as never },
   {
     type: 'select-v2',
-    label: '车间',
+    label: '所属车间',
     field: 'workshop',
-    props: {
-      options: [
-        { label: '全部', value: '' },
-        { label: '机加工一车间', value: '机加工一车间' },
-        { label: '机加工二车间', value: '机加工二车间' },
-        { label: '装配车间', value: '装配车间' }
-      ]
-    } as any
+    props: { clearable: true, options: workshopOptions } as never
   },
   {
     type: 'select-v2',
-    label: '状态',
+    label: '设备状态',
     field: 'status',
-    props: {
-      options: [
-        { label: '全部', value: '' },
-        { label: '运行中', value: 'running' },
-        { label: '空闲', value: 'idle' },
-        { label: '保养中', value: 'maintenance' },
-        { label: '维修中', value: 'repair' }
-      ]
-    } as any
+    props: { clearable: true, options: statusSelectOptions } as never
   }
 ]
 
@@ -115,35 +88,40 @@ const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
-const columns: TableColumnItem<Equipment>[] = [
-  { prop: 'code', label: '设备编码', minWidth: 150 },
-  { prop: 'name', label: '设备名称', minWidth: 140 },
+const columns: TableColumnItem<EquipmentAssetRecord>[] = [
+  { prop: 'code', label: '设备编码', minWidth: 140 },
+  { prop: 'name', label: '设备名称', minWidth: 160 },
   { prop: 'model', label: '型号', minWidth: 120 },
-  { prop: 'workshop', label: '所属车间', minWidth: 160 },
-  { label: '状态', minWidth: 100, slotName: 'status', align: 'center' },
-  { prop: 'purchase_date', label: '购置日期', minWidth: 120 },
-  { prop: 'commission_date', label: '投产日期', minWidth: 120 },
-  { label: '操作', minWidth: 240, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'workshop', label: '所属车间', minWidth: 140 },
+  { prop: 'line', label: '产线/单元', minWidth: 140 },
+  { prop: 'owner', label: '责任人', minWidth: 110 },
+  { label: '设备状态', minWidth: 100, align: 'center', slotName: 'status' },
+  { label: '累计工时', minWidth: 110, align: 'right', slotName: 'runtime_hours' },
+  { prop: 'next_maintain_date', label: '下次保养', minWidth: 120, align: 'center' },
+  { label: '操作', minWidth: 240, fixed: 'right', align: 'center', slotName: 'actions' }
 ]
 
-const queryParams = reactive({
+const queryParams = reactive<{
+  keyword: string
+  workshop: string
+  status: '' | EquipmentAssetRecord['status']
+}>({
   keyword: '',
   workshop: '',
   status: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
+const dialogMode = ref<CrudDialogMode>('add')
 const formModel = ref<EquipmentFormModel>(createDefaultFormModel())
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<Equipment>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<EquipmentAssetRecord>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const params: EquipmentQuery = {
+    const params: EquipmentAssetQuery = {
       pageNum: page,
       pageSize: size,
-      name: queryParams.keyword || undefined,
+      keyword: queryParams.keyword || undefined,
       workshop: queryParams.workshop || undefined,
       status: queryParams.status || undefined
     }
@@ -153,26 +131,17 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<E
   deleteAPI: (ids) => Promise.all(ids.map((id) => deleteEquipment(id)))
 })
 
-const totalCount = computed(() => tableData.value.length)
-const runningCount = computed(() => tableData.value.filter((item) => item.status === 'running').length)
-const idleCount = computed(() => tableData.value.filter((item) => item.status === 'idle').length)
-const repairCount = computed(() => tableData.value.filter((item) => item.status === 'repair' || item.status === 'maintenance').length)
-
 function createDefaultFormModel(): EquipmentFormModel {
   return {
     id: '',
     code: '',
     name: '',
     model: '',
-    workshop: '机加工一车间',
+    workshop: workshopOptions[0]?.value || '',
     status: 'running',
     purchase_date: '',
     commission_date: ''
   }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
@@ -190,7 +159,7 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: Equipment) {
+function openEdit(row: EquipmentAssetRecord) {
   dialogMode.value = 'edit'
   formModel.value = {
     id: row.id,
@@ -205,80 +174,67 @@ function openEdit(row: Equipment) {
   dialogVisible.value = true
 }
 
-function openCheckPlan(_row: Equipment) {
-  router.push('/collaboration/equipment-iot/equipment/check')
+function getRowActions(row: EquipmentAssetRecord): CrudRowActionItem[] {
+  return [
+    { key: 'edit', label: '编辑', tone: 'primary' },
+    { key: 'check', label: '点检', tone: 'primary' },
+    { key: 'maintain', label: '保养', tone: 'warning' },
+    { key: 'repair', label: '报修', tone: 'warning', hidden: row.status === 'repair' },
+    { key: 'delete', label: '删除', tone: 'danger', hidden: row.status === 'repair' }
+  ]
 }
 
-function openMaintainPlan(_row: Equipment) {
-  router.push('/collaboration/equipment-iot/equipment/maintain')
+function handleRowAction(action: string, row: EquipmentAssetRecord) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'check') {
+    router.push({ name: 'equipmentCheck' })
+    return
+  }
+
+  if (action === 'maintain') {
+    router.push({ name: 'equipmentMaintain' })
+    return
+  }
+
+  if (action === 'repair') {
+    router.push({ name: 'equipmentRepair' })
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
 }
 
 async function submitDialog() {
-  const payload: Partial<Equipment> = {
-    id: formModel.value.id,
+  if (!formModel.value.code || !formModel.value.name || !formModel.value.workshop) {
+    ElMessage.warning('请填写设备编码、设备名称和所属车间')
+    return
+  }
+
+  const payload: Partial<EquipmentAssetRecord> = {
     code: formModel.value.code,
     name: formModel.value.name,
     model: formModel.value.model,
     workshop: formModel.value.workshop,
-    status: formModel.value.status as Equipment['status'],
+    status: formModel.value.status as EquipmentAssetRecord['status'],
     purchase_date: formModel.value.purchase_date,
     commission_date: formModel.value.commission_date
   }
 
   if (dialogMode.value === 'add') {
     await createEquipment(payload)
+    ElMessage.success('设备资产已新增')
   } else {
     await updateEquipment(formModel.value.id, payload)
+    ElMessage.success('设备资产已更新')
   }
 
   dialogVisible.value = false
   await refresh()
 }
 </script>
-
-<style scoped>
-.stats-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.stat-card {
-  flex: 1;
-  text-align: center;
-  cursor: default;
-}
-
-.stat-card :deep(.el-card__body) {
-  padding: 16px 12px;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: #303133;
-}
-
-.stat-label {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #909399;
-}
-
-.stat-running .stat-value {
-  color: #67c23a;
-}
-
-.stat-idle .stat-value {
-  color: #909399;
-}
-
-.stat-repair .stat-value {
-  color: #e6a23c;
-}
-
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-</style>

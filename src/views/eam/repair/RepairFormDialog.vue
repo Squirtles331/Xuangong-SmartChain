@@ -13,12 +13,13 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
 
 export interface RepairFormModel {
   id: string
   code: string
-  equipment: string
+  equipment_code: string
   fault_desc: string
   priority: string
   status: string
@@ -28,9 +29,14 @@ export interface RepairFormModel {
 
 interface Props {
   mode: 'add' | 'edit'
+  equipmentOptions?: Array<{ label: string; value: string }>
+  priorityOptions?: Array<{ label: string; value: string }>
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  equipmentOptions: () => [],
+  priorityOptions: () => []
+})
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<RepairFormModel>('form', { required: true })
@@ -39,25 +45,29 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '维修单号', field: 'code', required: true },
-  { type: 'input', label: '设备', field: 'equipment', required: true },
-  { type: 'input', label: '故障描述', field: 'fault_desc', required: true, props: { type: 'textarea', rows: 3 } as any },
+  {
+    type: 'select-v2',
+    label: '设备',
+    field: 'equipment_code',
+    required: true,
+    props: {
+      options: props.equipmentOptions
+    } as never
+  },
+  { type: 'input', label: '故障描述', field: 'fault_desc', required: true, props: { type: 'textarea', rows: 3 } as never },
   {
     type: 'select-v2',
     label: '优先级',
     field: 'priority',
     required: true,
     props: {
-      options: [
-        { label: '紧急', value: 'urgent' },
-        { label: '高', value: 'high' },
-        { label: '普通', value: 'normal' }
-      ]
-    } as any
+      options: props.priorityOptions
+    } as never
   },
   { type: 'input', label: '维修人', field: 'worker' }
-]
+])
 
 function handleCancel() {
   visible.value = false

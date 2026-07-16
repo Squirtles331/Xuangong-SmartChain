@@ -13,12 +13,13 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
 
 export interface MaintainFormModel {
   id: string
   code: string
-  equipment: string
+  equipment_code: string
   type: string
   plan_date: string
   executor: string
@@ -27,9 +28,14 @@ export interface MaintainFormModel {
 
 interface Props {
   mode: 'add' | 'edit'
+  equipmentOptions?: Array<{ label: string; value: string }>
+  maintainTypeOptions?: Array<{ label: string; value: string }>
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  equipmentOptions: () => [],
+  maintainTypeOptions: () => []
+})
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<MaintainFormModel>('form', { required: true })
@@ -38,36 +44,28 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '计划编号', field: 'code', required: true },
   {
     type: 'select-v2',
     label: '设备',
-    field: 'equipment',
+    field: 'equipment_code',
     required: true,
     props: {
-      options: [
-        { label: '数控车床 CK6150', value: '数控车床 CK6150' },
-        { label: '钻床 Z3050', value: '钻床 Z3050' },
-        { label: '磨床 M1432', value: '磨床 M1432' }
-      ]
-    } as any
+      options: props.equipmentOptions
+    } as never
   },
   {
     type: 'select-v2',
     label: '保养类型',
     field: 'type',
     props: {
-      options: [
-        { label: '日常保养', value: 'daily' },
-        { label: '周保养', value: 'weekly' },
-        { label: '大修', value: 'overhaul' }
-      ]
-    } as any
+      options: props.maintainTypeOptions
+    } as never
   },
   { type: 'date-picker', label: '计划日期', field: 'plan_date' },
   { type: 'input', label: '执行人', field: 'executor' }
-]
+])
 
 function handleCancel() {
   visible.value = false

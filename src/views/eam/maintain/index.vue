@@ -1,103 +1,93 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @reset="handleReset"
-          @search="search"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="保养"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :table-attrs="{ border: true, stripe: true, rowKey: 'id', style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #type="{ row }">
+      {{ resolveMaintainTypeLabel(row.type) }}
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    <template #status="{ row }">
+      <StatusTag :value="row.status" :options="statusOptions" />
     </template>
 
-    <TableSetting title="保养计划" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #type="{ row }">
-            <el-tag :type="row.type === 'daily' ? 'info' : row.type === 'weekly' ? 'warning' : 'primary'">
-              {{ row.type === 'daily' ? '日常' : row.type === 'weekly' ? '周保养' : '大修' }}
-            </el-tag>
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
+    </template>
 
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'done' ? 'success' : 'danger'">
-              {{ row.status === 'pending' ? '待执行' : row.status === 'done' ? '已完成' : '已逾期' }}
-            </el-tag>
-          </template>
-
-          <template #actions="{ row }">
-            <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="execute(row)">执行</el-button>
-            <gi-button type="edit" @click="openEdit(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <MaintainFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-    <MaintainExecuteDialog v-model:visible="execVisible" v-model:items="execItems" v-model:form="execForm" @submit="confirmExec" />
-  </gi-page-layout>
+    <template #dialog>
+      <MaintainFormDialog
+        v-model:visible="dialogVisible"
+        v-model:form="formModel"
+        :mode="dialogMode"
+        :equipment-options="equipmentOptions"
+        :maintain-type-options="maintainTypeOptions"
+        @submit="submitDialog"
+      />
+      <MaintainExecuteDialog v-model:visible="execVisible" v-model:items="execItems" v-model:form="execForm" @submit="confirmExec" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudDialogMode, CrudRowActionItem } from '@/components/crud/types'
+import { useTable } from '@/hooks/useTable'
 import {
+  deleteEquipmentMaintain,
+  eamDefaultMaintainExecuteItems,
+  eamMaintainStatusOptions,
+  eamMaintainTypeOptions,
   executeEquipmentMaintain,
+  getEquipmentAssetOptions,
   getEquipmentMaintainList,
   saveEquipmentMaintain,
-  type EquipmentMaintain,
-  type EquipmentMaintainQuery
-} from '@/api/equipment'
-import { useTable } from '@/hooks/useTable'
-import MaintainFormDialog, { type MaintainFormModel } from './MaintainFormDialog.vue'
+  type EquipmentMaintainQuery,
+  type EquipmentMaintainRecord
+} from '@/static/services/eam'
 import MaintainExecuteDialog, { type MaintainExecuteFormModel, type MaintainExecuteItem } from './MaintainExecuteDialog.vue'
+import MaintainFormDialog, { type MaintainFormModel } from './MaintainFormDialog.vue'
+
+defineOptions({
+  name: 'EamMaintainPage'
+})
+
+const maintainTypeOptions = [...eamMaintainTypeOptions]
+const statusOptions = [...eamMaintainStatusOptions]
+const equipmentOptions = ref(getEquipmentAssetOptions())
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '设备名称', field: 'keyword' },
+  { type: 'input', label: '保养关键字', field: 'keyword', props: { clearable: true, placeholder: '计划编号 / 设备 / 执行人' } as never },
   {
     type: 'select-v2',
     label: '保养类型',
     field: 'type',
-    props: {
-      options: [
-        { label: '全部', value: '' },
-        { label: '日常', value: 'daily' },
-        { label: '周保养', value: 'weekly' },
-        { label: '大修', value: 'overhaul' }
-      ]
-    } as any
+    props: { clearable: true, options: maintainTypeOptions } as never
   },
   {
     type: 'select-v2',
-    label: '状态',
+    label: '执行状态',
     field: 'status',
     props: {
-      options: [
-        { label: '全部', value: '' },
-        { label: '待执行', value: 'pending' },
-        { label: '已完成', value: 'done' },
-        { label: '已逾期', value: 'overdue' }
-      ]
-    } as any
+      clearable: true,
+      options: statusOptions.map((item) => ({ label: item.label, value: item.value }))
+    } as never
   }
 ]
 
@@ -105,58 +95,58 @@ const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
-const columns: TableColumnItem<EquipmentMaintain>[] = [
-  { prop: 'code', label: '计划编号', minWidth: 160 },
-  { prop: 'equipment', label: '设备', minWidth: 160 },
-  { label: '类型', minWidth: 100, slotName: 'type', align: 'center' },
-  { prop: 'plan_date', label: '计划日期', minWidth: 120 },
-  { prop: 'executor', label: '执行人', minWidth: 100 },
-  { label: '状态', minWidth: 100, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 160, slotName: 'actions', align: 'center' }
+const columns: TableColumnItem<EquipmentMaintainRecord>[] = [
+  { prop: 'code', label: '计划编号', minWidth: 150 },
+  { prop: 'equipment', label: '设备', minWidth: 180 },
+  { label: '保养类型', minWidth: 110, align: 'center', slotName: 'type' },
+  { prop: 'plan_date', label: '计划日期', minWidth: 120, align: 'center' },
+  { prop: 'executor', label: '执行人', minWidth: 110 },
+  { prop: 'cycle_days', label: '周期(天)', minWidth: 90, align: 'right' },
+  { prop: 'spare_plan', label: '备件/耗材', minWidth: 180 },
+  { label: '状态', minWidth: 100, align: 'center', slotName: 'status' },
+  { label: '操作', minWidth: 180, align: 'center', slotName: 'actions' }
 ]
 
-const queryParams = reactive({
+const queryParams = reactive<{
+  keyword: string
+  type: '' | EquipmentMaintainRecord['type']
+  status: '' | EquipmentMaintainRecord['status']
+}>({
   keyword: '',
   type: '',
   status: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
+const dialogMode = ref<CrudDialogMode>('add')
 const formModel = ref<MaintainFormModel>(createDefaultFormModel())
 
 const execVisible = ref(false)
 const execPlanId = ref('')
 const execForm = ref<MaintainExecuteFormModel>({ remark: '' })
-const execItems = ref<MaintainExecuteItem[]>([
-  { name: '清洁设备表面', result: 'done' },
-  { name: '检查润滑油', result: 'done' },
-  { name: '紧固螺栓', result: 'done' },
-  { name: '更换滤芯', result: 'done' },
-  { name: '电气检查', result: 'done' }
-])
+const execItems = ref<MaintainExecuteItem[]>(eamDefaultMaintainExecuteItems.map((item) => ({ ...item })))
 
-const { tableData, pagination, loading, search, refresh } = useTable<EquipmentMaintain>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<EquipmentMaintainRecord>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: EquipmentMaintainQuery = {
       pageNum: page,
       pageSize: size,
       keyword: queryParams.keyword || undefined,
-      type: (queryParams.type || undefined) as EquipmentMaintain['type'] | undefined,
-      status: (queryParams.status || undefined) as EquipmentMaintain['status'] | undefined
+      type: queryParams.type || undefined,
+      status: queryParams.status || undefined
     }
     const response = await getEquipmentMaintainList(params)
     return response.data
-  }
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteEquipmentMaintain(id)))
 })
 
 function createDefaultFormModel(): MaintainFormModel {
   return {
     id: '',
     code: '',
-    equipment: '',
+    equipment_code: equipmentOptions.value[0]?.value || '',
     type: 'daily',
     plan_date: '',
     executor: '',
@@ -164,8 +154,8 @@ function createDefaultFormModel(): MaintainFormModel {
   }
 }
 
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
+function resolveMaintainTypeLabel(value: EquipmentMaintainRecord['type']) {
+  return maintainTypeOptions.find((item) => item.value === value)?.label || value
 }
 
 function handleReset() {
@@ -178,44 +168,83 @@ function handleReset() {
 }
 
 function openAdd() {
+  equipmentOptions.value = getEquipmentAssetOptions()
   dialogMode.value = 'add'
   formModel.value = createDefaultFormModel()
   dialogVisible.value = true
 }
 
-function openEdit(row: EquipmentMaintain) {
+function openEdit(row: EquipmentMaintainRecord) {
+  equipmentOptions.value = getEquipmentAssetOptions()
   dialogMode.value = 'edit'
-  formModel.value = { ...row }
+  formModel.value = {
+    id: row.id,
+    code: row.code,
+    equipment_code: row.equipment_code,
+    type: row.type,
+    plan_date: row.plan_date,
+    executor: row.executor,
+    status: row.status
+  }
   dialogVisible.value = true
 }
 
+function getRowActions(row: EquipmentMaintainRecord): CrudRowActionItem[] {
+  return [
+    { key: 'edit', label: '编辑', tone: 'primary' },
+    { key: 'execute', label: '执行', tone: 'warning', hidden: row.status === 'done' },
+    { key: 'delete', label: '删除', tone: 'danger', hidden: row.status === 'done' }
+  ]
+}
+
+function handleRowAction(action: string, row: EquipmentMaintainRecord) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'execute') {
+    execute(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
+}
+
 async function submitDialog() {
+  if (!formModel.value.code || !formModel.value.equipment_code || !formModel.value.executor) {
+    ElMessage.warning('请填写计划编号、设备和执行人')
+    return
+  }
+
   await saveEquipmentMaintain({
-    ...formModel.value,
-    type: formModel.value.type as EquipmentMaintain['type'],
-    status: formModel.value.status as EquipmentMaintain['status']
+    id: formModel.value.id,
+    code: formModel.value.code,
+    equipment_code: formModel.value.equipment_code,
+    type: formModel.value.type as EquipmentMaintainRecord['type'],
+    plan_date: formModel.value.plan_date,
+    executor: formModel.value.executor,
+    status: formModel.value.status as EquipmentMaintainRecord['status']
   })
+
   dialogVisible.value = false
+  ElMessage.success(dialogMode.value === 'add' ? '保养计划已新增' : '保养计划已更新')
   await refresh()
 }
 
-function execute(row: EquipmentMaintain) {
+function execute(row: EquipmentMaintainRecord) {
   execPlanId.value = row.id
   execForm.value = { remark: '' }
-  execItems.value = execItems.value.map((item) => ({ ...item, result: 'done' }))
+  execItems.value = eamDefaultMaintainExecuteItems.map((item) => ({ ...item }))
   execVisible.value = true
 }
 
 async function confirmExec() {
   await executeEquipmentMaintain(execPlanId.value, { remark: execForm.value.remark })
   execVisible.value = false
-  ElMessage.success('保养完成')
+  ElMessage.success('保养已执行完成')
   await refresh()
 }
 </script>
-
-<style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-</style>

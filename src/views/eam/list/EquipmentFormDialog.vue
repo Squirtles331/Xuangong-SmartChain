@@ -13,6 +13,7 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import type { FormColumnItem } from 'gi-component'
 
 export interface EquipmentFormModel {
@@ -28,9 +29,14 @@ export interface EquipmentFormModel {
 
 interface Props {
   mode: 'add' | 'edit'
+  workshopOptions?: Array<{ label: string; value: string }>
+  statusOptions?: Array<{ label: string; value: string }>
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  workshopOptions: () => [],
+  statusOptions: () => []
+})
 
 const visible = defineModel<boolean>('visible', { required: true })
 const formData = defineModel<EquipmentFormModel>('form', { required: true })
@@ -39,39 +45,30 @@ const emit = defineEmits<{
   submit: []
 }>()
 
-const formColumns: FormColumnItem[] = [
+const formColumns = computed<FormColumnItem[]>(() => [
   { type: 'input', label: '设备编码', field: 'code', required: true },
   { type: 'input', label: '设备名称', field: 'name', required: true },
   { type: 'input', label: '型号', field: 'model' },
   {
     type: 'select-v2',
-    label: '车间',
+    label: '所属车间',
     field: 'workshop',
     required: true,
     props: {
-      options: [
-        { label: '机加工一车间', value: '机加工一车间' },
-        { label: '机加工二车间', value: '机加工二车间' },
-        { label: '装配车间', value: '装配车间' }
-      ]
-    } as any
+      options: props.workshopOptions
+    } as never
   },
   {
     type: 'select-v2',
-    label: '状态',
+    label: '设备状态',
     field: 'status',
     props: {
-      options: [
-        { label: '运行中', value: 'running' },
-        { label: '空闲', value: 'idle' },
-        { label: '保养中', value: 'maintenance' },
-        { label: '维修中', value: 'repair' }
-      ]
-    } as any
+      options: props.statusOptions
+    } as never
   },
   { type: 'date-picker', label: '购置日期', field: 'purchase_date' },
   { type: 'date-picker', label: '投产日期', field: 'commission_date' }
-]
+])
 
 function handleCancel() {
   visible.value = false

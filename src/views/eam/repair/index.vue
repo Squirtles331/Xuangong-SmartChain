@@ -1,108 +1,93 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @reset="handleReset"
-          @search="search"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="维修"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :table-attrs="{ border: true, stripe: true, rowKey: 'id', style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #priority="{ row }">
+      <StatusTag :value="row.priority" :options="priorityOptions" />
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button style="margin-left: 8px" type="reset" @click="refresh" />
+    <template #status="{ row }">
+      <StatusTag :value="row.status" :options="statusOptions" />
     </template>
 
-    <TableSetting title="维修工单" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #priority="{ row }">
-            <StatusTag :value="row.priority" :options="priorityOptions" />
-          </template>
+    <template #downtime_minutes="{ row }"> {{ Number(row.downtime_minutes ?? 0).toLocaleString('zh-CN') }} 分钟 </template>
 
-          <template #status="{ row }">
-            <StatusTag :value="row.status" :options="repairStatusOptions" />
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
+    </template>
 
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <el-button v-if="row.status === 'pending'" type="primary" link size="small" @click="dispatch(row)">派工</el-button>
-            <el-button v-if="row.status === 'running'" type="success" link size="small" @click="complete(row)">完工</el-button>
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <RepairFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <RepairFormDialog
+        v-model:visible="dialogVisible"
+        v-model:form="formModel"
+        :mode="dialogMode"
+        :equipment-options="equipmentOptions"
+        :priority-options="prioritySelectOptions"
+        @submit="submitDialog"
+      />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import TableSetting from '@/components/TableSetting.vue'
-import { WORK_ORDER_PRIORITY as priorityOptions } from '@/common/status-maps'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudDialogMode, CrudRowActionItem } from '@/components/crud/types'
+import { useTable } from '@/hooks/useTable'
 import {
+  deleteEquipmentRepair,
+  eamRepairPriorityOptions,
+  eamRepairStatusOptions,
+  getEquipmentAssetOptions,
   getEquipmentRepairList,
   saveEquipmentRepair,
   updateEquipmentRepairStatus,
-  type EquipmentRepair,
-  type EquipmentRepairQuery
-} from '@/api/equipment'
-import { useTable } from '@/hooks/useTable'
+  type EquipmentRepairQuery,
+  type EquipmentRepairRecord
+} from '@/static/services/eam'
 import RepairFormDialog, { type RepairFormModel } from './RepairFormDialog.vue'
 
-const repairStatusOptions = [
-  { value: 'pending', label: '待派工', type: 'warning' as const },
-  { value: 'running', label: '维修中', type: 'primary' as const },
-  { value: 'done', label: '已完成', type: 'success' as const },
-  { value: 'verified', label: '已验收', type: 'info' as const }
-]
+defineOptions({
+  name: 'EamRepairPage'
+})
+
+const priorityOptions = [...eamRepairPriorityOptions]
+const prioritySelectOptions = priorityOptions.map((item) => ({ label: item.label, value: item.value }))
+const statusOptions = [...eamRepairStatusOptions]
+const equipmentOptions = ref(getEquipmentAssetOptions())
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键字', field: 'keyword' },
+  { type: 'input', label: '维修关键字', field: 'keyword', props: { clearable: true, placeholder: '维修单号 / 设备 / 故障描述 / 来源' } as never },
   {
     type: 'select-v2',
-    label: '状态',
+    label: '维修状态',
     field: 'status',
     props: {
-      options: [
-        { label: '全部', value: '' },
-        { label: '待派工', value: 'pending' },
-        { label: '维修中', value: 'running' },
-        { label: '已完成', value: 'done' },
-        { label: '已验收', value: 'verified' }
-      ]
-    } as any
+      clearable: true,
+      options: statusOptions.map((item) => ({ label: item.label, value: item.value }))
+    } as never
   },
   {
     type: 'select-v2',
     label: '优先级',
     field: 'priority',
-    props: {
-      options: [
-        { label: '全部', value: '' },
-        { label: '紧急', value: 'urgent' },
-        { label: '高', value: 'high' },
-        { label: '普通', value: 'normal' }
-      ]
-    } as any
+    props: { clearable: true, options: prioritySelectOptions } as never
   }
 ]
 
@@ -110,58 +95,59 @@ const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
-const columns: TableColumnItem<EquipmentRepair>[] = [
-  { prop: 'code', label: '维修单号', minWidth: 170 },
-  { prop: 'equipment', label: '设备', minWidth: 160 },
+const columns: TableColumnItem<EquipmentRepairRecord>[] = [
+  { prop: 'code', label: '维修单号', minWidth: 150 },
+  { prop: 'equipment', label: '设备', minWidth: 180 },
   { prop: 'fault_desc', label: '故障描述', minWidth: 220 },
-  { label: '优先级', minWidth: 90, slotName: 'priority', align: 'center' },
-  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
-  { prop: 'worker', label: '维修人', minWidth: 100 },
-  { prop: 'created_at', label: '创建时间', minWidth: 160 },
-  { label: '操作', minWidth: 180, fixed: 'right', slotName: 'actions', align: 'center' }
+  { prop: 'source', label: '来源上下文', minWidth: 130 },
+  { label: '优先级', minWidth: 90, align: 'center', slotName: 'priority' },
+  { label: '维修状态', minWidth: 100, align: 'center', slotName: 'status' },
+  { prop: 'worker', label: '维修人', minWidth: 110 },
+  { label: '停机影响', minWidth: 110, align: 'right', slotName: 'downtime_minutes' },
+  { label: '操作', minWidth: 220, fixed: 'right', align: 'center', slotName: 'actions' }
 ]
 
-const queryParams = reactive({
+const queryParams = reactive<{
+  keyword: string
+  status: '' | EquipmentRepairRecord['status']
+  priority: '' | EquipmentRepairRecord['priority']
+}>({
   keyword: '',
   status: '',
   priority: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
+const dialogMode = ref<CrudDialogMode>('add')
 const formModel = ref<RepairFormModel>(createDefaultFormModel())
 
-const { tableData, pagination, loading, search, refresh } = useTable<EquipmentRepair>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<EquipmentRepairRecord>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const params: EquipmentRepairQuery = {
       pageNum: page,
       pageSize: size,
       keyword: queryParams.keyword || undefined,
-      status: (queryParams.status || undefined) as EquipmentRepair['status'] | undefined,
-      priority: (queryParams.priority || undefined) as EquipmentRepair['priority'] | undefined
+      status: queryParams.status || undefined,
+      priority: queryParams.priority || undefined
     }
     const response = await getEquipmentRepairList(params)
     return response.data
-  }
+  },
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteEquipmentRepair(id)))
 })
 
 function createDefaultFormModel(): RepairFormModel {
   return {
     id: '',
     code: '',
-    equipment: '',
+    equipment_code: equipmentOptions.value[0]?.value || '',
     fault_desc: '',
     priority: 'normal',
     status: 'pending',
     worker: '',
     created_at: ''
   }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
@@ -174,42 +160,104 @@ function handleReset() {
 }
 
 function openAdd() {
+  equipmentOptions.value = getEquipmentAssetOptions()
   dialogMode.value = 'add'
   formModel.value = createDefaultFormModel()
   dialogVisible.value = true
 }
 
-function openEdit(row: EquipmentRepair) {
+function openEdit(row: EquipmentRepairRecord) {
+  equipmentOptions.value = getEquipmentAssetOptions()
   dialogMode.value = 'edit'
-  formModel.value = { ...row }
+  formModel.value = {
+    id: row.id,
+    code: row.code,
+    equipment_code: row.equipment_code,
+    fault_desc: row.fault_desc,
+    priority: row.priority,
+    status: row.status,
+    worker: row.worker,
+    created_at: row.created_at
+  }
   dialogVisible.value = true
 }
 
+function getRowActions(row: EquipmentRepairRecord): CrudRowActionItem[] {
+  return [
+    { key: 'edit', label: '编辑', tone: 'primary' },
+    { key: 'dispatch', label: '派工', tone: 'warning', hidden: row.status !== 'pending' },
+    { key: 'complete', label: '完工', tone: 'success', hidden: row.status !== 'running' },
+    { key: 'verify', label: '验收', tone: 'primary', hidden: row.status !== 'done' },
+    { key: 'delete', label: '删除', tone: 'danger', hidden: row.status !== 'pending' }
+  ]
+}
+
+function handleRowAction(action: string, row: EquipmentRepairRecord) {
+  if (action === 'edit') {
+    openEdit(row)
+    return
+  }
+
+  if (action === 'dispatch') {
+    void dispatch(row)
+    return
+  }
+
+  if (action === 'complete') {
+    void complete(row)
+    return
+  }
+
+  if (action === 'verify') {
+    void verify(row)
+    return
+  }
+
+  if (action === 'delete') {
+    onDelete(row)
+  }
+}
+
 async function submitDialog() {
+  if (!formModel.value.code || !formModel.value.equipment_code || !formModel.value.fault_desc) {
+    ElMessage.warning('请填写维修单号、设备和故障描述')
+    return
+  }
+
   await saveEquipmentRepair({
-    ...formModel.value,
-    priority: formModel.value.priority as EquipmentRepair['priority'],
-    status: formModel.value.status as EquipmentRepair['status']
+    id: formModel.value.id,
+    code: formModel.value.code,
+    equipment_code: formModel.value.equipment_code,
+    fault_desc: formModel.value.fault_desc,
+    priority: formModel.value.priority as EquipmentRepairRecord['priority'],
+    status: formModel.value.status as EquipmentRepairRecord['status'],
+    worker: formModel.value.worker,
+    created_at: formModel.value.created_at
   })
+
   dialogVisible.value = false
+  ElMessage.success(dialogMode.value === 'add' ? '维修工单已新增' : '维修工单已更新')
   await refresh()
 }
 
-async function dispatch(row: EquipmentRepair) {
-  await updateEquipmentRepairStatus(row.id, { status: 'running', worker: row.worker || '张维修' })
-  ElMessage.success('已派工')
+async function dispatch(row: EquipmentRepairRecord) {
+  await updateEquipmentRepairStatus(row.id, {
+    status: 'running',
+    worker: row.worker || '陈维修'
+  })
+  ElMessage.success('维修工单已派工')
   await refresh()
 }
 
-async function complete(row: EquipmentRepair) {
+async function complete(row: EquipmentRepairRecord) {
   await updateEquipmentRepairStatus(row.id, { status: 'done' })
-  ElMessage.success('维修完成，待验收')
+  ElMessage.success('维修工单已完工，待验收')
+  await refresh()
+}
+
+async function verify(row: EquipmentRepairRecord) {
+  await updateEquipmentRepairStatus(row.id, { status: 'verified' })
+  ElMessage.success('维修工单已验收闭环')
   await refresh()
 }
 </script>
-
-<style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-</style>
