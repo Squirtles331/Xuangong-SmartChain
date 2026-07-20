@@ -21,7 +21,7 @@ import UserDropdown from '@/layout/common/header-right/UserDropdown.vue'
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
   flex: 0 0 auto;
 }
 </style>

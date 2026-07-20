@@ -84,13 +84,14 @@ defineEmits<{
   overflow-y: auto;
   padding: 0;
   background:
-    radial-gradient(circle at top right, rgba(31, 94, 122, 0.08), transparent 26%),
-    linear-gradient(180deg, color-mix(in srgb, var(--layout-main-bg) 72%, #ffffff 28%) 0%, var(--layout-main-bg) 100%);
+    radial-gradient(circle at top right, rgba(53, 101, 122, 0.08), transparent 24%),
+    linear-gradient(180deg, color-mix(in srgb, var(--layout-main-bg) 84%, #ffffff 16%) 0%, var(--layout-main-bg) 100%);
 }
 
 .app-content {
   min-height: 100%;
   padding: var(--layout-content-padding);
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {

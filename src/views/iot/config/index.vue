@@ -1,108 +1,85 @@
 <template>
-  <gi-page-layout>
-    <template #header>
-      <SearchSetting :columns="searchColumns" @update:visible-fields="onSearchFieldsChange">
-        <gi-form
-          v-model="queryParams"
-          :columns="visibleSearchColumns"
-          :grid-item-props="searchGridItemProps"
-          search
-          @search="search"
-          @reset="handleReset"
-        />
-      </SearchSetting>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="设备连接管理"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :table-attrs="{ border: true, stripe: true, rowKey: 'id', style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+    @add="openAdd"
+  >
+    <template #protocol="{ row }">
+      <el-tag size="small" effect="light">{{ row.protocol }}</el-tag>
     </template>
 
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="refresh" />
+    <template #status="{ row }">
+      <StatusTag :value="row.status" :options="statusOptions" />
     </template>
 
-    <TableSetting title="IoT 连接配置" :columns="columns" @refresh="refresh">
-      <template #default="{ settingColumns, tableProps }">
-        <gi-table
-          :columns="settingColumns"
-          :data="tableData"
-          :pagination="pagination"
-          :loading="loading"
-          v-bind="tableProps"
-          border
-          style="height: 100%"
-        >
-          <template #index="{ $index }">
-            {{ $index + 1 + (pagination.currentPage - 1) * pagination.pageSize }}
-          </template>
+    <template #collect_interval="{ row }"> {{ row.collect_interval }} 秒 </template>
 
-          <template #protocol="{ row }">
-            <el-tag :type="row.protocol === 'OPC UA' ? 'primary' : row.protocol === 'MQTT' ? 'success' : 'warning'">
-              {{ row.protocol }}
-            </el-tag>
-          </template>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
+    </template>
 
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'connected' ? 'success' : 'danger'">
-              {{ row.status === 'connected' ? '已连接' : '已断开' }}
-            </el-tag>
-          </template>
-
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <gi-button type="delete" style="margin-left: 8px" @click="onDelete(row)" />
-          </template>
-        </gi-table>
-      </template>
-    </TableSetting>
-
-    <IoTConfigFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
-  </gi-page-layout>
+    <template #dialog>
+      <IoTConfigFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
-import SearchSetting from '@/components/SearchSetting.vue'
-import TableSetting from '@/components/TableSetting.vue'
-import {
-  createIoTConfig,
-  deleteIoTConfig,
-  getIoTConfigList,
-  updateIoTConfig,
-  type IoTConfig,
-  type IoTConfigQuery,
-  type IoTConnectionStatus
-} from '@/api/iot'
+import StatusTag from '@/components/StatusTag.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudDialogMode, CrudRowActionItem } from '@/components/crud/types'
 import { useTable } from '@/hooks/useTable'
+import {
+  deleteIotConnection,
+  getIotConnectionList,
+  iotConnectionStatusOptions,
+  iotProtocolOptions,
+  saveIotConnection,
+  type IotConnectionQuery,
+  type IotConnectionRecord
+} from '@/static/services/iot'
 import IoTConfigFormDialog, { type IoTConfigFormModel } from './IoTConfigFormDialog.vue'
 
-const statusOptions: Array<{ label: string; value: '' | IoTConnectionStatus }> = [
-  { label: '全部', value: '' },
-  { label: '已连接', value: 'connected' },
-  { label: '已断开', value: 'disconnected' }
-]
+defineOptions({
+  name: 'IotConnectionPage'
+})
+
+const statusOptions = [...iotConnectionStatusOptions]
+const protocolOptions = [{ label: '全部', value: '' }, ...iotProtocolOptions]
+const statusSelectOptions = [{ label: '全部', value: '' }, ...statusOptions.map((item) => ({ label: item.label, value: item.value }))]
 
 const searchColumns: FormColumnItem[] = [
-  { type: 'input', label: '关键词', field: 'keyword' },
+  {
+    type: 'input',
+    label: '连接关键字',
+    field: 'keyword',
+    props: { clearable: true, placeholder: '连接编码 / 设备 / 网关 / 端点 / 责任人' } as never
+  },
   {
     type: 'select-v2',
     label: '通信协议',
     field: 'protocol',
-    props: {
-      options: [
-        { label: '全部', value: '' },
-        { label: 'OPC UA', value: 'OPC UA' },
-        { label: 'MQTT', value: 'MQTT' },
-        { label: 'Modbus', value: 'Modbus' }
-      ]
-    } as any
+    props: { clearable: true, options: protocolOptions } as never
   },
   {
     type: 'select-v2',
     label: '连接状态',
     field: 'status',
-    props: {
-      options: statusOptions
-    } as any
+    props: { clearable: true, options: statusSelectOptions } as never
   }
 ]
 
@@ -110,63 +87,68 @@ const searchGridItemProps = {
   span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
-const columns: TableColumnItem<IoTConfig>[] = [
-  { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
-  { prop: 'name', label: '设备名称', minWidth: 180 },
-  { prop: 'protocol', label: '通信协议', minWidth: 100, align: 'center', slotName: 'protocol' },
-  { prop: 'address', label: '连接地址', minWidth: 220 },
-  { prop: 'port', label: '端口', minWidth: 80, align: 'center' },
-  { prop: 'interval', label: '采集间隔', minWidth: 100, align: 'center' },
-  { prop: 'status', label: '连接状态', minWidth: 100, align: 'center', slotName: 'status' },
-  { label: '操作', minWidth: 180, align: 'center', slotName: 'actions' }
+const columns: TableColumnItem<IotConnectionRecord>[] = [
+  { prop: 'code', label: '连接编码', minWidth: 140 },
+  { prop: 'equipment_name', label: '设备名称', minWidth: 180 },
+  { prop: 'equipment_code', label: '设备编码', minWidth: 140 },
+  { prop: 'workshop', label: '所属车间', minWidth: 130 },
+  { prop: 'line', label: '产线/单元', minWidth: 140 },
+  { label: '协议', minWidth: 100, align: 'center', slotName: 'protocol' },
+  { prop: 'gateway', label: '边缘网关', minWidth: 150 },
+  { prop: 'endpoint', label: '连接端点', minWidth: 230 },
+  { label: '采集周期', minWidth: 100, align: 'center', slotName: 'collect_interval' },
+  { label: '连接状态', minWidth: 100, align: 'center', slotName: 'status' },
+  { prop: 'last_heartbeat', label: '最近心跳', minWidth: 160 },
+  { prop: 'owner', label: '责任人', minWidth: 100 },
+  { label: '操作', minWidth: 180, fixed: 'right', align: 'center', slotName: 'actions' }
 ]
 
 const queryParams = reactive<{
   keyword: string
-  protocol: string
-  status: '' | IoTConnectionStatus
+  protocol: '' | IotConnectionRecord['protocol']
+  status: '' | IotConnectionRecord['status']
 }>({
   keyword: '',
   protocol: '',
   status: ''
 })
 
-const visibleSearchColumns = ref<FormColumnItem[]>([...searchColumns])
 const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
+const dialogMode = ref<CrudDialogMode>('add')
 const formModel = ref<IoTConfigFormModel>(createDefaultFormModel())
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<IoTConfig>({
+const { tableData, pagination, loading, search, refresh, onDelete } = useTable<IotConnectionRecord>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
-    const params: IoTConfigQuery = {
+    const params: IotConnectionQuery = {
       pageNum: page,
       pageSize: size,
       keyword: queryParams.keyword || undefined,
       protocol: queryParams.protocol || undefined,
       status: queryParams.status || undefined
     }
-
-    const response = await getIoTConfigList(params)
+    const response = await getIotConnectionList(params)
     return response.data
   },
-  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteIoTConfig(id)))
+  deleteAPI: (ids) => Promise.all(ids.map((id) => deleteIotConnection(id)))
 })
 
 function createDefaultFormModel(): IoTConfigFormModel {
   return {
     id: '',
-    name: '',
+    code: '',
+    equipment_code: '',
+    equipment_name: '',
+    workshop: '机加一车间',
+    line: '',
     protocol: 'OPC UA',
-    address: '',
-    port: 4840,
-    interval: '1s',
-    status: 'connected'
+    gateway: '',
+    endpoint: '',
+    collect_interval: 1,
+    status: 'connected',
+    last_heartbeat: '2026-07-16 10:30:00',
+    owner: ''
   }
-}
-
-function onSearchFieldsChange(fields: FormColumnItem[]) {
-  visibleSearchColumns.value = fields
 }
 
 function handleReset() {
@@ -184,33 +166,42 @@ function openAdd() {
   dialogVisible.value = true
 }
 
-function openEdit(row: IoTConfig) {
+function openEdit(row: IotConnectionRecord) {
   dialogMode.value = 'edit'
   formModel.value = { ...row }
   dialogVisible.value = true
 }
 
-async function submitDialog() {
-  if (!formModel.value.name || !formModel.value.address) {
-    ElMessage.warning('请填写设备名称和连接地址')
+function getRowActions(row: IotConnectionRecord): CrudRowActionItem[] {
+  return [
+    { key: 'edit', label: '编辑', tone: 'primary' },
+    { key: 'delete', label: '删除', tone: 'danger', hidden: row.status === 'connected' }
+  ]
+}
+
+function handleRowAction(action: string, row: IotConnectionRecord) {
+  if (action === 'edit') {
+    openEdit(row)
     return
   }
 
-  if (dialogMode.value === 'add') {
-    await createIoTConfig(formModel.value)
-    ElMessage.success('新增成功')
-  } else {
-    await updateIoTConfig(formModel.value.id, formModel.value)
-    ElMessage.success('编辑成功')
+  if (action === 'delete') {
+    onDelete(row)
+  }
+}
+
+async function submitDialog() {
+  if (!formModel.value.code || !formModel.value.equipment_code || !formModel.value.equipment_name || !formModel.value.endpoint) {
+    ElMessage.warning('请填写连接编码、设备信息和连接端点')
+    return
   }
 
+  await saveIotConnection({
+    ...formModel.value,
+    collect_interval: Number(formModel.value.collect_interval || 1)
+  })
   dialogVisible.value = false
+  ElMessage.success(dialogMode.value === 'add' ? '设备连接已新增' : '设备连接已更新')
   await refresh()
 }
 </script>
-
-<style scoped>
-:deep(.gi-page-layout__tool) {
-  gap: 8px;
-}
-</style>

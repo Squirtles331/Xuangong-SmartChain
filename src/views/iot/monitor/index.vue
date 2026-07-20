@@ -1,161 +1,165 @@
 <template>
-  <gi-page-layout>
-    <div class="iot-grid">
-      <el-card
-        v-for="item in devices"
-        :key="item.id"
-        shadow="hover"
-        class="iot-card"
-        :class="item.online ? 'online' : 'offline'"
-        @click="showDetail(item)"
-      >
-        <div class="iot-header">
-          <span class="iot-name">{{ item.name }}</span>
-          <el-tag :type="item.online ? 'success' : 'danger'" size="small">
-            {{ item.online ? '在线' : '离线' }}
-          </el-tag>
-        </div>
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="实时监控"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :show-add-button="false"
+    :table-attrs="{ border: true, stripe: true, rowKey: 'id', style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+  >
+    <template #connection_status="{ row }">
+      <StatusTag :value="row.connection_status" :options="connectionStatusOptions" />
+    </template>
 
-        <div class="iot-body">
-          <div class="iot-row">
-            <span>运行状态</span>
-            <el-tag :type="item.running ? 'success' : 'info'" size="small">
-              {{ item.running ? '运行中' : '空闲' }}
-            </el-tag>
-          </div>
-          <div class="iot-row">
-            <span>转速</span>
-            <strong>{{ item.rpm }} rpm</strong>
-          </div>
-          <div class="iot-row">
-            <span>温度</span>
-            <strong :style="{ color: item.temp > 60 ? '#f56c6c' : '' }">{{ item.temp.toFixed(1) }} °C</strong>
-          </div>
-          <div class="iot-row">
-            <span>电流</span>
-            <strong>{{ item.current.toFixed(1) }} A</strong>
-          </div>
-        </div>
+    <template #run_status="{ row }">
+      <StatusTag :value="row.run_status" :options="runStatusOptions" />
+    </template>
 
-        <div class="iot-footer">最近上报 {{ item.last_report }}</div>
-      </el-card>
-    </div>
+    <template #temperature="{ row }"> {{ row.temperature }} degC </template>
 
-    <DeviceDetailDialog v-model:visible="detailVisible" :device="detailDevice" />
-  </gi-page-layout>
+    <template #current="{ row }"> {{ row.current }} A </template>
+
+    <template #vibration="{ row }"> {{ row.vibration }} mm/s </template>
+
+    <template #alarm_count="{ row }">
+      <el-tag :type="row.alarm_count > 0 ? 'danger' : 'success'" size="small" effect="light"> {{ row.alarm_count }} 条 </el-tag>
+    </template>
+
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions()" @action="handleRowAction($event, row)" />
+    </template>
+
+    <template #dialog>
+      <DeviceDetailDialog v-model:visible="detailVisible" :snapshot="detailSnapshot" :samples="detailSamples" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue'
-import { getIoTDeviceList } from '@/api/iot'
-import DeviceDetailDialog, { type DeviceDetailModel } from './DeviceDetailDialog.vue'
+import { reactive, ref } from 'vue'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import StatusTag from '@/components/StatusTag.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem } from '@/components/crud/types'
+import { useTable } from '@/hooks/useTable'
+import {
+  getIotMonitorList,
+  getIotPointSamples,
+  iotConnectionStatusOptions,
+  iotRunStatusOptions,
+  type IotConnectionStatus,
+  type IotMonitorQuery,
+  type IotMonitorSnapshot,
+  type IotPointSample,
+  type IotRunStatus
+} from '@/static/services/iot'
+import DeviceDetailDialog from './DeviceDetailDialog.vue'
 
-type DeviceItem = DeviceDetailModel
+defineOptions({
+  name: 'IotMonitorPage'
+})
 
-const devices = ref<DeviceItem[]>([])
+const connectionStatusOptions = [...iotConnectionStatusOptions]
+const runStatusOptions = [...iotRunStatusOptions]
+const connectionSelectOptions = [{ label: '全部', value: '' }, ...connectionStatusOptions.map((item) => ({ label: item.label, value: item.value }))]
+const runStatusSelectOptions = [{ label: '全部', value: '' }, ...runStatusOptions.map((item) => ({ label: item.label, value: item.value }))]
+
+const searchColumns: FormColumnItem[] = [
+  {
+    type: 'input',
+    label: '设备关键字',
+    field: 'keyword',
+    props: { clearable: true, placeholder: '设备编码 / 设备名称 / 车间 / 网关' } as never
+  },
+  {
+    type: 'select-v2',
+    label: '运行状态',
+    field: 'run_status',
+    props: { clearable: true, options: runStatusSelectOptions } as never
+  },
+  {
+    type: 'select-v2',
+    label: '连接状态',
+    field: 'connection_status',
+    props: { clearable: true, options: connectionSelectOptions } as never
+  }
+]
+
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
+}
+
+const columns: TableColumnItem<IotMonitorSnapshot>[] = [
+  { prop: 'equipment_name', label: '设备名称', minWidth: 180 },
+  { prop: 'equipment_code', label: '设备编码', minWidth: 140 },
+  { prop: 'workshop', label: '所属车间', minWidth: 130 },
+  { prop: 'line', label: '产线/单元', minWidth: 140 },
+  { label: '连接状态', minWidth: 100, align: 'center', slotName: 'connection_status' },
+  { label: '运行状态', minWidth: 100, align: 'center', slotName: 'run_status' },
+  { prop: 'rpm', label: '转速(rpm)', minWidth: 110, align: 'right' },
+  { label: '温度', minWidth: 100, align: 'right', slotName: 'temperature' },
+  { label: '电流', minWidth: 100, align: 'right', slotName: 'current' },
+  { label: '振动', minWidth: 110, align: 'right', slotName: 'vibration' },
+  { label: '告警数', minWidth: 90, align: 'center', slotName: 'alarm_count' },
+  { prop: 'sample_time', label: '采样时间', minWidth: 160 },
+  { label: '操作', minWidth: 120, fixed: 'right', align: 'center', slotName: 'actions' }
+]
+
+const queryParams = reactive<{
+  keyword: string
+  run_status: '' | IotRunStatus
+  connection_status: '' | IotConnectionStatus
+}>({
+  keyword: '',
+  run_status: '',
+  connection_status: ''
+})
+
 const detailVisible = ref(false)
-const detailDevice = ref<DeviceItem | null>(null)
+const detailSnapshot = ref<IotMonitorSnapshot | null>(null)
+const detailSamples = ref<IotPointSample[]>([])
 
-let timer: ReturnType<typeof setInterval> | null = null
+const { tableData, pagination, loading, search, refresh } = useTable<IotMonitorSnapshot>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: IotMonitorQuery = {
+      pageNum: page,
+      pageSize: size,
+      keyword: queryParams.keyword || undefined,
+      run_status: queryParams.run_status || undefined,
+      connection_status: queryParams.connection_status || undefined
+    }
+    const response = await getIotMonitorList(params)
+    return response.data
+  }
+})
 
-function showDetail(device: DeviceItem) {
-  detailDevice.value = device
+function getRowActions(): CrudRowActionItem[] {
+  return [{ key: 'detail', label: '查看详情', tone: 'primary' }]
+}
+
+function handleReset() {
+  Object.assign(queryParams, {
+    keyword: '',
+    run_status: '',
+    connection_status: ''
+  })
+  search()
+}
+
+async function handleRowAction(action: string, row: IotMonitorSnapshot) {
+  if (action !== 'detail') return
+  detailSnapshot.value = row
+  const response = await getIotPointSamples(row.equipment_code)
+  detailSamples.value = response.data.list || []
   detailVisible.value = true
 }
-
-async function loadDevices() {
-  const response = await getIoTDeviceList({ pageNum: 1, pageSize: 100 })
-  const now = '2026-06-30 12:00:00'
-  devices.value = response.data.list.map((item) => ({
-    id: item.id,
-    name: item.name,
-    online: item.status !== 'maintenance',
-    running: item.status === 'running',
-    rpm: Number(item.rpm || 0),
-    temp: Number(item.temp || 0),
-    current: Number(item.power || 0),
-    last_report: now
-  }))
-}
-
-function startTimer() {
-  timer = setInterval(() => {
-    const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
-    devices.value.forEach((item) => {
-      if (!item.online) return
-
-      if (item.running) {
-        item.rpm = Math.max(0, Math.round(item.rpm + (Math.random() - 0.5) * 20))
-        item.temp = +(item.temp + (Math.random() - 0.5) * 0.8).toFixed(1)
-        item.current = Math.max(0, +(item.current + (Math.random() - 0.5) * 0.3).toFixed(1))
-      } else {
-        item.temp = +(item.temp + (Math.random() - 0.5) * 0.3).toFixed(1)
-        item.current = +(0.3 + Math.random() * 0.4).toFixed(1)
-      }
-
-      item.last_report = now
-    })
-  }, 3000)
-}
-
-onMounted(async () => {
-  await loadDevices()
-  startTimer()
-})
-
-onUnmounted(() => {
-  if (timer) clearInterval(timer)
-})
 </script>
-
-<style scoped>
-.iot-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.iot-card {
-  border-left: 4px solid #67c23a;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.iot-card:hover {
-  transform: translateY(-2px);
-}
-
-.iot-card.offline {
-  border-left-color: #f56c6c;
-}
-
-.iot-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.iot-name {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.iot-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  font-size: 13px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.iot-row span {
-  color: #909399;
-}
-
-.iot-footer {
-  margin-top: 8px;
-  font-size: 11px;
-  color: #c0c4cc;
-}
-</style>

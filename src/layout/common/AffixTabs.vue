@@ -133,6 +133,7 @@ watch(
   background-color: var(--layout-header-bg);
   border-bottom: 1px solid var(--layout-header-border);
   padding: 0 12px;
+  backdrop-filter: blur(12px);
 }
 
 .route-tabs__bar {
@@ -192,7 +193,7 @@ watch(
   min-height: 34px;
   padding: 0 12px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: 10px;
   background-color: var(--tab-bg);
   color: var(--tab-color);
   cursor: pointer;
@@ -207,7 +208,7 @@ watch(
   color: var(--tab-active-color);
   background-color: var(--tab-active-bg);
   border-color: var(--tab-active-border);
-  box-shadow: 0 4px 12px var(--tab-active-shadow);
+  box-shadow: 0 4px 10px var(--tab-active-shadow);
 }
 
 .tab-title {

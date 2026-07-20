@@ -171,9 +171,9 @@ onUnmounted(() => {
 
 .section {
   padding: 16px;
-  border-radius: 18px;
+  border-radius: 14px;
   border: 1px solid var(--layout-divider);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--el-bg-color) 96%, transparent) 0%, var(--el-fill-color-lighter) 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--el-bg-color) 98%, transparent) 0%, var(--el-fill-color-lighter) 100%);
   box-shadow: var(--el-box-shadow-lighter);
 }
 
@@ -211,7 +211,7 @@ onUnmounted(() => {
   position: relative;
   padding: 12px;
   border: 1px solid var(--layout-divider);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--el-bg-color);
   cursor: pointer;
   transition:
@@ -226,7 +226,7 @@ onUnmounted(() => {
 
 .option-card.active {
   border-color: var(--el-color-primary);
-  box-shadow: 0 0 0 2px rgba(32, 104, 182, 0.12);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--el-color-primary) 14%, transparent);
 }
 
 .label {
@@ -241,7 +241,7 @@ onUnmounted(() => {
   height: 70px;
   overflow: hidden;
   border-radius: 8px;
-  background: #edf2f7;
+  background: #edf2f5;
   place-items: center;
 }
 
@@ -249,7 +249,7 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   border: 1px solid rgba(118, 134, 158, 0.18);
-  background: linear-gradient(180deg, #f9fbfd 0%, #edf3f6 100%);
+  background: linear-gradient(180deg, #fbfcfd 0%, #eff4f7 100%);
 }
 
 .layout-classic .page {

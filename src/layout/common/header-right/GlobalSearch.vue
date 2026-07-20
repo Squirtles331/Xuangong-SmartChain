@@ -33,7 +33,7 @@ const openSearchDialog = () => {
 
 <style scoped>
 .global-search {
-  width: 180px;
+  width: 196px;
   cursor: pointer;
 }
 
@@ -44,10 +44,22 @@ const openSearchDialog = () => {
 .global-search :deep(.el-input__wrapper) {
   cursor: pointer;
   border-radius: 10px;
+  background: color-mix(in srgb, var(--el-bg-color) 78%, var(--el-fill-color-light) 22%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el-border-color) 78%, transparent);
 }
 
 .global-search :deep(.el-input__wrapper:hover) {
   cursor: pointer;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 22%, var(--el-border-color) 78%);
+}
+
+.global-search :deep(.el-input__inner) {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.global-search :deep(.el-input__prefix-inner) {
+  color: var(--el-text-color-secondary);
 }
 
 .search-result {

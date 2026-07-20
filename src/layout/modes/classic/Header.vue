@@ -49,6 +49,7 @@ const showBreadcrumb = computed(() => layoutStore.showBreadcrumb)
   gap: 20px;
   padding: 0 24px;
   box-shadow: 0 1px 4px var(--layout-header-shadow);
+  backdrop-filter: blur(12px);
 }
 
 .header-left {
@@ -67,6 +68,11 @@ const showBreadcrumb = computed(() => layoutStore.showBreadcrumb)
   height: 40px;
   object-fit: contain;
   flex: 0 0 auto;
+  padding: 6px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--el-color-primary-light-9) 70%, #ffffff 30%);
+  border: 1px solid color-mix(in srgb, var(--el-color-primary-light-8) 72%, #ffffff 28%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .brand-copy {
@@ -76,15 +82,15 @@ const showBreadcrumb = computed(() => layoutStore.showBreadcrumb)
 }
 
 .brand-title {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.1;
   font-weight: 700;
   color: var(--el-text-color-primary);
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
 }
 
 .brand-subtitle {
-  margin-top: 2px;
+  margin-top: 3px;
   font-size: 12px;
   line-height: 1.2;
   color: var(--el-text-color-secondary);
@@ -97,12 +103,17 @@ const showBreadcrumb = computed(() => layoutStore.showBreadcrumb)
 }
 
 .header-center :deep(.el-breadcrumb) {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .header-center :deep(.el-breadcrumb__inner.is-link),
 .header-center :deep(.el-breadcrumb__inner) {
   font-weight: 600;
+  color: var(--el-text-color-secondary);
+}
+
+.header-center :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+  color: var(--el-text-color-primary);
 }
 
 @media (max-width: 1280px) {

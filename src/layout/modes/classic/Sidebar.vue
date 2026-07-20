@@ -80,6 +80,8 @@ const getIcon = (name?: string) => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.03);
 }
 
 .app-sidebar.collapsed {
@@ -87,7 +89,7 @@ const getIcon = (name?: string) => {
 }
 
 .sidebar-top {
-  padding: 18px 16px 14px;
+  padding: 18px 16px 16px;
   border-bottom: 1px solid var(--layout-sidebar-border);
 }
 
@@ -95,6 +97,9 @@ const getIcon = (name?: string) => {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 4px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.015) 100%);
 }
 
 .sidebar-brand-logo {
@@ -103,8 +108,8 @@ const getIcon = (name?: string) => {
   object-fit: contain;
   flex: 0 0 auto;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 4px;
 }
 
 .sidebar-brand-copy {
@@ -115,14 +120,15 @@ const getIcon = (name?: string) => {
   font-size: 16px;
   line-height: 1.2;
   font-weight: 700;
-  color: #f4f7fb;
+  color: #eef4f8;
+  letter-spacing: 0.02em;
 }
 
 .sidebar-brand-subtitle {
   margin-top: 3px;
   font-size: 12px;
   line-height: 1.2;
-  color: rgba(208, 220, 236, 0.72);
+  color: rgba(205, 218, 231, 0.68);
 }
 
 .app-sidebar.collapsed .sidebar-top {
@@ -148,7 +154,7 @@ const getIcon = (name?: string) => {
 .sidebar-menu {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 10px 14px;
+  padding: 14px 10px 14px;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -167,7 +173,7 @@ const getIcon = (name?: string) => {
   height: 44px;
   line-height: 44px;
   margin-bottom: 6px;
-  border-radius: 10px;
+  border-radius: 12px;
   color: var(--layout-sidebar-text);
 }
 
@@ -179,7 +185,9 @@ const getIcon = (name?: string) => {
 .app-sidebar :deep(.el-menu-item.is-active) {
   color: var(--layout-sidebar-active-text);
   background-color: var(--layout-sidebar-active-bg);
-  box-shadow: inset 0 0 0 1px rgba(94, 155, 229, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(157, 184, 200, 0.18),
+    inset 3px 0 0 rgba(226, 238, 245, 0.78);
 }
 
 .app-sidebar :deep(.el-menu-item .el-icon),
@@ -205,8 +213,8 @@ const getIcon = (name?: string) => {
   height: 18px;
   padding: 0 6px;
   border-radius: 999px;
-  background: rgba(155, 196, 245, 0.12);
-  color: #b8d6fb;
+  background: rgba(170, 196, 214, 0.14);
+  color: #d5e4ee;
   font-size: 11px;
   line-height: 1;
   white-space: nowrap;
@@ -237,7 +245,7 @@ const getIcon = (name?: string) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  background-color: var(--layout-sidebar-bg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.02) 100%);
   border-top: 1px solid var(--layout-sidebar-border);
 }
 

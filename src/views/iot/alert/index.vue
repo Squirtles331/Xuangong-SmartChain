@@ -1,205 +1,173 @@
 <template>
-  <gi-page-layout>
-    <template #tool>
-      <gi-button type="add" @click="openAdd" />
-      <gi-button type="reset" style="margin-left: 8px" @click="loadHistory" />
+  <CrudPage
+    v-model:search-model="queryParams"
+    title="报警记录"
+    :search-columns="searchColumns"
+    :search-grid-item-props="searchGridItemProps"
+    :columns="columns"
+    :data="tableData"
+    :pagination="pagination"
+    :loading="loading"
+    :show-add-button="false"
+    :table-attrs="{ border: true, stripe: true, rowKey: 'id', style: 'height: 100%' }"
+    @search="search"
+    @reset="handleReset"
+    @refresh="refresh"
+  >
+    <template #metric="{ row }">
+      <el-tag size="small" effect="light">{{ metricLabelMap[row.metric] }}</el-tag>
     </template>
 
-    <el-tabs v-model="tab">
-      <el-tab-pane label="预警规则" name="rules">
-        <gi-table :columns="ruleColumns" :data="rules" border stripe>
-          <template #metric="{ row }">
-            <el-tag size="small">{{ metricLabel[row.metric] }}</el-tag>
-          </template>
+    <template #level="{ row }">
+      <StatusTag :value="row.level" :options="levelOptions" />
+    </template>
 
-          <template #level="{ row }">
-            <el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">
-              {{ levelLabel[row.level] }}
-            </el-tag>
-          </template>
+    <template #status="{ row }">
+      <StatusTag :value="row.status" :options="statusOptions" />
+    </template>
 
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
-              {{ row.status === 'active' ? '启用' : '停用' }}
-            </el-tag>
-          </template>
+    <template #trigger_value="{ row }"> {{ row.trigger_value }} </template>
 
-          <template #actions="{ row }">
-            <gi-button type="edit" @click="openEdit(row)" />
-            <el-button :type="row.status === 'active' ? 'warning' : 'success'" link size="small" @click="toggle(row)">
-              {{ row.status === 'active' ? '停用' : '启用' }}
-            </el-button>
-            <gi-button type="delete" @click="removeRule(row.id)" />
-          </template>
-        </gi-table>
-      </el-tab-pane>
-
-      <el-tab-pane label="告警历史" name="history">
-        <gi-table :columns="historyColumns" :data="alertHistory" border stripe size="small">
-          <template #metric="{ row }">
-            <el-tag size="small">{{ metricLabel[row.metric] }}</el-tag>
-          </template>
-
-          <template #level="{ row }">
-            <el-tag :type="row.level === 'critical' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'" size="small">
-              {{ levelLabel[row.level] }}
-            </el-tag>
-          </template>
-
-          <template #status="{ row }">
-            <el-tag :type="row.status === 'triggered' ? 'danger' : 'success'" size="small">
-              {{ row.status === 'triggered' ? '已触发' : '已恢复' }}
-            </el-tag>
-          </template>
-        </gi-table>
-      </el-tab-pane>
-    </el-tabs>
-
-    <AlertFormDialog
-      v-model:visible="dialogVisible"
-      v-model:form="formModel"
-      :mode="dialogMode"
-      :device-options="deviceOptions"
-      @submit="submitDialog"
-    />
-  </gi-page-layout>
+    <template #actions="{ row }">
+      <CrudRowActions :actions="getRowActions(row)" @action="handleRowAction($event, row)" />
+    </template>
+  </CrudPage>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import type { TableColumnItem } from 'gi-component'
+import { reactive } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { FormColumnItem, TableColumnItem } from 'gi-component'
+import StatusTag from '@/components/StatusTag.vue'
+import CrudPage from '@/components/crud/CrudPage/index.vue'
+import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
+import type { CrudRowActionItem } from '@/components/crud/types'
+import { useTable } from '@/hooks/useTable'
 import {
-  createIoTAlertRule,
-  deleteIoTAlertRule,
-  getIoTAlertHistory,
-  getIoTAlertRuleList,
-  updateIoTAlertRule,
-  type IoTAlertHistoryItem,
-  type IoTAlertLevel,
-  type IoTAlertMetric,
-  type IoTAlertRule
-} from '@/api/iot'
-import AlertFormDialog, { type AlertRuleFormModel } from './AlertFormDialog.vue'
+  getIotAlarmList,
+  iotAlarmLevelOptions,
+  iotAlarmStatusOptions,
+  iotPointMetricOptions,
+  updateIotAlarmStatus,
+  type IotAlarmLevel,
+  type IotAlarmQuery,
+  type IotAlarmRecord,
+  type IotAlarmStatus
+} from '@/static/services/iot'
 
-const metricLabel: Record<IoTAlertMetric, string> = {
-  temp: '温度',
-  rpm: '转速',
-  vibration: '振动',
-  current: '电流'
-}
+defineOptions({
+  name: 'IotAlarmPage'
+})
 
-const levelLabel: Record<IoTAlertLevel, string> = {
-  critical: '严重',
-  warning: '预警',
-  info: '提示'
-}
+const levelOptions = [...iotAlarmLevelOptions]
+const statusOptions = [...iotAlarmStatusOptions]
+const metricLabelMap = Object.fromEntries(iotPointMetricOptions.map((item) => [item.value, item.label])) as Record<IotAlarmRecord['metric'], string>
+const levelSelectOptions = [{ label: '全部', value: '' }, ...levelOptions.map((item) => ({ label: item.label, value: item.value }))]
+const statusSelectOptions = [{ label: '全部', value: '' }, ...statusOptions.map((item) => ({ label: item.label, value: item.value }))]
 
-const deviceOptions = [
-  { label: '数控车床 CK6150', value: '数控车床 CK6150' },
-  { label: '钻床 Z3050', value: '钻床 Z3050' },
-  { label: '加工中心 VMC850', value: '加工中心 VMC850' }
-]
-
-const tab = ref('rules')
-const rules = ref<IoTAlertRule[]>([])
-const alertHistory = ref<IoTAlertHistoryItem[]>([])
-const dialogVisible = ref(false)
-const dialogMode = ref<'add' | 'edit'>('add')
-
-const formModel = ref<AlertRuleFormModel>(createDefaultFormModel())
-
-const historyColumns: TableColumnItem<IoTAlertHistoryItem>[] = [
-  { prop: 'device', label: '设备', minWidth: 160 },
-  { label: '监测项', minWidth: 90, slotName: 'metric', align: 'center' },
-  { prop: 'actual_value', label: '实际值', minWidth: 90, align: 'center' },
-  { prop: 'threshold', label: '阈值', minWidth: 90, align: 'center' },
-  { label: '等级', minWidth: 80, slotName: 'level', align: 'center' },
-  { label: '状态', minWidth: 90, slotName: 'status', align: 'center' },
-  { prop: 'triggered_at', label: '触发时间', minWidth: 170 },
-  { prop: 'recovered_at', label: '恢复时间', minWidth: 170 }
-]
-
-const ruleColumns: TableColumnItem<IoTAlertRule>[] = [
-  { prop: 'device', label: '设备', minWidth: 180 },
-  { label: '监测项', minWidth: 90, slotName: 'metric', align: 'center' },
-  { prop: 'operator', label: '运算符', minWidth: 80, align: 'center' },
-  { prop: 'threshold', label: '阈值', minWidth: 90, align: 'center' },
-  { label: '等级', minWidth: 80, slotName: 'level', align: 'center' },
-  { label: '状态', minWidth: 80, slotName: 'status', align: 'center' },
-  { label: '操作', minWidth: 220, fixed: 'right', slotName: 'actions', align: 'center' }
-]
-
-function createDefaultFormModel(): AlertRuleFormModel {
-  return {
-    id: '',
-    device: '数控车床 CK6150',
-    metric: 'temp',
-    operator: '>',
-    threshold: 60,
-    level: 'warning',
-    status: 'active'
+const searchColumns: FormColumnItem[] = [
+  {
+    type: 'input',
+    label: '报警关键字',
+    field: 'keyword',
+    props: { clearable: true, placeholder: '报警编号 / 设备 / 点位 / 来源 / 关联维修' } as never
+  },
+  {
+    type: 'select-v2',
+    label: '报警等级',
+    field: 'level',
+    props: { clearable: true, options: levelSelectOptions } as never
+  },
+  {
+    type: 'select-v2',
+    label: '处理状态',
+    field: 'status',
+    props: { clearable: true, options: statusSelectOptions } as never
   }
+]
+
+const searchGridItemProps = {
+  span: { xs: 24, sm: 12, md: 12, lg: 12, xl: 8, xxl: 8 }
 }
 
-async function loadRules() {
-  const response = await getIoTAlertRuleList()
-  rules.value = response.data || []
+const columns: TableColumnItem<IotAlarmRecord>[] = [
+  { prop: 'code', label: '报警编号', minWidth: 160 },
+  { prop: 'equipment_name', label: '设备名称', minWidth: 180 },
+  { prop: 'equipment_code', label: '设备编码', minWidth: 140 },
+  { prop: 'point_name', label: '点位名称', minWidth: 130 },
+  { label: '指标', minWidth: 90, align: 'center', slotName: 'metric' },
+  { label: '等级', minWidth: 90, align: 'center', slotName: 'level' },
+  { label: '触发值', minWidth: 90, align: 'right', slotName: 'trigger_value' },
+  { prop: 'threshold_desc', label: '阈值', minWidth: 120, align: 'center' },
+  { label: '处理状态', minWidth: 100, align: 'center', slotName: 'status' },
+  { prop: 'triggered_at', label: '触发时间', minWidth: 160 },
+  { prop: 'recovered_at', label: '恢复时间', minWidth: 160 },
+  { prop: 'handler', label: '处理人', minWidth: 100 },
+  { prop: 'related_repair', label: '关联维修', minWidth: 130 },
+  { label: '操作', minWidth: 200, fixed: 'right', align: 'center', slotName: 'actions' }
+]
+
+const queryParams = reactive<{
+  keyword: string
+  level: '' | IotAlarmLevel
+  status: '' | IotAlarmStatus
+}>({
+  keyword: '',
+  level: '',
+  status: ''
+})
+
+const { tableData, pagination, loading, search, refresh } = useTable<IotAlarmRecord>({
+  rowKey: 'id',
+  listAPI: async ({ page, size }) => {
+    const params: IotAlarmQuery = {
+      pageNum: page,
+      pageSize: size,
+      keyword: queryParams.keyword || undefined,
+      level: queryParams.level || undefined,
+      status: queryParams.status || undefined
+    }
+    const response = await getIotAlarmList(params)
+    return response.data
+  }
+})
+
+function handleReset() {
+  Object.assign(queryParams, {
+    keyword: '',
+    level: '',
+    status: ''
+  })
+  search()
 }
 
-async function loadHistory() {
-  const response = await getIoTAlertHistory({ pageNum: 1, pageSize: 100 })
-  alertHistory.value = response.data.list || []
+function getRowActions(row: IotAlarmRecord): CrudRowActionItem[] {
+  return [
+    { key: 'ack', label: '确认', tone: 'primary', hidden: row.status !== 'triggered' },
+    { key: 'recover', label: '标记恢复', tone: 'success', hidden: row.status === 'recovered' || row.status === 'closed' },
+    { key: 'close', label: '关闭', tone: 'secondary', hidden: row.status !== 'recovered' }
+  ]
 }
 
-function openAdd() {
-  dialogMode.value = 'add'
-  formModel.value = createDefaultFormModel()
-  dialogVisible.value = true
-}
-
-function openEdit(rule: IoTAlertRule) {
-  dialogMode.value = 'edit'
-  formModel.value = { ...rule }
-  dialogVisible.value = true
-}
-
-async function submitDialog() {
-  if (!formModel.value.device) {
-    ElMessage.warning('请选择设备')
+async function handleRowAction(action: string, row: IotAlarmRecord) {
+  if (action === 'ack') {
+    await updateIotAlarmStatus(row.id, 'acknowledged', '当前用户')
+    ElMessage.success('报警已确认')
+    await refresh()
     return
   }
 
-  if (dialogMode.value === 'add') {
-    await createIoTAlertRule(formModel.value)
-    ElMessage.success('新增成功')
-  } else {
-    await updateIoTAlertRule(formModel.value.id, formModel.value)
-    ElMessage.success('编辑成功')
+  if (action === 'recover') {
+    await updateIotAlarmStatus(row.id, 'recovered', '当前用户')
+    ElMessage.success('报警已标记恢复')
+    await refresh()
+    return
   }
 
-  dialogVisible.value = false
-  await loadRules()
+  if (action === 'close') {
+    await updateIotAlarmStatus(row.id, 'closed', '当前用户')
+    ElMessage.success('报警已关闭')
+    await refresh()
+  }
 }
-
-async function toggle(rule: IoTAlertRule) {
-  const nextStatus = rule.status === 'active' ? 'disabled' : 'active'
-  await updateIoTAlertRule(rule.id, { ...rule, status: nextStatus })
-  await loadRules()
-  ElMessage.success(nextStatus === 'active' ? '规则已启用' : '规则已停用')
-}
-
-function removeRule(id: string) {
-  ElMessageBox.confirm('确认删除这条预警规则吗？', '提示', { type: 'warning' })
-    .then(async () => {
-      await deleteIoTAlertRule(id)
-      await loadRules()
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
-}
-
-onMounted(async () => {
-  await Promise.all([loadRules(), loadHistory()])
-})
 </script>

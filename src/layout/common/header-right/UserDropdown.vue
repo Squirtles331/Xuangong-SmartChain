@@ -182,24 +182,30 @@ onUnmounted(() => {
 <style scoped>
 .avatar {
   cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--el-border-color) 78%, transparent);
+  background: color-mix(in srgb, var(--el-bg-color) 82%, var(--el-fill-color-light) 18%);
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.06);
 }
 
 .user-dropdown {
   width: 280px;
   padding: 8px 0;
+  border-radius: 14px;
 }
 
 .user-top {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 16px 12px;
+  padding: 10px 16px 14px;
   border-bottom: 1px solid var(--layout-divider);
 }
 
 .user-avatar {
   width: 44px;
   height: 44px;
+  border: 1px solid color-mix(in srgb, var(--el-border-color) 78%, transparent);
+  background: color-mix(in srgb, var(--el-bg-color) 88%, var(--el-fill-color-light) 12%);
 }
 
 .user-meta {
@@ -220,6 +226,7 @@ onUnmounted(() => {
 
 .user-tag {
   line-height: 1;
+  border-radius: 999px;
 }
 
 .user-email {
@@ -243,6 +250,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+  border-radius: 10px;
+  margin: 0 6px;
 }
 
 .repo-section {
@@ -262,6 +271,8 @@ onUnmounted(() => {
   gap: 8px;
   padding-top: 10px;
   padding-bottom: 10px;
+  border-radius: 10px;
+  margin: 0 6px;
 }
 
 .repo-item {
@@ -285,6 +296,8 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin: 0 6px;
+  border-radius: 10px;
 }
 
 .shortcut {
