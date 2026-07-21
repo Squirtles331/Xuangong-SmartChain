@@ -1,6 +1,6 @@
-import { generateId } from '@/mock/shared/id'
-import { paginate, searchItems } from '@/mock/shared/paginate'
-import { wrapListResponse, wrapSuccessResponse } from '@/mock/shared/response'
+import { generateId } from '@/static/utils/id'
+import { paginate, searchItems } from '@/static/utils/paginate'
+import { wrapListResponse, wrapSuccessResponse } from '@/static/utils/response'
 
 export type PurchaseRequestSource = 'erp' | 'manual'
 export type PurchaseRequestStatus = 'draft' | 'approved' | 'ordered' | 'rejected'

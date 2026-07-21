@@ -13,8 +13,8 @@
         :unique-opened="true"
         router
         background-color="transparent"
-        text-color="var(--layout-sidebar-text)"
-        active-text-color="var(--layout-sidebar-active-text)"
+        text-color="var(--layout-sub-sidebar-text)"
+        active-text-color="var(--layout-sub-sidebar-active-text)"
         @select="emit('select')"
       >
         <SidebarMenuItem v-for="item in items" :key="item.path" :item="item" :leaf-icon="true" />
@@ -54,11 +54,12 @@ const emit = defineEmits<{
 
 <style scoped>
 .secondary-sidebar {
-  width: 248px;
+  width: 272px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--layout-sidebar-border);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--el-bg-color) 94%, #f7fbff 6%) 0%, var(--el-bg-color) 100%);
+  border-right: 1px solid var(--layout-sub-sidebar-border);
+  background: var(--layout-sub-sidebar-bg);
+  box-shadow: var(--layout-sub-sidebar-shadow);
   transition: width 0.3s ease;
   overflow: hidden;
 }
@@ -68,25 +69,29 @@ const emit = defineEmits<{
 }
 
 .sidebar-head {
-  padding: 18px 16px 12px;
-  border-bottom: 1px solid rgba(124, 146, 170, 0.14);
+  padding: 22px 18px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--layout-sub-sidebar-border) 88%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--el-bg-color) 96%, transparent) 0%, transparent 100%),
+    radial-gradient(circle at top left, color-mix(in srgb, var(--el-color-primary) 8%, transparent) 0%, transparent 48%);
 }
 
 .sidebar-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  color: var(--el-text-color-primary);
+  color: var(--layout-sub-sidebar-title);
+  letter-spacing: 0.01em;
 }
 
 .sidebar-hint {
-  margin-top: 4px;
+  margin-top: 6px;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--el-text-color-secondary);
+  color: var(--layout-sub-sidebar-hint);
 }
 
 .secondary-sidebar.collapsed .sidebar-head {
-  padding: 18px 8px 12px;
+  padding: 20px 8px 12px;
 }
 
 .secondary-sidebar.collapsed .sidebar-title,
@@ -98,7 +103,7 @@ const emit = defineEmits<{
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px 10px 14px;
+  padding: 14px 12px 18px;
   scrollbar-width: none;
 }
 
@@ -109,35 +114,74 @@ const emit = defineEmits<{
 
 .secondary-sidebar :deep(.el-menu) {
   border-right: none;
+  background: transparent;
 }
 
 .secondary-sidebar :deep(.el-menu-item),
 .secondary-sidebar :deep(.el-sub-menu__title) {
-  height: 44px;
-  line-height: 44px;
-  margin-bottom: 6px;
-  border-radius: 10px;
-  color: var(--layout-sidebar-text);
+  height: 46px;
+  line-height: 46px;
+  margin-bottom: 8px;
+  padding-right: 14px !important;
+  border-radius: 12px;
+  color: var(--layout-sub-sidebar-text);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.secondary-sidebar :deep(.el-menu-item .el-icon),
+.secondary-sidebar :deep(.el-sub-menu__title .el-icon) {
+  color: var(--layout-sub-sidebar-muted-text);
+  transition: color 0.2s ease;
+}
+
+.secondary-sidebar :deep(.el-sub-menu__icon-arrow) {
+  color: var(--layout-sub-sidebar-muted-text);
 }
 
 .secondary-sidebar :deep(.el-menu-item:hover),
 .secondary-sidebar :deep(.el-sub-menu__title:hover) {
-  background-color: rgba(39, 108, 185, 0.08);
+  background-color: var(--layout-sub-sidebar-hover-bg);
+  color: var(--layout-sub-sidebar-title);
+  transform: translateX(2px);
 }
 
 .secondary-sidebar :deep(.el-menu-item.is-active) {
-  color: var(--layout-sidebar-active-text);
-  background-color: color-mix(in srgb, var(--layout-sidebar-active-bg) 72%, #ffffff 28%);
-  box-shadow: inset 0 0 0 1px rgba(94, 155, 229, 0.16);
+  color: var(--layout-sub-sidebar-active-text);
+  background: var(--layout-sub-sidebar-active-bg);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 20%, transparent),
+    0 10px 18px color-mix(in srgb, var(--el-color-primary) 14%, transparent);
+}
+
+.secondary-sidebar :deep(.el-menu-item:hover .el-icon),
+.secondary-sidebar :deep(.el-sub-menu__title:hover .el-icon),
+.secondary-sidebar :deep(.el-menu-item.is-active .el-icon),
+.secondary-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .el-icon),
+.secondary-sidebar :deep(.el-sub-menu.is-opened > .el-sub-menu__title .el-icon),
+.secondary-sidebar :deep(.el-sub-menu.is-opened > .el-sub-menu__title .el-sub-menu__icon-arrow) {
+  color: inherit;
+}
+
+.secondary-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title),
+.secondary-sidebar :deep(.el-sub-menu.is-opened > .el-sub-menu__title) {
+  color: var(--layout-sub-sidebar-title);
+  background-color: color-mix(in srgb, var(--layout-sub-sidebar-hover-bg) 92%, transparent);
 }
 
 .secondary-sidebar :deep(.el-sub-menu .el-menu-item) {
   min-width: 0;
-  padding-left: 46px !important;
+  padding-left: 48px !important;
+  font-size: 13px;
 }
 
 .secondary-sidebar.collapsed .sidebar-menu-wrap {
-  padding: 12px 8px 14px;
+  padding: 14px 8px 18px;
 }
 
 .secondary-sidebar.collapsed :deep(.el-menu-item),
@@ -154,8 +198,8 @@ const emit = defineEmits<{
 .sidebar-empty {
   flex: 1;
   min-height: 0;
-  padding: 18px 16px;
-  color: var(--el-text-color-secondary);
+  padding: 20px 18px;
+  color: var(--layout-sub-sidebar-hint);
   font-size: 13px;
   line-height: 1.7;
 }
@@ -168,18 +212,19 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  border-top: 1px solid rgba(124, 146, 170, 0.14);
-  background: rgba(255, 255, 255, 0.76);
+  padding: 14px 16px;
+  border-top: 1px solid color-mix(in srgb, var(--layout-sub-sidebar-border) 88%, transparent);
+  background: var(--layout-sub-sidebar-footer-bg);
+  backdrop-filter: blur(12px);
 }
 
 .sidebar-footer-text {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--layout-sub-sidebar-hint);
 }
 
 .collapse-toggle {
-  color: var(--layout-sidebar-text);
+  color: var(--layout-sub-sidebar-text);
 }
 
 .secondary-sidebar.collapsed .sidebar-footer {

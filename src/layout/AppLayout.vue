@@ -1,6 +1,5 @@
 <template>
-  <component
-    :is="currentLayoutComp"
+  <StandardLayout
     :breadcrumbs="breadcrumbs"
     :active-menu="activeMenu"
     :sidebar-collapsed="sidebarCollapsed"
@@ -16,9 +15,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useLayoutStore } from '@/stores/layout'
+import StandardLayout from '@/layout/modes/double-column/Layout.vue'
 
 interface Tab {
   title: string
@@ -32,7 +31,6 @@ interface Breadcrumb {
 
 const route = useRoute()
 const router = useRouter()
-const layoutStore = useLayoutStore()
 
 const getRouteTitle = (path: string): string => {
   if (path === route.path && route.meta?.title) return route.meta.title as string
@@ -122,18 +120,6 @@ const removeTab = (targetPath: string) => {
 const handleTabClick = (path: string) => {
   router.push(path)
 }
-
-const currentLayoutComp = computed(() => {
-  switch (layoutStore.mode) {
-    case 'double-row':
-      return defineAsyncComponent(() => import('@/layout/modes/double-row/Layout.vue'))
-    case 'double-column':
-      return defineAsyncComponent(() => import('@/layout/modes/double-column/Layout.vue'))
-    case 'classic':
-    default:
-      return defineAsyncComponent(() => import('@/layout/modes/classic/Layout.vue'))
-  }
-})
 </script>
 
 <style scoped></style>

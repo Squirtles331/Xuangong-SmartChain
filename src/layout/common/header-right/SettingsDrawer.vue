@@ -6,26 +6,8 @@
 
     <div class="drawer-body">
       <div class="section">
-        <div class="section-title">布局模式</div>
-        <div class="card-grid">
-          <div class="option-card" :class="{ active: layoutMode === 'classic' }" @click="setLayout('classic')">
-            <div class="preview layout-classic"><div class="page"></div></div>
-            <div class="label">经典布局</div>
-          </div>
-          <div class="option-card" :class="{ active: layoutMode === 'double-row' }" @click="setLayout('double-row')">
-            <div class="preview layout-double-row"><div class="page"></div></div>
-            <div class="label">顶侧双排</div>
-          </div>
-          <div class="option-card" :class="{ active: layoutMode === 'double-column' }" @click="setLayout('double-column')">
-            <div class="preview layout-double-column"><div class="page"></div></div>
-            <div class="label">左侧双列</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
         <div class="section-title">全局主题</div>
-        <div class="card-grid theme-grid">
+        <div class="card-grid">
           <div class="option-card" :class="{ active: currentTheme === 'light' }" @click="setTheme('light', $event)">
             <div class="preview theme-light"><div class="page"></div></div>
             <div class="label">工业蓝灰</div>
@@ -50,7 +32,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { applyAppTheme, getActiveAppTheme, getStoredAppTheme, type AppTheme } from '@/hooks/useAppTheme'
-import { type LayoutMode, useLayoutStore } from '@/stores/layout'
 import { useUserStore } from '@/stores/user'
 
 const props = defineProps<{ modelValue: boolean }>()
@@ -61,8 +42,6 @@ const open = computed({
   set: (value: boolean) => emit('update:modelValue', value)
 })
 
-const layoutStore = useLayoutStore()
-const layoutMode = ref<LayoutMode>(layoutStore.mode)
 const currentTheme = ref<AppTheme>(getStoredAppTheme())
 
 const root = document.documentElement
@@ -71,11 +50,6 @@ const supportsVT = 'startViewTransition' in document
 
 const applyTheme = (value: AppTheme) => {
   currentTheme.value = applyAppTheme(value)
-}
-
-const setLayout = (mode: LayoutMode) => {
-  layoutStore.setMode(mode)
-  layoutMode.value = mode
 }
 
 const setTheme = (value: AppTheme, event?: MouseEvent) => {
@@ -112,7 +86,6 @@ const userStore = useUserStore()
 
 const resetDefaults = () => {
   setTheme('light')
-  setLayout('classic')
 }
 
 const clearAndLogout = () => {
@@ -124,15 +97,7 @@ watch(
   () => props.modelValue,
   (openState) => {
     if (!openState) return
-    layoutMode.value = layoutStore.mode
     currentTheme.value = getStoredAppTheme()
-  }
-)
-
-watch(
-  () => layoutStore.mode,
-  (mode) => {
-    layoutMode.value = mode
   }
 )
 
@@ -210,12 +175,8 @@ onUnmounted(() => {
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.theme-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .option-card {
@@ -263,27 +224,8 @@ onUnmounted(() => {
   background: linear-gradient(180deg, #fbfcfd 0%, #eff4f7 100%);
 }
 
-.layout-classic .page {
-  background: linear-gradient(90deg, #18324d 0 28%, transparent 28% 100%), linear-gradient(180deg, #ffffff 0 22%, #eef3f7 22% 100%);
-}
-
-.layout-double-row .page {
-  background:
-    linear-gradient(180deg, #ffffff 0 26%, #eaf1f7 26% 42%, transparent 42% 100%), linear-gradient(90deg, #eef4f8 0 23%, transparent 23% 100%);
-}
-
-.layout-double-column .page {
-  background: linear-gradient(90deg, #18324d 0 18%, #eef4f8 18% 42%, transparent 42% 100%), linear-gradient(180deg, #ffffff 0 22%, #eef3f7 22% 100%);
-}
-
 .theme-night-shift-dark .page {
   border-color: rgba(149, 170, 196, 0.16);
   background: linear-gradient(180deg, #172231 0%, #111a27 100%);
-}
-
-@media (max-width: 960px) {
-  .card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 </style>

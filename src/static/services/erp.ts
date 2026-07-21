@@ -1,6 +1,6 @@
-import { generateId } from '@/mock/shared/id'
-import { paginate, searchItems } from '@/mock/shared/paginate'
-import { wrapDetailResponse, wrapListResponse, wrapSuccessResponse } from '@/mock/shared/response'
+import { generateId } from '@/static/utils/id'
+import { paginate, searchItems } from '@/static/utils/paginate'
+import { wrapDetailResponse, wrapListResponse, wrapSuccessResponse } from '@/static/utils/response'
 import type { FinanceAccountSummary, FinanceLedgerEntry, FinanceReconciliationItem } from '@/api/finance'
 
 export type DemandSourceType = 'sales' | 'forecast' | 'manual'

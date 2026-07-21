@@ -1,6 +1,4 @@
-import { isMockMode } from './_config'
-import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/finance'
+import { apiDelete, apiGet, apiPost, apiPut, type PaginatedData } from './_factory'
 
 export type FinancePayableStatus = 'open' | 'paid' | 'partial'
 export type FinanceReconciliationStatus = 'matched' | 'pending'
@@ -99,36 +97,29 @@ export interface FinanceReportSummary {
 }
 
 export function getFinancePayableList(params: FinancePayableQuery) {
-  if (isMockMode) return mockService.getFinancePayableList(params) as Promise<ApiResponse<PaginatedData<FinancePayable>>>
   return apiGet<PaginatedData<FinancePayable>>('/finance/payables', { params })
 }
 
 export function createFinancePayable(data: Partial<FinancePayable>) {
-  if (isMockMode) return mockService.createFinancePayable(data)
   return apiPost<Record<string, never>, Partial<FinancePayable>>('/finance/payables', data)
 }
 
 export function updateFinancePayable(id: string, data: Partial<FinancePayable>) {
-  if (isMockMode) return mockService.updateFinancePayable(id, data)
   return apiPut<Record<string, never>, Partial<FinancePayable>>(`/finance/payables/${id}`, data)
 }
 
 export function deleteFinancePayable(id: string) {
-  if (isMockMode) return mockService.deleteFinancePayable(id)
   return apiDelete<Record<string, never>>(`/finance/payables/${id}`)
 }
 
 export function getFinanceCostList(params: FinanceCostQuery) {
-  if (isMockMode) return mockService.getFinanceCostList(params) as Promise<ApiResponse<PaginatedData<FinanceCostDetail>>>
   return apiGet<PaginatedData<FinanceCostDetail>>('/finance/cost-details', { params })
 }
 
 export function getFinanceLedgerOverview() {
-  if (isMockMode) return mockService.getFinanceLedgerOverview() as Promise<ApiResponse<FinanceLedgerOverview>>
   return apiGet<FinanceLedgerOverview>('/finance/ledger-overview')
 }
 
 export function getFinanceReportSummary() {
-  if (isMockMode) return mockService.getFinanceReportSummary() as Promise<ApiResponse<FinanceReportSummary>>
   return apiGet<FinanceReportSummary>('/finance/report-summary')
 }

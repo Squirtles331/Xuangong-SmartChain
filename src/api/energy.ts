@@ -1,6 +1,6 @@
-import { isMockMode } from './_config'
+import * as staticService from '@/static/services/energy'
+import { isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/energy'
 
 export interface EnergyDetail {
   id: string
@@ -19,23 +19,6 @@ export interface EnergyDetailQuery {
   keyword?: string
   type?: 'electricity' | 'water' | 'gas'
   period?: string
-}
-
-export function getEnergyDetailList(params: EnergyDetailQuery) {
-  if (isMockMode) return mockService.getEnergyDetailList(params) as Promise<ApiResponse<PaginatedData<EnergyDetail>>>
-  return apiGet<PaginatedData<EnergyDetail>>('/energy/details', { params })
-}
-
-export function saveEnergyDetail(data: Partial<EnergyDetail> & { type?: 'electricity' | 'water' | 'gas' | '电' | '水' | '气' }) {
-  if (isMockMode) return mockService.saveEnergyDetail(data)
-  return data.id
-    ? apiPut<EnergyDetail, Partial<EnergyDetail>>(`/energy/details/${data.id}`, data)
-    : apiPost<EnergyDetail, Partial<EnergyDetail>>('/energy/details', data)
-}
-
-export function deleteEnergyDetail(id: string) {
-  if (isMockMode) return mockService.deleteEnergyDetail(id)
-  return apiDelete<Record<string, never>>(`/energy/details/${id}`)
 }
 
 export interface EnergyOverviewCard {
@@ -58,8 +41,25 @@ export interface EnergyOverviewData {
   structure: Array<{ name: string; value: number }>
 }
 
+export function getEnergyDetailList(params: EnergyDetailQuery) {
+  if (isStaticMode) return staticService.getEnergyDetailList(params) as Promise<ApiResponse<PaginatedData<EnergyDetail>>>
+  return apiGet<PaginatedData<EnergyDetail>>('/energy/details', { params })
+}
+
+export function saveEnergyDetail(data: Partial<EnergyDetail>) {
+  if (isStaticMode) return staticService.saveEnergyDetail(data)
+  return data.id
+    ? apiPut<EnergyDetail, Partial<EnergyDetail>>(`/energy/details/${data.id}`, data)
+    : apiPost<EnergyDetail, Partial<EnergyDetail>>('/energy/details', data)
+}
+
+export function deleteEnergyDetail(id: string) {
+  if (isStaticMode) return staticService.deleteEnergyDetail(id)
+  return apiDelete<Record<string, never>>(`/energy/details/${id}`)
+}
+
 export function getEnergyOverview(params?: { start?: string; end?: string }) {
-  if (isMockMode) return mockService.getEnergyOverview(params) as Promise<ApiResponse<EnergyOverviewData>>
+  if (isStaticMode) return staticService.getEnergyOverview(params) as Promise<ApiResponse<EnergyOverviewData>>
   return apiGet<EnergyOverviewData>('/energy/overview', { params })
 }
 
@@ -78,6 +78,6 @@ export interface EnergyBenchmarkData {
 }
 
 export function getEnergyBenchmark() {
-  if (isMockMode) return mockService.getEnergyBenchmark() as Promise<ApiResponse<EnergyBenchmarkData>>
+  if (isStaticMode) return staticService.getEnergyBenchmark() as Promise<ApiResponse<EnergyBenchmarkData>>
   return apiGet<EnergyBenchmarkData>('/energy/benchmark')
 }

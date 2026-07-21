@@ -1,9 +1,8 @@
 import http from '@/utils/http'
 import type { ApiResponse, PaginatedData } from '@/utils/http'
-import { isMockMode } from './_config'
+import { isStaticMode } from './_config'
 import { unwrapApiResponse } from './_factory'
-import { apsConstraintData } from '@/mock/modules/aps'
-import * as mockService from '@/mock/services/aps'
+import * as staticService from '@/static/services/aps'
 
 export interface ApsConstraintBase {
   id: string
@@ -64,26 +63,31 @@ export interface ConstraintListQuery {
 }
 
 export function getApsScheduleData() {
-  if (isMockMode) return mockService.getApsScheduleData()
+  if (isStaticMode) return staticService.getApsScheduleSnapshot()
   return unwrapApiResponse(http.get<ApiResponse<any>>('/aps/schedule'))
 }
 
 export function runApsSchedule() {
-  if (isMockMode) return mockService.runApsSchedule()
+  if (isStaticMode) return staticService.runApsSchedule()
   return unwrapApiResponse(http.post<ApiResponse<null>>('/aps/run'))
 }
 
 export function getConstraintList<T>(params: ConstraintListQuery) {
-  if (isMockMode) return mockService.getConstraintList(params) as Promise<ApiResponse<PaginatedData<T>>>
+  if (isStaticMode) return staticService.getApsConstraintList(params) as Promise<ApiResponse<PaginatedData<T>>>
   return unwrapApiResponse(http.get<ApiResponse<PaginatedData<T>>>('/aps/constraints', { params }))
 }
 
 export function getApsConstraintSnapshot(): ApsConstraintSnapshot {
-  return JSON.parse(JSON.stringify(apsConstraintData)) as ApsConstraintSnapshot
+  return {
+    molds: [],
+    tools: [],
+    skills: [],
+    materialShortages: []
+  }
 }
 
 export function saveConstraint(data: Record<string, any>) {
-  if (isMockMode) return mockService.saveConstraint(data)
+  if (isStaticMode) return staticService.saveApsConstraint(data as any)
   if (data.id) {
     return unwrapApiResponse(http.put<ApiResponse<null>>(`/aps/constraints/${data.id}`, data))
   }
@@ -91,6 +95,6 @@ export function saveConstraint(data: Record<string, any>) {
 }
 
 export function deleteConstraint(type: ConstraintType, id: string) {
-  if (isMockMode) return mockService.deleteConstraint(type, id)
+  if (isStaticMode) return staticService.deleteApsConstraint(type, id)
   return unwrapApiResponse(http.delete<ApiResponse<null>>(`/aps/constraints/${id}`, { params: { type } }))
 }

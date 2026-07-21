@@ -1,69 +1,64 @@
 import * as staticService from '@/static/services/wms'
-import { isMockMode, isStaticMode } from './_config'
+import { isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut } from './_factory'
-import * as mockService from '@/mock/services/wms'
 
 export function getInventoryList(params: { pageNum: number; pageSize: number; code?: string; name?: string; warehouse?: string }) {
   if (isStaticMode) return staticService.getInventoryList(params)
-  if (isMockMode) return mockService.getInventoryList(params)
   return apiGet<any>('/wms/inventory', { params })
 }
 
 export function getWmsBridgeSummary() {
-  if (isStaticMode || isMockMode) return staticService.getWmsBridgeSummary()
+  if (isStaticMode) return staticService.getWmsBridgeSummary()
   return apiGet<any>('/wms/bridge-summary')
 }
 
 export function getMaterialListForBarcode(params: { pageNum: number; pageSize: number; code?: string; name?: string }) {
-  if (isMockMode) return mockService.getMaterialListForBarcode(params)
+  if (isStaticMode) return staticService.getMaterialListForBarcode(params)
   return apiGet<any>('/wms/materials', { params })
 }
 
 export function getStockCountList(params: { pageNum: number; pageSize: number; planCode?: string; warehouse?: string; status?: string }) {
   if (isStaticMode) return staticService.getStockCountList(params)
-  if (isMockMode) return mockService.getStockCountList(params)
   return apiGet<any>('/wms/stock-counts', { params })
 }
 
 export function getStockCountDiff(params: { pageNum: number; pageSize: number; planCode?: string; material?: string }) {
   if (isStaticMode) return staticService.getStockCountDiff(params)
-  if (isMockMode) return mockService.getStockCountDiff(params)
   return apiGet<any>('/wms/stock-count-diffs', { params })
 }
 
 export function getIoTDeviceList(params: { pageNum: number; pageSize: number; status?: string; type?: string }) {
-  if (isMockMode) return mockService.getIoTDeviceList(params)
+  if (isStaticMode) return staticService.getIoTDeviceList(params)
   return apiGet<any>('/wms/iot-devices', { params })
 }
 
 export function getIoTAlertHistory(params: { pageNum: number; pageSize: number; device?: string; level?: string }) {
-  if (isMockMode) return mockService.getIoTAlertHistory(params)
+  if (isStaticMode) return staticService.getIoTAlertHistory(params)
   return apiGet<any>('/wms/iot-alerts', { params })
 }
 
 export function getIoTAlertRules() {
-  if (isMockMode) return mockService.getIoTAlertRules()
+  if (isStaticMode) return staticService.getIoTAlertRules()
   return apiGet<any>('/wms/iot-alert-rules')
 }
 
 export function createIoTAlertRule(data: Record<string, any>) {
-  if (isMockMode) return mockService.createIoTAlertRule(data)
+  if (isStaticMode) return staticService.createIoTAlertRule(data)
   return apiPost<Record<string, never>, Record<string, any>>('/wms/iot-alert-rules', data)
 }
 
 export function updateIoTAlertRule(id: string, data: Record<string, any>) {
-  if (isMockMode) return mockService.updateIoTAlertRule(id, data)
+  if (isStaticMode) return staticService.updateIoTAlertRule(id, data)
   return apiPut<Record<string, never>, Record<string, any>>(`/wms/iot-alert-rules/${id}`, data)
 }
 
 export function deleteIoTAlertRule(id: string) {
-  if (isMockMode) return mockService.deleteIoTAlertRule(id)
+  if (isStaticMode) return staticService.deleteIoTAlertRule(id)
   return apiDelete<Record<string, never>>(`/wms/iot-alert-rules/${id}`)
 }
 
 export function getReceiptList(params: { pageNum: number; pageSize: number; code?: string; type?: string; supplier?: string; status?: string }) {
   if (isStaticMode) return staticService.getReceiptList(params)
-  if (isMockMode) return mockService.getReceiptList(params)
   return apiGet<any>('/wms/receipts', { params })
 }
 
@@ -83,13 +78,12 @@ export function deleteReceipt(id: string) {
 }
 
 export function getDeliveryList(params: { pageNum: number; pageSize: number; code?: string; customer?: string; status?: string }) {
-  if (isMockMode) return mockService.getDeliveryList(params)
+  if (isStaticMode) return staticService.getDeliveryList(params)
   return apiGet<any>('/wms/deliveries', { params })
 }
 
 export function getPickingList(params: { pageNum: number; pageSize: number; code?: string; warehouse?: string; status?: string }) {
   if (isStaticMode) return staticService.getPickingList(params)
-  if (isMockMode) return mockService.getPickingList(params)
   return apiGet<any>('/wms/picking', { params })
 }
 
@@ -117,7 +111,6 @@ export function getTransferList(params: {
   status?: string
 }) {
   if (isStaticMode) return staticService.getTransferList(params)
-  if (isMockMode) return mockService.getTransferList(params)
   return apiGet<any>('/wms/transfers', { params })
 }
 
@@ -133,7 +126,6 @@ export function updateTransfer(id: string, data: Record<string, any>) {
 
 export function getReturnList(params: { pageNum: number; pageSize: number; code?: string; reason?: string; status?: string }) {
   if (isStaticMode) return staticService.getReturnList(params)
-  if (isMockMode) return mockService.getReturnList(params)
   return apiGet<any>('/wms/returns', { params })
 }
 
@@ -148,7 +140,7 @@ export function updateReturn(id: string, data: Record<string, any>) {
 }
 
 export function getBackflushList(params: { pageNum: number; pageSize: number; code?: string; material?: string; status?: string }) {
-  if (isMockMode) return mockService.getBackflushList(params)
+  if (isStaticMode) return staticService.getBackflushList(params)
   return apiGet<any>('/wms/backflush', { params })
 }
 
@@ -177,6 +169,6 @@ export function getBarcodeScanList(params: {
   startDate?: string
   endDate?: string
 }) {
-  if (isMockMode) return mockService.getBarcodeScanList(params)
+  if (isStaticMode) return staticService.getBarcodeScanList(params)
   return apiGet<any>('/wms/barcode-scans', { params })
 }

@@ -1,4 +1,4 @@
-import { wrapDetailResponse, wrapListResponse } from '@/mock/shared/response'
+import { wrapDetailResponse, wrapListResponse } from '@/static/utils/response'
 
 export type BiDashboardKind = 'production' | 'quality' | 'inventory' | 'business' | 'energy' | 'ehs' | 'hr'
 

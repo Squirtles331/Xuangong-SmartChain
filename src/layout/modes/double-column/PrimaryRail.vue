@@ -47,8 +47,10 @@ const getIcon = (name?: string) => {
   width: 92px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(124, 146, 170, 0.16);
-  background: linear-gradient(180deg, #18324d 0%, #1f425f 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 18%), linear-gradient(180deg, #17314c 0%, #1d3f5c 46%, #234968 100%);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
 }
 
 .rail-head {
@@ -57,12 +59,17 @@ const getIcon = (name?: string) => {
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .rail-logo {
   width: 42px;
   height: 42px;
   object-fit: contain;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 24px rgba(8, 18, 36, 0.22);
 }
 
 .rail-body {
@@ -86,13 +93,13 @@ const getIcon = (name?: string) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   min-height: 74px;
   padding: 10px 8px;
-  border: 1px solid transparent;
-  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  border-radius: 18px;
   background: transparent;
-  color: rgba(221, 232, 245, 0.76);
+  color: rgba(227, 235, 255, 0.76);
   cursor: pointer;
   transition:
     background-color 0.2s ease,
@@ -102,13 +109,16 @@ const getIcon = (name?: string) => {
 }
 
 .rail-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   color: #f4f8fc;
 }
 
 .rail-item.is-active {
-  background: linear-gradient(180deg, rgba(107, 167, 233, 0.2) 0%, rgba(67, 133, 206, 0.16) 100%);
-  border-color: rgba(130, 188, 245, 0.22);
+  background: linear-gradient(180deg, rgba(112, 177, 241, 0.2) 0%, rgba(59, 126, 201, 0.22) 100%);
+  border-color: rgba(170, 211, 255, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 20px rgba(6, 18, 38, 0.16);
   color: #ffffff;
   transform: translateY(-1px);
 }
@@ -120,6 +130,7 @@ const getIcon = (name?: string) => {
 .rail-label {
   font-size: 12px;
   line-height: 1.35;
+  font-weight: 600;
   text-align: center;
   word-break: break-word;
 }

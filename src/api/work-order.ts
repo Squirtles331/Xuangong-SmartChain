@@ -1,7 +1,6 @@
 import * as staticService from '@/static/services/work-order'
-import { isMockMode, isStaticMode } from './_config'
+import { isStaticMode } from './_config'
 import { apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/work-order'
 
 export interface WorkOrder {
   id: string
@@ -43,37 +42,31 @@ export interface WorkOrderQuery {
 
 export function getWorkOrderList(params: WorkOrderQuery) {
   if (isStaticMode) return staticService.getWorkOrderList(params) as Promise<ApiResponse<PaginatedData<WorkOrder>>>
-  if (isMockMode) return mockService.getWorkOrderList(params) as Promise<ApiResponse<PaginatedData<WorkOrder>>>
   return apiGet<PaginatedData<WorkOrder>>('/work-orders', { params })
 }
 
 export function getWorkOrderDetail(id: string) {
   if (isStaticMode) return staticService.getWorkOrderDetail(id)
-  if (isMockMode) return mockService.getWorkOrderDetail(id)
   return apiGet<WorkOrder>(`/work-orders/${id}`)
 }
 
 export function createWorkOrder(data: any) {
   if (isStaticMode) return staticService.createWorkOrder(data)
-  if (isMockMode) return mockService.createWorkOrder(data)
   return apiPost<Record<string, never>, any>('/work-orders', data)
 }
 
 export function approveWorkOrder(id: string, approved: boolean, comment?: string) {
   if (isStaticMode) return staticService.approveWorkOrder(id, approved, comment)
-  if (isMockMode) return mockService.approveWorkOrder(id, approved, comment)
   return apiPut<Record<string, never>, { approved: boolean; comment?: string }>(`/work-orders/${id}/approve`, { approved, comment })
 }
 
 export function releaseWorkOrder(id: string) {
   if (isStaticMode) return staticService.releaseWorkOrder(id)
-  if (isMockMode) return mockService.releaseWorkOrder(id)
   return apiPut<Record<string, never>>(`/work-orders/${id}/release`)
 }
 
 export function closeWorkOrder(id: string, data: { close_type: string; reason?: string; wip_disposition?: string }) {
   if (isStaticMode) return staticService.closeWorkOrder(id, data)
-  if (isMockMode) return mockService.closeWorkOrder(id, data)
   return apiPut<Record<string, never>, { close_type: string; reason?: string; wip_disposition?: string }>(`/work-orders/${id}/close`, data)
 }
 
@@ -95,19 +88,16 @@ export interface WoOperation {
 
 export function getWorkOrderOperations(workOrderId: string) {
   if (isStaticMode) return staticService.getWorkOrderOperations(workOrderId)
-  if (isMockMode) return mockService.getWorkOrderOperations(workOrderId)
   return apiGet<WoOperation[]>(`/work-orders/${workOrderId}/operations`)
 }
 
 export function assignOperation(operationId: string, data: { team_id: string; worker_id?: string; equipment_id?: string }) {
   if (isStaticMode) return staticService.assignOperation(operationId, data)
-  if (isMockMode) return mockService.assignOperation(operationId, data)
   return apiPut<Record<string, never>, { team_id: string; worker_id?: string; equipment_id?: string }>(`/operations/${operationId}/assign`, data)
 }
 
 export function startOperation(operationId: string) {
   if (isStaticMode) return staticService.startOperation(operationId)
-  if (isMockMode) return mockService.startOperation(operationId)
   return apiPut<Record<string, never>>(`/operations/${operationId}/start`)
 }
 
@@ -116,7 +106,6 @@ export function reportOperation(
   data: { qualified_qty: number; defective_qty: number; defect_reasons?: string[]; actual_hours: number }
 ) {
   if (isStaticMode) return staticService.reportOperation(operationId, data)
-  if (isMockMode) return mockService.reportOperation(operationId, data)
   return apiPut<Record<string, never>, { qualified_qty: number; defective_qty: number; defect_reasons?: string[]; actual_hours: number }>(
     `/operations/${operationId}/report`,
     data
@@ -142,7 +131,6 @@ export interface KanbanOp {
 
 export function getKanbanData() {
   if (isStaticMode) return staticService.getKanbanData()
-  if (isMockMode) return mockService.getKanbanData()
   return apiGet<KanbanOp[]>('/work-orders/kanban')
 }
 
@@ -172,7 +160,6 @@ export interface MyTasksData {
 
 export function getMyTasks() {
   if (isStaticMode) return staticService.getMyTasks()
-  if (isMockMode) return mockService.getMyTasks()
   return apiGet<MyTasksData>('/work-orders/my-tasks')
 }
 
@@ -197,7 +184,6 @@ export interface ReportHistoryQuery {
 
 export function getReportHistory(params: ReportHistoryQuery) {
   if (isStaticMode) return staticService.getReportHistory(params) as Promise<ApiResponse<PaginatedData<ReportRecord>>>
-  if (isMockMode) return mockService.getReportHistory(params) as Promise<ApiResponse<PaginatedData<ReportRecord>>>
   return apiGet<PaginatedData<ReportRecord>>('/work-orders/report-history', { params })
 }
 
@@ -223,22 +209,22 @@ export interface OutsourceOrderQuery {
 }
 
 export function getOutsourceOrders(params: OutsourceOrderQuery) {
-  if (isMockMode) return mockService.getOutsourceOrders(params) as Promise<ApiResponse<PaginatedData<OutsourceOrder>>>
+  if (isStaticMode) return staticService.getOutsourceOrders(params) as Promise<ApiResponse<PaginatedData<OutsourceOrder>>>
   return apiGet<PaginatedData<OutsourceOrder>>('/work-orders/outsource', { params })
 }
 
 export function createOutsourceOrder(data: Partial<OutsourceOrder>) {
-  if (isMockMode) return mockService.createOutsourceOrder(data)
+  if (isStaticMode) return staticService.createOutsourceOrder(data)
   return apiPost<OutsourceOrder, Partial<OutsourceOrder>>('/work-orders/outsource', data)
 }
 
 export function updateOutsourceOrder(id: string, data: Partial<OutsourceOrder>) {
-  if (isMockMode) return mockService.updateOutsourceOrder(id, data)
+  if (isStaticMode) return staticService.updateOutsourceOrder(id, data)
   return apiPut<OutsourceOrder, Partial<OutsourceOrder>>(`/work-orders/outsource/${id}`, data)
 }
 
 export function updateOutsourceOrderStatus(id: string, status: OutsourceOrder['status']) {
-  if (isMockMode) return mockService.updateOutsourceOrderStatus(id, status)
+  if (isStaticMode) return staticService.updateOutsourceOrderStatus(id, status)
   return apiPut<OutsourceOrder, { status: OutsourceOrder['status'] }>(`/work-orders/outsource/${id}/status`, { status })
 }
 
@@ -265,7 +251,6 @@ export interface TraceRecordQuery {
 
 export function getTraceRecords(params: TraceRecordQuery) {
   if (isStaticMode) return staticService.getTraceRecords(params).then(mapTraceRecordResponse)
-  if (isMockMode) return mockService.getTraceRecords(params).then(mapTraceRecordResponse)
   return apiGet<PaginatedData<any>>('/work-orders/trace-records', { params }).then(mapTraceRecordResponse)
 }
 

@@ -1,6 +1,6 @@
-import { isMockMode } from './_config'
+import * as staticService from '@/static/services/bom'
+import { isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/bom'
 
 export interface BOMVersion {
   id: string
@@ -24,29 +24,28 @@ export interface BOMListQuery {
 }
 
 export function getBOMList(params: BOMListQuery) {
-  if (isMockMode) return mockService.getBOMList(params) as Promise<ApiResponse<PaginatedData<BOMVersion>>>
+  if (isStaticMode) return staticService.getBOMList(params) as Promise<ApiResponse<PaginatedData<BOMVersion>>>
   return apiGet<PaginatedData<BOMVersion>>('/bom/list', { params })
 }
 
 export function getBOMTree(versionId: string) {
-  if (isMockMode) return mockService.getBOMTree(versionId)
+  if (isStaticMode) return staticService.getBOMTree(versionId)
   return apiGet<any>(`/bom/tree/${versionId}`)
 }
 
 export function saveBOM(data: Partial<BOMVersion>) {
-  if (isMockMode) return mockService.saveBOM(data)
-  if (data.id) {
-    return apiPut<Record<string, never>, Partial<BOMVersion>>(`/bom/${data.id}`, data)
-  }
-  return apiPost<Record<string, never>, Partial<BOMVersion>>('/bom', data)
+  if (isStaticMode) return staticService.saveBOM(data)
+  return data.id
+    ? apiPut<Record<string, never>, Partial<BOMVersion>>(`/bom/${data.id}`, data)
+    : apiPost<Record<string, never>, Partial<BOMVersion>>('/bom', data)
 }
 
 export function deleteBOM(id: string) {
-  if (isMockMode) return mockService.deleteBOM(id)
+  if (isStaticMode) return staticService.deleteBOM(id)
   return apiDelete<Record<string, never>>(`/bom/${id}`)
 }
 
 export function getBOMPreview(materialCode: string) {
-  if (isMockMode) return mockService.getBOMPreview(materialCode)
+  if (isStaticMode) return staticService.getBOMPreview(materialCode)
   return apiGet<any>('/bom/preview', { params: { materialCode } })
 }

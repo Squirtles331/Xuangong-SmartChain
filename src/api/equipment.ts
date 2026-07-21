@@ -1,6 +1,6 @@
-import { isMockMode } from './_config'
-import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/equipment'
+import * as staticService from '@/static/services/equipment'
+import { isStaticMode } from './_config'
+import { apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
 
 export interface EquipmentOeeOverviewData {
   cards: Array<{ title: string; value: number }>
@@ -15,8 +15,8 @@ export interface EquipmentOeeOverviewData {
 }
 
 export function getEquipmentOeeOverview(params?: { start_month?: string; end_month?: string }) {
-  if (isMockMode) return mockService.getEquipmentOeeOverview(params) as Promise<ApiResponse<EquipmentOeeOverviewData>>
-  return apiGet<EquipmentOeeOverviewData>('/equipment/oee', { params })
+  if (isStaticMode) return staticService.getEquipmentOeeOverview(params) as Promise<ApiResponse<EquipmentOeeOverviewData>>
+  return apiGet<EquipmentOeeOverviewData>('/equipment/oee/overview', { params })
 }
 
 export interface EquipmentRepair {
@@ -25,7 +25,7 @@ export interface EquipmentRepair {
   equipment: string
   fault_desc: string
   priority: 'urgent' | 'high' | 'normal'
-  status: 'pending' | 'running' | 'done' | 'verified'
+  status: 'pending' | 'running' | 'done'
   worker: string
   created_at: string
 }
@@ -39,19 +39,19 @@ export interface EquipmentRepairQuery {
 }
 
 export function getEquipmentRepairList(params: EquipmentRepairQuery) {
-  if (isMockMode) return mockService.getEquipmentRepairList(params) as Promise<ApiResponse<PaginatedData<EquipmentRepair>>>
+  if (isStaticMode) return staticService.getEquipmentRepairList(params) as Promise<ApiResponse<PaginatedData<EquipmentRepair>>>
   return apiGet<PaginatedData<EquipmentRepair>>('/equipment/repair', { params })
 }
 
 export function saveEquipmentRepair(data: Partial<EquipmentRepair>) {
-  if (isMockMode) return mockService.saveEquipmentRepair(data)
+  if (isStaticMode) return staticService.saveEquipmentRepair(data)
   return data.id
     ? apiPut<EquipmentRepair, Partial<EquipmentRepair>>(`/equipment/repair/${data.id}`, data)
     : apiPost<EquipmentRepair, Partial<EquipmentRepair>>('/equipment/repair', data)
 }
 
 export function updateEquipmentRepairStatus(id: string, data: { status: EquipmentRepair['status']; worker?: string }) {
-  if (isMockMode) return mockService.updateEquipmentRepairStatus(id, data)
+  if (isStaticMode) return staticService.updateEquipmentRepairStatus(id, data)
   return apiPut<EquipmentRepair, { status: EquipmentRepair['status']; worker?: string }>(`/equipment/repair/${id}/status`, data)
 }
 
@@ -74,19 +74,19 @@ export interface EquipmentMaintainQuery {
 }
 
 export function getEquipmentMaintainList(params: EquipmentMaintainQuery) {
-  if (isMockMode) return mockService.getEquipmentMaintainList(params) as Promise<ApiResponse<PaginatedData<EquipmentMaintain>>>
+  if (isStaticMode) return staticService.getEquipmentMaintainList(params) as Promise<ApiResponse<PaginatedData<EquipmentMaintain>>>
   return apiGet<PaginatedData<EquipmentMaintain>>('/equipment/maintain', { params })
 }
 
 export function saveEquipmentMaintain(data: Partial<EquipmentMaintain>) {
-  if (isMockMode) return mockService.saveEquipmentMaintain(data)
+  if (isStaticMode) return staticService.saveEquipmentMaintain(data)
   return data.id
     ? apiPut<EquipmentMaintain, Partial<EquipmentMaintain>>(`/equipment/maintain/${data.id}`, data)
     : apiPost<EquipmentMaintain, Partial<EquipmentMaintain>>('/equipment/maintain', data)
 }
 
 export function executeEquipmentMaintain(id: string, data: { remark?: string }) {
-  if (isMockMode) return mockService.executeEquipmentMaintain(id, data)
+  if (isStaticMode) return staticService.executeEquipmentMaintain(id, data)
   return apiPost<Record<string, never>, { remark?: string }>(`/equipment/maintain/${id}/execute`, data)
 }
 
@@ -109,19 +109,19 @@ export interface EquipmentCheckQuery {
 }
 
 export function getEquipmentCheckList(params: EquipmentCheckQuery) {
-  if (isMockMode) return mockService.getEquipmentCheckList(params) as Promise<ApiResponse<PaginatedData<EquipmentCheck>>>
+  if (isStaticMode) return staticService.getEquipmentCheckList(params) as Promise<ApiResponse<PaginatedData<EquipmentCheck>>>
   return apiGet<PaginatedData<EquipmentCheck>>('/equipment/check', { params })
 }
 
 export function saveEquipmentCheck(data: Partial<EquipmentCheck>) {
-  if (isMockMode) return mockService.saveEquipmentCheck(data)
+  if (isStaticMode) return staticService.saveEquipmentCheck(data)
   return data.id
     ? apiPut<EquipmentCheck, Partial<EquipmentCheck>>(`/equipment/check/${data.id}`, data)
     : apiPost<EquipmentCheck, Partial<EquipmentCheck>>('/equipment/check', data)
 }
 
 export function executeEquipmentCheck(id: string, data: { remark?: string }) {
-  if (isMockMode) return mockService.executeEquipmentCheck(id, data)
+  if (isStaticMode) return staticService.executeEquipmentCheck(id, data)
   return apiPost<Record<string, never>, { remark?: string }>(`/equipment/check/${id}/execute`, data)
 }
 
@@ -145,18 +145,18 @@ export interface EquipmentSpareQuery {
 }
 
 export function getEquipmentSpareList(params: EquipmentSpareQuery) {
-  if (isMockMode) return mockService.getEquipmentSpareList(params) as Promise<ApiResponse<PaginatedData<EquipmentSpare>>>
+  if (isStaticMode) return staticService.getEquipmentSpareList(params) as Promise<ApiResponse<PaginatedData<EquipmentSpare>>>
   return apiGet<PaginatedData<EquipmentSpare>>('/equipment/spare', { params })
 }
 
 export function saveEquipmentSpare(data: Partial<EquipmentSpare>) {
-  if (isMockMode) return mockService.saveEquipmentSpare(data)
+  if (isStaticMode) return staticService.saveEquipmentSpare(data)
   return data.id
     ? apiPut<EquipmentSpare, Partial<EquipmentSpare>>(`/equipment/spare/${data.id}`, data)
     : apiPost<EquipmentSpare, Partial<EquipmentSpare>>('/equipment/spare', data)
 }
 
 export function updateEquipmentSpareQty(id: string, delta: number) {
-  if (isMockMode) return mockService.updateEquipmentSpareQty(id, delta)
+  if (isStaticMode) return staticService.updateEquipmentSpareQty(id, delta)
   return apiPut<EquipmentSpare, { delta: number }>(`/equipment/spare/${id}/qty`, { delta })
 }

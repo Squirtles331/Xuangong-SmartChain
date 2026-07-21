@@ -1,6 +1,6 @@
-import { isMockMode } from './_config'
+import { isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/iot'
+import * as staticService from '@/static/services/iot-api'
 
 export type IoTConnectionStatus = 'connected' | 'disconnected'
 export type IoTRuleStatus = 'active' | 'disabled'
@@ -107,71 +107,71 @@ export interface IoTDeviceHistoryQuery {
 }
 
 export function getIoTConfigList(params: IoTConfigQuery) {
-  if (isMockMode) return mockService.getIoTConfigList(params) as Promise<ApiResponse<PaginatedData<IoTConfig>>>
+  if (isStaticMode) return staticService.getIoTConfigList(params as any) as unknown as Promise<ApiResponse<PaginatedData<IoTConfig>>>
   return apiGet<PaginatedData<IoTConfig>>('/iot/configs', { params })
 }
 
 export function createIoTConfig(data: Partial<IoTConfig>) {
-  if (isMockMode) return mockService.createIoTConfig(data)
+  if (isStaticMode) return staticService.createIoTConfig(data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPost<Record<string, never>, Partial<IoTConfig>>('/iot/configs', data)
 }
 
 export function updateIoTConfig(id: string, data: Partial<IoTConfig>) {
-  if (isMockMode) return mockService.updateIoTConfig(id, data)
+  if (isStaticMode) return staticService.updateIoTConfig(id, data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPut<Record<string, never>, Partial<IoTConfig>>(`/iot/configs/${id}`, data)
 }
 
 export function deleteIoTConfig(id: string) {
-  if (isMockMode) return mockService.deleteIoTConfig(id)
+  if (isStaticMode) return staticService.deleteIoTConfig(id) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiDelete<Record<string, never>>(`/iot/configs/${id}`)
 }
 
 export function getIoTAutoReportList(params: IoTAutoReportQuery) {
-  if (isMockMode) return mockService.getIoTAutoReportList(params) as Promise<ApiResponse<PaginatedData<IoTAutoReportRule>>>
+  if (isStaticMode) return staticService.getIoTAutoReportList(params as any) as unknown as Promise<ApiResponse<PaginatedData<IoTAutoReportRule>>>
   return apiGet<PaginatedData<IoTAutoReportRule>>('/iot/auto-reports', { params })
 }
 
 export function createIoTAutoReportRule(data: Partial<IoTAutoReportRule>) {
-  if (isMockMode) return mockService.createIoTAutoReportRule(data)
+  if (isStaticMode) return staticService.createIoTAutoReportRule(data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPost<Record<string, never>, Partial<IoTAutoReportRule>>('/iot/auto-reports', data)
 }
 
 export function updateIoTAutoReportRule(id: string, data: Partial<IoTAutoReportRule>) {
-  if (isMockMode) return mockService.updateIoTAutoReportRule(id, data)
+  if (isStaticMode) return staticService.updateIoTAutoReportRule(id, data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPut<Record<string, never>, Partial<IoTAutoReportRule>>(`/iot/auto-reports/${id}`, data)
 }
 
 export function getIoTAlertRuleList() {
-  if (isMockMode) return mockService.getIoTAlertRuleList() as Promise<ApiResponse<IoTAlertRule[]>>
+  if (isStaticMode) return staticService.getIoTAlertRuleList() as unknown as Promise<ApiResponse<IoTAlertRule[]>>
   return apiGet<IoTAlertRule[]>('/iot/alert-rules')
 }
 
 export function createIoTAlertRule(data: Partial<IoTAlertRule>) {
-  if (isMockMode) return mockService.createIoTAlertRule(data)
+  if (isStaticMode) return staticService.createIoTAlertRule(data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPost<Record<string, never>, Partial<IoTAlertRule>>('/iot/alert-rules', data)
 }
 
 export function updateIoTAlertRule(id: string, data: Partial<IoTAlertRule>) {
-  if (isMockMode) return mockService.updateIoTAlertRule(id, data)
+  if (isStaticMode) return staticService.updateIoTAlertRule(id, data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPut<Record<string, never>, Partial<IoTAlertRule>>(`/iot/alert-rules/${id}`, data)
 }
 
 export function deleteIoTAlertRule(id: string) {
-  if (isMockMode) return mockService.deleteIoTAlertRule(id)
+  if (isStaticMode) return staticService.deleteIoTAlertRule(id) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiDelete<Record<string, never>>(`/iot/alert-rules/${id}`)
 }
 
 export function getIoTAlertHistory(params: IoTAlertHistoryQuery) {
-  if (isMockMode) return mockService.getIoTAlertHistory(params) as Promise<ApiResponse<PaginatedData<IoTAlertHistoryItem>>>
+  if (isStaticMode) return staticService.getIoTAlertHistory(params as any) as unknown as Promise<ApiResponse<PaginatedData<IoTAlertHistoryItem>>>
   return apiGet<PaginatedData<IoTAlertHistoryItem>>('/iot/alert-history', { params })
 }
 
 export function getIoTDeviceList(params: IoTDeviceQuery) {
-  if (isMockMode) return mockService.getIoTDeviceList(params) as Promise<ApiResponse<PaginatedData<IoTDevice>>>
+  if (isStaticMode) return staticService.getIoTDeviceList(params as any) as unknown as Promise<ApiResponse<PaginatedData<IoTDevice>>>
   return apiGet<PaginatedData<IoTDevice>>('/iot/devices', { params })
 }
 
 export function getIoTDeviceHistory(params: IoTDeviceHistoryQuery) {
-  if (isMockMode) return mockService.getIoTDeviceHistory(params) as Promise<ApiResponse<PaginatedData<IoTDeviceHistoryItem>>>
+  if (isStaticMode) return staticService.getIoTDeviceHistory(params as any) as unknown as Promise<ApiResponse<PaginatedData<IoTDeviceHistoryItem>>>
   return apiGet<PaginatedData<IoTDeviceHistoryItem>>('/iot/history', { params })
 }

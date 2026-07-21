@@ -1,6 +1,6 @@
-import { generateId } from '@/mock/shared/id'
-import { paginate, searchItems } from '@/mock/shared/paginate'
-import { wrapCreatedResponse, wrapDetailResponse, wrapListResponse, wrapSuccessResponse, wrapUpdatedResponse } from '@/mock/shared/response'
+import { generateId } from '@/static/utils/id'
+import { paginate, searchItems } from '@/static/utils/paginate'
+import { wrapCreatedResponse, wrapDetailResponse, wrapListResponse, wrapSuccessResponse, wrapUpdatedResponse } from '@/static/utils/response'
 
 const REFERENCE_TODAY = '2026-07-16'
 
@@ -1066,4 +1066,105 @@ export async function createSalesOrderChangeRequest(payload: SalesOrderChangePay
 
 export function getCustomerRelationOptions() {
   return [...crmCustomerOptions]
+}
+
+type CustomerRecord = Record<string, any>
+
+const customerState: CustomerRecord[] = customerRelationState.map((item, index) => ({
+  id: item.id,
+  code: item.customer_code,
+  name: item.customer_name,
+  contact_person: item.owner,
+  contact_phone: `1380000${String(index + 1).padStart(4, '0')}`,
+  payment_terms: index === 1 ? '月结 45 天' : '月结 30 天',
+  credit_limit: [3000000, 1800000, 1200000][index] ?? 1000000,
+  status: 'active'
+}))
+
+function resolveCustomerCode(input?: string) {
+  if (!input) return customerRelationState[0]?.customer_code || ''
+
+  const matchedRelation = customerRelationState.find((item) => item.customer_code === input || item.customer_name === input)
+  if (matchedRelation) return matchedRelation.customer_code
+
+  const matchedCustomer = customerState.find((item) => item.code === input || item.name === input)
+  return matchedCustomer?.code || input
+}
+
+function buildCustomerCode() {
+  return `CUS-${String(customerState.length + 1).padStart(3, '0')}`
+}
+
+export async function getCustomerList(params: { pageNum: number; pageSize: number; code?: string; name?: string; status?: string }) {
+  let filtered = [...customerState]
+
+  if (params.code) {
+    filtered = searchItems(filtered, params.code, ['code'])
+  }
+  if (params.name) {
+    filtered = searchItems(filtered, params.name, ['name', 'contact_person'])
+  }
+  if (params.status) {
+    filtered = filtered.filter((item) => item.status === params.status)
+  }
+
+  const result = paginate(filtered, params.pageNum, params.pageSize)
+  return wrapListResponse(result.list, result.total, result.pageNum, result.pageSize)
+}
+
+export async function createCustomer(data: Partial<CustomerRecord>) {
+  const record: CustomerRecord = {
+    id: data.id || generateId(),
+    code: data.code || buildCustomerCode(),
+    name: data.name || '',
+    contact_person: data.contact_person || '',
+    contact_phone: data.contact_phone || '',
+    payment_terms: data.payment_terms || '月结 30 天',
+    credit_limit: Number(data.credit_limit ?? 0),
+    status: data.status || 'active'
+  }
+
+  customerState.unshift(record)
+  return wrapCreatedResponse(record)
+}
+
+export async function updateCustomer(id: string, data: Partial<CustomerRecord>) {
+  const index = customerState.findIndex((item) => item.id === id)
+  const current = index >= 0 ? customerState[index] : null
+  const record: CustomerRecord = {
+    id,
+    code: data.code || current?.code || buildCustomerCode(),
+    name: data.name || current?.name || '',
+    contact_person: data.contact_person || current?.contact_person || '',
+    contact_phone: data.contact_phone || current?.contact_phone || '',
+    payment_terms: data.payment_terms || current?.payment_terms || '月结 30 天',
+    credit_limit: Number(data.credit_limit ?? current?.credit_limit ?? 0),
+    status: data.status || current?.status || 'active'
+  }
+
+  if (index >= 0) {
+    customerState[index] = record
+  } else {
+    customerState.unshift(record)
+  }
+
+  return wrapUpdatedResponse(record)
+}
+
+export async function deleteCustomer(id: string) {
+  const index = customerState.findIndex((item) => item.id === id)
+  if (index >= 0) {
+    customerState.splice(index, 1)
+  }
+
+  return wrapSuccessResponse('客户已删除')
+}
+
+export async function createReceipt(data: Record<string, any>) {
+  return createReceiptRecord({
+    customer_code: resolveCustomerCode(data.customer_code || data.customer),
+    amount: Number(data.amount || 0),
+    date: data.date,
+    method: data.method
+  })
 }

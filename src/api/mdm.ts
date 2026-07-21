@@ -1,6 +1,6 @@
-import { isMockMode } from './_config'
+import * as staticService from '@/static/services/mdm'
+import { isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/mdm'
 
 export interface OrgNode {
   id: string
@@ -11,7 +11,7 @@ export interface OrgNode {
 }
 
 export function getOrgTree() {
-  if (isMockMode) return mockService.getOrgTree()
+  if (isStaticMode) return staticService.getOrgTree()
   return apiGet<OrgNode[]>('/mdm/org-tree')
 }
 
@@ -33,27 +33,27 @@ export interface OrgTreeQuery {
 }
 
 export function getOrgNodeDetail(id: string) {
-  if (isMockMode) return mockService.getOrgNodeDetail(id)
+  if (isStaticMode) return staticService.getOrgNodeDetail(id)
   return apiGet<OrgNode>(`/mdm/org-tree/${id}`)
 }
 
 export function getOrgTreeList(params?: OrgTreeQuery) {
-  if (isMockMode) return mockService.getOrgTreeList(params) as Promise<ApiResponse<PaginatedData<OrgListItem>>>
+  if (isStaticMode) return staticService.getOrgTreeList(params) as Promise<ApiResponse<PaginatedData<OrgListItem>>>
   return apiGet<PaginatedData<OrgListItem>>('/mdm/org-tree/list', { params })
 }
 
 export function createOrgNode(data: Partial<OrgNode> & { parentId?: string }) {
-  if (isMockMode) return mockService.createOrgNode(data)
+  if (isStaticMode) return staticService.createOrgNode(data)
   return apiPost<Record<string, never>, Partial<OrgNode> & { parentId?: string }>('/mdm/org-tree', data)
 }
 
 export function updateOrgNode(id: string, data: Partial<OrgNode>) {
-  if (isMockMode) return mockService.updateOrgNode(id, data)
+  if (isStaticMode) return staticService.updateOrgNode(id, data)
   return apiPut<Record<string, never>, Partial<OrgNode>>(`/mdm/org-tree/${id}`, data)
 }
 
 export function deleteOrgNode(id: string) {
-  if (isMockMode) return mockService.deleteOrgNode(id)
+  if (isStaticMode) return staticService.deleteOrgNode(id)
   return apiDelete<Record<string, never>>(`/mdm/org-tree/${id}`)
 }
 
@@ -83,27 +83,27 @@ export interface MaterialQuery {
 }
 
 export function getMaterialTree() {
-  if (isMockMode) return mockService.getMaterialTree()
+  if (isStaticMode) return staticService.getMaterialTree()
   return apiGet<MaterialCategory[]>('/mdm/material-tree')
 }
 
 export function getMaterialList(params: MaterialQuery) {
-  if (isMockMode) return mockService.getMaterialList(params) as Promise<ApiResponse<PaginatedData<Material>>>
+  if (isStaticMode) return staticService.getMaterialList(params) as Promise<ApiResponse<PaginatedData<Material>>>
   return apiGet<PaginatedData<Material>>('/mdm/materials', { params })
 }
 
 export function createMaterial(data: Partial<Material>) {
-  if (isMockMode) return mockService.createMaterial(data)
+  if (isStaticMode) return staticService.createMaterial(data)
   return apiPost<Record<string, never>, Partial<Material>>('/mdm/materials', data)
 }
 
 export function updateMaterial(id: string, data: Partial<Material>) {
-  if (isMockMode) return mockService.updateMaterial(id, data)
+  if (isStaticMode) return staticService.updateMaterial(id, data)
   return apiPut<Record<string, never>, Partial<Material>>(`/mdm/materials/${id}`, data)
 }
 
 export function deleteMaterial(id: string) {
-  if (isMockMode) return mockService.deleteMaterial(id)
+  if (isStaticMode) return staticService.deleteMaterial(id)
   return apiDelete<Record<string, never>>(`/mdm/materials/${id}`)
 }
 
@@ -127,22 +127,22 @@ export interface EquipmentQuery {
 }
 
 export function getEquipmentList(params: EquipmentQuery) {
-  if (isMockMode) return mockService.getEquipmentList(params) as Promise<ApiResponse<PaginatedData<Equipment>>>
+  if (isStaticMode) return staticService.getEquipmentList(params) as Promise<ApiResponse<PaginatedData<Equipment>>>
   return apiGet<PaginatedData<Equipment>>('/mdm/equipments', { params })
 }
 
 export function createEquipment(data: Partial<Equipment>) {
-  if (isMockMode) return mockService.createEquipment(data)
+  if (isStaticMode) return staticService.createEquipment(data)
   return apiPost<Record<string, never>, Partial<Equipment>>('/mdm/equipments', data)
 }
 
 export function updateEquipment(id: string, data: Partial<Equipment>) {
-  if (isMockMode) return mockService.updateEquipment(id, data)
+  if (isStaticMode) return staticService.updateEquipment(id, data)
   return apiPut<Record<string, never>, Partial<Equipment>>(`/mdm/equipments/${id}`, data)
 }
 
 export function deleteEquipment(id: string) {
-  if (isMockMode) return mockService.deleteEquipment(id)
+  if (isStaticMode) return staticService.deleteEquipment(id)
   return apiDelete<Record<string, never>>(`/mdm/equipments/${id}`)
 }
 
@@ -164,22 +164,22 @@ export interface ResourceQuery {
 }
 
 export function getResourceList(params: ResourceQuery) {
-  if (isMockMode) return mockService.getResourceList(params) as Promise<ApiResponse<PaginatedData<Resource>>>
+  if (isStaticMode) return staticService.getResourceList(params) as Promise<ApiResponse<PaginatedData<Resource>>>
   return apiGet<PaginatedData<Resource>>('/mdm/resources', { params })
 }
 
 export function createResource(data: Partial<Resource>) {
-  if (isMockMode) return mockService.createResource(data)
+  if (isStaticMode) return staticService.createResource(data)
   return apiPost<Record<string, never>, Partial<Resource>>('/mdm/resources', data)
 }
 
 export function updateResource(id: string, data: Partial<Resource>) {
-  if (isMockMode) return mockService.updateResource(id, data)
+  if (isStaticMode) return staticService.updateResource(id, data)
   return apiPut<Record<string, never>, Partial<Resource>>(`/mdm/resources/${id}`, data)
 }
 
 export function deleteResource(id: string) {
-  if (isMockMode) return mockService.deleteResource(id)
+  if (isStaticMode) return staticService.deleteResource(id)
   return apiDelete<Record<string, never>>(`/mdm/resources/${id}`)
 }
 
@@ -203,22 +203,22 @@ export interface WorkCenterQuery {
 }
 
 export function getWorkCenterList(params: WorkCenterQuery) {
-  if (isMockMode) return mockService.getWorkCenterList(params) as Promise<ApiResponse<PaginatedData<WorkCenter>>>
+  if (isStaticMode) return staticService.getWorkCenterList(params) as Promise<ApiResponse<PaginatedData<WorkCenter>>>
   return apiGet<PaginatedData<WorkCenter>>('/mdm/work-centers', { params })
 }
 
 export function createWorkCenter(data: Partial<WorkCenter>) {
-  if (isMockMode) return mockService.createWorkCenter(data)
+  if (isStaticMode) return staticService.createWorkCenter(data)
   return apiPost<Record<string, never>, Partial<WorkCenter>>('/mdm/work-centers', data)
 }
 
 export function updateWorkCenter(id: string, data: Partial<WorkCenter>) {
-  if (isMockMode) return mockService.updateWorkCenter(id, data)
+  if (isStaticMode) return staticService.updateWorkCenter(id, data)
   return apiPut<Record<string, never>, Partial<WorkCenter>>(`/mdm/work-centers/${id}`, data)
 }
 
 export function deleteWorkCenter(id: string) {
-  if (isMockMode) return mockService.deleteWorkCenter(id)
+  if (isStaticMode) return staticService.deleteWorkCenter(id)
   return apiDelete<Record<string, never>>(`/mdm/work-centers/${id}`)
 }
 
@@ -241,21 +241,21 @@ export interface MoldQuery {
 }
 
 export function getMoldList(params: MoldQuery) {
-  if (isMockMode) return mockService.getMoldList(params) as Promise<ApiResponse<PaginatedData<Mold>>>
+  if (isStaticMode) return staticService.getMoldList(params) as Promise<ApiResponse<PaginatedData<Mold>>>
   return apiGet<PaginatedData<Mold>>('/mdm/molds', { params })
 }
 
 export function createMold(data: Partial<Mold>) {
-  if (isMockMode) return mockService.createMold(data)
+  if (isStaticMode) return staticService.createMold(data)
   return apiPost<Record<string, never>, Partial<Mold>>('/mdm/molds', data)
 }
 
 export function updateMold(id: string, data: Partial<Mold>) {
-  if (isMockMode) return mockService.updateMold(id, data)
+  if (isStaticMode) return staticService.updateMold(id, data)
   return apiPut<Record<string, never>, Partial<Mold>>(`/mdm/molds/${id}`, data)
 }
 
 export function deleteMold(id: string) {
-  if (isMockMode) return mockService.deleteMold(id)
+  if (isStaticMode) return staticService.deleteMold(id)
   return apiDelete<Record<string, never>>(`/mdm/molds/${id}`)
 }

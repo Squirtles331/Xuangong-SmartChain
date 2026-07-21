@@ -1,6 +1,6 @@
-import { isMockMode } from './_config'
+import * as staticService from '@/static/services/routing'
+import { isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/routing'
 
 export interface RoutingOperation {
   id: string
@@ -76,52 +76,50 @@ export interface RoutingParallelQuery {
 }
 
 export function getRoutingList(params: RoutingListQuery) {
-  if (isMockMode) return mockService.getRoutingList(params) as Promise<ApiResponse<PaginatedData<RoutingOperation>>>
+  if (isStaticMode) return staticService.getRoutingList(params) as Promise<ApiResponse<PaginatedData<RoutingOperation>>>
   return apiGet<PaginatedData<RoutingOperation>>('/routing/list', { params })
 }
 
 export function saveRouting(data: Partial<RoutingOperation | RoutingDetail>) {
-  if (isMockMode) return mockService.saveRouting(data)
-  if (data.id) {
-    return apiPut<Record<string, never>, Partial<RoutingOperation | RoutingDetail>>(`/routing/${data.id}`, data)
-  }
-  return apiPost<Record<string, never>, Partial<RoutingOperation | RoutingDetail>>('/routing', data)
+  if (isStaticMode) return staticService.saveRouting(data)
+  return data.id
+    ? apiPut<Record<string, never>, Partial<RoutingOperation | RoutingDetail>>(`/routing/${data.id}`, data)
+    : apiPost<Record<string, never>, Partial<RoutingOperation | RoutingDetail>>('/routing', data)
 }
 
 export function deleteRouting(id: string) {
-  if (isMockMode) return mockService.deleteRouting(id)
+  if (isStaticMode) return staticService.deleteRouting(id)
   return apiDelete<Record<string, never>>(`/routing/${id}`)
 }
 
 export function getRoutingDetail(id: string) {
-  if (isMockMode) return mockService.getRoutingDetail(id) as Promise<ApiResponse<RoutingDetail | null>>
+  if (isStaticMode) return staticService.getRoutingDetail(id) as Promise<ApiResponse<RoutingDetail | null>>
   return apiGet<RoutingDetail>(`/routing/${id}`)
 }
 
 export function getRoutingAutoTimeList(params: RoutingAutoTimeQuery) {
-  if (isMockMode) return mockService.getRoutingAutoTimeList(params) as Promise<ApiResponse<PaginatedData<RoutingAutoTimeRecord>>>
+  if (isStaticMode) return staticService.getRoutingAutoTimeList(params) as Promise<ApiResponse<PaginatedData<RoutingAutoTimeRecord>>>
   return apiGet<PaginatedData<RoutingAutoTimeRecord>>('/routing/auto-time', { params })
 }
 
 export function adoptRoutingAutoTime(id: string) {
-  if (isMockMode) return mockService.adoptRoutingAutoTime(id)
+  if (isStaticMode) return staticService.adoptRoutingAutoTime(id)
   return apiPost<Record<string, never>>(`/routing/auto-time/${id}/adopt`)
 }
 
 export function getRoutingParallelList(params: RoutingParallelQuery) {
-  if (isMockMode) return mockService.getRoutingParallelList(params) as Promise<ApiResponse<PaginatedData<RoutingParallelGroup>>>
+  if (isStaticMode) return staticService.getRoutingParallelList(params) as Promise<ApiResponse<PaginatedData<RoutingParallelGroup>>>
   return apiGet<PaginatedData<RoutingParallelGroup>>('/routing/parallel', { params })
 }
 
 export function saveRoutingParallel(data: Partial<RoutingParallelGroup>) {
-  if (isMockMode) return mockService.saveRoutingParallel(data)
-  if (data.id) {
-    return apiPut<Record<string, never>, Partial<RoutingParallelGroup>>(`/routing/parallel/${data.id}`, data)
-  }
-  return apiPost<Record<string, never>, Partial<RoutingParallelGroup>>('/routing/parallel', data)
+  if (isStaticMode) return staticService.saveRoutingParallel(data)
+  return data.id
+    ? apiPut<Record<string, never>, Partial<RoutingParallelGroup>>(`/routing/parallel/${data.id}`, data)
+    : apiPost<Record<string, never>, Partial<RoutingParallelGroup>>('/routing/parallel', data)
 }
 
 export function deleteRoutingParallel(id: string) {
-  if (isMockMode) return mockService.deleteRoutingParallel(id)
+  if (isStaticMode) return staticService.deleteRoutingParallel(id)
   return apiDelete<Record<string, never>>(`/routing/parallel/${id}`)
 }

@@ -1,5 +1,5 @@
-import { generateId } from '@/mock/shared/id'
-import { paginate, searchItems } from '@/mock/shared/paginate'
+import { generateId } from '@/static/utils/id'
+import { paginate, searchItems } from '@/static/utils/paginate'
 import {
   MockResponse,
   wrapCreatedResponse,
@@ -7,7 +7,7 @@ import {
   wrapListResponse,
   wrapSuccessResponse,
   wrapUpdatedResponse
-} from '@/mock/shared/response'
+} from '@/static/utils/response'
 import type {
   ApsConflictSeverity,
   ApsConstraintFormModel,

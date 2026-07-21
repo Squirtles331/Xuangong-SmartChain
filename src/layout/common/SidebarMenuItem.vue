@@ -44,9 +44,10 @@ const getIcon = (name?: string) => {
   height: 18px;
   padding: 0 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #f3f6ff;
+  background: var(--layout-sub-sidebar-tag-bg, rgba(76, 111, 255, 0.12));
+  color: var(--layout-sub-sidebar-tag-text, #4c6fff);
   font-size: 11px;
+  font-weight: 600;
   line-height: 1;
   white-space: nowrap;
 }

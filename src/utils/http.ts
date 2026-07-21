@@ -68,7 +68,6 @@ function clearAuthStorage() {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
   localStorage.removeItem('user_info')
-  localStorage.removeItem('mock_login')
   localStorage.removeItem('tenant_id')
   sessionStorage.clear()
 }

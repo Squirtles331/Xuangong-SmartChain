@@ -10,7 +10,7 @@ type LogoutOptions = {
   redirectTo?: string
 }
 
-const AUTH_STORAGE_KEYS = ['access_token', 'refresh_token', 'user_info', 'mock_login', 'tenant_id'] as const
+const AUTH_STORAGE_KEYS = ['access_token', 'refresh_token', 'user_info', 'tenant_id'] as const
 const PREFERENCE_STORAGE_KEYS = ['app-theme', 'app-layout-mode', 'app-lang'] as const
 
 export const useUserStore = defineStore('user', () => {
@@ -54,6 +54,10 @@ export const useUserStore = defineStore('user', () => {
     permissions.value = data.user_info.permissions
 
     localStorage.setItem('user_info', JSON.stringify(data.user_info))
+  }
+
+  function setStaticAuthData(data: LoginResult) {
+    setAuthData(data)
   }
 
   function restoreUserInfo() {
@@ -122,6 +126,7 @@ export const useUserStore = defineStore('user', () => {
     isLoggedIn,
     hasPermission,
     doLogin,
+    setStaticAuthData,
     doLogout,
     clearAuth,
     restoreUserInfo

@@ -1,6 +1,6 @@
-import { generateId } from '@/mock/shared/id'
-import { paginate, searchItems } from '@/mock/shared/paginate'
-import { MockResponse, wrapCreatedResponse, wrapListResponse, wrapSuccessResponse, wrapUpdatedResponse } from '@/mock/shared/response'
+import { generateId } from '@/static/utils/id'
+import { paginate, searchItems } from '@/static/utils/paginate'
+import { MockResponse, wrapCreatedResponse, wrapListResponse, wrapSuccessResponse, wrapUpdatedResponse } from '@/static/utils/response'
 import type {
   ConcessionRecord,
   InspectionCategory,

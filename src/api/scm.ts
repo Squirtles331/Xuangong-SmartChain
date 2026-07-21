@@ -1,6 +1,6 @@
-import { isMockMode } from './_config'
+import * as staticService from '@/static/services/scm'
+import { isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/scm'
 
 export interface Supplier {
   id: string
@@ -21,22 +21,22 @@ export interface SupplierQuery {
 }
 
 export function getSupplierList(params: SupplierQuery) {
-  if (isMockMode) return mockService.getSupplierList(params) as Promise<ApiResponse<PaginatedData<Supplier>>>
+  if (isStaticMode) return staticService.getSupplierList(params) as Promise<ApiResponse<PaginatedData<Supplier>>>
   return apiGet<PaginatedData<Supplier>>('/scm/suppliers', { params })
 }
 
 export function createSupplier(data: Partial<Supplier>) {
-  if (isMockMode) return mockService.createSupplier(data)
+  if (isStaticMode) return staticService.createSupplier(data)
   return apiPost<Record<string, never>, Partial<Supplier>>('/scm/suppliers', data)
 }
 
 export function updateSupplier(id: string, data: Partial<Supplier>) {
-  if (isMockMode) return mockService.updateSupplier(id, data)
+  if (isStaticMode) return staticService.updateSupplier(id, data)
   return apiPut<Record<string, never>, Partial<Supplier>>(`/scm/suppliers/${id}`, data)
 }
 
 export function deleteSupplier(id: string) {
-  if (isMockMode) return mockService.deleteSupplier(id)
+  if (isStaticMode) return staticService.deleteSupplier(id)
   return apiDelete<Record<string, never>>(`/scm/suppliers/${id}`)
 }
 
@@ -61,22 +61,22 @@ export interface PurchaseOrderQuery {
 }
 
 export function getPurchaseOrderList(params: PurchaseOrderQuery) {
-  if (isMockMode) return mockService.getPurchaseOrderList(params) as Promise<ApiResponse<PaginatedData<PurchaseOrder>>>
+  if (isStaticMode) return staticService.getPurchaseOrderList(params) as Promise<ApiResponse<PaginatedData<PurchaseOrder>>>
   return apiGet<PaginatedData<PurchaseOrder>>('/scm/purchase-orders', { params })
 }
 
 export function createPurchaseOrder(data: Partial<PurchaseOrder>) {
-  if (isMockMode) return mockService.createPurchaseOrder(data)
+  if (isStaticMode) return staticService.createPurchaseOrder(data)
   return apiPost<Record<string, never>, Partial<PurchaseOrder>>('/scm/purchase-orders', data)
 }
 
 export function updatePurchaseOrder(id: string, data: Partial<PurchaseOrder>) {
-  if (isMockMode) return mockService.updatePurchaseOrder(id, data)
+  if (isStaticMode) return staticService.updatePurchaseOrder(id, data)
   return apiPut<Record<string, never>, Partial<PurchaseOrder>>(`/scm/purchase-orders/${id}`, data)
 }
 
 export function deletePurchaseOrder(id: string) {
-  if (isMockMode) return mockService.deletePurchaseOrder(id)
+  if (isStaticMode) return staticService.deletePurchaseOrder(id)
   return apiDelete<Record<string, never>>(`/scm/purchase-orders/${id}`)
 }
 
@@ -126,22 +126,22 @@ export interface SupplierPortalData {
 }
 
 export function getSupplierPortalData() {
-  if (isMockMode) return mockService.getSupplierPortalData() as Promise<ApiResponse<SupplierPortalData>>
+  if (isStaticMode) return staticService.getSupplierPortalData() as Promise<ApiResponse<SupplierPortalData>>
   return apiGet<SupplierPortalData>('/scm/portal')
 }
 
 export function confirmPortalOrder(id: string) {
-  if (isMockMode) return mockService.confirmPortalOrder(id)
+  if (isStaticMode) return staticService.confirmPortalOrder(id)
   return apiPut<Record<string, never>>(`/scm/portal/orders/${id}/confirm`)
 }
 
 export function rejectPortalOrder(id: string) {
-  if (isMockMode) return mockService.rejectPortalOrder(id)
+  if (isStaticMode) return staticService.rejectPortalOrder(id)
   return apiPut<Record<string, never>>(`/scm/portal/orders/${id}/reject`)
 }
 
 export function confirmPortalDelivery(id: string) {
-  if (isMockMode) return mockService.confirmPortalDelivery(id)
+  if (isStaticMode) return staticService.confirmPortalDelivery(id)
   return apiPut<Record<string, never>>(`/scm/portal/deliveries/${id}/confirm`)
 }
 
@@ -165,22 +165,22 @@ export interface PriceQuery {
 }
 
 export function getPriceList(params: PriceQuery) {
-  if (isMockMode) return mockService.getPriceList(params) as Promise<ApiResponse<PaginatedData<PriceRecord>>>
+  if (isStaticMode) return staticService.getPriceList(params) as Promise<ApiResponse<PaginatedData<PriceRecord>>>
   return apiGet<PaginatedData<PriceRecord>>('/scm/prices', { params })
 }
 
 export function createPrice(data: Partial<PriceRecord>) {
-  if (isMockMode) return mockService.createPrice(data)
+  if (isStaticMode) return staticService.createPrice(data)
   return apiPost<Record<string, never>, Partial<PriceRecord>>('/scm/prices', data)
 }
 
 export function updatePrice(id: string, data: Partial<PriceRecord>) {
-  if (isMockMode) return mockService.updatePrice(id, data)
+  if (isStaticMode) return staticService.updatePrice(id, data)
   return apiPut<Record<string, never>, Partial<PriceRecord>>(`/scm/prices/${id}`, data)
 }
 
 export function deletePrice(id: string) {
-  if (isMockMode) return mockService.deletePrice(id)
+  if (isStaticMode) return staticService.deletePrice(id)
   return apiDelete<Record<string, never>>(`/scm/prices/${id}`)
 }
 
@@ -204,22 +204,22 @@ export interface PurchaseRequestQuery {
 }
 
 export function getPurchaseRequestList(params: PurchaseRequestQuery) {
-  if (isMockMode) return mockService.getPurchaseRequestList(params) as Promise<ApiResponse<PaginatedData<PurchaseRequest>>>
+  if (isStaticMode) return staticService.getPurchaseRequestList(params) as Promise<ApiResponse<PaginatedData<PurchaseRequest>>>
   return apiGet<PaginatedData<PurchaseRequest>>('/scm/purchase-requests', { params })
 }
 
 export function createPurchaseRequest(data: Partial<PurchaseRequest>) {
-  if (isMockMode) return mockService.createPurchaseRequest(data)
+  if (isStaticMode) return staticService.createPurchaseRequest(data)
   return apiPost<Record<string, never>, Partial<PurchaseRequest>>('/scm/purchase-requests', data)
 }
 
 export function updatePurchaseRequest(id: string, data: Partial<PurchaseRequest>) {
-  if (isMockMode) return mockService.updatePurchaseRequest(id, data)
+  if (isStaticMode) return staticService.updatePurchaseRequest(id, data)
   return apiPut<Record<string, never>, Partial<PurchaseRequest>>(`/scm/purchase-requests/${id}`, data)
 }
 
 export function deletePurchaseRequest(id: string) {
-  if (isMockMode) return mockService.deletePurchaseRequest(id)
+  if (isStaticMode) return staticService.deletePurchaseRequest(id)
   return apiDelete<Record<string, never>>(`/scm/purchase-requests/${id}`)
 }
 
@@ -242,21 +242,21 @@ export interface PurchaseReturnQuery {
 }
 
 export function getPurchaseReturnList(params: PurchaseReturnQuery) {
-  if (isMockMode) return mockService.getPurchaseReturnList(params) as Promise<ApiResponse<PaginatedData<PurchaseReturn>>>
+  if (isStaticMode) return staticService.getPurchaseReturnList(params) as Promise<ApiResponse<PaginatedData<PurchaseReturn>>>
   return apiGet<PaginatedData<PurchaseReturn>>('/scm/purchase-returns', { params })
 }
 
 export function createPurchaseReturn(data: Partial<PurchaseReturn>) {
-  if (isMockMode) return mockService.createPurchaseReturn(data)
+  if (isStaticMode) return staticService.createPurchaseReturn(data)
   return apiPost<Record<string, never>, Partial<PurchaseReturn>>('/scm/purchase-returns', data)
 }
 
 export function updatePurchaseReturn(id: string, data: Partial<PurchaseReturn>) {
-  if (isMockMode) return mockService.updatePurchaseReturn(id, data)
+  if (isStaticMode) return staticService.updatePurchaseReturn(id, data)
   return apiPut<Record<string, never>, Partial<PurchaseReturn>>(`/scm/purchase-returns/${id}`, data)
 }
 
 export function deletePurchaseReturn(id: string) {
-  if (isMockMode) return mockService.deletePurchaseReturn(id)
+  if (isStaticMode) return staticService.deletePurchaseReturn(id)
   return apiDelete<Record<string, never>>(`/scm/purchase-returns/${id}`)
 }

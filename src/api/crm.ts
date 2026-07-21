@@ -1,6 +1,6 @@
-import { isMockMode } from './_config'
+import { isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/crm'
+import * as staticService from '@/static/services/crm'
 
 export interface Customer {
   id: string
@@ -22,22 +22,22 @@ export interface CustomerQuery {
 }
 
 export function getCustomerList(params: CustomerQuery) {
-  if (isMockMode) return mockService.getCustomerList(params) as Promise<ApiResponse<PaginatedData<Customer>>>
+  if (isStaticMode) return staticService.getCustomerList(params as any) as unknown as Promise<ApiResponse<PaginatedData<Customer>>>
   return apiGet<PaginatedData<Customer>>('/crm/customers', { params })
 }
 
 export function createCustomer(data: Partial<Customer>) {
-  if (isMockMode) return mockService.createCustomer(data)
+  if (isStaticMode) return staticService.createCustomer(data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPost<Record<string, never>, Partial<Customer>>('/crm/customers', data)
 }
 
 export function updateCustomer(id: string, data: Partial<Customer>) {
-  if (isMockMode) return mockService.updateCustomer(id, data)
+  if (isStaticMode) return staticService.updateCustomer(id, data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPut<Record<string, never>, Partial<Customer>>(`/crm/customers/${id}`, data)
 }
 
 export function deleteCustomer(id: string) {
-  if (isMockMode) return mockService.deleteCustomer(id)
+  if (isStaticMode) return staticService.deleteCustomer(id) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiDelete<Record<string, never>>(`/crm/customers/${id}`)
 }
 
@@ -61,27 +61,27 @@ export interface SalesOrderQuery {
 }
 
 export function getSalesOrderList(params: SalesOrderQuery) {
-  if (isMockMode) return mockService.getSalesOrderList(params) as Promise<ApiResponse<PaginatedData<SalesOrder>>>
+  if (isStaticMode) return staticService.getSalesOrderList(params as any) as unknown as Promise<ApiResponse<PaginatedData<SalesOrder>>>
   return apiGet<PaginatedData<SalesOrder>>('/crm/sales-orders', { params })
 }
 
 export function getSalesOrderDetail(id: string) {
-  if (isMockMode) return mockService.getSalesOrderDetail(id) as Promise<ApiResponse<SalesOrder | null>>
+  if (isStaticMode) return staticService.getSalesOrderDetail(id) as unknown as Promise<ApiResponse<SalesOrder | null>>
   return apiGet<SalesOrder>(`/crm/sales-orders/${id}`)
 }
 
 export function createSalesOrder(data: Partial<SalesOrder>) {
-  if (isMockMode) return mockService.createSalesOrder(data)
+  if (isStaticMode) return staticService.createSalesOrder(data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPost<Record<string, never>, Partial<SalesOrder>>('/crm/sales-orders', data)
 }
 
 export function updateSalesOrder(id: string, data: Partial<SalesOrder>) {
-  if (isMockMode) return mockService.updateSalesOrder(id, data)
+  if (isStaticMode) return staticService.updateSalesOrder(id, data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPut<Record<string, never>, Partial<SalesOrder>>(`/crm/sales-orders/${id}`, data)
 }
 
 export function deleteSalesOrder(id: string) {
-  if (isMockMode) return mockService.deleteSalesOrder(id)
+  if (isStaticMode) return staticService.deleteSalesOrder(id) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiDelete<Record<string, never>>(`/crm/sales-orders/${id}`)
 }
 
@@ -105,12 +105,12 @@ export interface ReceivableQuery {
 }
 
 export function getReceivableList(params: ReceivableQuery) {
-  if (isMockMode) return mockService.getReceivableList(params) as Promise<ApiResponse<PaginatedData<Receivable>>>
+  if (isStaticMode) return staticService.getReceivableList(params as any) as unknown as Promise<ApiResponse<PaginatedData<Receivable>>>
   return apiGet<PaginatedData<Receivable>>('/crm/receivables', { params })
 }
 
 export function createReceipt(data: Partial<Receivable>) {
-  if (isMockMode) return mockService.createReceipt(data)
+  if (isStaticMode) return staticService.createReceipt(data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPost<Record<string, never>, Partial<Receivable>>('/crm/receivables', data)
 }
 
@@ -122,7 +122,7 @@ export interface ReceiptCreatePayload {
 }
 
 export function createReceiptRecord(data: ReceiptCreatePayload) {
-  if (isMockMode) return mockService.createReceipt(data)
+  if (isStaticMode) return staticService.createReceipt(data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPost<Record<string, never>, ReceiptCreatePayload>('/crm/receivables', data)
 }
 
@@ -147,19 +147,19 @@ export interface QuotationQuery {
 }
 
 export function getQuotationList(params: QuotationQuery) {
-  if (isMockMode) return mockService.getQuotationList(params) as Promise<ApiResponse<PaginatedData<Quotation>>>
+  if (isStaticMode) return staticService.getQuotationList(params as any) as unknown as Promise<ApiResponse<PaginatedData<Quotation>>>
   return apiGet<PaginatedData<Quotation>>('/crm/quotations', { params })
 }
 
 export function saveQuotation(data: Partial<Quotation>) {
-  if (isMockMode) return mockService.saveQuotation(data)
+  if (isStaticMode) return staticService.saveQuotation(data as any) as unknown as Promise<ApiResponse<Quotation>>
   return data.id
     ? apiPut<Quotation, Partial<Quotation>>(`/crm/quotations/${data.id}`, data)
     : apiPost<Quotation, Partial<Quotation>>('/crm/quotations', data)
 }
 
 export function deleteQuotation(id: string) {
-  if (isMockMode) return mockService.deleteQuotation(id)
+  if (isStaticMode) return staticService.deleteQuotation(id) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiDelete<Record<string, never>>(`/crm/quotations/${id}`)
 }
 
@@ -182,24 +182,24 @@ export interface OpportunityQuery {
 }
 
 export function getOpportunityList(params: OpportunityQuery) {
-  if (isMockMode) return mockService.getOpportunityList(params) as Promise<ApiResponse<PaginatedData<Opportunity>>>
+  if (isStaticMode) return staticService.getOpportunityList(params as any) as unknown as Promise<ApiResponse<PaginatedData<Opportunity>>>
   return apiGet<PaginatedData<Opportunity>>('/crm/opportunities', { params })
 }
 
 export function saveOpportunity(data: Partial<Opportunity>) {
-  if (isMockMode) return mockService.saveOpportunity(data)
+  if (isStaticMode) return staticService.saveOpportunity(data as any) as unknown as Promise<ApiResponse<Opportunity>>
   return data.id
     ? apiPut<Opportunity, Partial<Opportunity>>(`/crm/opportunities/${data.id}`, data)
     : apiPost<Opportunity, Partial<Opportunity>>('/crm/opportunities', data)
 }
 
 export function deleteOpportunity(id: string) {
-  if (isMockMode) return mockService.deleteOpportunity(id)
+  if (isStaticMode) return staticService.deleteOpportunity(id) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiDelete<Record<string, never>>(`/crm/opportunities/${id}`)
 }
 
 export function convertOpportunity(id: string) {
-  if (isMockMode) return mockService.convertOpportunity(id)
+  if (isStaticMode) return staticService.convertOpportunity(id) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPut<Record<string, never>>(`/crm/opportunities/${id}/convert`)
 }
 
@@ -222,19 +222,19 @@ export interface ContractQuery {
 }
 
 export function getContractList(params: ContractQuery) {
-  if (isMockMode) return mockService.getContractList(params) as Promise<ApiResponse<PaginatedData<Contract>>>
+  if (isStaticMode) return staticService.getContractList(params as any) as unknown as Promise<ApiResponse<PaginatedData<Contract>>>
   return apiGet<PaginatedData<Contract>>('/crm/contracts', { params })
 }
 
 export function saveContract(data: Partial<Contract>) {
-  if (isMockMode) return mockService.saveContract(data)
+  if (isStaticMode) return staticService.saveContract(data as any) as unknown as Promise<ApiResponse<Contract>>
   return data.id
     ? apiPut<Contract, Partial<Contract>>(`/crm/contracts/${data.id}`, data)
     : apiPost<Contract, Partial<Contract>>('/crm/contracts', data)
 }
 
 export function deleteContract(id: string) {
-  if (isMockMode) return mockService.deleteContract(id)
+  if (isStaticMode) return staticService.deleteContract(id) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiDelete<Record<string, never>>(`/crm/contracts/${id}`)
 }
 
@@ -259,21 +259,21 @@ export interface InvoiceQuery {
 }
 
 export function getInvoiceList(params: InvoiceQuery) {
-  if (isMockMode) return mockService.getInvoiceList(params) as Promise<ApiResponse<PaginatedData<Invoice>>>
+  if (isStaticMode) return staticService.getInvoiceList(params as any) as unknown as Promise<ApiResponse<PaginatedData<Invoice>>>
   return apiGet<PaginatedData<Invoice>>('/crm/invoices', { params })
 }
 
 export function saveInvoice(data: Partial<Invoice>) {
-  if (isMockMode) return mockService.saveInvoice(data)
+  if (isStaticMode) return staticService.saveInvoice(data as any) as unknown as Promise<ApiResponse<Invoice>>
   return data.id ? apiPut<Invoice, Partial<Invoice>>(`/crm/invoices/${data.id}`, data) : apiPost<Invoice, Partial<Invoice>>('/crm/invoices', data)
 }
 
 export function issueInvoice(id: string) {
-  if (isMockMode) return mockService.issueInvoice(id)
+  if (isStaticMode) return staticService.issueInvoice(id) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPut<Record<string, never>>(`/crm/invoices/${id}/issue`)
 }
 
 export function settleReceivables(data: { items: Array<{ id: string; amount: number }> }) {
-  if (isMockMode) return mockService.settleReceivables(data)
+  if (isStaticMode) return staticService.settleReceivables(data as any) as unknown as Promise<ApiResponse<Record<string, never>>>
   return apiPost<Record<string, never>, { items: Array<{ id: string; amount: number }> }>('/crm/receivables/settle', data)
 }

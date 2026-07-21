@@ -1,6 +1,6 @@
-import { isMockMode } from './_config'
+import * as staticService from '@/static/services/hr'
+import { isStaticMode } from './_config'
 import { apiDelete, apiGet, apiPost, apiPut, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/hr'
 
 export type HrEmployeeStatus = 'active' | 'inactive'
 export type HrAttendanceResult = 'normal' | 'late' | 'absent'
@@ -98,86 +98,86 @@ export interface HrSkillMatrixData {
 }
 
 export function getHrEmployeeList(params: HrEmployeeQuery) {
-  if (isMockMode) return mockService.getHrEmployeeList(params) as Promise<ApiResponse<PaginatedData<HrEmployee>>>
+  if (isStaticMode) return staticService.getHrEmployeeList(params) as Promise<ApiResponse<PaginatedData<HrEmployee>>>
   return apiGet<PaginatedData<HrEmployee>>('/hr/employees', { params })
 }
 
 export function createHrEmployee(data: Partial<HrEmployee>) {
-  if (isMockMode) return mockService.createHrEmployee(data)
+  if (isStaticMode) return staticService.createHrEmployee(data)
   return apiPost<Record<string, never>, Partial<HrEmployee>>('/hr/employees', data)
 }
 
 export function updateHrEmployee(id: string, data: Partial<HrEmployee>) {
-  if (isMockMode) return mockService.updateHrEmployee(id, data)
+  if (isStaticMode) return staticService.updateHrEmployee(id, data)
   return apiPut<Record<string, never>, Partial<HrEmployee>>(`/hr/employees/${id}`, data)
 }
 
 export function deleteHrEmployee(id: string) {
-  if (isMockMode) return mockService.deleteHrEmployee(id)
+  if (isStaticMode) return staticService.deleteHrEmployee(id)
   return apiDelete<Record<string, never>>(`/hr/employees/${id}`)
 }
 
 export function getHrAttendanceList(params: HrAttendanceQuery) {
-  if (isMockMode) return mockService.getHrAttendanceList(params) as Promise<ApiResponse<PaginatedData<HrAttendanceRecord>>>
+  if (isStaticMode) return staticService.getHrAttendanceList(params) as Promise<ApiResponse<PaginatedData<HrAttendanceRecord>>>
   return apiGet<PaginatedData<HrAttendanceRecord>>('/hr/attendance', { params })
 }
 
 export function createHrAttendance(data: Partial<HrAttendanceRecord>) {
-  if (isMockMode) return mockService.createHrAttendance(data)
+  if (isStaticMode) return staticService.createHrAttendance(data)
   return apiPost<Record<string, never>, Partial<HrAttendanceRecord>>('/hr/attendance', data)
 }
 
 export function updateHrAttendance(id: string, data: Partial<HrAttendanceRecord>) {
-  if (isMockMode) return mockService.updateHrAttendance(id, data)
+  if (isStaticMode) return staticService.updateHrAttendance(id, data)
   return apiPut<Record<string, never>, Partial<HrAttendanceRecord>>(`/hr/attendance/${id}`, data)
 }
 
 export function deleteHrAttendance(id: string) {
-  if (isMockMode) return mockService.deleteHrAttendance(id)
+  if (isStaticMode) return staticService.deleteHrAttendance(id)
   return apiDelete<Record<string, never>>(`/hr/attendance/${id}`)
 }
 
 export function getHrPieceworkList(params: HrPieceworkQuery) {
-  if (isMockMode) return mockService.getHrPieceworkList(params) as Promise<ApiResponse<PaginatedData<HrPieceworkRule>>>
+  if (isStaticMode) return staticService.getHrPieceworkList(params) as Promise<ApiResponse<PaginatedData<HrPieceworkRule>>>
   return apiGet<PaginatedData<HrPieceworkRule>>('/hr/piecework', { params })
 }
 
 export function createHrPiecework(data: Partial<HrPieceworkRule>) {
-  if (isMockMode) return mockService.createHrPiecework(data)
+  if (isStaticMode) return staticService.createHrPiecework(data)
   return apiPost<Record<string, never>, Partial<HrPieceworkRule>>('/hr/piecework', data)
 }
 
 export function updateHrPiecework(id: string, data: Partial<HrPieceworkRule>) {
-  if (isMockMode) return mockService.updateHrPiecework(id, data)
+  if (isStaticMode) return staticService.updateHrPiecework(id, data)
   return apiPut<Record<string, never>, Partial<HrPieceworkRule>>(`/hr/piecework/${id}`, data)
 }
 
 export function getHrPieceworkSummary() {
-  if (isMockMode) return mockService.getHrPieceworkSummary() as Promise<ApiResponse<HrPieceworkSummaryCard[]>>
+  if (isStaticMode) return staticService.getHrPieceworkSummary() as Promise<ApiResponse<HrPieceworkSummaryCard[]>>
   return apiGet<HrPieceworkSummaryCard[]>('/hr/piecework/summary')
 }
 
 export function getHrScheduleList(params: HrScheduleQuery) {
-  if (isMockMode) return mockService.getHrScheduleList(params) as Promise<ApiResponse<PaginatedData<HrScheduleRecord>>>
+  if (isStaticMode) return staticService.getHrScheduleList(params) as Promise<ApiResponse<PaginatedData<HrScheduleRecord>>>
   return apiGet<PaginatedData<HrScheduleRecord>>('/hr/schedule', { params })
 }
 
 export function createHrSchedule(data: Partial<HrScheduleRecord>) {
-  if (isMockMode) return mockService.createHrSchedule(data)
+  if (isStaticMode) return staticService.createHrSchedule(data)
   return apiPost<Record<string, never>, Partial<HrScheduleRecord>>('/hr/schedule', data)
 }
 
 export function updateHrSchedule(id: string, data: Partial<HrScheduleRecord>) {
-  if (isMockMode) return mockService.updateHrSchedule(id, data)
+  if (isStaticMode) return staticService.updateHrSchedule(id, data)
   return apiPut<Record<string, never>, Partial<HrScheduleRecord>>(`/hr/schedule/${id}`, data)
 }
 
 export function deleteHrSchedule(id: string) {
-  if (isMockMode) return mockService.deleteHrSchedule(id)
+  if (isStaticMode) return staticService.deleteHrSchedule(id)
   return apiDelete<Record<string, never>>(`/hr/schedule/${id}`)
 }
 
 export function getSkillMatrixData() {
-  if (isMockMode) return mockService.getSkillMatrixData() as Promise<ApiResponse<HrSkillMatrixData>>
+  if (isStaticMode) return staticService.getSkillMatrixData() as Promise<ApiResponse<HrSkillMatrixData>>
   return apiGet<HrSkillMatrixData>('/hr/skill-matrix')
 }

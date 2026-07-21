@@ -1,6 +1,6 @@
-import { isMockMode } from './_config'
+import * as staticService from '@/static/services/analysis'
+import { isStaticMode } from './_config'
 import { apiDelete, apiGet, type ApiResponse, type PaginatedData } from './_factory'
-import * as mockService from '@/mock/services/analysis'
 
 export interface ReportItem {
   id: number
@@ -18,21 +18,21 @@ export interface ReportQuery {
 }
 
 export function getReportList(params: ReportQuery) {
-  if (isMockMode) return mockService.getReportList(params) as Promise<ApiResponse<PaginatedData<ReportItem>>>
+  if (isStaticMode) return staticService.getReportList(params) as Promise<ApiResponse<PaginatedData<ReportItem>>>
   return apiGet<PaginatedData<ReportItem>>('/analysis/reports', { params })
 }
 
 export function previewReport(id: number) {
-  if (isMockMode) return mockService.previewReport(id)
+  if (isStaticMode) return staticService.previewReport(id)
   return apiGet<any>(`/analysis/reports/${id}/preview`)
 }
 
 export function downloadReport(id: number) {
-  if (isMockMode) return mockService.downloadReport(id)
+  if (isStaticMode) return staticService.downloadReport(id)
   return apiGet<Record<string, never>>(`/analysis/reports/${id}/download`)
 }
 
 export function deleteReport(id: number) {
-  if (isMockMode) return mockService.deleteReport(id)
+  if (isStaticMode) return staticService.deleteReport(id)
   return apiDelete<Record<string, never>>(`/analysis/reports/${id}`)
 }

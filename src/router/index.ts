@@ -74,8 +74,7 @@ router.beforeEach((to, _from, next) => {
 
   const whiteList = ['/login', '/lock']
   const userStore = useUserStore()
-  const mockLogin = localStorage.getItem('mock_login')
-  if (!mockLogin && !userStore.isLoggedIn && !whiteList.includes(to.path)) {
+  if (!userStore.isLoggedIn && !whiteList.includes(to.path)) {
     return next('/login')
   }
 

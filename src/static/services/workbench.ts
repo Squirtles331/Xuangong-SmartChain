@@ -1,5 +1,5 @@
 import type { WorkbenchHomepageData } from '@/types/workbench'
-import { wrapDetailResponse } from '@/mock/shared/response'
+import { wrapDetailResponse } from '@/static/utils/response'
 
 const workbenchData: WorkbenchHomepageData = {
   headline: '今天优先处理执行阻塞与待办',

@@ -90,8 +90,10 @@ import { ElMessage } from 'element-plus'
 import { User, Lock, Refresh } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import loginImage from '@/assets/images/login.png'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const loginFormRef = ref()
 const loading = ref(false)
 
@@ -122,14 +124,13 @@ const handleLogin = async () => {
     await loginFormRef.value.validate()
     loading.value = true
 
-    const success = await mockLogin()
+    const success = await staticLogin()
 
     if (success) {
       ElMessage.success('登录成功')
       if (loginForm.remember) {
         localStorage.setItem('remembered_username', loginForm.username)
       }
-      localStorage.setItem('mock_login', 'true')
       router.push('/')
     }
   } catch (error) {
@@ -140,7 +141,7 @@ const handleLogin = async () => {
   }
 }
 
-function mockLogin(): Promise<boolean> {
+function staticLogin(): Promise<boolean> {
   return new Promise((resolve) => {
     setTimeout(() => {
       const inputCaptcha = loginForm.captcha.replace(/\s/g, '')
@@ -151,18 +152,18 @@ function mockLogin(): Promise<boolean> {
         return
       }
       if (loginForm.username && loginForm.password) {
-        localStorage.setItem('access_token', 'mock_token_' + Date.now())
-        localStorage.setItem('refresh_token', 'mock_refresh_token')
-        localStorage.setItem(
-          'user_info',
-          JSON.stringify({
+        userStore.setStaticAuthData({
+          access_token: `static_token_${Date.now()}`,
+          refresh_token: 'static_refresh_token',
+          expires_in: 7200,
+          user_info: {
             id: '1',
             username: loginForm.username,
             real_name: loginForm.username,
             roles: ['super_admin'],
             permissions: ['*']
-          })
-        )
+          }
+        })
         resolve(true)
       } else {
         ElMessage.error('请输入用户名和密码')
