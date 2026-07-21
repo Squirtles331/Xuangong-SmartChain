@@ -180,11 +180,11 @@ function mockLogin(): Promise<boolean> {
 
 .login-container {
   display: grid;
-  grid-template-columns: minmax(420px, 0.9fr) minmax(560px, 1.3fr);
+  grid-template-columns: minmax(420px, 0.92fr) minmax(560px, 1.28fr);
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--login-page-bg);
 }
 
 .login-left-panel {
@@ -196,12 +196,19 @@ function mockLogin(): Promise<boolean> {
   justify-content: center;
   padding: 48px 40px 32px;
   scrollbar-gutter: stable;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px);
 }
 
 .login-card {
   width: 100%;
   max-width: 525px;
+  padding: 28px;
+  border: 1px solid var(--login-card-border);
+  border-radius: 28px;
+  background: var(--login-card-bg);
+  box-shadow: var(--login-card-shadow);
+  backdrop-filter: blur(22px);
 }
 
 .brand-header {
@@ -219,8 +226,9 @@ function mockLogin(): Promise<boolean> {
   width: 36px;
   height: 36px;
   flex: 0 0 36px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #3f79f5 0%, #2a63e8 100%);
+  border-radius: 12px;
+  background: var(--gradient-brand);
+  box-shadow: 0 10px 20px rgba(76, 111, 255, 0.28);
 }
 
 .logo-icon::before,
@@ -248,10 +256,11 @@ function mockLogin(): Promise<boolean> {
 }
 
 .logo-text {
-  color: #172033;
+  color: var(--login-card-title);
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
+  font-family: var(--app-font-display);
 }
 
 .login-header {
@@ -260,15 +269,16 @@ function mockLogin(): Promise<boolean> {
 
 .welcome-title {
   margin: 0 0 8px;
-  color: #172033;
+  color: var(--login-card-title);
   font-size: 32px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
+  font-family: var(--app-font-display);
 }
 
 .login-hint {
   margin: 0;
-  color: #52617a;
+  color: var(--login-card-text);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -296,32 +306,30 @@ function mockLogin(): Promise<boolean> {
 .captcha-input :deep(.el-input__wrapper) {
   min-height: 52px;
   padding: 1px 16px;
-  border: 1px solid #d9e0ea;
-  border-radius: 10px;
-  box-shadow: none;
-  background: #ffffff;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px var(--login-field-border) inset;
+  background: var(--login-field-bg);
+  transition: box-shadow 0.2s ease;
 }
 
 .form-select :deep(.el-input__wrapper:hover),
 .form-input :deep(.el-input__wrapper:hover),
 .captcha-input :deep(.el-input__wrapper:hover) {
-  border-color: #aebbd0;
+  box-shadow: 0 0 0 1px rgba(76, 111, 255, 0.24) inset;
 }
 
 .form-select :deep(.el-input__wrapper.is-focus),
 .form-input :deep(.el-input__wrapper.is-focus),
 .captcha-input :deep(.el-input__wrapper.is-focus) {
-  border-color: #3f79f5;
-  box-shadow: 0 0 0 3px rgba(63, 121, 245, 0.1);
+  box-shadow:
+    0 0 0 1px var(--el-color-primary) inset,
+    var(--focus-ring);
 }
 
 .form-input :deep(.el-input__inner),
 .form-select :deep(.el-input__inner),
 .captcha-input :deep(.el-input__inner) {
-  color: #26344a;
+  color: var(--el-text-color-regular);
   font-size: 15px;
 }
 
@@ -352,8 +360,9 @@ function mockLogin(): Promise<boolean> {
   overflow: hidden;
   padding: 0;
   border: 0;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #f1f4f8 0%, #e2e7ef 100%);
+  border-radius: 14px;
+  background: var(--login-captcha-bg);
+  box-shadow: 0 0 0 1px rgba(76, 111, 255, 0.08) inset;
   cursor: pointer;
 }
 
@@ -366,18 +375,18 @@ function mockLogin(): Promise<boolean> {
 }
 
 .captcha-box:focus-visible {
-  outline: 3px solid rgba(63, 121, 245, 0.22);
+  outline: 3px solid rgba(76, 111, 255, 0.22);
   outline-offset: 2px;
 }
 
 .captcha-text {
   position: relative;
   z-index: 1;
-  color: #26344a;
+  color: var(--login-captcha-text);
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 4px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 1px 1px 2px rgba(76, 111, 255, 0.12);
 }
 
 .refresh-icon {
@@ -385,7 +394,7 @@ function mockLogin(): Promise<boolean> {
   z-index: 1;
   top: 5px;
   right: 5px;
-  color: #6d7a8f;
+  color: var(--el-text-color-secondary);
   font-size: 12px;
 }
 
@@ -407,7 +416,7 @@ function mockLogin(): Promise<boolean> {
 }
 
 :deep(.remember-checkbox .el-checkbox__label) {
-  color: #52617a;
+  color: var(--el-text-color-secondary);
   font-size: 14px;
 }
 
@@ -420,20 +429,21 @@ function mockLogin(): Promise<boolean> {
   height: 48px;
   margin-bottom: 20px;
   border: 0;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #3f79f5 0%, #2a63e8 100%);
+  border-radius: 14px;
+  background: var(--gradient-brand);
   color: #ffffff;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
     background 0.2s ease;
+  box-shadow: 0 14px 24px rgba(76, 111, 255, 0.22);
 }
 
 .login-button:hover {
-  background: linear-gradient(135deg, #2f6bed 0%, #1d4ed8 100%);
-  box-shadow: 0 6px 20px rgba(63, 121, 245, 0.28);
+  background: linear-gradient(135deg, #3f5eeb 0%, #6a75ff 54%, #7d6ef8 100%);
+  box-shadow: 0 16px 30px rgba(76, 111, 255, 0.28);
   transform: translateY(-1px);
 }
 
@@ -449,7 +459,7 @@ function mockLogin(): Promise<boolean> {
 .social-title {
   position: relative;
   margin: 0 0 12px;
-  color: #7b8798;
+  color: var(--el-text-color-tertiary);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -461,7 +471,7 @@ function mockLogin(): Promise<boolean> {
   width: 24%;
   height: 1px;
   content: '';
-  background: #e1e6ee;
+  background: var(--el-border-color);
 }
 
 .social-title::before {
@@ -497,12 +507,12 @@ function mockLogin(): Promise<boolean> {
 }
 
 .social-icon:hover {
-  box-shadow: 0 4px 12px rgba(23, 32, 51, 0.14);
+  box-shadow: 0 10px 18px rgba(31, 42, 68, 0.12);
   transform: translateY(-2px);
 }
 
 .social-icon:focus-visible {
-  outline: 3px solid rgba(63, 121, 245, 0.22);
+  outline: 3px solid rgba(76, 111, 255, 0.22);
   outline-offset: 2px;
 }
 
@@ -515,7 +525,7 @@ function mockLogin(): Promise<boolean> {
 }
 
 .icon-google {
-  border: 1px solid #d7dde7;
+  border: 1px solid var(--el-border-color);
   background: #ffffff;
   color: #4285f4;
 }
@@ -526,7 +536,7 @@ function mockLogin(): Promise<boolean> {
 
 .copyright {
   margin: 0;
-  color: #a0a9b7;
+  color: var(--el-text-color-tertiary);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -540,7 +550,9 @@ function mockLogin(): Promise<boolean> {
   justify-content: center;
   overflow: hidden;
   padding: 48px 56px;
-  background: linear-gradient(135deg, #f1f5ff 0%, #e4ecff 52%, #dce8ff 100%);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.16), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(139, 124, 255, 0.16), transparent 22%), var(--login-brand-bg);
 }
 
 .login-right-panel::before,
@@ -556,7 +568,7 @@ function mockLogin(): Promise<boolean> {
   left: -140px;
   width: 420px;
   height: 420px;
-  background: radial-gradient(circle, rgba(63, 121, 245, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, transparent 70%);
 }
 
 .login-right-panel::after {
@@ -564,7 +576,7 @@ function mockLogin(): Promise<boolean> {
   bottom: -220px;
   width: 520px;
   height: 520px;
-  background: radial-gradient(circle, rgba(94, 126, 194, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
 }
 
 .right-content {
@@ -582,15 +594,16 @@ function mockLogin(): Promise<boolean> {
 
 .promo-title {
   margin: 0 0 10px;
-  color: #172033;
+  color: var(--login-brand-title);
   font-size: 30px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.3;
+  font-family: var(--app-font-display);
 }
 
 .promo-subtitle {
   margin: 0;
-  color: #687790;
+  color: var(--login-brand-text);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -601,6 +614,11 @@ function mockLogin(): Promise<boolean> {
   justify-content: center;
   width: 100%;
   min-height: 0;
+  padding: 28px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--login-brand-border);
+  backdrop-filter: blur(10px);
 }
 
 .illustration-image {
@@ -615,6 +633,10 @@ function mockLogin(): Promise<boolean> {
   .login-left-panel {
     padding-top: 32px;
     padding-bottom: 24px;
+  }
+
+  .login-card {
+    padding: 24px;
   }
 
   .brand-header {

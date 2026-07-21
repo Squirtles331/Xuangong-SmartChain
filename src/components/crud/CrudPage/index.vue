@@ -199,12 +199,31 @@ function handleSelectionChange(rows: T[]) {
 .crud-page__header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--el-border-color-light);
+  background: transparent;
 }
 
 .crud-page__segmented {
   display: flex;
   align-items: center;
   overflow-x: auto;
+}
+
+.crud-page__header :deep(.el-segmented) {
+  border-radius: 10px;
+}
+
+.crud-page__header :deep(.gi-form) {
+  margin: 0;
+}
+
+.crud-page__header :deep(.el-form) {
+  margin: 0;
+}
+
+.crud-page__header :deep(.el-form-item) {
+  margin-bottom: 10px;
 }
 </style>

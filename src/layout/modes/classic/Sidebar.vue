@@ -75,13 +75,13 @@ const getIcon = (name?: string) => {
 <style scoped>
 .app-sidebar {
   width: 248px;
-  background-color: var(--layout-sidebar-bg);
+  background: var(--layout-sidebar-gradient);
   transition: width 0.3s;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.03);
+  border-right: 1px solid var(--layout-sidebar-border);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
 }
 
 .app-sidebar.collapsed {
@@ -89,46 +89,61 @@ const getIcon = (name?: string) => {
 }
 
 .sidebar-top {
-  padding: 18px 16px 16px;
+  padding: 20px 18px 14px;
   border-bottom: 1px solid var(--layout-sidebar-border);
 }
 
 .sidebar-brand {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  padding: 4px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.015) 100%);
+  padding: 0;
+  border: none;
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .sidebar-brand-logo {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
   flex: 0 0 auto;
+  padding: 5px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  padding: 4px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 20px -16px rgba(4, 18, 68, 0.65);
 }
 
 .sidebar-brand-copy {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 1px;
 }
 
 .sidebar-brand-title {
-  font-size: 16px;
+  font-size: 19px;
   line-height: 1.2;
   font-weight: 700;
-  color: #eef4f8;
-  letter-spacing: 0.02em;
+  color: var(--layout-sidebar-active-text);
+  font-family: var(--app-font-display);
+  letter-spacing: 0;
 }
 
 .sidebar-brand-subtitle {
-  margin-top: 3px;
-  font-size: 12px;
-  line-height: 1.2;
-  color: rgba(205, 218, 231, 0.68);
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(243, 246, 255, 0.78);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .app-sidebar.collapsed .sidebar-top {
@@ -137,6 +152,7 @@ const getIcon = (name?: string) => {
 
 .app-sidebar.collapsed .sidebar-brand {
   justify-content: center;
+  align-items: center;
 }
 
 .app-sidebar.collapsed .sidebar-brand-copy {
@@ -146,15 +162,15 @@ const getIcon = (name?: string) => {
 .app-sidebar.collapsed .sidebar-brand-logo {
   width: 32px;
   height: 32px;
-  padding: 0;
+  padding: 4px;
   border-radius: 10px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .sidebar-menu {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 10px 14px;
+  padding: 16px 10px 14px;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -175,19 +191,26 @@ const getIcon = (name?: string) => {
   margin-bottom: 6px;
   border-radius: 12px;
   color: var(--layout-sidebar-text);
+  border: 1px solid transparent;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
 }
 
 .app-sidebar :deep(.el-menu-item:hover),
 .app-sidebar :deep(.el-sub-menu__title:hover) {
   background-color: var(--layout-sidebar-hover-bg);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateX(2px);
 }
 
 .app-sidebar :deep(.el-menu-item.is-active) {
   color: var(--layout-sidebar-active-text);
   background-color: var(--layout-sidebar-active-bg);
-  box-shadow:
-    inset 0 0 0 1px rgba(157, 184, 200, 0.18),
-    inset 3px 0 0 rgba(226, 238, 245, 0.78);
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(10, 42, 148, 0.14);
 }
 
 .app-sidebar :deep(.el-menu-item .el-icon),
@@ -213,8 +236,8 @@ const getIcon = (name?: string) => {
   height: 18px;
   padding: 0 6px;
   border-radius: 999px;
-  background: rgba(170, 196, 214, 0.14);
-  color: #d5e4ee;
+  background: rgba(255, 255, 255, 0.14);
+  color: #f3f6ff;
   font-size: 11px;
   line-height: 1;
   white-space: nowrap;
@@ -245,13 +268,13 @@ const getIcon = (name?: string) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.06) 100%);
   border-top: 1px solid var(--layout-sidebar-border);
 }
 
 .sidebar-footer-text {
   font-size: 12px;
-  color: rgba(208, 220, 236, 0.72);
+  color: var(--layout-sidebar-muted-text);
 }
 
 .collapse-toggle {

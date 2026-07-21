@@ -1,10 +1,18 @@
 <template>
   <el-dropdown trigger="click">
-    <el-avatar class="avatar" size="small" src=""></el-avatar>
+    <div class="user-trigger">
+      <el-avatar class="avatar" size="small">{{ user.name.slice(0, 1) }}</el-avatar>
+      <div class="user-trigger__meta">
+        <span class="user-trigger__name">{{ user.name }}</span>
+        <span class="user-trigger__role">{{ user.role }}</span>
+      </div>
+      <el-icon class="user-trigger__arrow"><ArrowDown /></el-icon>
+    </div>
+
     <template #dropdown>
       <el-dropdown-menu class="user-dropdown">
         <div class="user-top">
-          <el-avatar class="user-avatar" size="large" src=""></el-avatar>
+          <el-avatar class="user-avatar" size="large">{{ user.name.slice(0, 1) }}</el-avatar>
           <div class="user-meta">
             <div class="user-row">
               <span class="user-name">{{ user.name }}</span>
@@ -57,7 +65,7 @@
     :lock-scroll="false"
   >
     <div class="lock-dialog">
-      <el-avatar class="lock-avatar" size="large" src="" />
+      <el-avatar class="lock-avatar" size="large">{{ user.name.slice(0, 1) }}</el-avatar>
       <div class="lock-name">{{ user.name }}</div>
       <el-form ref="lockFormRef" :model="lockForm">
         <el-form-item prop="pwd" :rules="[{ required: true, message: '请输入锁屏密码' }]">
@@ -83,7 +91,7 @@
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
-import { Link, Lock, Setting } from '@element-plus/icons-vue'
+import { ArrowDown, Link, Lock, Setting } from '@element-plus/icons-vue'
 
 import SettingsDrawer from '@/layout/common/header-right/SettingsDrawer.vue'
 import { useLockStore } from '@/stores/lock'
@@ -180,11 +188,58 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.avatar {
+.user-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 16px;
   cursor: pointer;
-  border: 1px solid color-mix(in srgb, var(--el-border-color) 78%, transparent);
-  background: color-mix(in srgb, var(--el-bg-color) 82%, var(--el-fill-color-light) 18%);
-  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.06);
+  background: color-mix(in srgb, var(--layout-header-bg) 72%, #ffffff 28%);
+  border: 1px solid color-mix(in srgb, var(--layout-header-border) 86%, transparent);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.user-trigger:hover {
+  border-color: color-mix(in srgb, var(--el-color-primary) 22%, var(--layout-header-border) 78%);
+  box-shadow: 0 14px 24px -24px rgba(32, 49, 93, 0.28);
+  transform: translateY(-1px);
+}
+
+.avatar,
+.user-avatar,
+.lock-avatar {
+  color: var(--el-color-primary);
+  font-weight: 700;
+  background: var(--gradient-soft);
+  border: 1px solid rgba(76, 111, 255, 0.12);
+}
+
+.user-trigger__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.user-trigger__name {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--el-text-color-primary);
+}
+
+.user-trigger__role {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--el-text-color-secondary);
+}
+
+.user-trigger__arrow {
+  color: var(--el-text-color-tertiary);
 }
 
 .user-dropdown {
@@ -199,13 +254,6 @@ onUnmounted(() => {
   gap: 10px;
   padding: 10px 16px 14px;
   border-bottom: 1px solid var(--layout-divider);
-}
-
-.user-avatar {
-  width: 44px;
-  height: 44px;
-  border: 1px solid color-mix(in srgb, var(--el-border-color) 78%, transparent);
-  background: color-mix(in srgb, var(--el-bg-color) 88%, var(--el-fill-color-light) 12%);
 }
 
 .user-meta {
@@ -238,8 +286,8 @@ onUnmounted(() => {
 .status-dot {
   width: 8px;
   height: 8px;
-  background-color: var(--el-color-success);
   border-radius: 50%;
+  background-color: var(--el-color-success);
 }
 
 .user-middle {
@@ -250,8 +298,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  border-radius: 10px;
   margin: 0 6px;
+  border-radius: 10px;
 }
 
 .repo-section {
@@ -269,10 +317,10 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  margin: 0 6px;
   padding-top: 10px;
   padding-bottom: 10px;
   border-radius: 10px;
-  margin: 0 6px;
 }
 
 .repo-item {
@@ -294,8 +342,8 @@ onUnmounted(() => {
 
 .user-bottom {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin: 0 6px;
   border-radius: 10px;
 }
@@ -311,10 +359,6 @@ onUnmounted(() => {
   gap: 10px;
 }
 
-.lock-avatar {
-  margin-top: 6px;
-}
-
 .lock-name {
   font-weight: 600;
 }
@@ -323,5 +367,17 @@ onUnmounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .user-trigger {
+    padding: 4px;
+    border-radius: 12px;
+  }
+
+  .user-trigger__meta,
+  .user-trigger__arrow {
+    display: none;
+  }
 }
 </style>

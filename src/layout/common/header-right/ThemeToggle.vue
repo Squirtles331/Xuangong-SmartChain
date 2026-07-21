@@ -1,5 +1,5 @@
 <template>
-  <el-button type="text" circle class="icon-btn" @click="toggleTheme($event)">
+  <el-button class="icon-btn" circle @click="toggleTheme($event)">
     <el-icon v-if="isDark"><Moon /></el-icon>
     <el-icon v-else><Sunny /></el-icon>
   </el-button>
@@ -7,8 +7,8 @@
 
 <script lang="ts" setup>
 import { Moon, Sunny } from '@element-plus/icons-vue'
-import { ref, onMounted, onUnmounted } from 'vue'
-import { applyAppTheme, getActiveAppTheme, type AppTheme } from '@/hooks/useAppTheme'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { applyAppTheme, getActiveAppTheme } from '@/hooks/useAppTheme'
 
 const root = document.documentElement
 const isDark = ref<boolean>(getActiveAppTheme() === 'night-shift-dark')
@@ -35,9 +35,7 @@ const toggleTheme = (e?: MouseEvent) => {
   transition.ready.then(() => {
     const radius = Math.hypot(Math.max(cx, vw - cx), Math.max(cy, vh - cy))
     document.documentElement.animate(
-      next === 'light'
-        ? { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`] }
-        : { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`] },
+      { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`] },
       { duration: 500, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
     )
   })
@@ -58,6 +56,17 @@ onUnmounted(() => {
 
 <style scoped>
 .icon-btn {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
   color: var(--el-text-color-regular);
+  background: transparent;
+  border: none;
+}
+
+.icon-btn:hover,
+.icon-btn:focus {
+  color: var(--el-color-primary);
+  background: rgba(255, 255, 255, 0.9);
 }
 </style>

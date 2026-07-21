@@ -49,7 +49,8 @@ function rowButtonType(tone?: CrudRowActionItem['tone']) {
   justify-content: center;
   flex-wrap: nowrap;
   white-space: nowrap;
-  gap: 0;
+  gap: 8px;
+  user-select: none;
 }
 
 .crud-row-actions :deep(.el-button + .el-button) {
@@ -57,6 +58,7 @@ function rowButtonType(tone?: CrudRowActionItem['tone']) {
 }
 
 .crud-row-actions :deep(.el-button) {
-  padding-inline: 2px;
+  min-height: auto;
+  padding-inline: 0;
 }
 </style>

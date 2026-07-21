@@ -130,10 +130,10 @@ watch(
   gap: 8px;
   min-width: 0;
   min-height: 52px;
-  background-color: var(--layout-header-bg);
+  background: rgba(255, 255, 255, 0.58);
   border-bottom: 1px solid var(--layout-header-border);
   padding: 0 12px;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
 }
 
 .route-tabs__bar {
@@ -192,7 +192,7 @@ watch(
   gap: 8px;
   min-height: 34px;
   padding: 0 12px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(228, 234, 243, 0.8);
   border-radius: 10px;
   background-color: var(--tab-bg);
   color: var(--tab-color);
@@ -204,11 +204,16 @@ watch(
     box-shadow 0.2s ease;
 }
 
+.route-tab:hover {
+  background-color: var(--tab-hover-bg);
+  border-color: rgba(76, 111, 255, 0.14);
+}
+
 .route-tab.active {
   color: var(--tab-active-color);
   background-color: var(--tab-active-bg);
   border-color: var(--tab-active-border);
-  box-shadow: 0 4px 10px var(--tab-active-shadow);
+  box-shadow: 0 8px 18px var(--tab-active-shadow);
 }
 
 .tab-title {
@@ -243,6 +248,6 @@ watch(
 
 .tab-close:hover {
   background-color: var(--tab-hover-bg);
-  color: var(--el-text-color-primary);
+  color: var(--el-color-primary);
 }
 </style>

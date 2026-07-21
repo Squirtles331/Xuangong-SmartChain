@@ -1,18 +1,22 @@
 <template>
-  <div>
+  <div class="global-search-shell">
     <el-input
       v-model="search"
-      size="small"
       class="global-search"
-      :placeholder="'搜索页面 / 菜单  ' + shortcut"
+      :placeholder="'搜索页面、菜单或功能'"
       readonly
       :prefix-icon="Search"
       @click="openSearchDialog"
       @keydown.stop.prevent
-    />
+    >
+      <template #suffix>
+        <span class="global-search__shortcut">{{ shortcut }}</span>
+      </template>
+    </el-input>
+
     <el-dialog v-model="searchDialog" title="全局搜索" width="600px">
-      <el-input v-model="searchQuery" :prefix-icon="Search" placeholder="输入菜单名称、功能名称或关键词" />
-      <div class="search-result">静态阶段暂未接入搜索索引</div>
+      <el-input v-model="searchQuery" :prefix-icon="Search" placeholder="输入菜单名称、功能名称或关键字" />
+      <div class="search-result">当前为静态搜索入口，后续可接入菜单索引与全局命令。</div>
     </el-dialog>
   </div>
 </template>
@@ -32,34 +36,51 @@ const openSearchDialog = () => {
 </script>
 
 <style scoped>
-.global-search {
-  width: 196px;
-  cursor: pointer;
+.global-search-shell {
+  width: 100%;
 }
 
-.global-search:hover {
+.global-search {
+  width: 100%;
   cursor: pointer;
 }
 
 .global-search :deep(.el-input__wrapper) {
+  height: 42px;
   cursor: pointer;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--el-bg-color) 78%, var(--el-fill-color-light) 22%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el-border-color) 78%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--layout-header-bg) 72%, #f4f7fb 28%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--layout-header-border) 86%, transparent),
+    0 10px 24px -24px rgba(32, 49, 93, 0.28);
 }
 
 .global-search :deep(.el-input__wrapper:hover) {
-  cursor: pointer;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 22%, var(--el-border-color) 78%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 24%, var(--layout-header-border) 76%),
+    0 12px 28px -24px rgba(52, 84, 185, 0.3);
 }
 
 .global-search :deep(.el-input__inner) {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--el-text-color-secondary);
 }
 
 .global-search :deep(.el-input__prefix-inner) {
-  color: var(--el-text-color-secondary);
+  color: var(--el-color-primary);
+}
+
+.global-search__shortcut {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--el-text-color-tertiary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .search-result {

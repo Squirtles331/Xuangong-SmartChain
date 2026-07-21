@@ -44,8 +44,8 @@ const getIcon = (name?: string) => {
   height: 18px;
   padding: 0 6px;
   border-radius: 999px;
-  background: rgba(17, 94, 166, 0.08);
-  color: #115ea6;
+  background: rgba(255, 255, 255, 0.14);
+  color: #f3f6ff;
   font-size: 11px;
   line-height: 1;
   white-space: nowrap;

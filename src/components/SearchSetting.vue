@@ -234,13 +234,17 @@ async function applyDraftFields() {
 
   &__actions {
     position: absolute;
-    top: 0;
+    top: 2px;
     right: 0;
     z-index: 10;
   }
 
   &__icon-btn {
     color: var(--el-color-primary);
+    border: 1px solid var(--el-border-color);
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: none;
   }
 
   &__drawer {
@@ -297,9 +301,9 @@ async function applyDraftFields() {
     gap: 8px;
     padding: 6px 8px;
     margin-bottom: 8px;
-    border-radius: var(--el-border-radius-small);
-    border: 1px solid var(--el-border-color-lighter);
-    background: var(--el-fill-color-blank);
+    border-radius: 8px;
+    border: 1px solid var(--el-border-color-light);
+    background: #ffffff;
     box-sizing: border-box;
 
     &:hover {

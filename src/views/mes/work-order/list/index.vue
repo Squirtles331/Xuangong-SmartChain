@@ -237,4 +237,16 @@ function closeOrder(row: WorkOrderRow) {
 .progress-cell {
   min-width: 120px;
 }
+
+.progress-cell :deep(.el-progress-bar__outer) {
+  border-radius: 4px;
+}
+
+.progress-cell :deep(.el-progress-bar__inner) {
+  border-radius: 4px;
+}
+
+:deep(.el-dropdown-menu__item) {
+  border-radius: 6px;
+}
 </style>

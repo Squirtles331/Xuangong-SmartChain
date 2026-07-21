@@ -369,11 +369,25 @@ onBeforeUnmount(() => {
 }
 
 .hero-card {
-  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
   border: 1px solid var(--workbench-hero-border);
   background: var(--workbench-hero-bg);
-  border-radius: 16px;
+  border-radius: 24px;
   box-shadow: var(--workbench-card-shadow);
+}
+
+.hero-card::after {
+  position: absolute;
+  top: -24px;
+  right: -24px;
+  width: 180px;
+  height: 180px;
+  content: '';
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.28) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .hero-card__content {
@@ -400,9 +414,10 @@ onBeforeUnmount(() => {
 
 .hero-copy__title {
   margin: 14px 0 10px;
-  font-size: 26px;
+  font-size: 28px;
   line-height: 1.2;
   color: var(--workbench-title);
+  font-family: var(--app-font-display);
 }
 
 .hero-copy__summary {
@@ -428,6 +443,7 @@ onBeforeUnmount(() => {
   color: var(--workbench-tip-text);
   font-size: 12px;
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
 }
 
 .hero-actions {
@@ -452,7 +468,7 @@ onBeforeUnmount(() => {
 }
 
 .workbench-section {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .section-heading {
@@ -467,6 +483,7 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 18px;
   color: var(--workbench-title);
+  font-family: var(--app-font-display);
 }
 
 .section-heading p,
@@ -480,7 +497,7 @@ onBeforeUnmount(() => {
 .todo-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
 
 .todo-card,
@@ -501,7 +518,7 @@ onBeforeUnmount(() => {
   position: relative;
   overflow: hidden;
   padding: 18px 18px 20px;
-  border-radius: 12px;
+  border-radius: 18px;
   background: var(--workbench-card-bg);
   border: 1px solid var(--workbench-card-border);
   box-shadow: var(--workbench-card-shadow);
@@ -581,6 +598,7 @@ onBeforeUnmount(() => {
   font-size: 17px;
   font-weight: 600;
   color: var(--workbench-title);
+  font-family: var(--app-font-display);
 }
 
 .todo-card__helper {
@@ -591,14 +609,14 @@ onBeforeUnmount(() => {
 }
 
 .section-row {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .panel-card {
   height: 100%;
   border: 1px solid var(--workbench-card-border);
   background: var(--workbench-card-bg);
-  border-radius: 14px;
+  border-radius: 20px;
   box-shadow: var(--workbench-card-shadow);
 }
 
@@ -619,7 +637,7 @@ onBeforeUnmount(() => {
   display: flex;
   gap: 12px;
   padding: 14px 16px;
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--workbench-card-muted-bg);
   border: 1px solid var(--workbench-card-border);
   transition:
@@ -684,7 +702,7 @@ onBeforeUnmount(() => {
 
 .execution-stat {
   padding: 14px 16px;
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--workbench-card-gradient);
   border: 1px solid var(--workbench-card-border);
 }
@@ -748,7 +766,7 @@ onBeforeUnmount(() => {
 .chart-panel,
 .load-panel {
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 18px;
   background: var(--workbench-card-muted-bg);
   border: 1px solid var(--workbench-card-border);
 }
@@ -809,7 +827,7 @@ onBeforeUnmount(() => {
 
 .domain-card {
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 18px;
   background: var(--workbench-card-gradient);
   border: 1px solid var(--workbench-card-border);
 }
@@ -885,7 +903,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 8px;
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 18px;
   background: var(--workbench-card-muted-bg);
   border: 1px solid var(--workbench-card-border);
 }
@@ -925,7 +943,7 @@ onBeforeUnmount(() => {
 
 .summary-metric {
   padding: 18px;
-  border-radius: 12px;
+  border-radius: 18px;
   background: var(--workbench-card-gradient);
   border: 1px solid var(--workbench-card-border);
 }

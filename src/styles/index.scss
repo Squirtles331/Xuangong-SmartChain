@@ -1,0 +1,30 @@
+:root {
+  --app-font-display: 'Poppins', 'HarmonyOS Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --app-font-body: 'Open Sans', 'HarmonyOS Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  color: var(--el-text-color-primary);
+  background: var(--page-ambient);
+  font-family: var(--app-font-body);
+}
+
+::selection {
+  color: #ffffff;
+  background: rgba(76, 111, 255, 0.9);
+}
+
+.gi-page-layout {
+}
+
+.gi-page-layout__header {
+}
+
+.gi-page-layout__tool {
+}

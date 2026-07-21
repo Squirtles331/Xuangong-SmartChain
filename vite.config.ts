@@ -48,9 +48,7 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
     },
     css: {
       preprocessorOptions: {
-        scss: {
-          additionalData: `@use "@/styles/index.scss" as *;\n`
-        }
+        scss: {}
       }
     },
     build: {

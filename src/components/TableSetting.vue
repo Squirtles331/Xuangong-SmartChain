@@ -315,7 +315,11 @@ const settingColumns = computed<TableColumnItem[]>(() => {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: var(--el-bg-color);
+  padding: 0;
+  border: 1px solid var(--el-border-color);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: none;
 
   &__title {
     font-size: 15px;
@@ -328,7 +332,7 @@ const settingColumns = computed<TableColumnItem[]>(() => {
     position: fixed;
     inset: 0;
     z-index: 2000;
-    padding: 12px;
+    padding: 16px;
     box-sizing: border-box;
   }
 
@@ -339,7 +343,9 @@ const settingColumns = computed<TableColumnItem[]>(() => {
     gap: 8px;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    padding: 14px 16px 12px;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--el-border-color-light);
   }
 
   &__toolbar-left {
@@ -351,6 +357,7 @@ const settingColumns = computed<TableColumnItem[]>(() => {
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    padding: 12px 16px 0;
   }
 
   &__draggable {
@@ -372,9 +379,11 @@ const settingColumns = computed<TableColumnItem[]>(() => {
   &__draggable-item {
     display: flex;
     align-items: center;
-    padding: 2px 4px;
+    padding: 6px 8px;
     cursor: pointer;
-    border-radius: var(--el-border-radius-small);
+    border-radius: 8px;
+    border: 1px solid var(--el-border-color-light);
+    background: #ffffff;
     box-sizing: border-box;
 
     &:hover {
@@ -447,5 +456,19 @@ const settingColumns = computed<TableColumnItem[]>(() => {
 :deep(.el-dropdown-menu__item.is-active) {
   font-weight: 600;
   color: var(--el-color-primary);
+}
+
+.table-setting :deep(.el-space) {
+  gap: 6px !important;
+}
+
+.table-setting :deep(.el-switch) {
+  --el-switch-on-color: var(--el-color-primary-light-5);
+}
+
+.table-setting :deep(.el-button.table-setting__icon-btn),
+.table-setting :deep(.el-button[type='primary'][bg][text][circle]) {
+  border-radius: 8px;
+  box-shadow: none;
 }
 </style>

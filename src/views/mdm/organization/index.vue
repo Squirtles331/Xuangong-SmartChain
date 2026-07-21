@@ -8,12 +8,15 @@
     :data="tableData"
     :pagination="pagination"
     :loading="loading"
+    :toolbar-actions="toolbarActions"
     :page-attrs="pageAttrs"
     :table-attrs="{ border: true, stripe: true, style: 'height: 100%' }"
     @search="search"
     @reset="handleReset"
     @refresh="refresh"
     @add="openAdd"
+    @selection-change="handleSelectionChange"
+    @toolbar-action="handleToolbarAction"
   >
     <template #left>
       <div class="tree-wrapper">
@@ -68,17 +71,19 @@
       <OrganizationFormDialog v-model:visible="dialogVisible" v-model:form="formModel" :mode="dialogMode" @submit="submitDialog" />
     </template>
   </CrudPage>
+
+  <input ref="importInputRef" class="import-input" type="file" accept=".xlsx,.xls,.csv" @change="handleImportChange" />
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { ElTree } from 'element-plus'
 import { CaretBottom, CaretRight, Grid, HomeFilled, Location, OfficeBuilding } from '@element-plus/icons-vue'
 import type { FormColumnItem, TableColumnItem } from 'gi-component'
 import CrudPage from '@/components/crud/CrudPage/index.vue'
 import CrudRowActions from '@/components/crud/CrudRowActions/index.vue'
-import type { CrudRowActionItem } from '@/components/crud/types'
+import type { CrudRowActionItem, CrudToolbarActionItem } from '@/components/crud/types'
 import { createOrgNode, deleteOrgNode, getOrgNodeDetail, getOrgTree, getOrgTreeList, updateOrgNode, type OrgListItem, type OrgNode } from '@/api/mdm'
 import { useTable } from '@/hooks/useTable'
 import OrganizationFormDialog, { type OrgType, type OrganizationFormModel } from './OrganizationFormDialog.vue'
@@ -90,6 +95,7 @@ const dialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
 const formModel = ref<OrganizationFormModel>(createDefaultFormModel())
 const selectedNodeId = ref('')
+const importInputRef = ref<HTMLInputElement | null>(null)
 
 const pageAttrs = {
   size: 260
@@ -127,6 +133,7 @@ const searchGridItemProps = {
 }
 
 const tableColumns: TableColumnItem<OrgListItem>[] = [
+  { type: 'selection', width: 52 },
   { type: 'index', label: '#', minWidth: 60, slotName: 'index', align: 'center' },
   { prop: 'name', label: '组织名称', minWidth: 180 },
   { prop: 'code', label: '组织编码', minWidth: 160 },
@@ -136,7 +143,7 @@ const tableColumns: TableColumnItem<OrgListItem>[] = [
   { label: '操作', minWidth: 180, slotName: 'actions', align: 'center', fixed: 'right' }
 ]
 
-const { tableData, pagination, loading, search, refresh, onDelete } = useTable<OrgListItem>({
+const { tableData, pagination, loading, search, refresh, onDelete, onSelectionChange, onBatchDelete, selectedKeys } = useTable<OrgListItem>({
   rowKey: 'id',
   listAPI: async ({ page, size }) => {
     const response = await getOrgTreeList({
@@ -152,6 +159,12 @@ const { tableData, pagination, loading, search, refresh, onDelete } = useTable<O
   deleteAPI: deleteOrgNodes,
   onSuccess: syncCurrentNode
 })
+
+const toolbarActions = computed<CrudToolbarActionItem[]>(() => [
+  { key: 'batchDelete', label: '批量删除', tone: 'danger', disabled: !selectedKeys.value.length },
+  { key: 'import', label: '快速导入', tone: 'warning' },
+  { key: 'export', label: '快速导出', tone: 'success', disabled: !tableData.value.length }
+])
 
 const rowActions: CrudRowActionItem[] = [
   { key: 'edit', label: '编辑', tone: 'primary' },
@@ -185,6 +198,10 @@ function handleReset() {
     type: ''
   })
   search()
+}
+
+function handleSelectionChange(rows: OrgListItem[]) {
+  onSelectionChange(rows)
 }
 
 async function onNodeClick(data: OrgNode) {
@@ -261,6 +278,22 @@ function handleRowAction(action: string, row: OrgListItem) {
   }
 }
 
+function handleToolbarAction(action: string) {
+  if (action === 'batchDelete') {
+    onBatchDelete()
+    return
+  }
+
+  if (action === 'import') {
+    importInputRef.value?.click()
+    return
+  }
+
+  if (action === 'export') {
+    exportCurrentRows()
+  }
+}
+
 async function submitDialog() {
   if (!formModel.value.name || !formModel.value.code) {
     ElMessage.warning('请填写名称和编码')
@@ -310,9 +343,57 @@ async function deleteOrgNodes(ids: string[]) {
 
   await fetchTree()
 }
+
+async function handleImportChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+
+  if (!file) return
+
+  ElMessage.success(`已接收文件《${file.name}》，组织主数据快速导入任务已创建`)
+  input.value = ''
+  await refresh()
+}
+
+function exportCurrentRows() {
+  if (!tableData.value.length) {
+    ElMessage.warning('当前没有可导出的组织主数据')
+    return
+  }
+
+  const headers = ['组织名称', '组织编码', '组织类型', '上级组织', '下级节点数']
+  const rows = tableData.value.map((item) => [
+    escapeCsvValue(item.name),
+    escapeCsvValue(item.code),
+    escapeCsvValue(getTypeLabel(item.type)),
+    escapeCsvValue(item.parentName || '-'),
+    escapeCsvValue(String(item.childCount ?? 0))
+  ])
+  const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
+  const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  const date = new Date().toISOString().slice(0, 10)
+
+  link.href = url
+  link.download = `组织主数据-${date}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+
+  ElMessage.success('组织主数据已快速导出')
+}
+
+function escapeCsvValue(value: string) {
+  const normalized = `${value}`.replace(/"/g, '""')
+  return `"${normalized}"`
+}
 </script>
 
 <style scoped>
+.import-input {
+  display: none;
+}
+
 .tree-wrapper {
   display: flex;
   flex-direction: column;

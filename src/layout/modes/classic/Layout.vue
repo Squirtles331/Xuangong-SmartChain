@@ -59,7 +59,7 @@ defineEmits<{
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--layout-main-bg);
+  background: var(--gradient-page);
   color: var(--layout-main-text);
 }
 
@@ -82,10 +82,10 @@ defineEmits<{
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 0;
   background:
-    radial-gradient(circle at top right, rgba(53, 101, 122, 0.08), transparent 24%),
-    linear-gradient(180deg, color-mix(in srgb, var(--layout-main-bg) 84%, #ffffff 16%) 0%, var(--layout-main-bg) 100%);
+    radial-gradient(circle at top right, rgba(139, 124, 255, 0.1), transparent 20%),
+    radial-gradient(circle at top left, rgba(76, 111, 255, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.36) 0%, transparent 100%);
 }
 
 .app-content {
