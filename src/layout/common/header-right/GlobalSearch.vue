@@ -14,25 +14,69 @@
       </template>
     </el-input>
 
-    <el-dialog v-model="searchDialog" title="全局搜索" width="600px">
-      <el-input v-model="searchQuery" :prefix-icon="Search" placeholder="输入菜单名称、功能名称或关键字" />
-      <div class="search-result">当前为静态搜索入口，后续可接入菜单索引与全局命令。</div>
+    <el-dialog
+      v-model="searchDialog"
+      title="全局搜索"
+      width="640px"
+      append-to-body
+      :lock-scroll="false"
+      align-center
+      destroy-on-close
+      class="global-search-dialog"
+      @opened="handleSearchDialogOpened"
+      @closed="handleSearchDialogClosed"
+    >
+      <div class="global-search-panel">
+        <el-input ref="searchInputRef" v-model="searchQuery" :prefix-icon="Search" size="large" placeholder="输入菜单名称、功能名称或关键字" />
+        <div class="search-result">当前为静态搜索入口，后续可接入菜单索引与全局命令。</div>
+        <div class="search-tip">
+          <span>快捷键</span>
+          <span>{{ shortcut }}</span>
+        </div>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import type { InputInstance } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 
 const search = ref('')
 const searchDialog = ref(false)
 const searchQuery = ref('')
-const shortcut = computed(() => 'Ctrl + K')
+const searchInputRef = ref<InputInstance>()
+const shortcut = computed(() => (navigator.userAgent.includes('Mac') ? 'Cmd + K' : 'Ctrl + K'))
 
 const openSearchDialog = () => {
   searchDialog.value = true
 }
+
+const handleSearchDialogOpened = () => {
+  searchInputRef.value?.focus?.()
+}
+
+const handleSearchDialogClosed = () => {
+  searchQuery.value = ''
+}
+
+const handleGlobalSearchShortcut = (event: KeyboardEvent) => {
+  if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'k') {
+    return
+  }
+
+  event.preventDefault()
+  openSearchDialog()
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalSearchShortcut)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalSearchShortcut)
+})
 </script>
 
 <style scoped>
@@ -83,8 +127,39 @@ const openSearchDialog = () => {
   letter-spacing: 0.02em;
 }
 
+.global-search-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .search-result {
-  margin-top: 12px;
   color: var(--el-text-color-tertiary);
+  line-height: 1.7;
+}
+
+.search-tip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--el-fill-color-light) 74%, transparent);
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+:deep(.global-search-dialog) {
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+:deep(.global-search-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 24px 24px 0;
+}
+
+:deep(.global-search-dialog .el-dialog__body) {
+  padding: 18px 24px 24px;
 }
 </style>

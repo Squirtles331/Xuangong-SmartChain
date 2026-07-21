@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="open" direction="rtl" size="420" :lock-scroll="false" :with-header="true" custom-class="settings-drawer">
+  <el-drawer v-model="open" direction="rtl" size="420px" append-to-body :lock-scroll="false" :with-header="true" custom-class="settings-drawer">
     <template #header>
       <div class="drawer-header">界面设置</div>
     </template>
@@ -154,13 +154,24 @@ onUnmounted(() => {
 <style scoped>
 :deep(.settings-drawer) {
   background: transparent;
+  overflow: hidden;
+  border-radius: 24px 0 0 24px;
 }
 
-.el-drawer__body {
+:deep(.settings-drawer .el-drawer__header) {
+  margin-bottom: 0;
+  padding: 24px 24px 0;
+}
+
+:deep(.settings-drawer .el-drawer__body) {
   flex: 1;
   overflow: auto;
-  padding: var(--el-drawer-padding-primary);
+  padding: 20px 24px 8px;
   scrollbar-width: none;
+}
+
+:deep(.settings-drawer .el-drawer__footer) {
+  padding: 0;
 }
 
 .drawer-body {

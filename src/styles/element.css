@@ -308,6 +308,18 @@
   border-top: 1px solid var(--el-border-color-light);
 }
 
+/*
+  The app uses an internal scrolling shell instead of body scrolling.
+  When Element Plus adds scrollbar compensation on popup open, it can
+  expose a right-side gap/white edge on some pages.
+*/
+body.el-popup-parent--hidden,
+html.el-popup-parent--hidden {
+  width: 100% !important;
+  padding-right: 0 !important;
+  overflow: hidden !important;
+}
+
 .el-tag {
   border-radius: var(--radius-pill);
   padding: 0 10px;

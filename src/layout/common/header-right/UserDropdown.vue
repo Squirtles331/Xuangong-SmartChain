@@ -24,11 +24,11 @@
         </div>
 
         <div class="user-middle">
-          <el-dropdown-item @click="lockOpen = true">
+          <el-dropdown-item @click="openLockDialog">
             <el-icon><Lock /></el-icon>
             <span>锁定屏幕</span>
           </el-dropdown-item>
-          <el-dropdown-item @click="open = true">
+          <el-dropdown-item @click="openSettingsDrawer">
             <el-icon><Setting /></el-icon>
             <span>界面设置</span>
           </el-dropdown-item>
@@ -62,11 +62,17 @@
     :close-on-click-modal="false"
     :close-on-press-escape="true"
     :show-close="true"
+    append-to-body
+    align-center
+    destroy-on-close
     :lock-scroll="false"
+    class="lock-screen-dialog"
+    @closed="resetLockForm"
   >
     <div class="lock-dialog">
       <el-avatar class="lock-avatar" size="large">{{ user.name.slice(0, 1) }}</el-avatar>
       <div class="lock-name">{{ user.name }}</div>
+      <div class="lock-tip">请输入锁屏密码后进入锁屏页，解锁后会回到工作台。</div>
       <el-form ref="lockFormRef" :model="lockForm">
         <el-form-item prop="pwd" :rules="[{ required: true, message: '请输入锁屏密码' }]">
           <el-input v-model="lockForm.pwd" type="password" show-password placeholder="请输入锁屏密码">
@@ -130,6 +136,14 @@ const router = useRouter()
 const lockStore = useLockStore()
 const userStore = useUserStore()
 
+const openSettingsDrawer = () => {
+  open.value = true
+}
+
+const openLockDialog = () => {
+  lockOpen.value = true
+}
+
 const logout = async () => {
   try {
     await ElMessageBox.confirm('退出后将返回登录页，当前未保存的内容可能丢失。是否继续退出？', '退出登录', {
@@ -163,8 +177,13 @@ const openRepo = (url: string) => {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
+const resetLockForm = () => {
+  lockForm.pwd = ''
+  lockFormRef.value?.clearValidate?.()
+}
+
 const handleGlobalLockOpen = () => {
-  lockOpen.value = true
+  openLockDialog()
 }
 
 const handleGlobalLogoutOpen = () => {
@@ -172,7 +191,6 @@ const handleGlobalLogoutOpen = () => {
 }
 
 const onCancel = () => {
-  lockForm.pwd = ''
   lockOpen.value = false
 }
 
@@ -359,7 +377,15 @@ onUnmounted(() => {
   gap: 10px;
 }
 
+.lock-tip {
+  text-align: center;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .lock-name {
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -367,6 +393,24 @@ onUnmounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+:deep(.lock-screen-dialog) {
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+:deep(.lock-screen-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 24px 24px 0;
+}
+
+:deep(.lock-screen-dialog .el-dialog__body) {
+  padding: 18px 24px 8px;
+}
+
+:deep(.lock-screen-dialog .el-dialog__footer) {
+  padding: 0 24px 24px;
 }
 
 @media (max-width: 768px) {
