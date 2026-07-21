@@ -9,7 +9,7 @@ export const biRoute: RouteRecordRaw = {
     order: 110,
     ownerSystem: 'BI',
     collaboratorSystems: ['MES', 'QMS', 'WMS', 'ERP', 'CRM', 'SRM', 'EAM', 'IOT'],
-    coreObject: '生产分析快照 / 质量分析快照 / 库存分析快照 / 经营分析快照'
+    coreObject: '生产分析快照 / 质量分析快照 / 库存分析快照 / 经营分析快照 / 专题分析快照 / 报表目录'
   },
   children: [
     {
@@ -62,6 +62,58 @@ export const biRoute: RouteRecordRaw = {
         ownerSystem: 'BI',
         collaboratorSystems: ['ERP', 'CRM', 'SRM'],
         coreObject: '经营分析快照'
+      }
+    },
+    {
+      path: 'energy-analysis',
+      name: 'biEnergyAnalysis',
+      component: () => import('@/views/bi/energy-analysis/index.vue'),
+      meta: {
+        title: '能耗分析',
+        icon: 'DataLine',
+        order: 5,
+        ownerSystem: 'BI',
+        collaboratorSystems: ['IOT', 'EAM', 'MES'],
+        coreObject: '能耗分析快照'
+      }
+    },
+    {
+      path: 'ehs-analysis',
+      name: 'biEhsAnalysis',
+      component: () => import('@/views/bi/ehs-analysis/index.vue'),
+      meta: {
+        title: '安环分析',
+        icon: 'Warning',
+        order: 6,
+        ownerSystem: 'BI',
+        collaboratorSystems: ['QMS', 'MES', 'EAM'],
+        coreObject: '安环分析快照'
+      }
+    },
+    {
+      path: 'hr-analysis',
+      name: 'biHrAnalysis',
+      component: () => import('@/views/bi/hr-analysis/index.vue'),
+      meta: {
+        title: '人资分析',
+        icon: 'User',
+        order: 7,
+        ownerSystem: 'BI',
+        collaboratorSystems: ['HR', 'MES', 'MDM'],
+        coreObject: '人资分析快照'
+      }
+    },
+    {
+      path: 'report-catalog',
+      name: 'biReportCatalog',
+      component: () => import('@/views/bi/report-catalog/index.vue'),
+      meta: {
+        title: '报表管理',
+        icon: 'Document',
+        order: 8,
+        ownerSystem: 'BI',
+        collaboratorSystems: ['MES', 'QMS', 'WMS', 'ERP', 'CRM', 'SRM', 'EAM', 'IOT'],
+        coreObject: '报表目录'
       }
     },
     {
